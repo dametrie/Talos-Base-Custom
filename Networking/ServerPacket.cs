@@ -13,7 +13,7 @@ namespace Talos.Networking
         {
             get
             {
-                switch (m_opcode)
+                switch (_opcode)
                 {
                     case 0:
                     case 3:
@@ -47,7 +47,7 @@ namespace Talos.Networking
 
         internal override void Encrypt(Crypto crypto)
         {
-            m_position = m_data.Length;
+            _position = _data.Length;
 
             // Generate random values
             ushort a = (ushort)(Utility.Random(65277) + 256);
@@ -67,14 +67,14 @@ namespace Talos.Networking
             }
 
             // Perform encryption
-            for (int i = 0; i < m_data.Length; i++)
+            for (int i = 0; i < _data.Length; i++)
             {
                 int num2 = i / crypto.Key.Length % 256;
-                m_data[i] ^= (byte)(crypto.Salt[num2] ^ key[i % key.Length]);
+                _data[i] ^= (byte)(crypto.Salt[num2] ^ key[i % key.Length]);
 
-                if (num2 != m_sequence)
+                if (num2 != _sequence)
                 {
-                    m_data[i] ^= crypto.Salt[m_sequence];
+                    _data[i] ^= crypto.Salt[_sequence];
                 }
             }
 
@@ -86,11 +86,11 @@ namespace Talos.Networking
 
         internal override void Decrypt(Crypto crypto)
         {
-            int num = m_data.Length - 3;
+            int num = _data.Length - 3;
 
             // Extract values from the last three bytes
-            ushort ushort_ = (ushort)(((m_data[num + 2] << 8) | m_data[num]) ^ 0x6474);
-            byte byte_ = (byte)(m_data[num + 1] ^ 0x24);
+            ushort ushort_ = (ushort)(((_data[num + 2] << 8) | _data[num]) ^ 0x6474);
+            byte byte_ = (byte)(_data[num + 1] ^ 0x24);
 
             // Select decryption key based on EncryptMethod
             byte[] key = EncryptMethod switch
@@ -109,27 +109,27 @@ namespace Talos.Networking
             for (int i = 0; i < num; i++)
             {
                 int num2 = i / crypto.Key.Length % 256;
-                m_data[i] ^= (byte)(crypto.Salt[num2] ^ key[i % key.Length]);
+                _data[i] ^= (byte)(crypto.Salt[num2] ^ key[i % key.Length]);
 
-                if (num2 != m_sequence)
+                if (num2 != _sequence)
                 {
-                    m_data[i] ^= crypto.Salt[m_sequence];
+                    _data[i] ^= crypto.Salt[_sequence];
                 }
             }
 
             // Resize the array to remove the last three bytes
-            Array.Resize(ref m_data, num);
+            Array.Resize(ref _data, num);
         }
 
         internal ServerPacket Copy()
         {
-            ServerPacket serverPacket = new ServerPacket(m_opcode);
-            serverPacket.Write(m_data);
-            serverPacket.dateTime_0 = dateTime_0;
+            ServerPacket serverPacket = new ServerPacket(_opcode);
+            serverPacket.Write(_data);
+            serverPacket._created = _created;
             return serverPacket;
         }
 
-        public string ToString()
+        public override string ToString()
         {
             string text = GetHexString().Substring(0, 2);
 
@@ -191,7 +191,7 @@ namespace Talos.Networking
         };
 
             // Use the dictionary to get the corresponding string or a default value
-            if (messageMap.TryGetValue(CalculateFNV(text), out string result))
+            if (messageMap.TryGetValue(Utility.CalculateFNV(text), out string result))
             {
                 return result + GetHexString();
             }
@@ -200,19 +200,6 @@ namespace Talos.Networking
             return "[**Unknown**] Recv> " + GetHexString();
         }
 
-        internal static uint CalculateFNV(string hash)
-        {
-            uint num = default(uint);
-            if (hash != null)
-            {
-                num = 2166136261u;
-                for (int i = 0; i < hash.Length; i++)
-                {
-                    num = (hash[i] ^ num) * 16777619;
-                }
-            }
-            return num;
-        }
     }
 
 }
