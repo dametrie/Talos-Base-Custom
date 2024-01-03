@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Talos.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DarkAgesPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Program Files (x86)\KRU\Dark Ages\Darkages.exe</Value>
+    </Setting>
+    <Setting Name="DataPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Program Files (x86)\KRU\Dark Ages</Value>
+    </Setting>
+    <Setting Name="useDawnd" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
