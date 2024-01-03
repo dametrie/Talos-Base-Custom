@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -32,6 +33,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -50,18 +52,52 @@
     <Compile Include="Base\Client.cs" />
     <Compile Include="Base\Program.cs" />
     <Compile Include="Base\Server.cs" />
+    <Compile Include="Capricorn\Drawing\DAGraphics.cs" />
+    <Compile Include="Capricorn\Drawing\EPFFrame.cs" />
+    <Compile Include="Capricorn\Drawing\EPFImage.cs" />
+    <Compile Include="Capricorn\Drawing\HPFImage.cs" />
+    <Compile Include="Capricorn\Drawing\ImageType.cs" />
+    <Compile Include="Capricorn\Drawing\MAPFile.cs" />
+    <Compile Include="Capricorn\Drawing\MapTile.cs" />
+    <Compile Include="Capricorn\Drawing\MPFFrame.cs" />
+    <Compile Include="Capricorn\Drawing\MPFImage.cs" />
+    <Compile Include="Capricorn\Drawing\Palette256.cs" />
+    <Compile Include="Capricorn\Drawing\PaletteTable.cs" />
+    <Compile Include="Capricorn\Drawing\PaletteTableEntry.cs" />
+    <Compile Include="Capricorn\Drawing\Tileset.cs" />
+    <Compile Include="Capricorn\IO\Compression\HPFCompression.cs" />
+    <Compile Include="Capricorn\IO\DATArchive.cs" />
+    <Compile Include="Capricorn\IO\DATFileEntry.cs" />
+    <Compile Include="Capricorn\IO\KhanArchive.cs" />
     <Compile Include="Cryptography\Abstractions\Definitions\Enums.cs" />
     <Compile Include="Cryptography\CRC.cs" />
     <Compile Include="Cryptography\Crypto.cs" />
+    <Compile Include="Enumerations\Cheats.cs" />
+    <Compile Include="Enumerations\Element.cs" />
     <Compile Include="Enumerations\EncryptMethod.cs" />
+    <Compile Include="Enumerations\Mail.cs" />
     <Compile Include="Enumerations\ProcessAccess.cs" />
+    <Compile Include="Enumerations\StatusType.cs" />
     <Compile Include="Enumerations\WaitEventResult.cs" />
-    <Compile Include="Forms\ClientTab.cs" />
-    <Compile Include="Forms\ClientTab.Designer.cs" />
-    <Compile Include="Forms\MainForm.cs" />
-    <Compile Include="Forms\MainForm.Designer.cs" />
-    <Compile Include="Forms\MessageDialog.cs" />
-    <Compile Include="Forms\MessageDialog.Designer.cs" />
+    <Compile Include="Forms\ClientTab.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ClientTab.Designer.cs">
+      <DependentUpon>ClientTab.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\MessageDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\MessageDialog.Designer.cs">
+      <DependentUpon>MessageDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\UI\ResourceBar.cs" />
     <Compile Include="Networking\ClientPacket.cs" />
     <Compile Include="Networking\Packet.cs" />
     <Compile Include="Networking\ServerPacket.cs" />
@@ -72,6 +108,7 @@
     <Compile Include="PInvoke\ProcessInformation.cs" />
     <Compile Include="Geometry\Rect.cs" />
     <Compile Include="PInvoke\StartupInfo.cs" />
+    <Compile Include="Statistics.cs" />
     <Compile Include="Utility\Utility.cs" />
     <EmbeddedResource Include="Forms\ClientTab.resx" />
     <EmbeddedResource Include="Forms\MainForm.resx" />
@@ -84,6 +121,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -94,12 +132,50 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="Resources\color.tbl" />
+    <None Include="Resources\mServer.tbl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Structs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\dawnd.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\detection.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\durability.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\expmaxed.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ranger.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\skull.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\stuck.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\whispernotif.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\hpBar.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\mpBar.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\healthBar.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\manaBar.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Talos.Cryptography;
+using Talos.Enumerations;
 using Talos.Networking;
 
 namespace Talos
@@ -504,7 +505,92 @@ namespace Talos
 
         private bool ServerMessage_0x08_Attributes(Client client, ServerPacket serverPacket)
         {
-            return true;
+            {
+                byte num;
+                Statistics stats = client.Stats;
+                try
+                {
+                    num = serverPacket.ReadByte();
+                    if ((num & 0x20) == 0x20)//32
+                    {
+                        serverPacket.Read(3);
+                        stats.Level = serverPacket.ReadByte();
+                        stats.Ability = serverPacket.ReadByte();
+                        stats.MaxHP = serverPacket.ReadUInt32();
+                        stats.MaxMP = serverPacket.ReadUInt32();
+                        stats.Str = serverPacket.ReadByte();
+                        stats.Int = serverPacket.ReadByte();
+                        stats.Wis = serverPacket.ReadByte();
+                        stats.Con = serverPacket.ReadByte();
+                        stats.Dex = serverPacket.ReadByte();
+                        stats.HasUnspentPoints = serverPacket.ReadBoolean();
+                        stats.AvailablePoints = serverPacket.ReadByte();
+                        stats.MaxWeight = serverPacket.ReadInt16();
+                        stats.CurrentWeight = serverPacket.ReadInt16();
+                        serverPacket.Read(4);
+                    }
+                    if ((num & 0x10) == 0x10)//16
+                    {
+                        stats.CurrentHP = serverPacket.ReadUInt32();
+                        stats.CurrentMP = serverPacket.ReadUInt32();
+                    }
+                    if ((num & 8) == 8)
+                    {
+                        stats.Experience = serverPacket.ReadUInt32();
+                        stats.ToNextLevel = serverPacket.ReadUInt32();
+                        stats.AbilityExp = serverPacket.ReadUInt32();
+                        stats.ToNextAbility = serverPacket.ReadUInt32();
+                        stats.GamePoints = serverPacket.ReadUInt32();
+                        stats.Gold = serverPacket.ReadUInt32();
+                    }
+                    if ((num & 4) == 4)
+                    {
+                        serverPacket.ReadByte();
+                        stats.byte_8 = serverPacket.ReadByte();
+                        if (client.getCheats(Cheats.NoBlind) && !client.inArena)
+                        {
+                            serverPacket.Position--;
+                            serverPacket.WriteByte(0);
+                        }
+                        serverPacket.Read(3);
+                        stats.Mail = (Mail)serverPacket.ReadByte();
+                        stats.AttackElement = (Element)serverPacket.ReadByte();
+                        stats.DefenseElement = (Element)serverPacket.ReadByte();
+                        stats.MagicResistance = serverPacket.ReadByte();
+                        serverPacket.ReadByte();
+                        stats.ArmorClass = serverPacket.ReadSByte();
+                        stats.Damage = serverPacket.ReadByte();
+                        stats.Hit = serverPacket.ReadByte();
+                    }
+                    if (stats.Mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client.safeScreen))
+                    {
+                        client.ServerMessage(0, "{=qYou have received a parcel.");
+                    }
+                    if ((stats.Mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client.safeScreen)
+                    {
+                        client.ServerMessage(0, "{=qYou've got mail.");
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
+                client.Stats = stats;
+                if (client.getCheats(Cheats.GmMode))
+                {
+                    num = (byte)(num | 0x40);
+                    serverPacket.Data[0] = num;
+                }
+                if (client.ClientTab != null)
+                {
+                    //client.ClientTab.DisplaySessionStats();
+                    client.ClientTab.DisplayHPMP();
+                    Console.WriteLine("Health: " + stats.CurrentHP);
+                    Console.WriteLine("Mana: " + stats.CurrentMP);
+                }
+                client.Attributes((StatusType)num, stats);
+                return false;
+            }
         }
 
         private bool ServerMessage_0x0A_ServerMessage(Client client, ServerPacket serverPacket)

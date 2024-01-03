@@ -34,7 +34,7 @@ namespace Talos.Networking
 
         internal byte[] Data => _data;
 
-        internal int Position => _position;
+        internal int Position {get => _position; set => _position = value; }
 
         internal byte[] Original => _original;
 

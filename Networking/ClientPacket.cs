@@ -184,7 +184,7 @@ namespace Talos.Networking
             return clientPacket;
         }
 
-        public string ToString()
+        public override string ToString()
         {
             string text = GetHexString().Substring(0, 2);
 

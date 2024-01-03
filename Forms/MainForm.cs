@@ -12,6 +12,7 @@ namespace Talos
 {
     public partial class MainForm : Form
     {
+
         internal Server Server { get; private set; }
         internal int ThreadID { get; set; }
         internal Dictionary<Client, TabPage> _clientDictionary;
@@ -175,5 +176,6 @@ namespace Talos
         {
             LaunchDarkages();
         }
+
     }
 }

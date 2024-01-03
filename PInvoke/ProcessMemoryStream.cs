@@ -89,7 +89,7 @@ namespace Talos
             Marshal.FreeHGlobal(intPtr);
         }
 
-        public void WriteByte(byte value) => Write(new byte[] { value }, 0, 1);
+        public override void WriteByte(byte value) => Write(new byte[] { value }, 0, 1);
 
         public void WriteString(string value)
         {
@@ -97,7 +97,7 @@ namespace Talos
             Write(bytes, 0, bytes.Length);
         }
 
-        public void Close()
+        public override void Close()
         {
             if (_disposed)
                 throw new ObjectDisposedException("ProcessMemoryStream");
