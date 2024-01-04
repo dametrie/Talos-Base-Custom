@@ -77,7 +77,7 @@
     <Compile Include="Enumerations\EncryptMethod.cs" />
     <Compile Include="Enumerations\Mail.cs" />
     <Compile Include="Enumerations\ProcessAccess.cs" />
-    <Compile Include="Enumerations\StatusType.cs" />
+    <Compile Include="Enumerations\StatUpdateFlags.cs" />
     <Compile Include="Enumerations\WaitEventResult.cs" />
     <Compile Include="Forms\ClientTab.cs">
       <SubType>Form</SubType>
@@ -108,7 +108,7 @@
     <Compile Include="PInvoke\ProcessInformation.cs" />
     <Compile Include="Geometry\Rect.cs" />
     <Compile Include="PInvoke\StartupInfo.cs" />
-    <Compile Include="Statistics.cs" />
+    <Compile Include="Player\Statistics.cs" />
     <Compile Include="Utility\Utility.cs" />
     <EmbeddedResource Include="Forms\ClientTab.resx" />
     <EmbeddedResource Include="Forms\MainForm.resx" />

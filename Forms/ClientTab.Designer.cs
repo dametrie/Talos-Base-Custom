@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
+using Talos.Forms.UI;
 
 namespace Talos.Forms
 {
@@ -476,8 +478,6 @@ namespace Talos.Forms
             this.clearPacketLogBtn = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleDialogBtn = new System.Windows.Forms.ToolStripButton();
-            this.manaBar1 = new System.Windows.Forms.ProgressBar();
-            this.healthBar1 = new System.Windows.Forms.ProgressBar();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -605,6 +605,36 @@ namespace Talos.Forms
             this.clientTabControl.SelectedIndex = 0;
             this.clientTabControl.Size = new System.Drawing.Size(850, 544);
             this.clientTabControl.TabIndex = 3;
+            //
+            // healthbar
+            //
+            _healthBar = new ResourceBar("healthBar")
+            {
+                BackColor = System.Drawing.Color.White,
+                ForeColor = System.Drawing.Color.Crimson,
+                Location = new System.Drawing.Point(6, 282),
+                MaximumSize = new Size(50, 196),
+                Name = "healthBar",
+                Size = new Size(50, 196),
+                Step = 10,
+                Style = ProgressBarStyle.Continuous,
+                TabIndex = 14
+            };
+            //
+            // manabar
+            //
+            _manaBar = new ResourceBar("manaBar")
+            {
+                BackColor = System.Drawing.Color.White,
+                ForeColor = System.Drawing.Color.MidnightBlue,
+                Location = new System.Drawing.Point(65, 282),
+                MaximumSize = new Size(50, 196),
+                Name = "manaBar",
+                Size = new Size(50, 196),
+                Step = 10,
+                Style = ProgressBarStyle.Continuous,
+                TabIndex = 15
+            };
             // 
             // mainCoverTab
             // 
@@ -618,26 +648,17 @@ namespace Talos.Forms
             this.mainCoverTab.Controls.Add(this.groupGroup);
             this.mainCoverTab.Controls.Add(this.addEnemyGroup);
             this.mainCoverTab.Controls.Add(this.coverEXPGrp);
+            this.mainCoverTab.Controls.Add(_manaBar);
+            this.mainCoverTab.Controls.Add(_healthBar);
             this.mainCoverTab.ForeColor = System.Drawing.Color.Black;
             this.mainCoverTab.Location = new System.Drawing.Point(4, 24);
             this.mainCoverTab.Name = "mainCoverTab";
             this.mainCoverTab.Size = new System.Drawing.Size(842, 516);
             this.mainCoverTab.TabIndex = 0;
             this.mainCoverTab.Text = "Cover";
-            // 
-            // manaBar1
-            // 
-            this.manaBar1.Location = new System.Drawing.Point(0, 0);
-            this.manaBar1.Name = "manaBar1";
-            this.manaBar1.Size = new System.Drawing.Size(100, 23);
-            this.manaBar1.TabIndex = 0;
-            // 
-            // healthBar1
-            // 
-            this.healthBar1.Location = new System.Drawing.Point(0, 0);
-            this.healthBar1.Name = "healthBar1";
-            this.healthBar1.Size = new System.Drawing.Size(100, 23);
-            this.healthBar1.TabIndex = 0;
+
+            
+
             // 
             // coverMapInfoGrp
             // 
@@ -6733,7 +6754,5 @@ namespace Talos.Forms
         internal Button spellBarIdsBtn;
         internal Button mapNodeIdsBtn;
         internal Button pursuitIdsBtn;
-        private ProgressBar healthBar1;
-        private ProgressBar manaBar1;
     }
 }

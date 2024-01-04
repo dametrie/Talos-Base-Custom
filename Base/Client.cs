@@ -13,6 +13,7 @@ using Talos.Cryptography;
 using Talos.Networking;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 using Talos.Enumerations;
+using Talos.Player;
 
 namespace Talos
 {
@@ -64,7 +65,7 @@ namespace Talos
        // }
 
         #region Player vars
-        internal Statistics stats;
+        internal Statistics _stats;
         internal string Name { get; set; }
         internal uint PlayerID { get; set; }
         internal byte Path { get; set; }
@@ -74,9 +75,9 @@ namespace Talos
         {
             get
             {
-                if (CurrentHP * 100 / MaxHP <= 100)
+                if (CurrentHP * 100 / MaximumHP <= 100)
                 {
-                    return (int)(CurrentHP * 100 / MaxHP);
+                    return (int)(CurrentHP * 100 / MaximumHP);
                 }
                 return 100;
             }
@@ -85,9 +86,9 @@ namespace Talos
         {
             get
             {
-                if (CurrentMP * 100 / MaxMP <= 100)
+                if (CurrentMP * 100 / MaximumMP <= 100)
                 {
-                    return (int)(CurrentMP * 100 / MaxMP);
+                    return (int)(CurrentMP * 100 / MaximumMP);
                 }
                 return 100;
             }
@@ -96,255 +97,255 @@ namespace Talos
         {
             get
             {
-                return stats.Level;
+                return _stats._level;
             }
             set
             {
-                stats.Level = value;
+                _stats._level = value;
             }
         }
         internal byte Ability
         {
             get
             {
-                return stats.Ability;
+                return _stats._ability;
             }
             set
             {
-                stats.Ability = value;
+                _stats._ability = value;
             }
         }
-        internal uint MaxHP
+        internal uint MaximumHP
         {
             get
             {
-                return stats.MaxHP;
+                return _stats._maximumHP;
             }
             set
             {
-                stats.MaxHP = value;
+                _stats._maximumHP = value;
             }
         }
-        internal uint MaxMP
+        internal uint MaximumMP
         {
             get
             {
-                return stats.MaxMP;
+                return _stats._maximumMP;
             }
             set
             {
-                stats.MaxMP = value;
+                _stats._maximumMP = value;
             }
         }
-        internal byte Str
+        internal byte CurrentStr
         {
             get
             {
-                return stats.Str;
+                return _stats._currentStr;
             }
             set
             {
-                stats.Str = value;
+                _stats._currentStr = value;
             }
         }
-        internal byte Int
+        internal byte CurrentInt
         {
             get
             {
-                return stats.Int;
+                return _stats._currentInt;
             }
             set
             {
-                stats.Int = value;
+                _stats._currentInt = value;
             }
         }
-        internal byte Wis
+        internal byte CurrentWis
         {
             get
             {
-                return stats.Wis;
+                return _stats._currentWis;
             }
             set
             {
-                stats.Wis = value;
+                _stats._currentWis = value;
             }
         }
-        internal byte Con
+        internal byte CurrentCon
         {
             get
             {
-                return stats.Con;
+                return _stats._currentCon;
             }
             set
             {
-                stats.Con = value;
+                _stats._currentCon = value;
             }
         }
-        internal byte Dex
+        internal byte CurrentDex
         {
             get
             {
-                return stats.Dex;
+                return _stats._currentDex;
             }
             set
             {
-                stats.Dex = value;
+                _stats._currentDex = value;
             }
         }
-        internal bool UnspentPoints
+        internal bool HasUnspentPoints
         {
             get
             {
-                return stats.HasUnspentPoints;
+                return _stats._hasUnspentPoints;
             }
             set
             {
-                stats.HasUnspentPoints = value;
+                _stats._hasUnspentPoints = value;
             }
         }
-        internal byte AvailablePoints
+        internal byte UnspentPoints
         {
             get
             {
-                return stats.AvailablePoints;
+                return _stats._unspentPoints;
             }
             set
             {
-                stats.AvailablePoints = value;
+                _stats._unspentPoints = value;
             }
         }
-        internal short MaxWeight
+        internal short MaximumWeight
         {
             get
             {
-                return stats.MaxWeight;
+                return _stats._maximumWeight;
             }
             set
             {
-                stats.MaxWeight = value;
+                _stats._maximumWeight = value;
             }
         }
         internal short CurrentWeight
         {
             get
             {
-                return stats.CurrentWeight;
+                return _stats._currentWeight;
             }
             set
             {
-                stats.CurrentWeight = value;
+                _stats._currentWeight = value;
             }
         }
         internal uint CurrentHP
         {
             get
             {
-                return stats.CurrentHP;
+                return _stats._currentHP;
             }
             set
             {
-                stats.CurrentHP = value;
+                _stats._currentHP = value;
             }
         }
         internal uint CurrentMP
         {
             get
             {
-                return stats.CurrentMP;
+                return _stats._currentMP;
             }
             set
             {
-                stats.CurrentMP = value;
+                _stats._currentMP = value;
             }
         }
         internal uint Experience
         {
             get
             {
-                return stats.Experience;
+                return _stats._experience;
             }
             set
             {
-                stats.Experience = value;
+                _stats._experience = value;
             }
         }
         internal uint ToNextLevel
         {
             get
             {
-                return stats.ToNextLevel;
+                return _stats._toNextLevel;
             }
             set
             {
-                stats.ToNextLevel = value;
+                _stats._toNextLevel = value;
             }
         }
         internal uint AbilityExp
         {
             get
             {
-                return stats.AbilityExp;
+                return _stats._abilityExp;
             }
             set
             {
-                stats.AbilityExp = value;
+                _stats._abilityExp = value;
             }
         }
         internal uint ToNextAbility
         {
             get
             {
-                return stats.ToNextAbility;
+                return _stats._toNextAbility;
             }
             set
             {
-                stats.ToNextAbility = value;
+                _stats._toNextAbility = value;
             }
         }
         internal uint GamePoints
         {
             get
             {
-                return stats.GamePoints;
+                return _stats._gamePoints;
             }
             set
             {
-                stats.GamePoints = value;
+                _stats._gamePoints = value;
             }
         }
         internal uint Gold
         {
             get
             {
-                return stats.Gold;
+                return _stats._gold;
             }
             set
             {
-                stats.Gold = value;
+                _stats._gold = value;
             }
         }
         internal Statistics Stats
         {
             get
             {
-                return stats;
+                return _stats;
             }
             set
             {
-                stats = value;
+                _stats = value;
             }
         }
-        internal bool HasLetter => stats.Mail.HasFlag(Mail.HasLetter);
-        internal bool HasParcel => stats.Mail.HasFlag(Mail.HasParcel);
-        internal byte Byte_10//Figure this out
+        internal bool HasLetter => _stats._mail.HasFlag(Mail.HasLetter);
+        internal bool HasParcel => _stats._mail.HasFlag(Mail.HasParcel);
+        internal byte Blind
         {
             get
             {
-                return stats.byte_8;
+                return _stats._blind;
             }
             set
             {
-                stats.byte_8 = value;
+                _stats._blind = value;
             }
         }
 
@@ -391,51 +392,51 @@ namespace Talos
             }
         }
 
-        internal void Attributes(StatusType value, Statistics stats)
+        internal void Attributes(StatUpdateFlags value, Statistics stats)
         {
             ServerPacket serverPacket = new ServerPacket(8);
             if (getCheats(Cheats.GmMode))
             {
-                value |= StatusType.GameMasterA;
+                value |= StatUpdateFlags.GameMasterA;
             }
-            if (stats.Mail != 0)
+            if (stats._mail != 0)
             {
-                value |= (StatusType.UnreadMail | StatusType.Secondary);
+                value |= (StatUpdateFlags.UnreadMail | StatUpdateFlags.Secondary);
             }
             serverPacket.WriteByte((byte)value);
-            if (value.HasFlag(StatusType.Primary))
+            if (value.HasFlag(StatUpdateFlags.Primary))
             {
                 serverPacket.Write(new byte[3]);
-                serverPacket.WriteByte(stats.Level);
-                serverPacket.WriteByte(stats.Ability);
-                serverPacket.WriteUInt32(stats.MaxHP);
-                serverPacket.WriteUInt32(stats.MaxMP);
-                serverPacket.WriteByte(stats.Str);
-                serverPacket.WriteByte(stats.Int);
-                serverPacket.WriteByte(stats.Wis);
-                serverPacket.WriteByte(stats.Con);
-                serverPacket.WriteByte(stats.Dex);
-                serverPacket.WriteBoolean(stats.HasUnspentPoints);
-                serverPacket.WriteByte(stats.AvailablePoints);
-                serverPacket.WriteInt16(stats.MaxWeight);
-                serverPacket.WriteInt16(stats.CurrentWeight);
+                serverPacket.WriteByte(stats._level);
+                serverPacket.WriteByte(stats._ability);
+                serverPacket.WriteUInt32(stats._maximumHP);
+                serverPacket.WriteUInt32(stats._maximumMP);
+                serverPacket.WriteByte(stats._currentStr);
+                serverPacket.WriteByte(stats._currentInt);
+                serverPacket.WriteByte(stats._currentWis);
+                serverPacket.WriteByte(stats._currentCon);
+                serverPacket.WriteByte(stats._currentDex);
+                serverPacket.WriteBoolean(stats._hasUnspentPoints);
+                serverPacket.WriteByte(stats._unspentPoints);
+                serverPacket.WriteInt16(stats._maximumWeight);
+                serverPacket.WriteInt16(stats._currentWeight);
                 serverPacket.Write(new byte[4]);
             }
-            if (value.HasFlag(StatusType.Current))
+            if (value.HasFlag(StatUpdateFlags.Current))
             {
-                serverPacket.WriteUInt32(stats.CurrentHP);
-                serverPacket.WriteUInt32(stats.CurrentMP);
+                serverPacket.WriteUInt32(stats._currentHP);
+                serverPacket.WriteUInt32(stats._currentMP);
             }
-            if (value.HasFlag(StatusType.Experience))
+            if (value.HasFlag(StatUpdateFlags.Experience))
             {
-                serverPacket.WriteUInt32(stats.Experience);
-                serverPacket.WriteUInt32(stats.ToNextLevel);
-                serverPacket.WriteUInt32(stats.AbilityExp);
-                serverPacket.WriteUInt32(stats.ToNextAbility);
-                serverPacket.WriteUInt32(stats.GamePoints);
-                serverPacket.WriteUInt32(stats.Gold);
+                serverPacket.WriteUInt32(stats._experience);
+                serverPacket.WriteUInt32(stats._toNextLevel);
+                serverPacket.WriteUInt32(stats._abilityExp);
+                serverPacket.WriteUInt32(stats._toNextAbility);
+                serverPacket.WriteUInt32(stats._gamePoints);
+                serverPacket.WriteUInt32(stats._gold);
             }
-            if (value.HasFlag(StatusType.Secondary))
+            if (value.HasFlag(StatUpdateFlags.Secondary))
             {
                 serverPacket.Write(new byte[1]);
                 if (getCheats(Cheats.NoBlind) && !inArena)
@@ -444,16 +445,16 @@ namespace Talos
                 }
                 else
                 {
-                    serverPacket.WriteByte(stats.byte_8);
+                    serverPacket.WriteByte(stats._blind);
                 }
                 serverPacket.Write(new byte[4]);
-                serverPacket.WriteByte((byte)stats.AttackElement);
-                serverPacket.WriteByte((byte)stats.DefenseElement);
-                serverPacket.WriteByte(stats.MagicResistance);
+                serverPacket.WriteByte((byte)stats._offenseElement);
+                serverPacket.WriteByte((byte)stats._defenseElement);
+                serverPacket.WriteByte(stats._magicResistance);
                 serverPacket.Write(new byte[1]);
-                serverPacket.WriteSByte(stats.ArmorClass);
-                serverPacket.WriteByte(stats.Damage);
-                serverPacket.WriteByte(stats.Hit);
+                serverPacket.WriteSByte(stats._armorClass);
+                serverPacket.WriteByte(stats._damage);
+                serverPacket.WriteByte(stats._hit);
             }
             Enqueue(serverPacket);
         }
@@ -476,6 +477,9 @@ namespace Talos
             _clientLoopThread.Start();
         }
 
+        /// <summary>
+        /// Main client loop that handles sending and receiving packets.
+        /// </summary>
         private void ClientLoop()
         {
             Thread.GetDomain().UnhandledException += Program.ExceptionHandler;
@@ -608,6 +612,7 @@ namespace Talos
             catch
             {
             }
+            //no longer connected
             _server._clientList.Remove(this);
             Thread.Sleep(100);
             _server._mainForm.RemoveClient(this);
@@ -715,7 +720,10 @@ namespace Talos
             }
         }
 
-
+        /// <summary>
+        /// Enqueues a packet to be sent to the server.
+        /// </summary>
+        /// <param name="packetArray">The packet array to be sent</param> 
         internal void Enqueue(params Packet[] packetArray)
         {
             if (Thread.CurrentThread.ManagedThreadId == Program.MainForm.ThreadID)
@@ -733,6 +741,10 @@ namespace Talos
             }
         }
 
+        /// <summary>
+        /// Disconnect from the server.
+        /// </summary>
+        /// <param name="wait">True or false depending on whether we are disconnecting</param>
         internal void DisconnectWait(bool wait = false)
         {
             _connected = false;

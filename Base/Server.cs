@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Talos.Cryptography;
+using Talos.Cryptography.Abstractions.Definitions;
 using Talos.Enumerations;
 using Talos.Networking;
+using Talos.Player;
 
 namespace Talos
 {
@@ -47,6 +46,10 @@ namespace Talos
             Initialize(2610);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="port"></param>
         internal void Initialize(int port)
         {
             if (!_initialized)
@@ -60,6 +63,10 @@ namespace Talos
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ar"></param>
         private void EndAccept(IAsyncResult ar)
         {
             try
@@ -76,125 +83,137 @@ namespace Talos
             }
         }
 
+        /// <summary>
+        /// Message handler for the client and server messages based on what opcode is sent.
+        /// </summary>
         private void MessageHandlers()
         {
-            //Client Message handlers
-            ClientMessage[0] = new ClientMessageHandler(ClientMessage_0x00_JoinServer);
-            ClientMessage[2] = new ClientMessageHandler(ClientMessage_0x02_CreateChar1);
-            ClientMessage[3] = new ClientMessageHandler(ClientMessage_0x03_Login);
-            ClientMessage[4] = new ClientMessageHandler(ClientMessage_0x04_CreateChar2);
-            ClientMessage[5] = new ClientMessageHandler(ClientMessage_0x05_MapDataRequest);
-            ClientMessage[6] = new ClientMessageHandler(ClientMessage_0x06_Walk);
-            ClientMessage[7] = new ClientMessageHandler(ClientMessage_0x07_Pickup);
-            ClientMessage[8] = new ClientMessageHandler(ClientMessage_0x08_Drop);
-            ClientMessage[11] = new ClientMessageHandler(ClientMessage_0x0B_ExitRequest);
-            ClientMessage[12] = new ClientMessageHandler(ClientMessage_0x0C_DisplayEntityRequest);
-            ClientMessage[13] = new ClientMessageHandler(ClientMessage_0x0D_Ignore);
-            ClientMessage[14] = new ClientMessageHandler(ClientMessage_0x0E_PublicMessage);
-            ClientMessage[15] = new ClientMessageHandler(ClientMessage_0x0F_UseSpell);
-            ClientMessage[16] = new ClientMessageHandler(ClientMessage_0x10_JoinClient);
-            ClientMessage[17] = new ClientMessageHandler(ClientMessage_0x11_Turn);
-            ClientMessage[19] = new ClientMessageHandler(ClientMessage_0x13_Spacebar);
-            ClientMessage[24] = new ClientMessageHandler(ClientMessage_0x18_WorldListRequest);
-            ClientMessage[25] = new ClientMessageHandler(ClientMessage_0x19_Whisper);
-            ClientMessage[27] = new ClientMessageHandler(ClientMessage_0x1B_UserOptionToggle);
-            ClientMessage[28] = new ClientMessageHandler(ClientMessage_0x1C_UseItem);
-            ClientMessage[29] = new ClientMessageHandler(ClientMessage_0x1D_Emote);
-            ClientMessage[36] = new ClientMessageHandler(ClientMessage_0x24_GoldDrop);
-            ClientMessage[38] = new ClientMessageHandler(ClientMessage_0x26_ChangePassword);
-            ClientMessage[41] = new ClientMessageHandler(ClientMessage_0x29_ItemDroppedOnCreature);
-            ClientMessage[42] = new ClientMessageHandler(ClientMessage_0x2A_GoldDropOnCreature);
-            ClientMessage[45] = new ClientMessageHandler(ClientMessage_0x2D_ProfileRequest);
-            ClientMessage[46] = new ClientMessageHandler(ClientMessage_0x2E_GroupRequest);
-            ClientMessage[47] = new ClientMessageHandler(ClientMessage_0x2F_ToggleGroup);
-            ClientMessage[48] = new ClientMessageHandler(ClientMessage_0x30_SwapSlot);
-            ClientMessage[56] = new ClientMessageHandler(ClientMessage_0x38_RefreshRequest);
-            ClientMessage[57] = new ClientMessageHandler(ClientMessage_0x39_PursuitRequest);
-            ClientMessage[58] = new ClientMessageHandler(ClientMessage_0x3A_DialogResponse);
-            ClientMessage[59] = new ClientMessageHandler(ClientMessage_0x3B_BoardRequest);
-            ClientMessage[62] = new ClientMessageHandler(ClientMessage_0x3E_UseSkill);
-            ClientMessage[63] = new ClientMessageHandler(ClientMessage_0x3F_WorldMapClick);
-            ClientMessage[67] = new ClientMessageHandler(ClientMessage_0x43_ClickObject);
-            ClientMessage[68] = new ClientMessageHandler(ClientMessage_0x44_RemoveEquipment);
-            ClientMessage[69] = new ClientMessageHandler(ClientMessage_0x45_KeepAlive);
-            ClientMessage[71] = new ClientMessageHandler(ClientMessage_0x47_ChangeStat);
-            ClientMessage[74] = new ClientMessageHandler(ClientMessage_0x4A_Exchange);
-            ClientMessage[75] = new ClientMessageHandler(ClientMessage_0x4B_RequestLoginMessage);
-            ClientMessage[77] = new ClientMessageHandler(ClientMessage_0x4D_BeginChant);
-            ClientMessage[78] = new ClientMessageHandler(ClientMessage_0x4E_DisplayChant);
-            ClientMessage[79] = new ClientMessageHandler(ClientMessage_0x4F_Profile);
-            ClientMessage[87] = new ClientMessageHandler(ClientMessage_0x57_RequestServerTable);
-            ClientMessage[104] = new ClientMessageHandler(ClientMessage_0x68_RequestHomePage);
-            ClientMessage[117] = new ClientMessageHandler(ClientMessage_0x75_SynchronizeTicks);
-            ClientMessage[121] = new ClientMessageHandler(ClientMessage_0x79_SocialStatus);
-            ClientMessage[123] = new ClientMessageHandler(ClientMessage_0x7B_MetaDataRequest);
+            #region Client Message Handlers
+            ClientMessage[(int)ClientOpCode.Version] = new ClientMessageHandler(ClientMessage_0x00_Version);
+            ClientMessage[(int)ClientOpCode.CreateCharRequest] = new ClientMessageHandler(ClientMessage_0x02_CreateCharRequest);
+            ClientMessage[(int)ClientOpCode.Login] = new ClientMessageHandler(ClientMessage_0x03_Login);
+            ClientMessage[(int)ClientOpCode.CreateCharFinalize] = new ClientMessageHandler(ClientMessage_0x04_CreateCharFinalize);
+            ClientMessage[(int)ClientOpCode.MapDataRequest] = new ClientMessageHandler(ClientMessage_0x05_MapDataRequest);
+            ClientMessage[(int)ClientOpCode.ClientWalk] = new ClientMessageHandler(ClientMessage_0x06_ClientWalk);
+            ClientMessage[(int)ClientOpCode.Pickup] = new ClientMessageHandler(ClientMessage_0x07_Pickup);
+            ClientMessage[(int)ClientOpCode.ItemDrop] = new ClientMessageHandler(ClientMessage_0x08_ItemDrop);
+            ClientMessage[(int)ClientOpCode.ExitRequest] = new ClientMessageHandler(ClientMessage_0x0B_ExitRequest);
+            ClientMessage[(int)ClientOpCode.DisplayEntityRequest] = new ClientMessageHandler(ClientMessage_0x0C_DisplayEntityRequest);
+            ClientMessage[(int)ClientOpCode.Ignore] = new ClientMessageHandler(ClientMessage_0x0D_Ignore);
+            ClientMessage[(int)ClientOpCode.PublicMessage] = new ClientMessageHandler(ClientMessage_0x0E_PublicMessage);
+            ClientMessage[(int)ClientOpCode.UseSpell] = new ClientMessageHandler(ClientMessage_0x0F_UseSpell);
+            ClientMessage[(int)ClientOpCode.ClientJoin] = new ClientMessageHandler(ClientMessage_0x10_JoinClient);
+            ClientMessage[(int)ClientOpCode.Turn] = new ClientMessageHandler(ClientMessage_0x11_Turn);
+            ClientMessage[(int)ClientOpCode.SpaceBar] = new ClientMessageHandler(ClientMessage_0x13_Spacebar);
+            ClientMessage[(int)ClientOpCode.WorldListRequest] = new ClientMessageHandler(ClientMessage_0x18_WorldListRequest);
+            ClientMessage[(int)ClientOpCode.Whisper] = new ClientMessageHandler(ClientMessage_0x19_Whisper);
+            ClientMessage[(int)ClientOpCode.UserOptionToggle] = new ClientMessageHandler(ClientMessage_0x1B_UserOptionToggle);
+            ClientMessage[(int)ClientOpCode.UseItem] = new ClientMessageHandler(ClientMessage_0x1C_UseItem);
+            ClientMessage[(int)ClientOpCode.Emote] = new ClientMessageHandler(ClientMessage_0x1D_Emote);
+            ClientMessage[(int)ClientOpCode.SetNotepad] = new ClientMessageHandler(ClientMessage_0x23_SetNotepad);
+            ClientMessage[(int)ClientOpCode.GoldDrop] = new ClientMessageHandler(ClientMessage_0x24_GoldDrop);
+            ClientMessage[(int)ClientOpCode.PasswordChange] = new ClientMessageHandler(ClientMessage_0x26_PasswordChange);
+            ClientMessage[(int)ClientOpCode.ItemDroppedOnCreature] = new ClientMessageHandler(ClientMessage_0x29_ItemDroppedOnCreature);
+            ClientMessage[(int)ClientOpCode.GoldDroppedOnCreature] = new ClientMessageHandler(ClientMessage_0x2A_GoldDropOnCreature);
+            ClientMessage[(int)ClientOpCode.ProfileRequest] = new ClientMessageHandler(ClientMessage_0x2D_ProfileRequest);
+            ClientMessage[(int)ClientOpCode.GroupRequest] = new ClientMessageHandler(ClientMessage_0x2E_GroupRequest);
+            ClientMessage[(int)ClientOpCode.ToggleGroup] = new ClientMessageHandler(ClientMessage_0x2F_ToggleGroup);
+            ClientMessage[(int)ClientOpCode.SwapSlot] = new ClientMessageHandler(ClientMessage_0x30_SwapSlot);
+            ClientMessage[(int)ClientOpCode.RefreshRequest] = new ClientMessageHandler(ClientMessage_0x38_RefreshRequest);
+            ClientMessage[(int)ClientOpCode.PursuitRequest] = new ClientMessageHandler(ClientMessage_0x39_PursuitRequest);
+            ClientMessage[(int)ClientOpCode.DialogResponse] = new ClientMessageHandler(ClientMessage_0x3A_DialogResponse);
+            ClientMessage[(int)ClientOpCode.BoardRequest] = new ClientMessageHandler(ClientMessage_0x3B_BoardRequest);
+            ClientMessage[(int)ClientOpCode.UseSkill] = new ClientMessageHandler(ClientMessage_0x3E_UseSkill);
+            ClientMessage[(int)ClientOpCode.WorldMapClick] = new ClientMessageHandler(ClientMessage_0x3F_WorldMapClick);
+            ClientMessage[(int)ClientOpCode.ClickObject] = new ClientMessageHandler(ClientMessage_0x43_ClickObject);
+            ClientMessage[(int)ClientOpCode.Unequip] = new ClientMessageHandler(ClientMessage_0x44_Unequip);
+            ClientMessage[(int)ClientOpCode.HeartBeat] = new ClientMessageHandler(ClientMessage_0x45_HeartBeat);
+            ClientMessage[(int)ClientOpCode.RaiseStat] = new ClientMessageHandler(ClientMessage_0x47_RaiseStat);
+            ClientMessage[(int)ClientOpCode.Exchange] = new ClientMessageHandler(ClientMessage_0x4A_Exchange);
+            ClientMessage[(int)ClientOpCode.NoticeRequest] = new ClientMessageHandler(ClientMessage_0x4B_NoticeRequest);
+            ClientMessage[(int)ClientOpCode.BeginChant] = new ClientMessageHandler(ClientMessage_0x4D_BeginChant);
+            ClientMessage[(int)ClientOpCode.DisplayChant] = new ClientMessageHandler(ClientMessage_0x4E_DisplayChant);
+            ClientMessage[(int)ClientOpCode.Profile] = new ClientMessageHandler(ClientMessage_0x4F_Profile);
+            ClientMessage[(int)ClientOpCode.ServerTableRequest] = new ClientMessageHandler(ClientMessage_0x57_ServerTableRequest);
+            ClientMessage[(int)ClientOpCode.SequenceChange] = new ClientMessageHandler(ClientMessage_0x62_SequenceChange);
+            ClientMessage[(int)ClientOpCode.HomePageRequest] = new ClientMessageHandler(ClientMessage_0x68_HomePageRequest);
+            ClientMessage[(int)ClientOpCode.SynchronizeTicks] = new ClientMessageHandler(ClientMessage_0x75_SynchronizeTicks);
+            ClientMessage[(int)ClientOpCode.SocialStatus] = new ClientMessageHandler(ClientMessage_0x79_SocialStatus);
+            ClientMessage[(int)ClientOpCode.MetaDataRequest] = new ClientMessageHandler(ClientMessage_0x7B_MetaDataRequest);
+            #endregion
 
-            //Server Message Handlers
-            ServerMessage[0] = new ServerMessageHandler(ServerMessage_0x00_ConnectionInfo);
-            ServerMessage[2] = new ServerMessageHandler(ServerMessage_0x02_LoginMessage);
-            ServerMessage[3] = new ServerMessageHandler(ServerMessage_0x03_Redirect);
-            ServerMessage[4] = new ServerMessageHandler(ServerMessage_0x04_Location);
-            ServerMessage[5] = new ServerMessageHandler(ServerMessage_0x05_UserID);
-            ServerMessage[7] = new ServerMessageHandler(ServerMessage_0x07_DisplayVisibleEntities);
-            ServerMessage[8] = new ServerMessageHandler(ServerMessage_0x08_Attributes);
-            ServerMessage[10] = new ServerMessageHandler(ServerMessage_0x0A_ServerMessage);
-            ServerMessage[11] = new ServerMessageHandler(ServerMessage_0x0B_ClientWalk);
-            ServerMessage[12] = new ServerMessageHandler(ServerMessage_0x0C_EntityWalk);
-            ServerMessage[13] = new ServerMessageHandler(ServerMessage_0x0D_PublicChat);
-            ServerMessage[14] = new ServerMessageHandler(ServerMessage_0x0E_RemoveObject);
-            ServerMessage[15] = new ServerMessageHandler(ServerMessage_0x0F_AddItem);
-            ServerMessage[16] = new ServerMessageHandler(ServerMessage_0x10_RemoveItem);
-            ServerMessage[17] = new ServerMessageHandler(ServerMessage_0x11_CreatureTurn);
-            ServerMessage[19] = new ServerMessageHandler(ServerMessage_0x13_HealthBar);
-            ServerMessage[21] = new ServerMessageHandler(ServerMessage_0x15_MapInfo);
-            ServerMessage[23] = new ServerMessageHandler(ServerMessage_0x17_AddSpell);
-            ServerMessage[24] = new ServerMessageHandler(ServerMessage_0x18_RemoveSpell);
-            ServerMessage[25] = new ServerMessageHandler(ServerMessage_0x19_Sound);
-            ServerMessage[26] = new ServerMessageHandler(ServerMessage_0x1A_AnimateUser);
-            ServerMessage[31] = new ServerMessageHandler(ServerMessage_0x1F_MapChangeComplete);
-            ServerMessage[32] = new ServerMessageHandler(ServerMessage_0x20_LightLevel);
-            ServerMessage[34] = new ServerMessageHandler(ServerMessage_0x22_RefreshResponse);
-            ServerMessage[41] = new ServerMessageHandler(ServerMessage_0x29_Animation);
-            ServerMessage[44] = new ServerMessageHandler(ServerMessage_0x2C_AddSkill);
-            ServerMessage[45] = new ServerMessageHandler(ServerMessage_0x2D_RemoveSkill);
-            ServerMessage[46] = new ServerMessageHandler(ServerMessage_0x2E_WorldMap);
-            ServerMessage[47] = new ServerMessageHandler(ServerMessage_0x2F_MerchantMenu);
-            ServerMessage[48] = new ServerMessageHandler(ServerMessage_0x30_Dialog);
-            ServerMessage[49] = new ServerMessageHandler(ServerMessage_0x31_BulletinBoard);
-            ServerMessage[50] = new ServerMessageHandler(ServerMessage_0x32_Door);
-            ServerMessage[51] = new ServerMessageHandler(ServerMessage_0x33_DisplayUser);
-            ServerMessage[52] = new ServerMessageHandler(ServerMessage_0x34_Profile);
-            ServerMessage[54] = new ServerMessageHandler(ServerMessage_0x36_WorldList);
-            ServerMessage[55] = new ServerMessageHandler(ServerMessage_0x37_AddEquipment);
-            ServerMessage[56] = new ServerMessageHandler(ServerMessage_0x38_RemoveEquipment);
-            ServerMessage[57] = new ServerMessageHandler(ServerMessage_0x39_ProfileSelf);
-            ServerMessage[58] = new ServerMessageHandler(ServerMessage_0x3A_EffectsBar);
-            ServerMessage[59] = new ServerMessageHandler(ServerMessage_0x3B_HeartbeatA);
-            ServerMessage[60] = new ServerMessageHandler(ServerMessage_0x3C_MapData);
-            ServerMessage[63] = new ServerMessageHandler(ServerMessage_0x3F_Cooldown);
-            ServerMessage[66] = new ServerMessageHandler(ServerMessage_0x42_Exchange);
-            ServerMessage[72] = new ServerMessageHandler(ServerMessage_0x48_CancelCasting);
-            ServerMessage[73] = new ServerMessageHandler(ServerMessage_0x49_RequestPersonal);
-            ServerMessage[75] = new ServerMessageHandler(ServerMessage_0x4B_ForceClientPacket);
-            ServerMessage[76] = new ServerMessageHandler(ServerMessage_0x4C_ConfirmExit);
-            ServerMessage[86] = new ServerMessageHandler(ServerMessage_0x56_ServerTable);
-            ServerMessage[88] = new ServerMessageHandler(ServerMessage_0x58_MapLoadComplete);
-            ServerMessage[96] = new ServerMessageHandler(ServerMessage_0x60_LobbyNotification);
-            ServerMessage[99] = new ServerMessageHandler(ServerMessage_0x63_GroupRequest);
-            ServerMessage[102] = new ServerMessageHandler(ServerMessage_0x66_LobbyControls);
-            ServerMessage[103] = new ServerMessageHandler(ServerMessage_0x67_MapChangePending);
-            ServerMessage[104] = new ServerMessageHandler(ServerMessage_0x68_HeartbeatB);
-            ServerMessage[111] = new ServerMessageHandler(ServerMessage_0x6F_MetaFile);
-            ServerMessage[126] = new ServerMessageHandler(ServerMessage_0x7E_AcceptConnection);
-
+            #region Server Message Handlers
+            ServerMessage[(int)ServerOpCode.ConnectionInfo] = new ServerMessageHandler(ServerMessage_0x00_ConnectionInfo);
+            ServerMessage[(int)ServerOpCode.LoginMessage] = new ServerMessageHandler(ServerMessage_0x02_LoginMessage);
+            ServerMessage[(int)ServerOpCode.Redirect] = new ServerMessageHandler(ServerMessage_0x03_Redirect);
+            ServerMessage[(int)ServerOpCode.Location] = new ServerMessageHandler(ServerMessage_0x04_Location);
+            ServerMessage[(int)ServerOpCode.UserID] = new ServerMessageHandler(ServerMessage_0x05_UserID);
+            ServerMessage[(int)ServerOpCode.DisplayVisibleEntities] = new ServerMessageHandler(ServerMessage_0x07_DisplayVisibleEntities);
+            ServerMessage[(int)ServerOpCode.Attributes] = new ServerMessageHandler(ServerMessage_0x08_Attributes);
+            ServerMessage[(int)ServerOpCode.ServerMessage] = new ServerMessageHandler(ServerMessage_0x0A_ServerMessage);
+            ServerMessage[(int)ServerOpCode.ConfirmClientWalk] = new ServerMessageHandler(ServerMessage_0x0B_ConfirmClientWalk);
+            ServerMessage[(int)ServerOpCode.CreatureWalk] = new ServerMessageHandler(ServerMessage_0x0C_CreatureWalk);
+            ServerMessage[(int)ServerOpCode.PublicMessage] = new ServerMessageHandler(ServerMessage_0x0D_PublicMessage);
+            ServerMessage[(int)ServerOpCode.RemoveObject] = new ServerMessageHandler(ServerMessage_0x0E_RemoveObject);
+            ServerMessage[(int)ServerOpCode.AddItemToPane] = new ServerMessageHandler(ServerMessage_0x0F_AddItemToPane);
+            ServerMessage[(int)ServerOpCode.RemoveItemFromPane] = new ServerMessageHandler(ServerMessage_0x10_RemoveItemFromPane);
+            ServerMessage[(int)ServerOpCode.CreatureTurn] = new ServerMessageHandler(ServerMessage_0x11_CreatureTurn);
+            ServerMessage[(int)ServerOpCode.HealthBar] = new ServerMessageHandler(ServerMessage_0x13_HealthBar);
+            ServerMessage[(int)ServerOpCode.MapInfo] = new ServerMessageHandler(ServerMessage_0x15_MapInfo);
+            ServerMessage[(int)ServerOpCode.AddSpellToPane] = new ServerMessageHandler(ServerMessage_0x17_AddSpellToPane);
+            ServerMessage[(int)ServerOpCode.RemoveSpellFromPane] = new ServerMessageHandler(ServerMessage_0x18_RemoveSpellFromPane);
+            ServerMessage[(int)ServerOpCode.Sound] = new ServerMessageHandler(ServerMessage_0x19_Sound);
+            ServerMessage[(int)ServerOpCode.BodyAnimation] = new ServerMessageHandler(ServerMessage_0x1A_BodyAnimation);
+            ServerMessage[(int)ServerOpCode.Notepad] = new ServerMessageHandler(ServerMessage_0x1B_NotePad);
+            ServerMessage[(int)ServerOpCode.MapChangeComplete] = new ServerMessageHandler(ServerMessage_0x1F_MapChangeComplete);
+            ServerMessage[(int)ServerOpCode.LightLevel] = new ServerMessageHandler(ServerMessage_0x20_LightLevel);
+            ServerMessage[(int)ServerOpCode.RefreshResponse] = new ServerMessageHandler(ServerMessage_0x22_RefreshResponse);
+            ServerMessage[(int)ServerOpCode.Animation] = new ServerMessageHandler(ServerMessage_0x29_Animation);
+            ServerMessage[(int)ServerOpCode.AddSkillToPane] = new ServerMessageHandler(ServerMessage_0x2C_AddSkillToPane);
+            ServerMessage[(int)ServerOpCode.RemoveSkillFromPane] = new ServerMessageHandler(ServerMessage_0x2D_RemoveSkillFromPane);
+            ServerMessage[(int)ServerOpCode.WorldMap] = new ServerMessageHandler(ServerMessage_0x2E_WorldMap);
+            ServerMessage[(int)ServerOpCode.MerchantMenu] = new ServerMessageHandler(ServerMessage_0x2F_MerchantMenu);
+            ServerMessage[(int)ServerOpCode.Dialog] = new ServerMessageHandler(ServerMessage_0x30_Dialog);
+            ServerMessage[(int)ServerOpCode.Board] = new ServerMessageHandler(ServerMessage_0x31_Board);
+            ServerMessage[(int)ServerOpCode.Door] = new ServerMessageHandler(ServerMessage_0x32_Door);
+            ServerMessage[(int)ServerOpCode.DisplayAisling] = new ServerMessageHandler(ServerMessage_0x33_DisplayAisling);
+            ServerMessage[(int)ServerOpCode.Profile] = new ServerMessageHandler(ServerMessage_0x34_Profile);
+            ServerMessage[(int)ServerOpCode.WorldList] = new ServerMessageHandler(ServerMessage_0x36_WorldList);
+            ServerMessage[(int)ServerOpCode.AddEquipment] = new ServerMessageHandler(ServerMessage_0x37_AddEquipment);
+            ServerMessage[(int)ServerOpCode.Unequip] = new ServerMessageHandler(ServerMessage_0x38_Unequip);
+            ServerMessage[(int)ServerOpCode.SelfProfile] = new ServerMessageHandler(ServerMessage_0x39_SelfProfle);
+            ServerMessage[(int)ServerOpCode.Effect] = new ServerMessageHandler(ServerMessage_0x3A_Effect);
+            ServerMessage[(int)ServerOpCode.HeartBeatResponse] = new ServerMessageHandler(ServerMessage_0x3B_HeartbeatResponse);
+            ServerMessage[(int)ServerOpCode.MapData] = new ServerMessageHandler(ServerMessage_0x3C_MapData);
+            ServerMessage[(int)ServerOpCode.Cooldown] = new ServerMessageHandler(ServerMessage_0x3F_Cooldown);
+            ServerMessage[(int)ServerOpCode.Exchange] = new ServerMessageHandler(ServerMessage_0x42_Exchange);
+            ServerMessage[(int)ServerOpCode.CancelCasting] = new ServerMessageHandler(ServerMessage_0x48_CancelCasting);
+            ServerMessage[(int)ServerOpCode.ProfileRequest] = new ServerMessageHandler(ServerMessage_0x49_ProfileRequest);
+            ServerMessage[(int)ServerOpCode.ForceClientPacket] = new ServerMessageHandler(ServerMessage_0x4B_ForceClientPacket);
+            ServerMessage[(int)ServerOpCode.ConfirmExit] = new ServerMessageHandler(ServerMessage_0x4C_ConfirmExit);
+            ServerMessage[(int)ServerOpCode.ServerTable] = new ServerMessageHandler(ServerMessage_0x56_ServerTable);
+            ServerMessage[(int)ServerOpCode.MapLoadComplete] = new ServerMessageHandler(ServerMessage_0x58_MapLoadComplete);
+            ServerMessage[(int)ServerOpCode.LoginNotice] = new ServerMessageHandler(ServerMessage_0x60_LoginNotice);
+            ServerMessage[(int)ServerOpCode.GroupRequest] = new ServerMessageHandler(ServerMessage_0x63_GroupRequest);
+            ServerMessage[(int)ServerOpCode.LoginControls] = new ServerMessageHandler(ServerMessage_0x66_LoginControls);
+            ServerMessage[(int)ServerOpCode.MapChangePending] = new ServerMessageHandler(ServerMessage_0x67_MapChangePending);
+            ServerMessage[(int)ServerOpCode.SynchronizeTicks] = new ServerMessageHandler(ServerMessage_0x68_SynchronizeTicks);
+            ServerMessage[(int)ServerOpCode.MetaData] = new ServerMessageHandler(ServerMessage_0x6F_MetaData);
+            ServerMessage[(int)ServerOpCode.AcceptConnection] = new ServerMessageHandler(ServerMessage_0x7E_AcceptConnection);
+            #endregion
         }
 
-        private bool ClientMessage_0x00_JoinServer(Client client, ClientPacket clientPacket)
+        private bool ServerMessage_0x1B_NotePad(Client client, ServerPacket packet)
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool ClientMessage_0x00_Version(Client client, ClientPacket clientPacket)
         {
             return true;
         }
 
-        private bool ClientMessage_0x02_CreateChar1(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x02_CreateCharRequest(Client client, ClientPacket clientPacket)
         {
             return true;
         }
@@ -215,7 +234,7 @@ namespace Talos
             return true;
         }
 
-        private bool ClientMessage_0x04_CreateChar2(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x04_CreateCharFinalize(Client client, ClientPacket clientPacket)
         {
             return true;
         }
@@ -225,7 +244,7 @@ namespace Talos
             return true;
         }
 
-        private bool ClientMessage_0x06_Walk(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x06_ClientWalk(Client client, ClientPacket clientPacket)
         {
             return true;
         }
@@ -235,7 +254,7 @@ namespace Talos
             return true;
         }
 
-        private bool ClientMessage_0x08_Drop(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x08_ItemDrop(Client client, ClientPacket clientPacket)
         {
             return true;
         }
@@ -310,13 +329,16 @@ namespace Talos
         {
             return true;
         }
-
+        private bool ClientMessage_0x23_SetNotepad(Client client, ClientPacket clientPacket)
+        {
+            return true;
+        }
         private bool ClientMessage_0x24_GoldDrop(Client client, ClientPacket clientPacket)
         {
             return true;
         }
 
-        private bool ClientMessage_0x26_ChangePassword(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x26_PasswordChange(Client client, ClientPacket clientPacket)
         {
             return true;
         }
@@ -386,17 +408,17 @@ namespace Talos
             return true;
         }
 
-        private bool ClientMessage_0x44_RemoveEquipment(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x44_Unequip(Client client, ClientPacket clientPacket)
         {
             return true;
         }
 
-        private bool ClientMessage_0x45_KeepAlive(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x45_HeartBeat(Client client, ClientPacket clientPacket)
         {
             return true;
         }
 
-        private bool ClientMessage_0x47_ChangeStat(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x47_RaiseStat(Client client, ClientPacket clientPacket)
         {
             return true;
         }
@@ -406,7 +428,7 @@ namespace Talos
             return true;
         }
 
-        private bool ClientMessage_0x4B_RequestLoginMessage(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x4B_NoticeRequest(Client client, ClientPacket clientPacket)
         {
             return true;
         }
@@ -426,12 +448,16 @@ namespace Talos
             return true;
         }
 
-        private bool ClientMessage_0x57_RequestServerTable(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x57_ServerTableRequest(Client client, ClientPacket clientPacket)
+        {
+            return true;
+        }
+        private bool ClientMessage_0x62_SequenceChange(Client client, ClientPacket clientPacket)
         {
             return true;
         }
 
-        private bool ClientMessage_0x68_RequestHomePage(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x68_HomePageRequest(Client client, ClientPacket clientPacket)
         {
             return true;
         }
@@ -514,59 +540,59 @@ namespace Talos
                     if ((num & 0x20) == 0x20)//32
                     {
                         serverPacket.Read(3);
-                        stats.Level = serverPacket.ReadByte();
-                        stats.Ability = serverPacket.ReadByte();
-                        stats.MaxHP = serverPacket.ReadUInt32();
-                        stats.MaxMP = serverPacket.ReadUInt32();
-                        stats.Str = serverPacket.ReadByte();
-                        stats.Int = serverPacket.ReadByte();
-                        stats.Wis = serverPacket.ReadByte();
-                        stats.Con = serverPacket.ReadByte();
-                        stats.Dex = serverPacket.ReadByte();
-                        stats.HasUnspentPoints = serverPacket.ReadBoolean();
-                        stats.AvailablePoints = serverPacket.ReadByte();
-                        stats.MaxWeight = serverPacket.ReadInt16();
-                        stats.CurrentWeight = serverPacket.ReadInt16();
+                        stats._level = serverPacket.ReadByte();
+                        stats._ability = serverPacket.ReadByte();
+                        stats._maximumHP = serverPacket.ReadUInt32();
+                        stats._maximumMP = serverPacket.ReadUInt32();
+                        stats._currentStr = serverPacket.ReadByte();
+                        stats._currentInt = serverPacket.ReadByte();
+                        stats._currentWis = serverPacket.ReadByte();
+                        stats._currentCon = serverPacket.ReadByte();
+                        stats._currentDex = serverPacket.ReadByte();
+                        stats._hasUnspentPoints = serverPacket.ReadBoolean();
+                        stats._unspentPoints = serverPacket.ReadByte();
+                        stats._maximumWeight = serverPacket.ReadInt16();
+                        stats._currentWeight = serverPacket.ReadInt16();
                         serverPacket.Read(4);
                     }
                     if ((num & 0x10) == 0x10)//16
                     {
-                        stats.CurrentHP = serverPacket.ReadUInt32();
-                        stats.CurrentMP = serverPacket.ReadUInt32();
+                        stats._currentHP = serverPacket.ReadUInt32();
+                        stats._currentMP = serverPacket.ReadUInt32();
                     }
                     if ((num & 8) == 8)
                     {
-                        stats.Experience = serverPacket.ReadUInt32();
-                        stats.ToNextLevel = serverPacket.ReadUInt32();
-                        stats.AbilityExp = serverPacket.ReadUInt32();
-                        stats.ToNextAbility = serverPacket.ReadUInt32();
-                        stats.GamePoints = serverPacket.ReadUInt32();
-                        stats.Gold = serverPacket.ReadUInt32();
+                        stats._experience = serverPacket.ReadUInt32();
+                        stats._toNextLevel = serverPacket.ReadUInt32();
+                        stats._abilityExp = serverPacket.ReadUInt32();
+                        stats._toNextAbility = serverPacket.ReadUInt32();
+                        stats._gamePoints = serverPacket.ReadUInt32();
+                        stats._gold = serverPacket.ReadUInt32();
                     }
                     if ((num & 4) == 4)
                     {
                         serverPacket.ReadByte();
-                        stats.byte_8 = serverPacket.ReadByte();
+                        stats._blind = serverPacket.ReadByte();
                         if (client.getCheats(Cheats.NoBlind) && !client.inArena)
                         {
                             serverPacket.Position--;
                             serverPacket.WriteByte(0);
                         }
                         serverPacket.Read(3);
-                        stats.Mail = (Mail)serverPacket.ReadByte();
-                        stats.AttackElement = (Element)serverPacket.ReadByte();
-                        stats.DefenseElement = (Element)serverPacket.ReadByte();
-                        stats.MagicResistance = serverPacket.ReadByte();
+                        stats._mail = (Mail)serverPacket.ReadByte();
+                        stats._offenseElement = (Element)serverPacket.ReadByte();
+                        stats._defenseElement = (Element)serverPacket.ReadByte();
+                        stats._magicResistance = serverPacket.ReadByte();
                         serverPacket.ReadByte();
-                        stats.ArmorClass = serverPacket.ReadSByte();
-                        stats.Damage = serverPacket.ReadByte();
-                        stats.Hit = serverPacket.ReadByte();
+                        stats._armorClass = serverPacket.ReadSByte();
+                        stats._damage = serverPacket.ReadByte();
+                        stats._hit = serverPacket.ReadByte();
                     }
-                    if (stats.Mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client.safeScreen))
+                    if (stats._mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client.safeScreen))
                     {
                         client.ServerMessage(0, "{=qYou have received a parcel.");
                     }
-                    if ((stats.Mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client.safeScreen)
+                    if ((stats._mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client.safeScreen)
                     {
                         client.ServerMessage(0, "{=qYou've got mail.");
                     }
@@ -585,10 +611,10 @@ namespace Talos
                 {
                     //client.ClientTab.DisplaySessionStats();
                     client.ClientTab.DisplayHPMP();
-                    Console.WriteLine("Health: " + stats.CurrentHP);
-                    Console.WriteLine("Mana: " + stats.CurrentMP);
+                    Console.WriteLine("Health: " + stats._currentHP);
+                    Console.WriteLine("Mana: " + stats._currentMP);
                 }
-                client.Attributes((StatusType)num, stats);
+                client.Attributes((StatUpdateFlags)num, stats);
                 return false;
             }
         }
@@ -598,17 +624,17 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x0B_ClientWalk(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x0B_ConfirmClientWalk(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x0C_EntityWalk(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x0C_CreatureWalk(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x0D_PublicChat(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x0D_PublicMessage(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -618,12 +644,12 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x0F_AddItem(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x0F_AddItemToPane(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x10_RemoveItem(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x10_RemoveItemFromPane(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -643,12 +669,12 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x17_AddSpell(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x17_AddSpellToPane(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x18_RemoveSpell(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x18_RemoveSpellFromPane(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -658,7 +684,7 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x1A_AnimateUser(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x1A_BodyAnimation(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -683,12 +709,12 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x2C_AddSkill(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x2C_AddSkillToPane(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x2D_RemoveSkill(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x2D_RemoveSkillFromPane(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -708,7 +734,7 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x31_BulletinBoard(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x31_Board(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -718,7 +744,7 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x33_DisplayUser(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x33_DisplayAisling(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -738,22 +764,22 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x38_RemoveEquipment(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x38_Unequip(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x39_ProfileSelf(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x39_SelfProfle(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x3A_EffectsBar(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x3A_Effect(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x3B_HeartbeatA(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x3B_HeartbeatResponse(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -778,7 +804,7 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x49_RequestPersonal(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x49_ProfileRequest(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -803,7 +829,7 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x60_LobbyNotification(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x60_LoginNotice(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -813,7 +839,7 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x66_LobbyControls(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x66_LoginControls(Client client, ServerPacket serverPacket)
         {
             return true;
         }
@@ -823,12 +849,12 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x68_HeartbeatB(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x68_SynchronizeTicks(Client client, ServerPacket serverPacket)
         {
             return true;
         }
 
-        private bool ServerMessage_0x6F_MetaFile(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x6F_MetaData(Client client, ServerPacket serverPacket)
         {
             return true;
         }

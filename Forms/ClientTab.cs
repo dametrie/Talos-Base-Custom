@@ -20,46 +20,14 @@ namespace Talos.Forms
         
         internal Client _client;
 
-        internal ResourceBar manaBar;
-        internal ResourceBar healthBar;
-        internal EPFImage skillImageArchive;
-        internal Palette256 palette256;
-
+        internal ResourceBar _manaBar;
+        internal ResourceBar _healthBar;
 
         internal ClientTab(Client client)
         {
             _client = client;
             _client.ClientTab = this;
             InitializeComponent();
-
-            healthBar = new ResourceBar("healthBar")
-            {
-                BackColor = System.Drawing.Color.White,
-                ForeColor = System.Drawing.Color.Crimson,
-                Location = new System.Drawing.Point(6, 282),
-                MaximumSize = new Size(50, 196),
-                Name = "healthBar",
-                Size = new Size(50, 196),
-                Step = 10,
-                Style = ProgressBarStyle.Continuous,
-                TabIndex = 14
-            };
-            manaBar = new ResourceBar("manaBar")
-            {
-                BackColor = System.Drawing.Color.White,
-                ForeColor = System.Drawing.Color.MidnightBlue,
-                Location = new System.Drawing.Point(65, 282),
-                MaximumSize = new Size(50, 196),
-                Name = "manaBar",
-                Size = new Size(50, 196),
-                Step = 10,
-                Style = ProgressBarStyle.Continuous,
-                TabIndex = 15
-            };
-
-            mainCoverTab.Controls.Add(manaBar);
-            mainCoverTab.Controls.Add(healthBar);
-
         }
 
         internal void DisplayHPMP()
@@ -69,8 +37,8 @@ namespace Talos.Forms
             {
                 hpLbl.Text = _client.CurrentHP.ToString();
                 mpLbl.Text = _client.CurrentMP.ToString();
-                healthBar.Value = _client.Health;
-                manaBar.Value = _client.Mana;
+                _healthBar.Value = _client.Health;
+                _manaBar.Value = _client.Mana;
             }
         }
 
@@ -440,9 +408,9 @@ namespace Talos.Forms
                 return;
             }
             StringBuilder stringBuilder = new StringBuilder();
-            Packet p = (Packet)packetList.SelectedItem;
-            packetHexText.Text = p.GetHexString();
-            string text = p.GetAsciiString();
+            Packet packet = (Packet)packetList.SelectedItem;
+            packetHexText.Text = packet.GetHexString();
+            string text = packet.GetAsciiString();
             for (int i = 0; i < text.Length; i++)
             {
                 if (i > 0 && i % 39 == 0)
@@ -488,7 +456,7 @@ namespace Talos.Forms
                 {
                     continue;
                 }
-                ClientPacket cp = new ClientPacket(byte.Parse(text.Substring(0, 2), NumberStyles.HexNumber));
+                ClientPacket clientPacket = new ClientPacket(byte.Parse(text.Substring(0, 2), NumberStyles.HexNumber));
                 if (text.Length > 2)
                 {
                     int num = (text.Length - 2) / 2;
@@ -498,9 +466,9 @@ namespace Talos.Forms
                         int startIndex = 2 + j * 2;
                         array[j] = byte.Parse(text.Substring(startIndex, 2), NumberStyles.HexNumber);
                     }
-                    cp.Write(array);
+                    clientPacket.Write(array);
                 }
-                _client.Enqueue(cp);
+                _client.Enqueue(clientPacket);
             }
         }
 

@@ -43,7 +43,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used when a client requests tile data for the current map<br />
         ///     Hex value: 0x05
         /// </summary>
-        RequestMapData = 5,
+        MapDataRequest = 5,
         /// <summary>
         ///     OpCode used when a client walks in a direction<br />
         ///     Hex value: 0x06
@@ -85,10 +85,10 @@ namespace Talos.Cryptography.Abstractions.Definitions
         /// </summary>
         UseSpell = 15,
         /// <summary>
-        ///     OpCode used when a client is redirected to this server<br />
+        ///     OpCode used when a client joins this server<br />
         ///     Hex value: 0x10
         /// </summary>
-        ClientRedirected = 16,
+        ClientJoin = 16,
         /// <summary>
         ///     OpCode used when a client changes their character's direction<br />
         ///     Hex value: 0x11
@@ -153,7 +153,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used when a client requests the profile of another player<br />
         ///     Hex value: 0x2D
         /// </summary>
-        RequestProfile = 45,
+        ProfileRequest = 45,
         /// <summary>
         ///     OpCode used when a client invites another player to a group, responds to a group invite, or creates or destroys a
         ///     group box<br />
@@ -174,7 +174,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used when a client refreshes their viewport<br />
         ///     Hex value: 0x38
         /// </summary>
-        RequestRefresh = 56,
+        RefreshRequest = 56,
         /// <summary>
         ///     OpCode used when a client responds to a merchant menu<br />
         ///     Hex value: 0x39
@@ -204,7 +204,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used when a client clicks on an object<br />
         ///     Hex value: 0x43
         /// </summary>
-        Click = 67,
+        ClickObject = 67,
         /// <summary>
         ///     OpCode used when a client unequips an item<br />
         ///     Hex value: 0x44
@@ -239,7 +239,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used when a client uses an ability that has chant lines<br />
         ///     Hex value: 0x4E
         /// </summary>
-        Chant = 78,
+        DisplayChant = 78,
         /// <summary>
         ///     OpCode used when a client responds to a request for profile data (portrait, text)<br />
         ///     Hex value: 0x4F
@@ -259,7 +259,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used when a client requests the url of the homepage<br />
         ///     Hex value: 0x68
         /// </summary>
-        HomepageRequest = 104,
+        HomePageRequest = 104,
         /// <summary>
         ///     OpCode used when a client sends it's Environment.Ticks value<br />
         ///     Hex value: 0x75
@@ -311,7 +311,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used to send a client it's id<br />
         ///     Hex value: 0x05
         /// </summary>
-        UserId = 5,
+        UserID = 5,
         /// <summary>
         ///     OpCode used to send a client all non-aisling objects in it's viewport<br />
         ///     Hex value: 0x07
@@ -436,7 +436,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used to display a merchant menu to a client<br />
         ///     Hex value: 0x2F
         /// </summary>
-        Menu = 47,
+        MerchantMenu = 47,
         /// <summary>
         ///     OpCode used to display a dialog to a client<br />
         ///     Hex value: 0x30
@@ -471,7 +471,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used to send a client a change in an equipment slot<br />
         ///     Hex value: 0x37
         /// </summary>
-        Equipment = 55,
+        AddEquipment = 55,
         /// <summary>
         ///     OpCode used to send a client a removal from an equipment slot<br />
         ///     Hex value: 0x38
