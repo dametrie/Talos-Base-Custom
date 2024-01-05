@@ -8,69 +8,69 @@ using Talos.Enumerations;
 
 namespace Talos.Player
 {
-    internal struct Statistics
+    internal record Statistics
     {
-        internal byte _level;
+        internal byte Level { get; set; }
 
-        internal byte _ability;
+        internal byte Ability { get; set; }
 
-        internal uint _maximumHP;
+        internal uint MaximumHP { get; set; }
 
-        internal uint _maximumMP;
+        internal uint MaximumMP { get; set; }
 
-        internal byte _currentStr;
+        internal byte CurrentStr { get; set; }
 
-        internal byte _currentInt;
+        internal byte CurrentInt { get; set; }
 
-        internal byte _currentWis;
+        internal byte CurrentWis { get; set; }
 
-        internal byte _currentCon;
+        internal byte CurrentCon { get; set; }
 
-        internal byte _currentDex;
+        internal byte CurrentDex { get; set; }
 
-        internal bool _hasUnspentPoints;
+        internal bool HasUnspentPoints { get; set; }
 
-        internal byte _unspentPoints;
+        internal byte UnspentPoints { get; set; }
 
-        internal short _maximumWeight;
+        internal short MaximumWeight { get; set; }
 
-        internal short _currentWeight;
+        internal short CurrentWeight { get; set; }
 
-        internal uint _currentHP;
+        internal uint CurrentHP { get; set; }
 
-        internal uint _currentMP;
+        internal uint CurrentMP { get; set; }
 
-        internal uint _experience;
+        internal uint Experience { get; set; }
 
-        internal uint _toNextLevel;
+        internal uint ToNextLevel { get; set; }
 
-        internal uint _abilityExp;
+        internal uint AbilityExperience { get; set; }
 
-        internal uint _toNextAbility;
+        internal uint ToNextAbility { get; set; }
 
-        internal uint _gamePoints;
+        internal uint GamePoints { get; set; }
 
-        internal uint _gold;
+        internal uint Gold { get; set; }
 
-        internal byte _blind;
+        internal byte Blind { get; set; }
 
-        internal Mail _mail;
+        internal Mail Mail { get; set; }
 
-        internal Element _offenseElement;
+        internal Element OffenseElement { get; set; }
 
-        internal Element _defenseElement;
+        internal Element DefenseElement { get; set; }
 
-        internal byte _magicResistance;
+        internal byte MagicResistance { get; set; }
 
-        internal sbyte _armorClass;
+        internal sbyte ArmorClass { get; set; }
 
-        internal byte _damage;
+        internal byte Damage { get; set; }
 
-        internal byte _hit;
+        internal byte Hit { get; set; }
 
-        internal uint _hpToAscend;
+        internal uint HpToAscend { get; set; }
 
-        internal uint _mpToAscend;
+        internal uint MpToAscend { get; set; }
     }
 
 }

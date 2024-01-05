@@ -20,8 +20,6 @@ namespace Talos.Forms
         
         internal Client _client;
 
-        internal ResourceBar _manaBar;
-        internal ResourceBar _healthBar;
 
         internal ClientTab(Client client)
         {
@@ -37,8 +35,8 @@ namespace Talos.Forms
             {
                 hpLbl.Text = _client.CurrentHP.ToString();
                 mpLbl.Text = _client.CurrentMP.ToString();
-                _healthBar.Value = _client.Health;
-                _manaBar.Value = _client.Mana;
+                healthBar.Value = _client.Health;
+                manaBar.Value = _client.Mana;
             }
         }
 

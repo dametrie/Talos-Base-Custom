@@ -1,18 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using Talos.Cryptography;
 using Talos.Cryptography.Abstractions.Definitions;
 using Talos.Enumerations;
+using Talos.Maps;
 using Talos.Networking;
 using Talos.Player;
+using Talos.Properties;
+using Talos.Structs;
 
 namespace Talos
 {
     internal class Server
     {
+        #region networking vars
         private Socket _clientSocket;
 
         private IPEndPoint _remoteEndPoint;
@@ -31,6 +36,10 @@ namespace Talos
         internal List<Client> _clientList;
 
         private bool _initialized;
+        #endregion
+
+        internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
+        internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
 
         public static object Lock { get; internal set; } = new object();
 
@@ -44,7 +53,12 @@ namespace Talos
             _clientList = new List<Client>();
             MessageHandlers();
             Initialize(2610);
+
+            LoadMapCache();
+
         }
+
+        #region networking
 
         /// <summary>
         /// 
@@ -82,6 +96,7 @@ namespace Talos
                 Console.WriteLine("Failed to establish a connection: Client");
             }
         }
+        #endregion
 
         /// <summary>
         /// Message handler for the client and server messages based on what opcode is sent.
@@ -203,10 +218,7 @@ namespace Talos
             #endregion
         }
 
-        private bool ServerMessage_0x1B_NotePad(Client client, ServerPacket packet)
-        {
-            throw new NotImplementedException();
-        }
+        #region Client Messages
 
         private bool ClientMessage_0x00_Version(Client client, ClientPacket clientPacket)
         {
@@ -476,7 +488,9 @@ namespace Talos
         {
             return true;
         }
+        #endregion
 
+        #region Server Messages
         private bool ServerMessage_0x00_ConnectionInfo(Client client, ServerPacket serverPacket)
         {
             return true;
@@ -537,62 +551,62 @@ namespace Talos
                 try
                 {
                     num = serverPacket.ReadByte();
-                    if ((num & 0x20) == 0x20)//32
+                    if ((num & 32) == 32)//StatUpdateFlags.Primary
                     {
                         serverPacket.Read(3);
-                        stats._level = serverPacket.ReadByte();
-                        stats._ability = serverPacket.ReadByte();
-                        stats._maximumHP = serverPacket.ReadUInt32();
-                        stats._maximumMP = serverPacket.ReadUInt32();
-                        stats._currentStr = serverPacket.ReadByte();
-                        stats._currentInt = serverPacket.ReadByte();
-                        stats._currentWis = serverPacket.ReadByte();
-                        stats._currentCon = serverPacket.ReadByte();
-                        stats._currentDex = serverPacket.ReadByte();
-                        stats._hasUnspentPoints = serverPacket.ReadBoolean();
-                        stats._unspentPoints = serverPacket.ReadByte();
-                        stats._maximumWeight = serverPacket.ReadInt16();
-                        stats._currentWeight = serverPacket.ReadInt16();
+                        stats.Level = serverPacket.ReadByte();
+                        stats.Ability = serverPacket.ReadByte();
+                        stats.MaximumHP = serverPacket.ReadUInt32();
+                        stats.MaximumMP = serverPacket.ReadUInt32();
+                        stats.CurrentStr = serverPacket.ReadByte();
+                        stats.CurrentInt = serverPacket.ReadByte();
+                        stats.CurrentWis = serverPacket.ReadByte();
+                        stats.CurrentCon = serverPacket.ReadByte();
+                        stats.CurrentDex = serverPacket.ReadByte();
+                        stats.HasUnspentPoints = serverPacket.ReadBoolean();
+                        stats.UnspentPoints = serverPacket.ReadByte();
+                        stats.MaximumWeight = serverPacket.ReadInt16();
+                        stats.CurrentWeight = serverPacket.ReadInt16();
                         serverPacket.Read(4);
                     }
-                    if ((num & 0x10) == 0x10)//16
+                    if ((num & 16) == 16)//StatUpdateFlags.Current
                     {
-                        stats._currentHP = serverPacket.ReadUInt32();
-                        stats._currentMP = serverPacket.ReadUInt32();
+                        stats.CurrentHP = serverPacket.ReadUInt32();
+                        stats.CurrentMP = serverPacket.ReadUInt32();
                     }
-                    if ((num & 8) == 8)
+                    if ((num & 8) == 8)//StatUpdateFlags.Experience
                     {
-                        stats._experience = serverPacket.ReadUInt32();
-                        stats._toNextLevel = serverPacket.ReadUInt32();
-                        stats._abilityExp = serverPacket.ReadUInt32();
-                        stats._toNextAbility = serverPacket.ReadUInt32();
-                        stats._gamePoints = serverPacket.ReadUInt32();
-                        stats._gold = serverPacket.ReadUInt32();
+                        stats.Experience = serverPacket.ReadUInt32();
+                        stats.ToNextLevel = serverPacket.ReadUInt32();
+                        stats.AbilityExperience = serverPacket.ReadUInt32();
+                        stats.ToNextAbility = serverPacket.ReadUInt32();
+                        stats.GamePoints = serverPacket.ReadUInt32();
+                        stats.Gold = serverPacket.ReadUInt32();
                     }
-                    if ((num & 4) == 4)
+                    if ((num & 4) == 4)//StatUpdateFlags.Secondary
                     {
                         serverPacket.ReadByte();
-                        stats._blind = serverPacket.ReadByte();
+                        stats.Blind = serverPacket.ReadByte();
                         if (client.getCheats(Cheats.NoBlind) && !client.inArena)
                         {
                             serverPacket.Position--;
                             serverPacket.WriteByte(0);
                         }
                         serverPacket.Read(3);
-                        stats._mail = (Mail)serverPacket.ReadByte();
-                        stats._offenseElement = (Element)serverPacket.ReadByte();
-                        stats._defenseElement = (Element)serverPacket.ReadByte();
-                        stats._magicResistance = serverPacket.ReadByte();
+                        stats.Mail = (Mail)serverPacket.ReadByte();
+                        stats.OffenseElement = (Element)serverPacket.ReadByte();
+                        stats.DefenseElement = (Element)serverPacket.ReadByte();
+                        stats.MagicResistance = serverPacket.ReadByte();
                         serverPacket.ReadByte();
-                        stats._armorClass = serverPacket.ReadSByte();
-                        stats._damage = serverPacket.ReadByte();
-                        stats._hit = serverPacket.ReadByte();
+                        stats.ArmorClass = serverPacket.ReadSByte();
+                        stats.Damage = serverPacket.ReadByte();
+                        stats.Hit = serverPacket.ReadByte();
                     }
-                    if (stats._mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client.safeScreen))
+                    if (stats.Mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client.safeScreen))
                     {
                         client.ServerMessage(0, "{=qYou have received a parcel.");
                     }
-                    if ((stats._mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client.safeScreen)
+                    if ((stats.Mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client.safeScreen)
                     {
                         client.ServerMessage(0, "{=qYou've got mail.");
                     }
@@ -604,15 +618,15 @@ namespace Talos
                 client.Stats = stats;
                 if (client.getCheats(Cheats.GmMode))
                 {
-                    num = (byte)(num | 0x40);
+                    num = (byte)(num | 64);//StatUpdateFlags.GameMasterA
                     serverPacket.Data[0] = num;
                 }
                 if (client.ClientTab != null)
                 {
                     //client.ClientTab.DisplaySessionStats();
                     client.ClientTab.DisplayHPMP();
-                    Console.WriteLine("Health: " + stats._currentHP);
-                    Console.WriteLine("Mana: " + stats._currentMP);
+                    Console.WriteLine("Health: " + stats.CurrentHP);
+                    Console.WriteLine("Mana: " + stats.CurrentMP);
                 }
                 client.Attributes((StatUpdateFlags)num, stats);
                 return false;
@@ -685,6 +699,10 @@ namespace Talos
         }
 
         private bool ServerMessage_0x1A_BodyAnimation(Client client, ServerPacket serverPacket)
+        {
+            return true;
+        }
+        private bool ServerMessage_0x1B_NotePad(Client client, ServerPacket packet)
         {
             return true;
         }
@@ -784,6 +802,12 @@ namespace Talos
             return true;
         }
 
+        /// <summary>
+        /// Packet sent to client whenever a map is not in the Darkages folder.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="serverPacket"></param>
+        /// <returns></returns>
         private bool ServerMessage_0x3C_MapData(Client client, ServerPacket serverPacket)
         {
             return true;
@@ -863,5 +887,73 @@ namespace Talos
         {
             return true;
         }
+        #endregion
+
+        private bool LoadMapCache()
+        {
+            BinaryReader binaryReader = new BinaryReader(new MemoryStream(Resources.maps));
+            binaryReader.ReadInt32();
+
+            short worldMapCount = binaryReader.ReadInt16();
+            for (int index1 = 0; index1 < (int)worldMapCount; ++index1)
+            {
+                WorldMap worldMap = new WorldMap(binaryReader.ReadString(), new WorldMapNode[0]);
+                byte num2 = binaryReader.ReadByte();
+                for (int index2 = 0; index2 < (int)num2; ++index2)
+                {
+                    short x1 = binaryReader.ReadInt16();
+                    short y1 = binaryReader.ReadInt16();
+                    string name = binaryReader.ReadString();
+                    short mapId = binaryReader.ReadInt16();
+                    byte x2 = binaryReader.ReadByte();
+                    byte y2 = binaryReader.ReadByte();
+                    worldMap.Nodes.Add(new WorldMapNode(new Point(x1, y1), name, mapId, new Point(x2, y2)));
+                }
+                this._worldMaps[worldMap.GetCRC32()] = worldMap;
+            }
+
+            short mapCount = binaryReader.ReadInt16();
+            for (int index3 = 0; index3 < (int)mapCount; ++index3)
+            {
+                try
+                {
+                    short sourceMapId = binaryReader.ReadInt16();
+                    byte sizeX = binaryReader.ReadByte();
+                    byte sizeY = binaryReader.ReadByte();
+                    string name = binaryReader.ReadString();
+                    byte flags = binaryReader.ReadByte();
+                    sbyte music = binaryReader.ReadSByte();
+                    Map map = new Map(sourceMapId, sizeX, sizeY, flags, name, music);
+                    short num5 = binaryReader.ReadInt16();
+                    for (int index4 = 0; index4 < (int)num5; ++index4)
+                    {
+                        byte sourceX = binaryReader.ReadByte();
+                        byte sourceY = binaryReader.ReadByte();
+                        short targetMapId = binaryReader.ReadInt16();
+                        byte targetX = binaryReader.ReadByte();
+                        byte targetY = binaryReader.ReadByte();
+                        Warp warp = new Warp(sourceX, sourceY, targetX, targetY, sourceMapId, targetMapId);
+                        map.Exits[new Point((short)sourceX, (short)sourceY)] = warp;
+                    }
+                    byte num8 = binaryReader.ReadByte();
+                    for (int index5 = 0; index5 < (int)num8; ++index5)
+                    {
+                        byte x = binaryReader.ReadByte();
+                        byte y = binaryReader.ReadByte();
+                        uint key = binaryReader.ReadUInt32();
+                        if (this._worldMaps.ContainsKey(key))
+                            map.WorldMaps[new Point((short)x, (short)y)] = this._worldMaps[key];
+                    }
+                    this._maps.Add(sourceMapId, map);
+                }
+                catch
+                {
+                }
+            }
+            binaryReader.Close();
+            return true;
+        }
+
     }
 }
+

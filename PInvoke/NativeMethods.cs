@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Talos
+namespace Talos.PInvoke
 {
     internal class NativeMethods
     {
@@ -137,7 +137,7 @@ namespace Talos
         [return: MarshalAs(UnmanagedType.Bool)]
         #endregion
 
-        internal static extern bool IsWindow(IntPtr intptr_0);
+        internal static extern bool IsWindow(IntPtr hWnd);
 
         internal static Interop.FLASHWINFO fInfo(IntPtr hWnd, uint dwFlags, uint uCount, uint dwTimeout)
         {

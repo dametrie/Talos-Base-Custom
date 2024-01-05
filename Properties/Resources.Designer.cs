@@ -118,6 +118,26 @@ namespace Talos.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] maps {
+            get {
+                object obj = ResourceManager.GetObject("maps", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] MapsCacheEditor {
+            get {
+                object obj = ResourceManager.GetObject("MapsCacheEditor", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap mpBar {
@@ -156,11 +176,31 @@ namespace Talos.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] sotp {
+            get {
+                object obj = ResourceManager.GetObject("sotp", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
         /// </summary>
         internal static System.IO.UnmanagedMemoryStream stuck {
             get {
                 return ResourceManager.GetStream("stuck", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon Talos {
+            get {
+                object obj = ResourceManager.GetObject("Talos", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
             }
         }
         

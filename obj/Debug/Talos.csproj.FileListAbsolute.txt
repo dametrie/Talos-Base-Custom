@@ -10,3 +10,5 @@ C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.csproj.CoreCompileInputs.cache
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.exe
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.pdb
+C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\bin\Debug\MapsCacheEditor.exe
+C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.csproj.CopyComplete

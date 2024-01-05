@@ -6,7 +6,9 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using Talos.Forms;
+using Talos.PInvoke;
 using Talos.Properties;
+using MapsCacheEditor;
 
 namespace Talos
 {
@@ -16,6 +18,7 @@ namespace Talos
         internal Server Server { get; private set; }
         internal int ThreadID { get; set; }
         internal Dictionary<Client, TabPage> _clientDictionary;
+        private IntPtr _hWnd;
         public MainForm()
         {
             InitializeComponent();
@@ -177,5 +180,29 @@ namespace Talos
             LaunchDarkages();
         }
 
+        private void mapCacheMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!NativeMethods.IsWindow(_hWnd))
+            {
+                using (MemoryStream memoryStream = new MemoryStream(Resources.MapsCacheEditor))
+                {
+                    MapsCacheViewer mapsCacheViewer = (MapsCacheViewer)(object)new MapsCacheViewer(memoryStream);
+                    _hWnd = ((Control)(object)mapsCacheViewer).Handle;
+                    if (mapsCacheViewer.InvokeRequired)
+                    {
+                        mapsCacheViewer.Invoke(new MethodInvoker(delegate
+                        {
+                            ((Form)(object)mapsCacheViewer).ShowDialog();
+                        }));
+                    }
+                    else
+                    {
+                        ((Form)(object)mapsCacheViewer).ShowDialog();
+                    }
+                }
+            }
+        }
     }
 }
+
+

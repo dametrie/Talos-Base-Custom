@@ -608,33 +608,29 @@ namespace Talos.Forms
             //
             // healthbar
             //
-            _healthBar = new ResourceBar("healthBar")
-            {
-                BackColor = System.Drawing.Color.White,
-                ForeColor = System.Drawing.Color.Crimson,
-                Location = new System.Drawing.Point(6, 282),
-                MaximumSize = new Size(50, 196),
-                Name = "healthBar",
-                Size = new Size(50, 196),
-                Step = 10,
-                Style = ProgressBarStyle.Continuous,
-                TabIndex = 14
-            };
+            this.healthBar = new ResourceBar("healthBar");
+            this.healthBar.BackColor = System.Drawing.Color.White;
+            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
+            this.healthBar.Location = new System.Drawing.Point(6, 282);
+            this.healthBar.MaximumSize = new Size(50, 196);
+            this.healthBar.Name = "healthBar";
+            this.healthBar.Size = new Size(50, 196);
+            this.healthBar.Step = 10;
+            this.healthBar.Style = ProgressBarStyle.Continuous;
+            this.healthBar.TabIndex = 14;
             //
             // manabar
             //
-            _manaBar = new ResourceBar("manaBar")
-            {
-                BackColor = System.Drawing.Color.White,
-                ForeColor = System.Drawing.Color.MidnightBlue,
-                Location = new System.Drawing.Point(65, 282),
-                MaximumSize = new Size(50, 196),
-                Name = "manaBar",
-                Size = new Size(50, 196),
-                Step = 10,
-                Style = ProgressBarStyle.Continuous,
-                TabIndex = 15
-            };
+            this.manaBar = new ResourceBar("manaBar");
+            this.manaBar.BackColor = System.Drawing.Color.White;
+            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.manaBar.Location = new System.Drawing.Point(65, 282);
+            this.manaBar.MaximumSize = new Size(50, 196);
+            this.manaBar.Name = "manaBar";
+            this.manaBar.Size = new Size(50, 196);
+            this.manaBar.Step = 10;
+            this.manaBar.Style = ProgressBarStyle.Continuous;
+            this.manaBar.TabIndex = 15;
             // 
             // mainCoverTab
             // 
@@ -648,8 +644,8 @@ namespace Talos.Forms
             this.mainCoverTab.Controls.Add(this.groupGroup);
             this.mainCoverTab.Controls.Add(this.addEnemyGroup);
             this.mainCoverTab.Controls.Add(this.coverEXPGrp);
-            this.mainCoverTab.Controls.Add(_manaBar);
-            this.mainCoverTab.Controls.Add(_healthBar);
+            this.mainCoverTab.Controls.Add(this.manaBar);
+            this.mainCoverTab.Controls.Add(this.healthBar);
             this.mainCoverTab.ForeColor = System.Drawing.Color.Black;
             this.mainCoverTab.Location = new System.Drawing.Point(4, 24);
             this.mainCoverTab.Name = "mainCoverTab";
@@ -6754,5 +6750,7 @@ namespace Talos.Forms
         internal Button spellBarIdsBtn;
         internal Button mapNodeIdsBtn;
         internal Button pursuitIdsBtn;
+        internal ResourceBar manaBar;
+        internal ResourceBar healthBar;
     }
 }

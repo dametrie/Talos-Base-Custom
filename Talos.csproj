@@ -9,7 +9,7 @@
     <RootNamespace>Talos</RootNamespace>
     <AssemblyName>Talos</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
@@ -36,6 +36,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MapsCacheEditor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Resources\MapsCacheEditor.exe</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -71,11 +75,13 @@
     <Compile Include="Capricorn\IO\KhanArchive.cs" />
     <Compile Include="Cryptography\Abstractions\Definitions\Enums.cs" />
     <Compile Include="Cryptography\CRC.cs" />
+    <Compile Include="Cryptography\CRC32.cs" />
     <Compile Include="Cryptography\Crypto.cs" />
     <Compile Include="Enumerations\Cheats.cs" />
     <Compile Include="Enumerations\Element.cs" />
     <Compile Include="Enumerations\EncryptMethod.cs" />
     <Compile Include="Enumerations\Mail.cs" />
+    <Compile Include="Enumerations\MapFlags.cs" />
     <Compile Include="Enumerations\ProcessAccess.cs" />
     <Compile Include="Enumerations\StatUpdateFlags.cs" />
     <Compile Include="Enumerations\WaitEventResult.cs" />
@@ -98,9 +104,14 @@
       <DependentUpon>MessageDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\UI\ResourceBar.cs" />
+    <Compile Include="Maps\Map.cs" />
+    <Compile Include="Maps\Warp.cs" />
+    <Compile Include="Maps\WorldMap.cs" />
+    <Compile Include="Maps\WorldMapNode.cs" />
     <Compile Include="Networking\ClientPacket.cs" />
     <Compile Include="Networking\Packet.cs" />
     <Compile Include="Networking\ServerPacket.cs" />
+    <Compile Include="Objects\MapObject.cs" />
     <Compile Include="PInvoke\Interop.cs" />
     <Compile Include="PInvoke\NativeMethods.cs" />
     <Compile Include="PInvoke\ProcessMemoryStream.cs" />
@@ -109,6 +120,9 @@
     <Compile Include="Geometry\Rect.cs" />
     <Compile Include="PInvoke\StartupInfo.cs" />
     <Compile Include="Player\Statistics.cs" />
+    <Compile Include="Structs\Location.cs" />
+    <Compile Include="Structs\Point.cs" />
+    <Compile Include="Structs\Tile.cs" />
     <Compile Include="Utility\Utility.cs" />
     <EmbeddedResource Include="Forms\ClientTab.resx" />
     <EmbeddedResource Include="Forms\MainForm.resx" />
@@ -133,13 +147,14 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <None Include="Resources\color.tbl" />
+    <None Include="Resources\maps.dat" />
     <None Include="Resources\mServer.tbl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Structs\" />
+    <None Include="Resources\Talos.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\dawnd.dll" />
@@ -160,6 +175,7 @@
     <None Include="Resources\skull.wav" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\sotp.dat" />
     <None Include="Resources\stuck.wav" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +192,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\manaBar.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MapsCacheEditor.exe" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,0 +1,88 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Talos.Structs
+{
+    internal struct Location : IEquatable<Location>
+    {
+        internal short MapID { get; }
+        internal short X { get; set; }
+        internal short Y { get; set; }
+
+        internal Point Point => new Point(X, Y);
+
+        /// <summary>
+        /// Constructor for a location that has a mapID and a point
+        /// </summary>
+        /// <param name="mapID"></param>
+        /// <param name="point"></param>
+        internal Location(short mapID, Point point)
+        {
+            MapID = mapID;
+            X = point.X;
+            Y = point.Y;
+        }
+
+        internal Location(short mapID, short x, short y)
+        {
+            MapID = mapID;
+            X = x;
+            Y = y;
+        }
+
+        /// <summary>
+        /// Returns true if both locations are equal
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public bool Equals(Location other) => MapID == other.MapID && Point.Equals(other.Point);
+
+        /// <summary>
+        /// Prints the value of the point to a string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() => $"{MapID}:{Point}";
+
+        /// <summary>
+        /// Attempts to parse a string into a location
+        /// </summary>
+        public static bool TryParse(string input, out Location location)
+        {
+            location = default(Location);
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return false;
+            }
+            string[] array = input.Split(new char[]
+            {
+                ','
+            });
+            if (array.Length != 3)
+            {
+                return false;
+            }
+            short mapID;
+            if (!short.TryParse(array[0], out mapID))
+            {
+                return false;
+            }
+            short x;
+            if (!short.TryParse(array[1], out x))
+            {
+                return false;
+            }
+            short y;
+            if (!short.TryParse(array[2], out y))
+            {
+                return false;
+            }
+            location = new Location(mapID, new Point(x, y));
+            return true;
+        }
+
+
+    }
+}
