@@ -4,8 +4,10 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Talos.Cryptography;
 using Talos.Enumerations;
+using Talos.Structs;
 
 namespace Talos.Networking
 {
@@ -192,14 +194,14 @@ namespace Talos.Networking
             return Encoding.GetEncoding(949).GetString(bytes);
         }
 
-        //internal Location ReadStruct()
-        //{
-        //	if (m_position + 4 > m_data.Length)
-        //	{
-        //		throw new EndOfStreamException();
-        //	}
-        //	return new Location((short)ReadUInt16(), (short)ReadUInt16());
-        //}
+        internal Point ReadStruct()
+        {
+            if (_position + 4 > _data.Length)
+            {
+                throw new EndOfStreamException();
+            }
+            return new Point((short)ReadUInt16(), (short)ReadUInt16());
+        }
 
         internal void Write(byte[] value)
         {
@@ -308,11 +310,11 @@ namespace Talos.Networking
             Write(bytes);
         }
 
-        //internal void WriteStruct(Location value)
-        //{
-        //	WriteInt16(value.x);
-        //	WriteInt16(value.y);
-        //}
+        internal void WriteStruct(Location value)
+        {
+        	WriteInt16(value.X);
+        	WriteInt16(value.Y);
+        }
 
         internal void WriteArray(Array value)
         {
@@ -354,10 +356,10 @@ namespace Talos.Networking
                 {
                     WriteString8((string)item);
                 }
-                //if (item is Location)
-                //{
-                //	WriteStruct((Location)item);
-                //}
+                if (item is Location)
+                {
+                	WriteStruct((Location)item);
+                }
                 if (item is Array)
                 {
                     WriteArray((Array)item);

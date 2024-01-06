@@ -9,9 +9,9 @@ namespace Talos.Structs
 {
     internal struct Tile
     {
-        internal ushort Background { get; }
-        internal ushort LeftForeground { get; }
-        internal ushort RightForeground { get; }
+        internal short Background { get; }
+        internal short LeftForeground { get; }
+        internal short RightForeground { get; }
 
         internal static byte[] SOTP => Resources.sotp;
 
@@ -23,7 +23,7 @@ namespace Talos.Structs
         /// <param name="background">background visual data</param>
         /// <param name="leftForeground">leftForeground visual data</param>
         /// <param name="rightForeground">rightForeground visual data</param>
-        internal Tile(ushort background, ushort leftForeground, ushort rightForeground)
+        internal Tile(short background, short leftForeground, short rightForeground)
         {
             Background = background;
             LeftForeground = leftForeground;

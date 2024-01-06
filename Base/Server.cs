@@ -53,8 +53,7 @@ namespace Talos
             _clientList = new List<Client>();
             MessageHandlers();
             Initialize(2610);
-
-            LoadMapCache();
+            //LoadMapCache();
 
         }
 
@@ -258,11 +257,26 @@ namespace Talos
 
         private bool ClientMessage_0x06_ClientWalk(Client client, ClientPacket clientPacket)
         {
+            Direction facing = (Direction)clientPacket.ReadByte();
+            Console.WriteLine("CLIENT Direction facing = " + facing);
+            clientPacket.ReadByte();
+            byte stepCount = client.StepCount;
+            client.StepCount = stepCount++;
+            clientPacket.Data[1] = stepCount;
+            client._clientLocation.GetDirection(facing);
+            Console.WriteLine("CLIENT Location facing = " + client._clientLocation);
+            client.LastStep = DateTime.Now;
+            Console.WriteLine("CLIENT Last step = " + client.LastStep);
+            client.IsCasting = false;
+            client.LastMoved = DateTime.Now;
+            Console.WriteLine("CLIENT Last moved = " + client.LastMoved);
             return true;
         }
 
         private bool ClientMessage_0x07_Pickup(Client client, ClientPacket clientPacket)
         {
+            clientPacket.ReadByte();
+            clientPacket.ReadStruct();
             return true;
         }
 
@@ -523,6 +537,12 @@ namespace Talos
 
         private bool ServerMessage_0x04_Location(Client client, ServerPacket serverPacket)
         {
+            Point location;
+            try { location = serverPacket.ReadStruct(); } catch { return false; }
+
+            client._clientLocation = location;
+            client._serverLocation = location;
+
             return true;
         }
 
@@ -640,6 +660,20 @@ namespace Talos
 
         private bool ServerMessage_0x0B_ConfirmClientWalk(Client client, ServerPacket serverPacket)
         {
+            Point location;
+            Direction direction = (Direction)serverPacket.ReadByte();
+            try { location = serverPacket.ReadStruct().TranslatePointByDirection(direction); } catch { return false; }
+
+            client._serverLocation = location;
+            client._clientLocation = location;
+            client.LastMoved = DateTime.Now;
+
+            Console.WriteLine("SERVER Direction facing = " + direction);
+            Console.WriteLine("SERVER Location facing = " + client._serverLocation);
+            Console.WriteLine("SERVER Last moved = " + client.LastMoved);
+            Console.WriteLine("SERVER client location = " + client._clientLocation);
+            Console.WriteLine("SERVER server location = " + client._serverLocation);    
+
             return true;
         }
 
@@ -680,7 +714,82 @@ namespace Talos
 
         private bool ServerMessage_0x15_MapInfo(Client client, ServerPacket serverPacket)
         {
-            return true;
+            short mapID = serverPacket.ReadInt16();
+            byte sizeX = serverPacket.ReadByte();
+            byte sizeY = serverPacket.ReadByte();
+            byte flags = serverPacket.ReadByte();
+            byte[] buffer = serverPacket.Read(2);
+            ushort checksum = serverPacket.ReadUInt16();
+            string name = serverPacket.ReadString8();
+
+            Map map = new Map(mapID, sizeX, sizeY, flags, checksum, name);  
+
+            if (_maps.TryGetValue(map.MapID, out map) && (map.Checksum == checksum))
+            {
+                map.Checksum = flags;
+                map.Name = name;
+            }
+            else
+            {
+                map = new Map(mapID, sizeX, sizeY, flags, checksum, name);
+                if (!_maps.ContainsKey(map.MapID))
+                {
+                    _maps.Add(map.MapID, map);
+
+                }
+            }
+            if (_maps.ContainsKey(mapID))
+            {
+                Map temp = _maps[mapID];
+                temp.Checksum = flags;
+                map = temp;
+            }
+            object[] args = new object[] { mapID };
+            string path = Program.WriteMapFiles(Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", args);
+            bool initialized = false;
+            if (File.Exists(path))
+            {
+                byte[] buffer2 = File.ReadAllBytes(path);
+                if (CRC.Calculate(buffer2) == checksum)
+                {
+                    map.Initialize(buffer2);
+                    initialized = true;
+                }
+            }
+            if (!initialized)
+            {
+                File.Delete(path);
+                ClientPacket cp = new ClientPacket(5);//RequestMapData
+                cp.WriteUInt32(0);
+                cp.WriteByte(sizeX);
+                cp.WriteByte(sizeY);
+                cp.WriteUInt16(0);
+                cp.WriteByte(0);
+                Packet[] classArray1 = new Packet[] { cp };
+                client.Enqueue(classArray1);
+            }
+            client._map = map;
+            _maps[mapID].Tiles = client._map.Tiles;
+
+            Console.WriteLine("Map ID: " + map.MapID);
+            Console.WriteLine("Map Name: " + map.Name);
+            Console.WriteLine("Map Checksum: " + map.Checksum);
+            Console.WriteLine("Map SizeX: " + map.SizeX);
+            Console.WriteLine("Map SizeY: " + map.SizeY);
+            Console.WriteLine("Map Flags: " + map.Flags);
+            Console.WriteLine("Map tiles: " + client._map.Tiles);
+
+            ServerPacket sp = new ServerPacket(21);
+            sp.WriteInt16(mapID);
+            sp.WriteByte(sizeX);
+            sp.WriteByte(sizeY);
+            sp.WriteByte(flags);
+            sp.Write(buffer);
+            sp.WriteUInt16(checksum);
+            sp.WriteString8(map.Name);
+            Packet[] array = new Packet[] { sp };
+            client.Enqueue(array);
+            return false;
         }
 
         private bool ServerMessage_0x17_AddSpellToPane(Client client, ServerPacket serverPacket)
@@ -810,6 +919,27 @@ namespace Talos
         /// <returns></returns>
         private bool ServerMessage_0x3C_MapData(Client client, ServerPacket serverPacket)
         {
+            short num = serverPacket.ReadInt16();
+            object[] mapID = new object[] { client._map.MapID };
+            string path = Program.WriteMapFiles(System.Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", mapID);
+            FileStream output = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+            output.Seek((long)((client._map.SizeX * 6) * num), SeekOrigin.Begin);
+            BinaryWriter writer = new BinaryWriter(output);
+            for (short i = 0; i < client._map.SizeX; i = (short)(i + 1))
+            {
+                writer.Write(serverPacket.ReadInt16());
+                writer.Write(serverPacket.ReadInt16());
+                writer.Write(serverPacket.ReadInt16());
+            }
+            writer.Close();
+            if (num == (client._map.SizeY - 1))
+            {
+                byte[] buffer = File.ReadAllBytes(path);
+                if (CRC.Calculate(buffer) == client._map.Checksum)
+                {
+                    client._map.Initialize(buffer);
+                }
+            }
             return true;
         }
 
@@ -889,6 +1019,11 @@ namespace Talos
         }
         #endregion
 
+        /// <summary>
+        /// Function to load the map cache from the resources maps.dat
+        /// Currently unused because this is being handled by the application called MapCacheEditor
+        /// </summary>
+        /// <returns></returns>
         private bool LoadMapCache()
         {
             BinaryReader binaryReader = new BinaryReader(new MemoryStream(Resources.maps));

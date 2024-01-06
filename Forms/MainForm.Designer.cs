@@ -35,8 +35,8 @@ namespace Talos
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.launchDA = new System.Windows.Forms.ToolStripMenuItem();
             this.clientTabControl = new System.Windows.Forms.TabControl();
-            this.mapCacheMenuStrip = new System.Windows.Forms.MenuStrip();
             this.mapCacheMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mapCacheMenuStrip = new System.Windows.Forms.MenuStrip();
             this.menuStrip1.SuspendLayout();
             this.mapCacheMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -48,7 +48,8 @@ namespace Talos
             this.launchDA});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(829, 24);
+            this.menuStrip1.Padding = new System.Windows.Forms.Padding(2, 2, 0, 2);
+            this.menuStrip1.Size = new System.Drawing.Size(955, 24);
             this.menuStrip1.TabIndex = 2;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -61,6 +62,7 @@ namespace Talos
             // 
             // clientTabControl
             // 
+            this.clientTabControl.Alignment = System.Windows.Forms.TabAlignment.Left;
             this.clientTabControl.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
             this.clientTabControl.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.clientTabControl.ItemSize = new System.Drawing.Size(25, 100);
@@ -75,33 +77,36 @@ namespace Talos
             this.clientTabControl.TabIndex = 3;
             this.clientTabControl.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.clientTabControl_DrawItem);
             // 
-            // mapCacheMenuStrip
-            // 
-            this.mapCacheMenuStrip.BackColor = System.Drawing.Color.White;
-            this.mapCacheMenuStrip.Dock = System.Windows.Forms.DockStyle.Right;
-            this.mapCacheMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.mapCacheMenuItem});
-            this.mapCacheMenuStrip.Location = new System.Drawing.Point(829, 0);
-            this.mapCacheMenuStrip.Name = "mapCacheMenuStrip";
-            this.mapCacheMenuStrip.Size = new System.Drawing.Size(126, 601);
-            this.mapCacheMenuStrip.TabIndex = 4;
-            this.mapCacheMenuStrip.Text = "menuStrip2";
-            // 
             // mapCacheMenuItem
             // 
             this.mapCacheMenuItem.Name = "mapCacheMenuItem";
-            this.mapCacheMenuItem.Size = new System.Drawing.Size(113, 19);
+            this.mapCacheMenuItem.Padding = new System.Windows.Forms.Padding(0);
+            this.mapCacheMenuItem.Size = new System.Drawing.Size(68, 24);
             this.mapCacheMenuItem.Text = "MapCache";
             this.mapCacheMenuItem.Click += new System.EventHandler(this.mapCacheMenuItem_Click);
+            // 
+            // mapCacheMenuStrip
+            // 
+            this.mapCacheMenuStrip.AutoSize = false;
+            this.mapCacheMenuStrip.BackColor = System.Drawing.Color.White;
+            this.mapCacheMenuStrip.Dock = System.Windows.Forms.DockStyle.None;
+            this.mapCacheMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mapCacheMenuItem});
+            this.mapCacheMenuStrip.Location = new System.Drawing.Point(882, 0);
+            this.mapCacheMenuStrip.Name = "mapCacheMenuStrip";
+            this.mapCacheMenuStrip.Padding = new System.Windows.Forms.Padding(0);
+            this.mapCacheMenuStrip.Size = new System.Drawing.Size(68, 24);
+            this.mapCacheMenuStrip.TabIndex = 4;
+            this.mapCacheMenuStrip.Text = "menuStrip2";
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(955, 601);
+            this.Controls.Add(this.mapCacheMenuStrip);
             this.Controls.Add(this.clientTabControl);
             this.Controls.Add(this.menuStrip1);
-            this.Controls.Add(this.mapCacheMenuStrip);
             this.Icon = global::Talos.Properties.Resources.Talos;
             this.MainMenuStrip = this.mapCacheMenuStrip;
             this.Name = "MainForm";
@@ -140,7 +145,7 @@ namespace Talos
                 Alignment = StringAlignment.Center,
                 LineAlignment = StringAlignment.Center
             };
-            Console.WriteLine("**************************Tabpage name:" + tabPage.Text);
+            //Console.WriteLine("**************************Tabpage name:" + tabPage.Text);
             graphics.DrawString(tabPage.Text, font, brush, (RectangleF)tabRect, format);
         }
 
@@ -149,7 +154,7 @@ namespace Talos
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem launchDA;
         private System.Windows.Forms.TabControl clientTabControl;
-        private MenuStrip mapCacheMenuStrip;
         private ToolStripMenuItem mapCacheMenuItem;
+        private MenuStrip mapCacheMenuStrip;
     }
 }

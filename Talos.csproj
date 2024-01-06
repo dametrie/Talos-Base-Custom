@@ -78,6 +78,7 @@
     <Compile Include="Cryptography\CRC32.cs" />
     <Compile Include="Cryptography\Crypto.cs" />
     <Compile Include="Enumerations\Cheats.cs" />
+    <Compile Include="Enumerations\Direction.cs" />
     <Compile Include="Enumerations\Element.cs" />
     <Compile Include="Enumerations\EncryptMethod.cs" />
     <Compile Include="Enumerations\Mail.cs" />

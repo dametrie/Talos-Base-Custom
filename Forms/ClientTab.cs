@@ -33,8 +33,8 @@ namespace Talos.Forms
             if (base.InvokeRequired) { Invoke((Action)delegate { DisplayHPMP(); }); }
             else
             {
-                hpLbl.Text = _client.CurrentHP.ToString();
-                mpLbl.Text = _client.CurrentMP.ToString();
+                hpLbl.Text = _client.Stats.CurrentHP.ToString();
+                mpLbl.Text = _client.Stats.CurrentMP.ToString();
                 healthBar.Value = _client.Health;
                 manaBar.Value = _client.Mana;
             }

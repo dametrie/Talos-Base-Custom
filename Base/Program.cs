@@ -34,6 +34,13 @@ namespace Talos
             Application.Run(new MainForm());
         }
 
+        internal static string WriteMapFiles(System.Environment.SpecialFolder folder, string path, params object[] obj)
+        {
+            string text = string.Join("\\", System.Environment.GetFolderPath(folder) + "\\Talos", string.Format(path, obj));
+            Directory.CreateDirectory(Path.GetDirectoryName(text));
+            return text;
+        }
+
         internal static void ExceptionHandler(object sender, UnhandledExceptionEventArgs e)
         {
             string text = AppDomain.CurrentDomain.BaseDirectory + "CrashLogs\\";

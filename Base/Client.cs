@@ -14,6 +14,8 @@ using Talos.Networking;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 using Talos.Enumerations;
 using Talos.Player;
+using Talos.Structs;
+using Talos.Maps;
 
 namespace Talos
 {
@@ -40,44 +42,53 @@ namespace Talos
         private Thread _clientLoopThread = null;
         #endregion
 
-        internal bool safeScreen;
-        internal Cheats cheats;
-        internal bool inArena = false;
         //internal bool inArena//Adam Fix
         //{
-        
-            //get
-            //{
-            //    string mapName = Map?.Name;
 
-            //    if (mapName == "Balanced Arena" || mapName == "Coliseum Circuit")
-            //    {
-            //        return false;
-            //    }
+        //get
+        //{
+        //    string mapName = Map?.Name;
 
-            //    if (mapName?.Contains("Arena") == true || mapName?.Contains("Loures Battle Ring") == true)
-            //    {
-            //        return true;
-            //    }
+        //    if (mapName == "Balanced Arena" || mapName == "Coliseum Circuit")
+        //    {
+        //        return false;
+        //    }
 
-            //    return mapName?.Contains("Coliseum") == true;
-            //}
-       // }
+        //    if (mapName?.Contains("Arena") == true || mapName?.Contains("Loures Battle Ring") == true)
+        //    {
+        //        return true;
+        //    }
+
+        //    return mapName?.Contains("Coliseum") == true;
+        //}
+        // }
+
+        internal ClientTab ClientTab { get; set; }
+        internal Point _clientLocation;
+        internal Point _serverLocation;
+        internal Map _map;
+        internal Cheats cheats;
+
+        internal bool safeScreen;
+        internal bool inArena = false;
+
+
 
         #region Player vars
-        internal Statistics _stats;
+        internal Statistics Stats { get; set; }
         internal string Name { get; set; }
-        internal uint PlayerID { get; set; }
         internal byte Path { get; set; }
-        internal ClientTab ClientTab { get; set; }
-        internal bool DialogOn { get; set; }
+        internal byte StepCount { get; set; }
+        internal DateTime LastStep { get; set; }
+        internal DateTime LastMoved { get; set; }
+        internal uint PlayerID { get; set; }
         internal int Health
         {
             get
             {
-                if (CurrentHP * 100 / MaximumHP <= 100)
+                if (Stats.CurrentHP * 100 / Stats.MaximumHP <= 100)
                 {
-                    return (int)(CurrentHP * 100 / MaximumHP);
+                    return (int)(Stats.CurrentHP * 100 / Stats.MaximumHP);
                 }
                 return 100;
             }
@@ -86,272 +97,19 @@ namespace Talos
         {
             get
             {
-                if (CurrentMP * 100 / MaximumMP <= 100)
+                if (Stats.CurrentMP * 100 / Stats.MaximumMP <= 100)
                 {
-                    return (int)(CurrentMP * 100 / MaximumMP);
+                    return (int)(Stats.CurrentMP * 100 / Stats.MaximumMP);
                 }
                 return 100;
             }
         }
-        internal byte Level
-        {
-            get
-            {
-                return _stats.Level;
-            }
-            set
-            {
-                _stats.Level = value;
-            }
-        }
-        internal byte Ability
-        {
-            get
-            {
-                return _stats.Ability;
-            }
-            set
-            {
-                _stats.Ability = value;
-            }
-        }
-        internal uint MaximumHP
-        {
-            get
-            {
-                return _stats.MaximumHP;
-            }
-            set
-            {
-                _stats.MaximumHP = value;
-            }
-        }
-        internal uint MaximumMP
-        {
-            get
-            {
-                return _stats.MaximumMP;
-            }
-            set
-            {
-                _stats.MaximumMP = value;
-            }
-        }
-        internal byte CurrentStr
-        {
-            get
-            {
-                return _stats.CurrentStr;
-            }
-            set
-            {
-                _stats.CurrentStr = value;
-            }
-        }
-        internal byte CurrentInt
-        {
-            get
-            {
-                return _stats.CurrentInt;
-            }
-            set
-            {
-                _stats.CurrentInt = value;
-            }
-        }
-        internal byte CurrentWis
-        {
-            get
-            {
-                return _stats.CurrentWis;
-            }
-            set
-            {
-                _stats.CurrentWis = value;
-            }
-        }
-        internal byte CurrentCon
-        {
-            get
-            {
-                return _stats.CurrentCon;
-            }
-            set
-            {
-                _stats.CurrentCon = value;
-            }
-        }
-        internal byte CurrentDex
-        {
-            get
-            {
-                return _stats.CurrentDex;
-            }
-            set
-            {
-                _stats.CurrentDex = value;
-            }
-        }
-        internal bool HasUnspentPoints
-        {
-            get
-            {
-                return _stats.HasUnspentPoints;
-            }
-            set
-            {
-                _stats.HasUnspentPoints = value;
-            }
-        }
-        internal byte UnspentPoints
-        {
-            get
-            {
-                return _stats.UnspentPoints;
-            }
-            set
-            {
-                _stats.UnspentPoints = value;
-            }
-        }
-        internal short MaximumWeight
-        {
-            get
-            {
-                return _stats.MaximumWeight;
-            }
-            set
-            {
-                _stats.MaximumWeight = value;
-            }
-        }
-        internal short CurrentWeight
-        {
-            get
-            {
-                return _stats.CurrentWeight;
-            }
-            set
-            {
-                _stats.CurrentWeight = value;
-            }
-        }
-        internal uint CurrentHP
-        {
-            get
-            {
-                return _stats.CurrentHP;
-            }
-            set
-            {
-                _stats.CurrentHP = value;
-            }
-        }
-        internal uint CurrentMP
-        {
-            get
-            {
-                return _stats.CurrentMP;
-            }
-            set
-            {
-                _stats.CurrentMP = value;
-            }
-        }
-        internal uint Experience
-        {
-            get
-            {
-                return _stats.Experience;
-            }
-            set
-            {
-                _stats.Experience = value;
-            }
-        }
-        internal uint ToNextLevel
-        {
-            get
-            {
-                return _stats.ToNextLevel;
-            }
-            set
-            {
-                _stats.ToNextLevel = value;
-            }
-        }
-        internal uint AbilityExp
-        {
-            get
-            {
-                return _stats.AbilityExperience;
-            }
-            set
-            {
-                _stats.AbilityExperience = value;
-            }
-        }
-        internal uint ToNextAbility
-        {
-            get
-            {
-                return _stats.ToNextAbility;
-            }
-            set
-            {
-                _stats.ToNextAbility = value;
-            }
-        }
-        internal uint GamePoints
-        {
-            get
-            {
-                return _stats.GamePoints;
-            }
-            set
-            {
-                _stats.GamePoints = value;
-            }
-        }
-        internal uint Gold
-        {
-            get
-            {
-                return _stats.Gold;
-            }
-            set
-            {
-                _stats.Gold = value;
-            }
-        }
-        internal Statistics Stats
-        {
-            get
-            {
-                return _stats;
-            }
-            set
-            {
-                _stats = value;
-            }
-        }
-        internal bool HasLetter => _stats.Mail.HasFlag(Mail.HasLetter);
-        internal bool HasParcel => _stats.Mail.HasFlag(Mail.HasParcel);
-        internal byte Blind
-        {
-            get
-            {
-                return _stats.Blind;
-            }
-            set
-            {
-                _stats.Blind = value;
-            }
-        }
+        internal bool IsCasting { get; set; }
+        internal bool DialogOn { get; set; }
+        internal bool HasLetter => Stats.Mail.HasFlag(Mail.HasLetter);
+        internal bool HasParcel => Stats.Mail.HasFlag(Mail.HasParcel);
 
         #endregion
-
-
 
 
         internal Client(Server server, Socket socket)
@@ -362,6 +120,7 @@ namespace Talos
             _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _sendQueue = new Queue<Packet>();
             _receiveQueue = new Queue<Packet>();
+            Stats = new Statistics();
 
         }
         internal void Remove()
@@ -495,7 +254,7 @@ namespace Talos
                         Socket socket;
                         if (clientPacket != null)
                         {
-                            Console.WriteLine(clientPacket.ToString());
+                            //Console.WriteLine(clientPacket.ToString());
                             if (ClientTab != null && !ClientTab.IsDisposed)
                                 ClientTab.LogPackets(clientPacket);
                             if (clientPacket.IsDialog)
@@ -516,7 +275,7 @@ namespace Talos
                         else
                         {
                             ServerPacket? serverPacket = packet as ServerPacket;
-                            Console.WriteLine(serverPacket.ToString());
+                            //Console.WriteLine(serverPacket.ToString());
                             if (ClientTab != null && !ClientTab.IsDisposed)
                                 ClientTab.LogPackets(serverPacket);
                             if (serverPacket.ShouldEncrypt)
