@@ -35,6 +35,8 @@ namespace Talos.Forms
         {
             this.clientTabControl = new System.Windows.Forms.TabControl();
             this.mainCoverTab = new System.Windows.Forms.TabPage();
+            this.manaBar = new ResourceBar("manaBar");
+            this.healthBar = new ResourceBar("healthBar");
             this.coverMapInfoGrp = new System.Windows.Forms.GroupBox();
             this.mapInfoInfoLbl = new System.Windows.Forms.Label();
             this.lastClickedSpriteLbl = new System.Windows.Forms.Label();
@@ -447,19 +449,6 @@ namespace Talos.Forms
             this.classDetectorBtn = new System.Windows.Forms.Button();
             this.pursuitIdsBtn = new System.Windows.Forms.Button();
             this.packetTab = new System.Windows.Forms.TabPage();
-            this.menuStrip = new System.Windows.Forms.MenuStrip();
-            this.startStrip = new System.Windows.Forms.ToolStripMenuItem();
-            this.clearStrip = new System.Windows.Forms.ToolStripMenuItem();
-            this.loadStrip = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveStrip = new System.Windows.Forms.ToolStripMenuItem();
-            this.deleteStrip = new System.Windows.Forms.ToolStripMenuItem();
-            this.waypointsMenu = new System.Windows.Forms.ToolStripMenuItem();
-            this.walkToMenu = new System.Windows.Forms.ToolStripMenuItem();
-            this.windowOptions = new System.Windows.Forms.ToolStripMenuItem();
-            this.toggleHideToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.smallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.largeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.packetPanel = new System.Windows.Forms.Panel();
             this.packetList = new System.Windows.Forms.ListBox();
             this.packetSidePanel = new System.Windows.Forms.Panel();
@@ -478,6 +467,23 @@ namespace Talos.Forms
             this.clearPacketLogBtn = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleDialogBtn = new System.Windows.Forms.ToolStripButton();
+            this.menuStrip = new System.Windows.Forms.MenuStrip();
+            this.startStrip = new System.Windows.Forms.ToolStripMenuItem();
+            this.clearStrip = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadStrip = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveStrip = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteStrip = new System.Windows.Forms.ToolStripMenuItem();
+            this.waypointsMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.walkToMenu = new System.Windows.Forms.ToolStripMenuItem();
+            this.windowOptions = new System.Windows.Forms.ToolStripMenuItem();
+            this.toggleHideToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.smallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.largeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -580,6 +586,12 @@ namespace Talos.Forms
             this.effectGroup.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.effectNum)).BeginInit();
             this.mapToolsGroup.SuspendLayout();
+            this.packetTab.SuspendLayout();
+            this.packetPanel.SuspendLayout();
+            this.packetSidePanel.SuspendLayout();
+            this.packetBottomPanel.SuspendLayout();
+            this.packetBottomRightPanel.SuspendLayout();
+            this.packetStrip.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -605,36 +617,14 @@ namespace Talos.Forms
             this.clientTabControl.SelectedIndex = 0;
             this.clientTabControl.Size = new System.Drawing.Size(850, 544);
             this.clientTabControl.TabIndex = 3;
-            //
-            // healthbar
-            //
-            this.healthBar = new ResourceBar("healthBar");
-            this.healthBar.BackColor = System.Drawing.Color.White;
-            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
-            this.healthBar.Location = new System.Drawing.Point(6, 282);
-            this.healthBar.MaximumSize = new Size(50, 196);
-            this.healthBar.Name = "healthBar";
-            this.healthBar.Size = new Size(50, 196);
-            this.healthBar.Step = 10;
-            this.healthBar.Style = ProgressBarStyle.Continuous;
-            this.healthBar.TabIndex = 14;
-            //
-            // manabar
-            //
-            this.manaBar = new ResourceBar("manaBar");
-            this.manaBar.BackColor = System.Drawing.Color.White;
-            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.manaBar.Location = new System.Drawing.Point(65, 282);
-            this.manaBar.MaximumSize = new Size(50, 196);
-            this.manaBar.Name = "manaBar";
-            this.manaBar.Size = new Size(50, 196);
-            this.manaBar.Step = 10;
-            this.manaBar.Style = ProgressBarStyle.Continuous;
-            this.manaBar.TabIndex = 15;
             // 
             // mainCoverTab
             // 
             this.mainCoverTab.BackColor = System.Drawing.Color.White;
+            this.mainCoverTab.Controls.Add(this.button4);
+            this.mainCoverTab.Controls.Add(this.button3);
+            this.mainCoverTab.Controls.Add(this.button2);
+            this.mainCoverTab.Controls.Add(this.button1);
             this.mainCoverTab.Controls.Add(this.coverMapInfoGrp);
             this.mainCoverTab.Controls.Add(this.lastClickedSpriteLbl);
             this.mainCoverTab.Controls.Add(this.mpLbl);
@@ -652,9 +642,6 @@ namespace Talos.Forms
             this.mainCoverTab.Size = new System.Drawing.Size(842, 516);
             this.mainCoverTab.TabIndex = 0;
             this.mainCoverTab.Text = "Cover";
-
-            
-
             // 
             // coverMapInfoGrp
             // 
@@ -1250,6 +1237,28 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // manaBar
+            // 
+            this.manaBar.BackColor = System.Drawing.Color.White;
+            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.manaBar.Location = new System.Drawing.Point(65, 282);
+            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.manaBar.Name = "manaBar";
+            this.manaBar.Size = new System.Drawing.Size(50, 196);
+            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.manaBar.TabIndex = 15;
+            // 
+            // healthBar
+            // 
+            this.healthBar.BackColor = System.Drawing.Color.White;
+            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
+            this.healthBar.Location = new System.Drawing.Point(6, 282);
+            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.healthBar.Name = "healthBar";
+            this.healthBar.Size = new System.Drawing.Size(50, 196);
+            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.healthBar.TabIndex = 14;
             // 
             // mainAislingsTab
             // 
@@ -5726,9 +5735,9 @@ namespace Talos.Forms
             this.packetTab.Controls.Add(this.packetPanel);
             this.packetTab.Controls.Add(this.packetBottomPanel);
             this.packetTab.Controls.Add(this.packetStrip);
-            this.packetTab.Location = new System.Drawing.Point(4, 27);
+            this.packetTab.Location = new System.Drawing.Point(4, 24);
             this.packetTab.Name = "packetTab";
-            this.packetTab.Size = new System.Drawing.Size(842, 513);
+            this.packetTab.Size = new System.Drawing.Size(842, 516);
             this.packetTab.TabIndex = 9;
             this.packetTab.Text = "Packet Console";
             this.packetTab.UseVisualStyleBackColor = true;
@@ -5740,8 +5749,8 @@ namespace Talos.Forms
             this.packetPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.packetPanel.Location = new System.Drawing.Point(0, 25);
             this.packetPanel.Name = "packetPanel";
-            this.packetPanel.Size = new System.Drawing.Size(842, 388);
-            this.packetPanel.TabIndex = 1;
+            this.packetPanel.Size = new System.Drawing.Size(842, 391);
+            this.packetPanel.TabIndex = 0;
             // 
             // packetList
             // 
@@ -5751,7 +5760,7 @@ namespace Talos.Forms
             this.packetList.ItemHeight = 14;
             this.packetList.Location = new System.Drawing.Point(0, 0);
             this.packetList.Name = "packetList";
-            this.packetList.Size = new System.Drawing.Size(544, 388);
+            this.packetList.Size = new System.Drawing.Size(642, 391);
             this.packetList.TabIndex = 0;
             this.packetList.SelectedIndexChanged += new System.EventHandler(this.packetList_SelectedIndexChanged);
             this.packetList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.packetList_KeyDown);
@@ -5762,10 +5771,10 @@ namespace Talos.Forms
             this.packetSidePanel.Controls.Add(this.packetHexText);
             this.packetSidePanel.Controls.Add(this.packetCharText);
             this.packetSidePanel.Dock = System.Windows.Forms.DockStyle.Right;
-            this.packetSidePanel.Location = new System.Drawing.Point(544, 0);
+            this.packetSidePanel.Location = new System.Drawing.Point(642, 0);
             this.packetSidePanel.Name = "packetSidePanel";
-            this.packetSidePanel.Size = new System.Drawing.Size(298, 388);
-            this.packetSidePanel.TabIndex = 1;
+            this.packetSidePanel.Size = new System.Drawing.Size(200, 391);
+            this.packetSidePanel.TabIndex = 0;
             // 
             // packetHexText
             // 
@@ -5776,7 +5785,7 @@ namespace Talos.Forms
             this.packetHexText.Name = "packetHexText";
             this.packetHexText.ReadOnly = true;
             this.packetHexText.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
-            this.packetHexText.Size = new System.Drawing.Size(298, 292);
+            this.packetHexText.Size = new System.Drawing.Size(200, 295);
             this.packetHexText.TabIndex = 0;
             this.packetHexText.Text = "";
             // 
@@ -5785,12 +5794,12 @@ namespace Talos.Forms
             this.packetCharText.BackColor = System.Drawing.SystemColors.Window;
             this.packetCharText.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.packetCharText.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.packetCharText.Location = new System.Drawing.Point(0, 292);
+            this.packetCharText.Location = new System.Drawing.Point(0, 295);
             this.packetCharText.Name = "packetCharText";
             this.packetCharText.ReadOnly = true;
             this.packetCharText.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedVertical;
-            this.packetCharText.Size = new System.Drawing.Size(298, 96);
-            this.packetCharText.TabIndex = 1;
+            this.packetCharText.Size = new System.Drawing.Size(200, 96);
+            this.packetCharText.TabIndex = 0;
             this.packetCharText.Text = "";
             // 
             // packetBottomPanel
@@ -5798,10 +5807,10 @@ namespace Talos.Forms
             this.packetBottomPanel.Controls.Add(this.packetInputText);
             this.packetBottomPanel.Controls.Add(this.packetBottomRightPanel);
             this.packetBottomPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.packetBottomPanel.Location = new System.Drawing.Point(0, 413);
+            this.packetBottomPanel.Location = new System.Drawing.Point(0, 416);
             this.packetBottomPanel.Name = "packetBottomPanel";
             this.packetBottomPanel.Size = new System.Drawing.Size(842, 100);
-            this.packetBottomPanel.TabIndex = 2;
+            this.packetBottomPanel.TabIndex = 0;
             // 
             // packetInputText
             // 
@@ -5809,7 +5818,7 @@ namespace Talos.Forms
             this.packetInputText.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.packetInputText.Location = new System.Drawing.Point(0, 0);
             this.packetInputText.Name = "packetInputText";
-            this.packetInputText.Size = new System.Drawing.Size(742, 100);
+            this.packetInputText.Size = new System.Drawing.Size(642, 100);
             this.packetInputText.TabIndex = 0;
             this.packetInputText.Text = "";
             // 
@@ -5818,18 +5827,18 @@ namespace Talos.Forms
             this.packetBottomRightPanel.Controls.Add(this.sendPacketToClientBtn);
             this.packetBottomRightPanel.Controls.Add(this.sendPacketToServerBtn);
             this.packetBottomRightPanel.Dock = System.Windows.Forms.DockStyle.Right;
-            this.packetBottomRightPanel.Location = new System.Drawing.Point(742, 0);
+            this.packetBottomRightPanel.Location = new System.Drawing.Point(642, 0);
             this.packetBottomRightPanel.Name = "packetBottomRightPanel";
-            this.packetBottomRightPanel.Size = new System.Drawing.Size(100, 100);
-            this.packetBottomRightPanel.TabIndex = 1;
+            this.packetBottomRightPanel.Size = new System.Drawing.Size(200, 100);
+            this.packetBottomRightPanel.TabIndex = 0;
             // 
             // sendPacketToClientBtn
             // 
             this.sendPacketToClientBtn.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.sendPacketToClientBtn.Location = new System.Drawing.Point(0, 50);
+            this.sendPacketToClientBtn.Location = new System.Drawing.Point(0, 77);
             this.sendPacketToClientBtn.Name = "sendPacketToClientBtn";
-            this.sendPacketToClientBtn.Size = new System.Drawing.Size(100, 50);
-            this.sendPacketToClientBtn.TabIndex = 1;
+            this.sendPacketToClientBtn.Size = new System.Drawing.Size(200, 23);
+            this.sendPacketToClientBtn.TabIndex = 0;
             this.sendPacketToClientBtn.Text = "Send to client";
             this.sendPacketToClientBtn.UseVisualStyleBackColor = true;
             this.sendPacketToClientBtn.Click += new System.EventHandler(this.sendPacketToClientBtn_Click);
@@ -5839,7 +5848,7 @@ namespace Talos.Forms
             this.sendPacketToServerBtn.Dock = System.Windows.Forms.DockStyle.Top;
             this.sendPacketToServerBtn.Location = new System.Drawing.Point(0, 0);
             this.sendPacketToServerBtn.Name = "sendPacketToServerBtn";
-            this.sendPacketToServerBtn.Size = new System.Drawing.Size(100, 50);
+            this.sendPacketToServerBtn.Size = new System.Drawing.Size(200, 23);
             this.sendPacketToServerBtn.TabIndex = 0;
             this.sendPacketToServerBtn.Text = "Send to server";
             this.sendPacketToServerBtn.UseVisualStyleBackColor = true;
@@ -5912,6 +5921,7 @@ namespace Talos.Forms
             this.toggleDialogBtn.Size = new System.Drawing.Size(82, 22);
             this.toggleDialogBtn.Text = "Block Dialogs";
             this.toggleDialogBtn.Click += new System.EventHandler(this.toggleDialogBtn_Click);
+            // 
             // menuStrip
             // 
             this.menuStrip.BackColor = System.Drawing.Color.White;
@@ -6015,120 +6025,45 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.fullscreenToolStripMenuItem.Text = "Fullscreen";
             // 
-            // packetPanel
+            // button1
             // 
-            this.packetPanel.Location = new System.Drawing.Point(0, 0);
-            this.packetPanel.Name = "packetPanel";
-            this.packetPanel.Size = new System.Drawing.Size(200, 100);
-            this.packetPanel.TabIndex = 0;
+            this.button1.Location = new System.Drawing.Point(313, 356);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 135;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // packetList
+            // button2
             // 
-            this.packetList.Location = new System.Drawing.Point(0, 0);
-            this.packetList.Name = "packetList";
-            this.packetList.Size = new System.Drawing.Size(120, 96);
-            this.packetList.TabIndex = 0;
+            this.button2.Location = new System.Drawing.Point(313, 390);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 136;
+            this.button2.Text = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // packetSidePanel
+            // button3
             // 
-            this.packetSidePanel.Location = new System.Drawing.Point(0, 0);
-            this.packetSidePanel.Name = "packetSidePanel";
-            this.packetSidePanel.Size = new System.Drawing.Size(200, 100);
-            this.packetSidePanel.TabIndex = 0;
+            this.button3.Location = new System.Drawing.Point(232, 374);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(75, 23);
+            this.button3.TabIndex = 137;
+            this.button3.Text = "button3";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
-            // packetHexText
+            // button4
             // 
-            this.packetHexText.Location = new System.Drawing.Point(0, 0);
-            this.packetHexText.Name = "packetHexText";
-            this.packetHexText.Size = new System.Drawing.Size(100, 96);
-            this.packetHexText.TabIndex = 0;
-            this.packetHexText.Text = "";
-            // 
-            // packetCharText
-            // 
-            this.packetCharText.Location = new System.Drawing.Point(0, 0);
-            this.packetCharText.Name = "packetCharText";
-            this.packetCharText.Size = new System.Drawing.Size(100, 96);
-            this.packetCharText.TabIndex = 0;
-            this.packetCharText.Text = "";
-            // 
-            // packetBottomPanel
-            // 
-            this.packetBottomPanel.Location = new System.Drawing.Point(0, 0);
-            this.packetBottomPanel.Name = "packetBottomPanel";
-            this.packetBottomPanel.Size = new System.Drawing.Size(200, 100);
-            this.packetBottomPanel.TabIndex = 0;
-            // 
-            // packetInputText
-            // 
-            this.packetInputText.Location = new System.Drawing.Point(0, 0);
-            this.packetInputText.Name = "packetInputText";
-            this.packetInputText.Size = new System.Drawing.Size(100, 96);
-            this.packetInputText.TabIndex = 0;
-            this.packetInputText.Text = "";
-            // 
-            // packetBottomRightPanel
-            // 
-            this.packetBottomRightPanel.Location = new System.Drawing.Point(0, 0);
-            this.packetBottomRightPanel.Name = "packetBottomRightPanel";
-            this.packetBottomRightPanel.Size = new System.Drawing.Size(200, 100);
-            this.packetBottomRightPanel.TabIndex = 0;
-            // 
-            // sendPacketToClientBtn
-            // 
-            this.sendPacketToClientBtn.Location = new System.Drawing.Point(0, 0);
-            this.sendPacketToClientBtn.Name = "sendPacketToClientBtn";
-            this.sendPacketToClientBtn.Size = new System.Drawing.Size(75, 23);
-            this.sendPacketToClientBtn.TabIndex = 0;
-            // 
-            // sendPacketToServerBtn
-            // 
-            this.sendPacketToServerBtn.Location = new System.Drawing.Point(0, 0);
-            this.sendPacketToServerBtn.Name = "sendPacketToServerBtn";
-            this.sendPacketToServerBtn.Size = new System.Drawing.Size(75, 23);
-            this.sendPacketToServerBtn.TabIndex = 0;
-            // 
-            // packetStrip
-            // 
-            this.packetStrip.Location = new System.Drawing.Point(0, 0);
-            this.packetStrip.Name = "packetStrip";
-            this.packetStrip.Size = new System.Drawing.Size(100, 25);
-            this.packetStrip.TabIndex = 0;
-            // 
-            // packetStripLbl
-            // 
-            this.packetStripLbl.Name = "packetStripLbl";
-            this.packetStripLbl.Size = new System.Drawing.Size(23, 23);
-            // 
-            // toggleLogSendBtn
-            // 
-            this.toggleLogSendBtn.Name = "toggleLogSendBtn";
-            this.toggleLogSendBtn.Size = new System.Drawing.Size(23, 23);
-            // 
-            // toggleLogRecvBtn
-            // 
-            this.toggleLogRecvBtn.Name = "toggleLogRecvBtn";
-            this.toggleLogRecvBtn.Size = new System.Drawing.Size(23, 23);
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 6);
-            // 
-            // clearPacketLogBtn
-            // 
-            this.clearPacketLogBtn.Name = "clearPacketLogBtn";
-            this.clearPacketLogBtn.Size = new System.Drawing.Size(23, 23);
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 6);
-            // 
-            // toggleDialogBtn
-            // 
-            this.toggleDialogBtn.Name = "toggleDialogBtn";
-            this.toggleDialogBtn.Size = new System.Drawing.Size(23, 23);
+            this.button4.Location = new System.Drawing.Point(394, 374);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(75, 23);
+            this.button4.TabIndex = 138;
+            this.button4.Text = "button4";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // ClientTab
             // 
@@ -6296,6 +6231,14 @@ namespace Talos.Forms
             this.effectGroup.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.effectNum)).EndInit();
             this.mapToolsGroup.ResumeLayout(false);
+            this.packetTab.ResumeLayout(false);
+            this.packetTab.PerformLayout();
+            this.packetPanel.ResumeLayout(false);
+            this.packetSidePanel.ResumeLayout(false);
+            this.packetBottomPanel.ResumeLayout(false);
+            this.packetBottomRightPanel.ResumeLayout(false);
+            this.packetStrip.ResumeLayout(false);
+            this.packetStrip.PerformLayout();
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.ResumeLayout(false);
@@ -6752,5 +6695,9 @@ namespace Talos.Forms
         internal Button pursuitIdsBtn;
         internal ResourceBar manaBar;
         internal ResourceBar healthBar;
+        private Button button4;
+        private Button button3;
+        private Button button2;
+        private Button button1;
     }
 }

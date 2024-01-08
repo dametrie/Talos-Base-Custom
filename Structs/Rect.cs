@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Globalization;
 
-namespace Talos
+namespace Talos.Structs
 {
     internal struct Rect
     {
@@ -63,11 +63,11 @@ namespace Talos
             }
         }
 
-        internal Point Point
+        internal System.Drawing.Point Point
         {
             get
             {
-                return new Point(_left, _top);
+                return new System.Drawing.Point(_left, _top);
             }
             set
             {

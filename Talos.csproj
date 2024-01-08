@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AStar\Pathfinding.cs" />
     <Compile Include="Base\Client.cs" />
     <Compile Include="Base\Program.cs" />
     <Compile Include="Base\Server.cs" />
@@ -119,7 +120,7 @@
     <Compile Include="Player\Dialog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PInvoke\ProcessInformation.cs" />
-    <Compile Include="Geometry\Rect.cs" />
+    <Compile Include="Structs\Rect.cs" />
     <Compile Include="PInvoke\StartupInfo.cs" />
     <Compile Include="Player\Statistics.cs" />
     <Compile Include="Structs\Location.cs" />

@@ -15,6 +15,7 @@ using Talos.Enumerations;
 using Talos.Player;
 using Talos.Structs;
 using Talos.Maps;
+using Talos.AStar;
 
 
 namespace Talos
@@ -64,8 +65,8 @@ namespace Talos
         // }
 
 
-        internal Point _clientLocation;
-        internal Point _serverLocation;
+        internal Location _clientLocation;
+        internal Location _serverLocation;
         internal Map _map;
         internal WorldMap _worldMap;
         internal Cheats cheats;
@@ -81,6 +82,7 @@ namespace Talos
         internal bool _isRefreshing;
         internal bool _canRefresh;
         internal bool bool_39;
+        internal double _walkSpeed = 420.0;
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
         internal Dialog Dialog { get; set; }
@@ -157,36 +159,91 @@ namespace Talos
                 Enqueue(serverPacket);
             }
         }
-
         internal void Walk(Direction dir)
         {
             if (Dialog == null && !_server._stopWalking && dir != Direction.Invalid && !_isRefreshing)
             {
                 LastStep = DateTime.UtcNow;
+
                 if (_serverDirection != dir)
                 {
                     Turn(dir);
                 }
-                bool_39 = true;
-                ClientPacket clientPacket = new ClientPacket(6);//walk
+
+                ClientPacket clientPacket = new ClientPacket(6); // walk
                 clientPacket.WriteByte((byte)dir);
                 clientPacket.WriteByte(StepCount++);
                 Enqueue(clientPacket);
-                ServerPacket serverPacket = new ServerPacket(12);//creaturewalk
+
+                ServerPacket serverPacket = new ServerPacket(12); // creaturewalk
                 serverPacket.WriteUInt32(PlayerID);
                 serverPacket.WriteStruct(_clientLocation);
                 serverPacket.WriteByte((byte)dir);
                 Enqueue(serverPacket);
-                _clientLocation.GetDirection(dir);
+
+                _clientLocation.TranslateLocationByDirection(dir);
                 LastMoved = DateTime.UtcNow;
             }
-
             else
             {
                 _isWalking = false;
-                Thread.Sleep(100);
+                Thread.Sleep(1000);
             }
         }
+
+        internal void WalkToLocation(Location targetLocation)
+        {
+            // Get the target map and path directions
+            var (pathDirections, targetMapID) = Pathfinding.FindPath(_server._maps[_clientLocation.MapID], _clientLocation, targetLocation);
+
+            if (pathDirections != null && pathDirections.Count > 0)
+            {
+                foreach (var pathDir in pathDirections)
+                {
+                    Walk(pathDir);
+                    Thread.Sleep(2000);
+                }
+            }
+
+            // Check if the destination is on a different map
+            if (targetMapID != _clientLocation.MapID)
+            {
+                // Handle map transition logic here
+                ChangeMap(targetMapID, targetLocation);
+            }
+        }
+
+        private Location GetTargetLocation(Direction dir)
+        {
+            // Implement logic to calculate the target location based on the current location and direction
+            // For example, use _location.TranslatePointByDirection(dir) to get the next location
+            return new Location(_clientLocation.MapID, _clientLocation.Point.TranslatePointByDirection(dir));
+        }
+
+        private void ChangeMap(short targetMapID, Location targetLocation)
+        {
+            if (targetMapID != _clientLocation.MapID)
+            {
+                // We are on a different map, find the corresponding exit
+                Map currentMap = _server._maps[_clientLocation.MapID];
+
+                if (currentMap.Exits.TryGetValue(_clientLocation.Point, out Warp exitWarp))
+                {
+                    // Walk to the exit warp location
+                    //WalkToExitWarp(exitWarp);
+                }
+                else
+                {
+                    // Handle the case where there is no exit warp to the target map
+                    // You might want to implement some fallback logic or handle this case differently
+                    Console.WriteLine($"No exit warp found from MapID {_clientLocation.MapID} at Point {_clientLocation.Point} to {targetMapID}");
+                }
+            }
+
+            // Update the player's location to the target location
+            _clientLocation = targetLocation;
+        }
+
 
 
         internal void Turn(Direction direction)

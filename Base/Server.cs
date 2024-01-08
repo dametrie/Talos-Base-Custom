@@ -56,7 +56,7 @@ namespace Talos
             _clientList = new List<Client>();
             MessageHandlers();
             Initialize(2610);
-            //LoadMapCache();
+            LoadMapCache();
 
         }
 
@@ -266,8 +266,8 @@ namespace Talos
             byte stepCount = client.StepCount;
             client.StepCount = stepCount++;
             clientPacket.Data[1] = stepCount;
-            client._clientLocation.GetDirection(facing);
-            Console.WriteLine("CLIENT Location facing = " + client._clientLocation);
+            client._clientLocation = client._clientLocation.TranslateLocationByDirection(facing);
+            Console.WriteLine("CLIENT Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
             client.LastStep = DateTime.Now;
             Console.WriteLine("CLIENT Last step = " + client.LastStep);
             client._isCasting = false;
@@ -543,8 +543,10 @@ namespace Talos
             Point location;
             try { location = serverPacket.ReadStruct(); } catch { return false; }
 
-            client._clientLocation = location;
-            client._serverLocation = location;
+            client._clientLocation.X = location.X;
+            client._clientLocation.Y = location.Y;
+            client._serverLocation.X = location.X;
+            client._serverLocation.Y = location.Y;
 
             return true;
         }
@@ -667,16 +669,17 @@ namespace Talos
             Direction direction = (Direction)serverPacket.ReadByte();
             try { location = serverPacket.ReadStruct().TranslatePointByDirection(direction); } catch { return false; }
 
-            client._serverLocation = location;
-            client._clientLocation = location;
+            client._clientLocation.X = location.X;
+            client._clientLocation.Y = location.Y;
+            client._serverLocation.X = location.X;
+            client._serverLocation.Y = location.Y;
             client._clientDirection = direction;
             client.LastMoved = DateTime.Now;
 
             Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
-            Console.WriteLine("SERVER Location facing = " + client._serverLocation);
             Console.WriteLine("SERVER Last moved = " + client.LastMoved);
-            Console.WriteLine("SERVER client location = " + client._clientLocation);
-            Console.WriteLine("SERVER server location = " + client._serverLocation);    
+            Console.WriteLine("SERVER Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
+            Console.WriteLine("SERVER Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
 
             return true;
         }
@@ -773,6 +776,10 @@ namespace Talos
                 client.Enqueue(classArray1);
             }
             client._map = map;
+            client._clientLocation.MapID = mapID;
+            client._serverLocation.MapID = mapID;
+            Console.WriteLine("Client Location Map ID: " + map.MapID);
+            Console.WriteLine("Server Location Map ID: " + map.MapID);
             _maps[mapID].Tiles = client._map.Tiles;
 
             client._worldMap = null;
@@ -874,9 +881,9 @@ namespace Talos
             _worldMaps[crc] = newWorldMap;
             if (_isMapping && (client._atDoor && _maps.ContainsKey(client._map.MapID)))
             {
-                Point loc = client._clientLocation;
-                loc.GetDirection(client._clientDirection);
-                _maps[client._map.MapID].WorldMaps[loc] = newWorldMap;
+                Location loc = client._clientLocation;
+                loc.TranslateLocationByDirection(client._clientDirection);
+                _maps[client._map.MapID].WorldMaps[loc.Point] = newWorldMap;
             }
             client._atDoor = false;
             return true;

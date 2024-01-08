@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Talos.Cryptography;
-using Talos.Forms.UI;
 using Talos.Networking;
+using Talos.Enumerations;
+using Talos.Structs;
 
 namespace Talos.Forms
 {
@@ -541,6 +535,27 @@ namespace Talos.Forms
                 dialogIdLbl.Text = "Dialog ID: " + dialogID.ToString();
                 pursuitLbl.Text = "Pursuit ID: " + pursuitID.ToString();
             }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Location targetLocation = new Location(500, new Point(23, 48));
+            _client.WalkToLocation(targetLocation);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            _client.Walk(Direction.South);
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            _client.Walk(Direction.East);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            _client.Walk(Direction.West);
         }
     }
 }

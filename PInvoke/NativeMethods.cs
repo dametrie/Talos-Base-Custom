@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using Talos.Structs;
 
 namespace Talos.PInvoke
 {

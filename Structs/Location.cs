@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Talos.Enumerations;
 
 namespace Talos.Structs
 {
     internal struct Location : IEquatable<Location>
     {
-        internal short MapID { get; }
+        internal short MapID { get; set; }
         internal short X { get; set; }
         internal short Y { get; set; }
 
@@ -31,6 +32,30 @@ namespace Talos.Structs
             MapID = mapID;
             X = x;
             Y = y;
+        }
+
+        internal Location TranslateLocationByDirection(Direction dir)
+        {
+            Location result = new Location(MapID, new Point(X, Y));
+
+            switch (dir)
+            {
+                case Direction.North:
+                    result.Y--;
+                    break;
+                case Direction.East:
+                    result.X++;
+                    break;
+                case Direction.South:
+                    result.Y++;
+                    break;
+                case Direction.West:
+                    result.X--;
+                    break;
+                    
+            }
+
+            return result;
         }
 
         /// <summary>

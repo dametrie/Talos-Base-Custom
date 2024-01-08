@@ -203,6 +203,15 @@ namespace Talos.Networking
             return new Point((short)ReadUInt16(), (short)ReadUInt16());
         }
 
+        internal Location ReadLocation()
+        {
+            if (_position + 4 > _data.Length)
+            {
+                throw new EndOfStreamException();
+            }
+            return new Location { X = (short)ReadUInt16(), Y = (short)ReadUInt16() };
+        }
+
         internal void Write(byte[] value)
         {
             int num = _position + value.Length;
@@ -314,6 +323,12 @@ namespace Talos.Networking
         {
         	WriteInt16(value.X);
         	WriteInt16(value.Y);
+        }
+
+        internal void WriteStruct(Location value)
+        {
+            WriteInt16(value.X);
+            WriteInt16(value.Y);
         }
 
         internal void WriteArray(Array value)
