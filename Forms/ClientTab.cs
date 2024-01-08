@@ -17,7 +17,7 @@ namespace Talos.Forms
 {
     public partial class ClientTab : UserControl
     {
-        
+
         internal Client _client;
 
 
@@ -46,7 +46,7 @@ namespace Talos.Forms
         }
 
 
-        internal void LogPackets(Packet  p)
+        internal void LogPackets(Packet p)
         {
             if (base.InvokeRequired) { Invoke((Action)delegate { LogPackets(p); }); }
             else
@@ -531,5 +531,17 @@ namespace Talos.Forms
         {
 
         }
+
+        internal void UpdateNpcInfo(string npcDialog, ushort dialogID, ushort pursuitID)
+        {
+            if (this.InvokeRequired) { this.Invoke(new Action(() => UpdateNpcInfo(npcDialog, dialogID, pursuitID))); }
+            else
+            {
+                npcText.Text = npcDialog;
+                dialogIdLbl.Text = "Dialog ID: " + dialogID.ToString();
+                pursuitLbl.Text = "Pursuit ID: " + pursuitID.ToString();
+            }
+        }
     }
 }
+

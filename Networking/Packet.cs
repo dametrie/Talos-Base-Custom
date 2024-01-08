@@ -310,7 +310,7 @@ namespace Talos.Networking
             Write(bytes);
         }
 
-        internal void WriteStruct(Location value)
+        internal void WriteStruct(Point value)
         {
         	WriteInt16(value.X);
         	WriteInt16(value.Y);
@@ -356,9 +356,9 @@ namespace Talos.Networking
                 {
                     WriteString8((string)item);
                 }
-                if (item is Location)
+                if (item is Point)
                 {
-                	WriteStruct((Location)item);
+                	WriteStruct((Point)item);
                 }
                 if (item is Array)
                 {

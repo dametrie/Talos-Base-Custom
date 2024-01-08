@@ -7,6 +7,7 @@ using System.Threading;
 using Talos.Cryptography;
 using Talos.Cryptography.Abstractions.Definitions;
 using Talos.Enumerations;
+using Talos.Forms;
 using Talos.Maps;
 using Talos.Networking;
 using Talos.Player;
@@ -40,6 +41,8 @@ namespace Talos
 
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
+        private bool _isMapping;
+        internal bool _stopWalking;
 
         public static object Lock { get; internal set; } = new object();
 
@@ -267,7 +270,7 @@ namespace Talos
             Console.WriteLine("CLIENT Location facing = " + client._clientLocation);
             client.LastStep = DateTime.Now;
             Console.WriteLine("CLIENT Last step = " + client.LastStep);
-            client.IsCasting = false;
+            client._isCasting = false;
             client.LastMoved = DateTime.Now;
             Console.WriteLine("CLIENT Last moved = " + client.LastMoved);
             return true;
@@ -666,9 +669,10 @@ namespace Talos
 
             client._serverLocation = location;
             client._clientLocation = location;
+            client._clientDirection = direction;
             client.LastMoved = DateTime.Now;
 
-            Console.WriteLine("SERVER Direction facing = " + direction);
+            Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
             Console.WriteLine("SERVER Location facing = " + client._serverLocation);
             Console.WriteLine("SERVER Last moved = " + client.LastMoved);
             Console.WriteLine("SERVER client location = " + client._clientLocation);
@@ -771,6 +775,8 @@ namespace Talos
             client._map = map;
             _maps[mapID].Tiles = client._map.Tiles;
 
+            client._worldMap = null;
+
             Console.WriteLine("Map ID: " + map.MapID);
             Console.WriteLine("Map Name: " + map.Name);
             Console.WriteLine("Map Checksum: " + map.Checksum);
@@ -848,6 +854,31 @@ namespace Talos
 
         private bool ServerMessage_0x2E_WorldMap(Client client, ServerPacket serverPacket)
         {
+            string field = serverPacket.ReadString8();
+            byte nodeCount = serverPacket.ReadByte();
+            byte image = serverPacket.ReadByte();
+            WorldMap worldMap = new WorldMap(field, new WorldMapNode[0]);
+            for (int i = 0; i < nodeCount; i++)
+            {
+
+                Point position = serverPacket.ReadStruct();
+                string name = serverPacket.ReadString8();
+                int checksum = serverPacket.ReadInt16();
+                short mapID = serverPacket.ReadInt16();
+                Point spawnPoint = serverPacket.ReadStruct();
+                worldMap.Nodes.Add(new WorldMapNode(position, name, mapID, spawnPoint));
+            }
+            client._worldMap = worldMap;
+            uint crc = worldMap.GetCRC32();
+            WorldMap newWorldMap = worldMap;
+            _worldMaps[crc] = newWorldMap;
+            if (_isMapping && (client._atDoor && _maps.ContainsKey(client._map.MapID)))
+            {
+                Point loc = client._clientLocation;
+                loc.GetDirection(client._clientDirection);
+                _maps[client._map.MapID].WorldMaps[loc] = newWorldMap;
+            }
+            client._atDoor = false;
             return true;
         }
 
@@ -858,6 +889,52 @@ namespace Talos
 
         private bool ServerMessage_0x30_Dialog(Client client, ServerPacket serverPacket)
         {
+            bool flag3;
+            byte inputLength = 0;
+            string topCaption = string.Empty;
+            string bottomCaption = string.Empty;
+            List<string> options = new List<string>();
+            try
+            {
+                byte dialogType = serverPacket.ReadByte();
+                if (dialogType != 10)
+                {
+                    byte objType = serverPacket.ReadByte();
+                    int objId = serverPacket.ReadInt32();
+                    byte unknown = serverPacket.ReadByte();
+                    ushort sprite1 = serverPacket.ReadUInt16();
+                    byte color1 = serverPacket.ReadByte();
+                    byte unknown2 = serverPacket.ReadByte();
+                    ushort sprite2 = serverPacket.ReadUInt16();
+                    byte color2 = serverPacket.ReadByte();
+                    ushort pursuitID = serverPacket.ReadUInt16();
+                    ushort dialogID = serverPacket.ReadUInt16();
+                    bool prevButton = serverPacket.ReadBoolean();
+                    bool nextButton = serverPacket.ReadBoolean();
+                    byte unknown3 = serverPacket.ReadByte();
+                    string objName = serverPacket.ReadString8();
+                    int num1 = serverPacket.Position;
+                    string npcDialog = serverPacket.ReadString16();
+                    int num17 = serverPacket.Position;
+
+                    client.ClientTab.UpdateNpcInfo(npcDialog, dialogID, pursuitID);
+                    //client.ClientTab.npcText.Text = npcDialog;
+                    //client.ClientTab.dialogIdLbl.Text = "Dialog ID:" + dialogID.ToString();
+                    //client.ClientTab.pursuitLbl.Text = "Pursuit ID:" + pursuitID.ToString();
+                    client._npcDialog = npcDialog;
+
+                }
+                else
+                {
+                    client.Dialog = null;
+                    flag3 = true;
+                }
+            }
+            catch
+            {
+                flag3 = false;
+            }
+
             return true;
         }
 
@@ -980,6 +1057,10 @@ namespace Talos
 
         private bool ServerMessage_0x58_MapLoadComplete(Client client, ServerPacket serverPacket)
         {
+            if (client._isRefreshing)
+            {
+                client._canRefresh = true;
+            }
             return true;
         }
 

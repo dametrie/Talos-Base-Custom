@@ -13,6 +13,6 @@ namespace Talos.Enumerations
         East = 1,
         South = 2,
         West = 3,
-        Invalid = 0xff
+        Invalid = 255
     }
 }

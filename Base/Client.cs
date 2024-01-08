@@ -11,11 +11,11 @@ using System.Threading.Tasks;
 using Talos.Forms;
 using Talos.Cryptography;
 using Talos.Networking;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 using Talos.Enumerations;
 using Talos.Player;
 using Talos.Structs;
 using Talos.Maps;
+
 
 namespace Talos
 {
@@ -63,24 +63,33 @@ namespace Talos
         //}
         // }
 
-        internal ClientTab ClientTab { get; set; }
+
         internal Point _clientLocation;
         internal Point _serverLocation;
         internal Map _map;
+        internal WorldMap _worldMap;
         internal Cheats cheats;
+        internal Direction _clientDirection;
+        internal Direction _serverDirection;
+        internal string _npcDialog;
 
         internal bool safeScreen;
         internal bool inArena = false;
-
-
-
-        #region Player vars
+        internal bool _atDoor;
+        internal bool _isCasting;
+        internal bool _isWalking;
+        internal bool _isRefreshing;
+        internal bool _canRefresh;
+        internal bool bool_39;
+        internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
+        internal Dialog Dialog { get; set; }
         internal string Name { get; set; }
         internal byte Path { get; set; }
         internal byte StepCount { get; set; }
         internal DateTime LastStep { get; set; }
         internal DateTime LastMoved { get; set; }
+        internal DateTime LastTurned { get; set; }
         internal uint PlayerID { get; set; }
         internal int Health
         {
@@ -104,12 +113,10 @@ namespace Talos
                 return 100;
             }
         }
-        internal bool IsCasting { get; set; }
         internal bool DialogOn { get; set; }
         internal bool HasLetter => Stats.Mail.HasFlag(Mail.HasLetter);
         internal bool HasParcel => Stats.Mail.HasFlag(Mail.HasParcel);
 
-        #endregion
 
 
         internal Client(Server server, Socket socket)
@@ -149,6 +156,71 @@ namespace Talos
                 serverPacket.WriteString16(message);
                 Enqueue(serverPacket);
             }
+        }
+
+        internal void Walk(Direction dir)
+        {
+            if (Dialog == null && !_server._stopWalking && dir != Direction.Invalid && !_isRefreshing)
+            {
+                LastStep = DateTime.UtcNow;
+                if (_serverDirection != dir)
+                {
+                    Turn(dir);
+                }
+                bool_39 = true;
+                ClientPacket clientPacket = new ClientPacket(6);//walk
+                clientPacket.WriteByte((byte)dir);
+                clientPacket.WriteByte(StepCount++);
+                Enqueue(clientPacket);
+                ServerPacket serverPacket = new ServerPacket(12);//creaturewalk
+                serverPacket.WriteUInt32(PlayerID);
+                serverPacket.WriteStruct(_clientLocation);
+                serverPacket.WriteByte((byte)dir);
+                Enqueue(serverPacket);
+                _clientLocation.GetDirection(dir);
+                LastMoved = DateTime.UtcNow;
+            }
+
+            else
+            {
+                _isWalking = false;
+                Thread.Sleep(100);
+            }
+        }
+
+
+        internal void Turn(Direction direction)
+        {
+            LastTurned = DateTime.UtcNow;
+            ClientPacket clientPacket = new ClientPacket(17);
+            clientPacket.WriteByte((byte)direction);
+            Enqueue(clientPacket);
+            _serverDirection = direction;
+        }
+
+        internal void RequestRefresh(bool bool_57 = true)
+        {
+            if (_isRefreshing)
+            {
+                return;
+            }
+            _isRefreshing = true;
+            Enqueue(new ClientPacket(56));
+            if (bool_57)
+            {
+                DateTime utcNow = DateTime.UtcNow;
+                while (DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds < 1500.0)
+                {
+                    if (!_canRefresh)
+                    {
+                        Thread.Sleep(10);
+                        continue;
+                    }
+                    _canRefresh = false;
+                    break;
+                }
+            }
+            _isRefreshing = false;
         }
 
         internal void Attributes(StatUpdateFlags value, Statistics stats)
@@ -217,6 +289,41 @@ namespace Talos
             }
             Enqueue(serverPacket);
         }
+
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId)
+        {
+            ClientPacket clientPacket = new ClientPacket(58);
+            clientPacket.WriteByte(objType);
+            clientPacket.WriteInt32(objId);
+            clientPacket.WriteUInt16(pursuitId);
+            clientPacket.WriteUInt16(dialogId);
+            Enqueue(clientPacket);
+        }
+
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, byte byte_10)
+        {
+            ClientPacket clientPacket = new ClientPacket(58);
+            clientPacket.WriteByte(objType);
+            clientPacket.WriteInt32(objId);
+            clientPacket.WriteUInt16(pursuitId);
+            clientPacket.WriteUInt16(dialogId);
+            clientPacket.WriteByte(1);
+            clientPacket.WriteByte(byte_10);
+            Enqueue(clientPacket);
+        }
+
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, string string_8)
+        {
+            ClientPacket clientPacket = new ClientPacket(58);
+            clientPacket.WriteByte(objType);
+            clientPacket.WriteInt32(objId);
+            clientPacket.WriteUInt16(pursuitId);
+            clientPacket.WriteUInt16(dialogId);
+            clientPacket.WriteByte(2);
+            clientPacket.WriteString8(string_8);
+            Enqueue(clientPacket);
+        }
+
 
         #endregion
 
@@ -517,7 +624,7 @@ namespace Talos
             }
         }
 
-       
+
         #endregion
 
     }

@@ -116,6 +116,7 @@
     <Compile Include="PInvoke\Interop.cs" />
     <Compile Include="PInvoke\NativeMethods.cs" />
     <Compile Include="PInvoke\ProcessMemoryStream.cs" />
+    <Compile Include="Player\Dialog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PInvoke\ProcessInformation.cs" />
     <Compile Include="Geometry\Rect.cs" />
