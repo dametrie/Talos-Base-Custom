@@ -62,6 +62,11 @@ namespace Talos.Structs
             };
         }
 
+        /// <summary>
+        /// Create a new point objbect the represents the current point translated by the direction
+        /// </summary>
+        /// <param name="dir">The direction to translate by</param>
+        /// <returns></returns>
         internal Point TranslatePointByDirection(Direction dir)
         {
             Point result = new Point(X, Y);
@@ -74,5 +79,27 @@ namespace Talos.Structs
         /// </summary>
         /// <returns></returns>
         public override string ToString() => $"({X}, {Y})";
+
+
+        /// <summary>
+        /// Get the distance between this point and another
+        /// </summary>
+        /// <param name="point">Other point to compare</param>
+        /// <returns></returns>
+        internal int DistanceFrom(Point point)
+        {
+            return AbsoluteXY(point.X, point.Y);
+        }
+        
+        /// <summary>
+        /// Return the absolute value of the difference between this point and another
+        /// </summary>
+        /// <param name="x">Other X to compare</param>
+        /// <param name="y">Other Y to compare</param>
+        /// <returns></returns>
+        internal int AbsoluteXY(short x, short y)
+        {
+            return Math.Abs(X - x) + Math.Abs(Y - y);
+        }
     }
 }

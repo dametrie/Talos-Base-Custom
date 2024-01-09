@@ -79,6 +79,7 @@
     <Compile Include="Cryptography\CRC32.cs" />
     <Compile Include="Cryptography\Crypto.cs" />
     <Compile Include="Enumerations\Cheats.cs" />
+    <Compile Include="Enumerations\CreatureType.cs" />
     <Compile Include="Enumerations\Direction.cs" />
     <Compile Include="Enumerations\Element.cs" />
     <Compile Include="Enumerations\EncryptMethod.cs" />
@@ -113,7 +114,11 @@
     <Compile Include="Networking\ClientPacket.cs" />
     <Compile Include="Networking\Packet.cs" />
     <Compile Include="Networking\ServerPacket.cs" />
+    <Compile Include="Objects\Creature.cs" />
     <Compile Include="Objects\MapObject.cs" />
+    <Compile Include="Objects\Object.cs" />
+    <Compile Include="Objects\VisibleObject.cs" />
+    <Compile Include="Objects\WorldObject.cs" />
     <Compile Include="PInvoke\Interop.cs" />
     <Compile Include="PInvoke\NativeMethods.cs" />
     <Compile Include="PInvoke\ProcessMemoryStream.cs" />
