@@ -16,3 +16,4 @@ namespace Talos.Enumerations
         Priest = 4,
         Monk = 5
     }
+}
