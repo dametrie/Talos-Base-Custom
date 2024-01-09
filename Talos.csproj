@@ -81,10 +81,13 @@
     <Compile Include="Enumerations\Cheats.cs" />
     <Compile Include="Enumerations\CreatureType.cs" />
     <Compile Include="Enumerations\Direction.cs" />
+    <Compile Include="Enumerations\Dugon.cs" />
+    <Compile Include="Enumerations\EffectsBar.cs" />
     <Compile Include="Enumerations\Element.cs" />
     <Compile Include="Enumerations\EncryptMethod.cs" />
     <Compile Include="Enumerations\Mail.cs" />
     <Compile Include="Enumerations\MapFlags.cs" />
+    <Compile Include="Enumerations\MedeniaClass.cs" />
     <Compile Include="Enumerations\ProcessAccess.cs" />
     <Compile Include="Enumerations\StatUpdateFlags.cs" />
     <Compile Include="Enumerations\TemuairClass.cs" />

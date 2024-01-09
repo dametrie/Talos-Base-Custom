@@ -5,17 +5,17 @@ namespace Talos.Enumerations
     [Flags]
     internal enum Element : byte
     {
-        None = 0x0,
-        Fire = 0x1,
-        Water = 0x2,
-        Wind = 0x3,
-        Earth = 0x4,
-        Holy = 0x5,
-        Darkness = 0x6,
-        Wood = 0x7,
-        Metal = 0x8,
-        Nature = 0x9,
-        Any = 0xA
+        None = 0,
+        Fire = 1,
+        Water = 2,
+        Wind = 3,
+        Earth = 4,
+        Holy = 5,
+        Darkness = 6,
+        Wood = 7,
+        Metal = 8,
+        Nature = 9,
+        Any = 10
     }
 
 }

@@ -5,13 +5,13 @@ namespace Talos.Enumerations
     [Flags]
     internal enum Cheats : byte
     {
-        None = 0x0,
-        NoBlind = 0x1,
-        SeeHidden = 0x2,
-        ZoomableMap = 0x4,
-        NoForegrounds = 0x8,
-        GmMode = 0x10,
-        SeeGhosts = 0x20
+        None = 0,
+        NoBlind = 1,
+        SeeHidden = 2,
+        ZoomableMap = 4,
+        NoForegrounds = 8,
+        GmMode = 16,
+        SeeGhosts = 32
     }
 
 }

@@ -2,12 +2,11 @@
 
 namespace Talos.Enumerations
 {
-
     [Flags]
     internal enum EncryptMethod
     {
-        None = 0x0,
-        Normal = 0x1,
-        MD5Key = 0x2
+        None = 0,
+        Normal = 1,
+        MD5Key = 2
     }
 }

@@ -17,7 +17,7 @@ namespace Talos.Objects
         internal bool IsRenamed { get; set; }
         internal bool IsIdentified { get; set; }
         internal bool IsStaff { get; set; }
-        internal bool IsMeleeWeapon {  get; set; }
+        internal bool IsMeleeWeapon { get; set; }
         internal bool IsBow { get; set; }
 
         internal Item(byte slot, ushort sprite, byte color, string name, int quantity, bool stackable, int maximumDurability, int currentDurability, DateTime lastUsed, bool isRenamed, bool isIdentified)

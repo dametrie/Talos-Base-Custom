@@ -7,13 +7,15 @@ using System.Threading.Tasks;
 namespace Talos.Enumerations
 {
     [Flags]
-    internal enum TemuairClass : byte
+    internal enum Nation : byte
     {
-        Peasant = 0x0,
-        Warrior = 0x1,
-        Rogue = 0x2,
-        Wizard = 0x3,
-        Priest = 0x4,
-        Monk = 0x5
+        None = 1,
+        Suomi = 2,
+        Loures = 3,
+        Mileth = 4,
+        Tagor = 5,
+        Rucesion = 6,
+        Noes = 7
     }
+
 }
