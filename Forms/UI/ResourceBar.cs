@@ -25,9 +25,9 @@ namespace Talos.Forms.UI
 
         internal ResourceBar(string name)
         {
-            base.Name = name;
+            Name = name;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
-            barImage = (base.Name.Equals("manaBar") ? Properties.Resources.mpBar : Properties.Resources.hpBar);
+            barImage = Name.Equals("manaBar") ? Properties.Resources.mpBar : Properties.Resources.hpBar;
         }
 
         public ResourceBar()

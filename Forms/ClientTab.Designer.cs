@@ -35,8 +35,14 @@ namespace Talos.Forms
         {
             this.clientTabControl = new System.Windows.Forms.TabControl();
             this.mainCoverTab = new System.Windows.Forms.TabPage();
-            this.manaBar = new ResourceBar("manaBar");
-            this.healthBar = new ResourceBar("healthBar");
+            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.button5 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.coverMapInfoGrp = new System.Windows.Forms.GroupBox();
             this.mapInfoInfoLbl = new System.Windows.Forms.Label();
             this.lastClickedSpriteLbl = new System.Windows.Forms.Label();
@@ -87,6 +93,8 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
+            this.manaBar = new Talos.Forms.UI.ResourceBar();
+            this.healthBar = new Talos.Forms.UI.ResourceBar();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -480,10 +488,7 @@ namespace Talos.Forms
             this.smallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.largeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.button1 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
+            this.button6 = new System.Windows.Forms.Button();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -621,6 +626,11 @@ namespace Talos.Forms
             // mainCoverTab
             // 
             this.mainCoverTab.BackColor = System.Drawing.Color.White;
+            this.mainCoverTab.Controls.Add(this.button6);
+            this.mainCoverTab.Controls.Add(this.textBox3);
+            this.mainCoverTab.Controls.Add(this.textBox2);
+            this.mainCoverTab.Controls.Add(this.textBox1);
+            this.mainCoverTab.Controls.Add(this.button5);
             this.mainCoverTab.Controls.Add(this.button4);
             this.mainCoverTab.Controls.Add(this.button3);
             this.mainCoverTab.Controls.Add(this.button2);
@@ -642,6 +652,80 @@ namespace Talos.Forms
             this.mainCoverTab.Size = new System.Drawing.Size(842, 516);
             this.mainCoverTab.TabIndex = 0;
             this.mainCoverTab.Text = "Cover";
+            // 
+            // textBox3
+            // 
+            this.textBox3.Location = new System.Drawing.Point(493, 345);
+            this.textBox3.Name = "textBox3";
+            this.textBox3.Size = new System.Drawing.Size(100, 23);
+            this.textBox3.TabIndex = 142;
+            this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
+            // 
+            // textBox2
+            // 
+            this.textBox2.Location = new System.Drawing.Point(493, 316);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(100, 23);
+            this.textBox2.TabIndex = 141;
+            this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(493, 287);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(100, 23);
+            this.textBox1.TabIndex = 140;
+            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(412, 309);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(75, 23);
+            this.button5.TabIndex = 139;
+            this.button5.Text = "set location";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(394, 374);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(75, 23);
+            this.button4.TabIndex = 138;
+            this.button4.Text = "E";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(232, 374);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(75, 23);
+            this.button3.TabIndex = 137;
+            this.button3.Text = "W";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(313, 390);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 136;
+            this.button2.Text = "S";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(313, 356);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 135;
+            this.button1.Text = "N";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // coverMapInfoGrp
             // 
@@ -6025,45 +6109,15 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.fullscreenToolStripMenuItem.Text = "Fullscreen";
             // 
-            // button1
+            // button6
             // 
-            this.button1.Location = new System.Drawing.Point(313, 356);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 135;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(313, 390);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 136;
-            this.button2.Text = "button2";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(232, 374);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
-            this.button3.TabIndex = 137;
-            this.button3.Text = "button3";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
-            // button4
-            // 
-            this.button4.Location = new System.Drawing.Point(394, 374);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(75, 23);
-            this.button4.TabIndex = 138;
-            this.button4.Text = "button4";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
+            this.button6.Location = new System.Drawing.Point(458, 406);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(139, 23);
+            this.button6.TabIndex = 143;
+            this.button6.Text = "Stop Walking";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // ClientTab
             // 
@@ -6081,6 +6135,7 @@ namespace Talos.Forms
             this.Size = new System.Drawing.Size(850, 568);
             this.clientTabControl.ResumeLayout(false);
             this.mainCoverTab.ResumeLayout(false);
+            this.mainCoverTab.PerformLayout();
             this.coverMapInfoGrp.ResumeLayout(false);
             this.friendsGroup.ResumeLayout(false);
             this.strangerGroup.ResumeLayout(false);
@@ -6699,5 +6754,10 @@ namespace Talos.Forms
         private Button button3;
         private Button button2;
         private Button button1;
+        private Button button5;
+        private TextBox textBox3;
+        private TextBox textBox2;
+        private TextBox textBox1;
+        private Button button6;
     }
 }

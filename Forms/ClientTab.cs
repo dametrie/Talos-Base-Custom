@@ -13,8 +13,13 @@ namespace Talos.Forms
     {
 
         internal Client _client;
-
-
+        string textMaptext = string.Empty;
+        string textXtext = string.Empty;
+        string textYtext = string.Empty;
+        short textMap;
+        short textX;
+        short testY;
+            
         internal ClientTab(Client client)
         {
             _client = client;
@@ -539,8 +544,7 @@ namespace Talos.Forms
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Location targetLocation = new Location(500, new Point(23, 48));
-            _client.WalkToLocation(targetLocation);
+            _client.Walk(Direction.North);
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -556,6 +560,55 @@ namespace Talos.Forms
         private void button3_Click(object sender, EventArgs e)
         {
             _client.Walk(Direction.West);
+        }
+
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            if (textMaptext != null && textXtext != null && textYtext != null)
+            {
+                Location targetLocation = new Location(textMap, new Point(textX, testY));
+                //while (!(_client._clientLocation.Equals(targetLocation)))
+                //{
+                    _client.WalkToLocation(targetLocation);
+                //}
+                   
+            }
+
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            //take in contents of textbox and store to variable of short type
+            textMaptext = textBox1.Text;
+            short.TryParse(textMaptext, out textMap);
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+            textXtext = textBox2.Text;
+            short.TryParse(textXtext, out textX);
+        }
+
+        private void textBox3_TextChanged(object sender, EventArgs e)
+        {
+            textYtext = textBox3.Text;
+            short.TryParse(textYtext, out testY);
+
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            if (_client._isRefreshing)
+            {
+                button6.Text = "Refresh";
+                _client._isRefreshing = false;
+            }
+            else
+            {
+                button6.Text = "Stop Refreshing";
+                _client._isRefreshing = true;
+            }   
         }
     }
 }

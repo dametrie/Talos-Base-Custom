@@ -12,25 +12,45 @@ namespace Talos.AStar
     internal static class Pathfinding
     {
         // ... other methods ...
+        
+        private static Dictionary <short, Map> _maps;
+
+
+        internal static void SetMaps(Dictionary<short, Map> maps)
+        {
+            _maps = maps;
+        }
 
         public static (List<Direction> pathDirections, short targetMapID) FindPath(Map map, Location start, Location goal)
         {
+
             // A* pathfinding algorithm implementation
             List<Point> pathPoints = AStar(map, start.Point, goal.Point);
 
-            // Convert the points to a list of directions
-            List<Direction> pathDirections = new List<Direction>();
-            for (int i = 1; i < pathPoints.Count; i++)
+            if (pathPoints != null)
             {
-                Direction dir = GetDirectionFromPoints(pathPoints[i - 1], pathPoints[i]);
-                pathDirections.Add(dir);
-            }
+                // Convert the points to a list of directions
+                List<Direction> pathDirections = new List<Direction>();
+                for (int i = 1; i < pathPoints.Count; i++)
+                {
+                    Direction dir = GetDirectionFromPoints(pathPoints[i - 1], pathPoints[i]);
+                    pathDirections.Add(dir);
+                }
 
-            return (pathDirections, goal.MapID);
+                return (pathDirections, goal.MapID);
+            }
+            else
+            {
+                Console.WriteLine($"No path found from {start} to {goal}");
+                return (null, goal.MapID);
+            }
+                
         }
 
         internal static List<Point> AStar(Map map, Point start, Point goal)
         {
+            Console.WriteLine($"Starting A* algorithm from {start} to {goal}");
+
             HashSet<Point> openSet = new HashSet<Point> { start };
             Dictionary<Point, Point> cameFrom = new Dictionary<Point, Point>();
 
@@ -42,7 +62,10 @@ namespace Talos.AStar
                 Point current = GetPointWithLowestFScore(openSet, fScore);
 
                 if (current.Equals(goal))
+                {
+                    Console.WriteLine($"Path found! Reconstructing path.");
                     return ReconstructPath(cameFrom, goal);
+                }
 
                 openSet.Remove(current);
 
@@ -57,11 +80,15 @@ namespace Talos.AStar
                         fScore[neighbor] = tentativeGScore + HeuristicCostEstimate(neighbor, goal);
 
                         if (!openSet.Contains(neighbor))
+                        {
                             openSet.Add(neighbor);
+                            Console.WriteLine($"Adding {neighbor} to open set");
+                        }
                     }
                 }
             }
 
+            Console.WriteLine($"No path found from {start} to {goal}");
             return null; // No path found
         }
 
@@ -105,35 +132,32 @@ namespace Talos.AStar
         {
             List<Point> neighbors = new List<Point>();
 
-            // Your logic for determining regular neighbors...
+            //Logic for determining regular neighbors...
 
             // Consider exit points as valid neighbors
             if (map.Exits != null)
             {
                 foreach (var exitPoint in map.Exits.Keys)
                 {
-                    // You might want to add additional conditions to check if the exit is reachable or valid
+                    //Might want to add additional conditions to check if the exit is reachable or valid
                     neighbors.Add(exitPoint);
                 }
             }
 
             // Check neighboring tiles for walkability
-            for (int dx = -1; dx <= 1; dx++)
+            int[] dx = { -1, 0, 1, 0 }; // Horizontal directions
+            int[] dy = { 0, 1, 0, -1 }; // Vertical directions
+
+            for (int i = 0; i < 4; i++)
             {
-                for (int dy = -1; dy <= 1; dy++)
+                int newX = point.X + dx[i];
+                int newY = point.Y + dy[i];
+
+                Point neighbor = new Point((short)newX, (short)newY);
+
+                if (IsValidNeighbor(map, point, neighbor))
                 {
-                    if (dx == 0 && dy == 0) // Skip the current point
-                        continue;
-
-                    int newX = point.X + dx;
-                    int newY = point.Y + dy;
-
-                    Point neighbor = new Point((short)newX, (short)newY);
-
-                    if (IsValidNeighbor(map, point, neighbor))
-                    {
-                        neighbors.Add(neighbor);
-                    }
+                    neighbors.Add(neighbor);
                 }
             }
 
@@ -145,6 +169,7 @@ namespace Talos.AStar
             // Check if the neighbor is within the map boundaries
             if (neighbor.X < 0 || neighbor.X >= map.SizeX || neighbor.Y < 0 || neighbor.Y >= map.SizeY)
             {
+                Console.WriteLine($"Invalid neighbor: Out of bounds - {neighbor}");
                 return false;
             }
 
@@ -152,10 +177,17 @@ namespace Talos.AStar
             Tile neighborTile;
             if (map.Tiles.TryGetValue(neighbor, out neighborTile))
             {
-                // Modify this condition based on your tile walkability criteria
-                return !neighborTile.IsWall;
+                if (neighborTile.IsWall)
+                {
+                    Console.WriteLine($"Invalid neighbor: Wall - {neighbor}");
+                    return false;
+                }
+
+
+                return true;
             }
 
+            Console.WriteLine($"Invalid neighbor: Tile not found - {neighbor}");
             return false;
         }
 

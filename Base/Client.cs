@@ -73,6 +73,7 @@ namespace Talos
         internal Direction _clientDirection;
         internal Direction _serverDirection;
         internal string _npcDialog;
+        internal AutoResetEvent _walkSignal = new AutoResetEvent(false);
 
         internal bool safeScreen;
         internal bool inArena = false;
@@ -83,6 +84,7 @@ namespace Talos
         internal bool _canRefresh;
         internal bool bool_39;
         internal double _walkSpeed = 420.0;
+        internal Thread WalkThread { get; set; }    
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
         internal Dialog Dialog { get; set; }
@@ -132,6 +134,8 @@ namespace Talos
             Stats = new Statistics();
 
         }
+
+
         internal void Remove()
         {
             ClientTab.RemoveClient();
@@ -163,6 +167,8 @@ namespace Talos
         {
             if (Dialog == null && !_server._stopWalking && dir != Direction.Invalid && !_isRefreshing)
             {
+                _walkSignal.Set(); // Always signal at the beginning
+
                 LastStep = DateTime.UtcNow;
 
                 if (_serverDirection != dir)
@@ -193,24 +199,29 @@ namespace Talos
 
         internal void WalkToLocation(Location targetLocation)
         {
+
+            _isWalking = true;
+            _walkSignal.Set(); // Ensure the WalkToLocation thread starts
+
             // Get the target map and path directions
             var (pathDirections, targetMapID) = Pathfinding.FindPath(_server._maps[_clientLocation.MapID], _clientLocation, targetLocation);
 
-            if (pathDirections != null && pathDirections.Count > 0)
+            Task.Run(async () => // Run on a separate thread
             {
                 foreach (var pathDir in pathDirections)
                 {
+                    _walkSignal.WaitOne(); // Wait for the signal before each step
                     Walk(pathDir);
-                    Thread.Sleep(2000);
+                    await Task.Delay((int)_walkSpeed); // Use asynchronous delay
                 }
-            }
 
-            // Check if the destination is on a different map
-            if (targetMapID != _clientLocation.MapID)
-            {
-                // Handle map transition logic here
-                ChangeMap(targetMapID, targetLocation);
-            }
+                // Check if the destination is on a different map
+                if (targetMapID != _clientLocation.MapID)
+                {
+                    // Handle map transition logic here
+                    ChangeMap(targetMapID, targetLocation);
+                }
+            });
         }
 
         private Location GetTargetLocation(Direction dir)

@@ -13,6 +13,7 @@ using Talos.Networking;
 using Talos.Player;
 using Talos.Properties;
 using Talos.Structs;
+using Talos.AStar;
 
 namespace Talos
 {
@@ -676,10 +677,10 @@ namespace Talos
             client._clientDirection = direction;
             client.LastMoved = DateTime.Now;
 
-            Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
-            Console.WriteLine("SERVER Last moved = " + client.LastMoved);
-            Console.WriteLine("SERVER Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
-            Console.WriteLine("SERVER Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
+            //Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
+            //Console.WriteLine("SERVER Last moved = " + client.LastMoved);
+            //Console.WriteLine("SERVER Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
+            //Console.WriteLine("SERVER Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
 
             return true;
         }
@@ -1107,6 +1108,7 @@ namespace Talos
         }
         #endregion
 
+
         /// <summary>
         /// Function to load the map cache from the resources maps.dat
         /// Currently unused because this is being handled by the application called MapCacheEditor
@@ -1173,6 +1175,7 @@ namespace Talos
                 {
                 }
             }
+            Pathfinding.SetMaps(this._maps);
             binaryReader.Close();
             return true;
         }

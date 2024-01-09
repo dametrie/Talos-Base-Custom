@@ -12,7 +12,7 @@ namespace Talos.Maps
         internal byte TargetX { get; }
         internal byte TargetY { get; }
         internal short TargetMapID { get; }
-        internal Location SourceLaction => new Location(this.SourceMapID, this.SourceX, this.SourceY);
+        internal Location SourceLocation => new Location(this.SourceMapID, this.SourceX, this.SourceY);
         internal Location TargetLocation => new Location(this.TargetMapID, this.TargetX, this.TargetY);
 
         internal Warp(byte sourceX, byte sourceY, byte targetX, byte targetYbyte, short sourceMapID, short targetMapID)
