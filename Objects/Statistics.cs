@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Talos.Enumerations;
 
-namespace Talos.Player
+namespace Talos.Objects
 {
     internal record Statistics
     {

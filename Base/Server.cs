@@ -10,7 +10,7 @@ using Talos.Enumerations;
 using Talos.Forms;
 using Talos.Maps;
 using Talos.Networking;
-using Talos.Player;
+using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
 using Talos.AStar;

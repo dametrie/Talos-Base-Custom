@@ -12,7 +12,7 @@ using Talos.Forms;
 using Talos.Cryptography;
 using Talos.Networking;
 using Talos.Enumerations;
-using Talos.Player;
+using Talos.Objects;
 using Talos.Structs;
 using Talos.Maps;
 using Talos.AStar;

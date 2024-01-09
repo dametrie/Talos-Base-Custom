@@ -5,17 +5,17 @@ namespace Talos.Enumerations
     [Flags]
     internal enum StatUpdateFlags : byte
     {
-        None = 0x0,
-        UnreadMail = 0x1,
-        Unknown = 0x2,
-        Secondary = 0x4,
-        Experience = 0x8,
-        Current = 0x10,
-        Primary = 0x20,
-        GameMasterA = 0x40,
-        GameMasterB = 0x80,
-        Swimming = 0xC0,
-        Full = 0x3C
+        None = 0,
+        UnreadMail = 1,
+        Unknown = 2,
+        Secondary = 4,
+        Experience = 8,
+        Current = 16,
+        Primary = 32,
+        GameMasterA = 64,
+        GameMasterB = 128,
+        Swimming = 192,
+        Full = 60
     }
 
 }
