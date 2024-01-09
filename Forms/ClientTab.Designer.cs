@@ -35,6 +35,7 @@ namespace Talos.Forms
         {
             this.clientTabControl = new System.Windows.Forms.TabControl();
             this.mainCoverTab = new System.Windows.Forms.TabPage();
+            this.button6 = new System.Windows.Forms.Button();
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.textBox1 = new System.Windows.Forms.TextBox();
@@ -488,7 +489,6 @@ namespace Talos.Forms
             this.smallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.largeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.button6 = new System.Windows.Forms.Button();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -652,6 +652,16 @@ namespace Talos.Forms
             this.mainCoverTab.Size = new System.Drawing.Size(842, 516);
             this.mainCoverTab.TabIndex = 0;
             this.mainCoverTab.Text = "Cover";
+            // 
+            // button6
+            // 
+            this.button6.Location = new System.Drawing.Point(458, 406);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(139, 23);
+            this.button6.TabIndex = 143;
+            this.button6.Text = "Stop Walking";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // textBox3
             // 
@@ -3800,6 +3810,7 @@ namespace Talos.Forms
             0,
             0,
             0});
+            this.formNum.ValueChanged += new System.EventHandler(this.formNum_ValueChanged);
             // 
             // formCbox
             // 
@@ -3811,6 +3822,7 @@ namespace Talos.Forms
             this.formCbox.TabIndex = 7;
             this.formCbox.Text = "Monster Form";
             this.formCbox.UseVisualStyleBackColor = true;
+            this.formCbox.CheckedChanged += new System.EventHandler(this.formCbox_CheckedChanged);
             // 
             // unifiedGuildChatCbox
             // 
@@ -6108,16 +6120,6 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem.Name = "fullscreenToolStripMenuItem";
             this.fullscreenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.fullscreenToolStripMenuItem.Text = "Fullscreen";
-            // 
-            // button6
-            // 
-            this.button6.Location = new System.Drawing.Point(458, 406);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(139, 23);
-            this.button6.TabIndex = 143;
-            this.button6.Text = "Stop Walking";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // ClientTab
             // 

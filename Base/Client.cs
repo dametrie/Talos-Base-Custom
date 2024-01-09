@@ -75,6 +75,11 @@ namespace Talos
         internal string _npcDialog;
         internal AutoResetEvent _walkSignal = new AutoResetEvent(false);
 
+        internal Dictionary<int, WorldObject> _worldObjects;
+        internal Dictionary<string, Player> _nearbyPlayers;
+
+
+
         internal bool safeScreen;
         internal bool inArena = false;
         internal bool _atDoor;
@@ -84,6 +89,7 @@ namespace Talos
         internal bool _canRefresh;
         internal bool bool_39;
         internal double _walkSpeed = 420.0;
+        internal ushort _monsterFormID = 1;
         internal Thread WalkThread { get; set; }    
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
@@ -95,6 +101,8 @@ namespace Talos
         internal DateTime LastMoved { get; set; }
         internal DateTime LastTurned { get; set; }
         internal uint PlayerID { get; set; }
+        internal bool InMonsterForm { get; set; }
+        internal Player Player { get; set; }
         internal int Health
         {
             get
@@ -123,6 +131,7 @@ namespace Talos
 
 
 
+
         internal Client(Server server, Socket socket)
         {
             _server = server;
@@ -132,6 +141,8 @@ namespace Talos
             _sendQueue = new Queue<Packet>();
             _receiveQueue = new Queue<Packet>();
             Stats = new Statistics();
+            _worldObjects = new Dictionary<int, WorldObject>();
+            _nearbyPlayers = new Dictionary<string, Player>();
 
         }
 
@@ -163,6 +174,79 @@ namespace Talos
                 Enqueue(serverPacket);
             }
         }
+        internal void ClickObject(int objectId)
+        {
+            ClientPacket clientPacket = new ClientPacket(67);
+            clientPacket.WriteByte(1);
+            clientPacket.WriteInt32(objectId);
+            Enqueue(clientPacket);
+        }
+        internal void DisplayAisling(Player player)
+        {
+            _ = player.Location;
+            ushort spriteID = player.Sprite;
+            if (player == this.Player && InMonsterForm)
+            {
+                spriteID = _monsterFormID;
+            }
+            ServerPacket serverPacket = new ServerPacket(51);
+            serverPacket.WriteStruct(player.Location);
+            serverPacket.WriteByte((byte)player.Direction);
+            serverPacket.WriteInt32(player.ID);
+            if (spriteID == 0)
+            {
+                serverPacket.WriteUInt16(player.HeadSprite);
+                if (player.BodySprite == 0 && getCheats(Cheats.SeeHidden) && !inArena)
+                {
+                    serverPacket.WriteByte(80);
+                }
+                else
+                {
+                    serverPacket.WriteByte(player.BodySprite);
+                }
+                serverPacket.WriteUInt16(player.ArmorSprite1);
+                serverPacket.WriteByte(player.BootsSprite);
+                serverPacket.WriteUInt16(player.ArmorSprite2);
+                serverPacket.WriteByte(player.ShieldSprite);
+                serverPacket.WriteUInt16(player.WeaponSprite);
+                serverPacket.WriteByte(player.HeadColor);
+                serverPacket.WriteByte(player.BootColor);
+                serverPacket.WriteByte(player.AccessoryColor1);
+                serverPacket.WriteUInt16(player.AccessorySprite1);
+                serverPacket.WriteByte(player.AccessoryColor2);
+                serverPacket.WriteUInt16(player.AccessorySprite2);
+                serverPacket.WriteByte(player.AccessoryColor3);
+                serverPacket.WriteUInt16(player.AccessorySprite3);
+                serverPacket.WriteByte(player.LanternSize);
+                serverPacket.WriteByte(player.RestPosition);
+                serverPacket.WriteUInt16(player.OvercoatSprite);
+                serverPacket.WriteByte(player.OvercoatColor);
+                serverPacket.WriteByte(player.BodyColor);
+                serverPacket.WriteBoolean(player._isHidden);
+                serverPacket.WriteByte(player.FaceSprite);
+            }
+            else
+            {
+                serverPacket.WriteUInt16(ushort.MaxValue);
+                serverPacket.WriteUInt16((ushort)(spriteID + 16384));
+                serverPacket.WriteByte(player.HeadColor);
+                serverPacket.WriteByte(player.BootColor);
+                serverPacket.WriteUInt16(0);
+                serverPacket.WriteUInt32(0u);
+            }
+            serverPacket.WriteByte(player.NameTagStyle);
+            if (player.BodySprite == 0 && !getCheats(Cheats.SeeHidden))
+            {
+                Map map = _map;
+                if (map != null && map.Name?.Contains("Arena") == false && !inArena)
+                    serverPacket.WriteString8(string.Empty);
+                else
+                    serverPacket.WriteString8(player.Name);
+            }
+            serverPacket.WriteString8(player.GroupName);
+            Enqueue(serverPacket);
+        }
+
         internal void Walk(Direction dir)
         {
             if (Dialog == null && !_server._stopWalking && dir != Direction.Invalid && !_isRefreshing)

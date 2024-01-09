@@ -9,7 +9,7 @@ namespace Talos.Objects
         internal bool _isHidden;
 
         internal ushort HeadSprite { get; set; }
-        internal ushort ArmorSprite { get; set; }
+        internal ushort ArmorSprite1 { get; set; }
         internal ushort ArmorSprite2 { get; set; }
         internal ushort WeaponSprite { get; set; }
         internal ushort AccessorySprite1 { get; set; }
@@ -64,7 +64,7 @@ namespace Talos.Objects
 
         internal void NakedPlayer()
         {
-            ArmorSprite = 0;
+            ArmorSprite1 = 0;
             ArmorSprite2 = 0;
             WeaponSprite = 0;
             AccessorySprite1 = 0;

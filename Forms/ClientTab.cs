@@ -610,6 +610,34 @@ namespace Talos.Forms
                 _client._isRefreshing = true;
             }   
         }
+
+        private void formCbox_CheckedChanged(object sender, EventArgs e)
+        {
+            _client.InMonsterForm = (sender as CheckBox).Checked;
+            _client.DisplayAisling(_client.Player);
+        }
+        private void formNum_ValueChanged(object sender, EventArgs e)
+        {
+            _client._monsterFormID = (ushort)(sender as NumericUpDown).Value;
+            if (formCbox.Checked)
+            {
+                _client.DisplayAisling(_client.Player);
+            }
+        }
+
+        internal void checkMonsterForm(bool isChecked, ushort monsterID)
+        {
+            if (base.InvokeRequired)
+            {
+                Invoke((Action)delegate
+                {
+                    checkMonsterForm(isChecked, monsterID);
+                });
+                return;
+            }
+            formCbox.Checked = isChecked;
+            formNum.Value = monsterID;
+        }
     }
 }
 

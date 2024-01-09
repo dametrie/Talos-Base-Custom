@@ -14,6 +14,7 @@ using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
 using Talos.AStar;
+using System.Linq;
 
 namespace Talos
 {
@@ -958,9 +959,190 @@ namespace Talos
 
         private bool ServerMessage_0x33_DisplayAisling(Client client, ServerPacket serverPacket)
         {
+            bool isHidden = false;
+            ushort armorSprite1 = 0;
+            ushort armorSprite2 = 0;
+            ushort weaponSprite = 0;
+            ushort accessorySprite1 = 0;
+            ushort accessorySprite2 = 0;
+            ushort accessorySprite3 = 0;
+            ushort overcoatSprite = 0;
+            ushort form = 0;
+            byte bodySprite = 0;
+            byte bootsSprite = 0;
+            byte shieldSprite = 0;
+            byte headColor = 0;
+            byte bootsColor = 0;
+            byte accessoryColor = 0;
+            byte accessorryColor2 = 0;
+            byte accessoryColor3 = 0;
+            byte lanternSize = 0;
+            byte restPosition = 0;
+            byte overcoatColor = 0;
+            byte bodyColor = 0;
+            byte faceSprite = 0;
+            byte nameTagStyle = 0;
+            string groupName = "";
+            string name = "";
+
+
+            Point point = serverPacket.ReadStruct();
+            Location location = new Location(client._clientLocation.MapID, point);  
+            Direction direction = (Direction)serverPacket.ReadByte();
+            int id = serverPacket.ReadInt32();
+            ushort headSprite = serverPacket.ReadUInt16();
+            if (headSprite == 65535)
+            {
+                form = (ushort)(serverPacket.ReadUInt16() - 16384);
+                headColor = serverPacket.ReadByte();
+                bootsColor = serverPacket.ReadByte();
+                serverPacket.Read(6);
+            }
+            else
+            {
+                bodySprite = serverPacket.ReadByte();
+                if ((bodySprite == 0) && (client.getCheats(Cheats.None | Cheats.SeeHidden) && !client.inArena))
+                {
+                    serverPacket.Position--;
+                    serverPacket.WriteByte(80);
+                }
+                armorSprite1 = serverPacket.ReadUInt16();
+                bootsSprite = serverPacket.ReadByte();
+                armorSprite2 = serverPacket.ReadUInt16();
+                shieldSprite = serverPacket.ReadByte();
+                weaponSprite = serverPacket.ReadUInt16();
+                headColor = serverPacket.ReadByte();
+                bootsColor = serverPacket.ReadByte();
+                accessoryColor = serverPacket.ReadByte();
+                accessorySprite1 = serverPacket.ReadUInt16();
+                accessorryColor2 = serverPacket.ReadByte();
+                accessorySprite2 = serverPacket.ReadUInt16();
+                accessoryColor3 = serverPacket.ReadByte();
+                accessorySprite3 = serverPacket.ReadUInt16();
+                lanternSize = serverPacket.ReadByte();
+                restPosition = serverPacket.ReadByte();
+                overcoatSprite = serverPacket.ReadUInt16();
+                overcoatColor = serverPacket.ReadByte();
+                bodyColor = serverPacket.ReadByte();
+                isHidden = serverPacket.ReadBoolean() || (bodySprite == 0);
+                faceSprite = serverPacket.ReadByte();
+            }
+            nameTagStyle = serverPacket.ReadByte();
+            name = serverPacket.ReadString8();
+            groupName = serverPacket.ReadString8();
+            if ((bodySprite == 0) && (client._worldObjects.ContainsKey(id) && (client.getCheats(Cheats.None | Cheats.SeeHidden) && !client.inArena)))
+            {
+                serverPacket.Position -= (name.Length + groupName.Length) + 3;
+                nameTagStyle = ((id == client.PlayerID) || (form != 0)) ? nameTagStyle : ((byte)3);
+                serverPacket.WriteByte(nameTagStyle);
+                serverPacket.WriteString8(client._worldObjects[id].Name);
+                serverPacket.WriteString8(groupName);
+            }
+            Player player = new Player(id, name, location, direction);
+            if (!string.IsNullOrEmpty(player.Name))
+            {
+                var playersToRemove = client._worldObjects
+                    .Values
+                    .OfType<Player>()
+                    .Where(p => p.Name.Equals(player.Name) && p.ID != id)
+                    .ToList();
+
+                foreach (var playerToRemove in playersToRemove)
+                {
+                    client._worldObjects.Remove(playerToRemove.ID);
+                }
+            }
+            if (!client._worldObjects.ContainsKey(id))
+            {
+                client._worldObjects[id] = player;
+                if (string.IsNullOrEmpty(name))
+                    client.ClickObject(id);
+            }
+            else if (!(client._worldObjects[id] is Player))
+                client._worldObjects[id] = player;
+            else
+            {
+                Player p = client._worldObjects[id] as Player;
+                p.Location = location;
+                p.Direction = direction;
+                if (string.IsNullOrEmpty(p.Name))
+                    p.Name = name;
+            }
+            player.Sprite = form;
+            player.BodySprite = bodySprite;
+            player.ArmorSprite1 = armorSprite1;
+            player.ArmorSprite2 = armorSprite2;
+            player.BootColor = bootsColor;
+            player.LanternSize = lanternSize;
+            player.RestPosition = restPosition;
+            player.OvercoatColor = overcoatColor;
+            player._isHidden = isHidden;
+            player.NameTagStyle = nameTagStyle;
+            player.GroupName = groupName;
+            if ((bodySprite == 0) || ((id == client.PlayerID) || client.inArena))
+            {
+                player.HeadSprite = headSprite;
+                player.BootsSprite = bootsSprite;
+                player.ShieldSprite = shieldSprite;
+                player.WeaponSprite = weaponSprite;
+                player.HeadColor = headColor;
+                player.AccessoryColor1 = accessoryColor;
+                player.AccessorySprite1 = accessorySprite1;
+                player.AccessoryColor2 = accessorryColor2;
+                player.AccessorySprite2 = accessorySprite2;
+                player.AccessoryColor3 = accessoryColor3;
+                player.AccessorySprite3 = accessorySprite3;
+                player.OvercoatSprite = overcoatSprite;
+                player.BodyColor = bodyColor;
+                player.FaceSprite = faceSprite;
+            }
+            if (string.IsNullOrEmpty(player.Name))
+            {
+                //client.dictionary_4[id] = player;
+            }
+            else
+            {
+                //if (client.dictionary_4.ContainsKey(id))
+                //{
+                //    client.dictionary_4.Remove(id);
+                //}
+                //client.Dictionary_7[player.Name] = player;
+                client._nearbyPlayers[player.Name] = player;
+                //client.dictGhostList.Remove(player.Name);
+            }
+            if (id == client.PlayerID)
+            {
+                client.Player = player;
+                client._clientDirection = direction;
+                client._clientLocation = location;
+                if (client.InMonsterForm)
+                {
+                    serverPacket.Clear();
+                    serverPacket.WriteStruct(location);
+                    serverPacket.WriteByte((byte)direction);
+                    serverPacket.WriteUInt32((uint)id);
+                    serverPacket.WriteUInt16(65535);//maxvalue
+                    serverPacket.WriteUInt16((ushort)(client._monsterFormID + 16384));
+                    serverPacket.WriteByte(headColor);
+                    serverPacket.WriteByte(bootsColor);
+                    serverPacket.Write(new byte[6]);
+                    serverPacket.WriteByte(nameTagStyle);
+                    serverPacket.WriteString8(name);
+                    serverPacket.WriteString8(groupName);
+                }
+            }
+
+            client.DisplayAisling(player);
+
             return true;
         }
 
+        /// <summary>
+        /// Message received when a player profile is requested, including legend details
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="serverPacket"></param>
+        /// <returns></returns>
         private bool ServerMessage_0x34_Profile(Client client, ServerPacket serverPacket)
         {
             return true;
