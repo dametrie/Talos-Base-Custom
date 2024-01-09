@@ -130,6 +130,7 @@
     <Compile Include="Objects\MapObject.cs" />
     <Compile Include="Objects\MeleeWeapon.cs" />
     <Compile Include="Objects\Object.cs" />
+    <Compile Include="Objects\Player.cs" />
     <Compile Include="Objects\Skill.cs" />
     <Compile Include="Objects\Spell.cs" />
     <Compile Include="Objects\Staff.cs" />
