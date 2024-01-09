@@ -6,8 +6,8 @@ namespace Talos.Maps
 {
     internal class Warp : MapObject
     {
-        internal override byte SourceX => this.SourceX;
-        internal override byte SourceY => this.SourceY;
+        internal override short SourceX => this.SourceX;
+        internal override short SourceY => this.SourceY;
         internal override short SourceMapID => this.SourceMapID;
         internal byte TargetX { get; }
         internal byte TargetY { get; }
