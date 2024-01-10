@@ -316,7 +316,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used to send a client all non-aisling objects in it's viewport<br />
         ///     Hex value: 0x07
         /// </summary>
-        DisplayVisibleEntities = 7,
+        DisplayVisibleObjects = 7,
         /// <summary>
         ///     OpCode used to send a client it's attributes<br />
         ///     Hex value: 0x08
@@ -346,7 +346,7 @@ namespace Talos.Cryptography.Abstractions.Definitions
         ///     OpCode used to remove an object from the client's viewport<br />
         ///     Hex value: 0x0E
         /// </summary>
-        RemoveObject = 14,
+        RemoveVisibleObjects = 14,
         /// <summary>
         ///     OpCode used to add an item to the client's inventory<br />
         ///     Hex value: 0x0F

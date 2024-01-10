@@ -75,21 +75,27 @@ namespace Talos
         internal string _npcDialog;
         internal AutoResetEvent _walkSignal = new AutoResetEvent(false);
 
-        internal Dictionary<int, WorldObject> _worldObjects;
-        internal Dictionary<string, Player> _nearbyPlayers;
+        internal Dictionary<int, WorldObject> WorldObjects { get; private set; } = new Dictionary<int, WorldObject>();
+        internal Dictionary<string, Player> NearbyPlayers { get; private set; } = new Dictionary<string, Player>();
+        internal Dictionary<string, Player> NearbyGhosts{ get; private set; } = new Dictionary<string, Player>();
+        internal Dictionary<string, Creature> NearbyNPC { get; private set; } = new Dictionary<string, Creature>();
+        internal Dictionary<string, int> ObjectID { get; private set; } = new Dictionary<string, int>();
 
+        internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
+        internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
 
-
-        internal bool safeScreen;
-        internal bool inArena = false;
+        internal bool _safeScreen;
+        internal bool _inArena = false;
         internal bool _atDoor;
         internal bool _isCasting;
         internal bool _isWalking;
         internal bool _isRefreshing;
         internal bool _canRefresh;
-        internal bool bool_39;
+        internal bool _hasLabor;
+        internal bool _bool_39;
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
+        internal DateTime _lastWorldShout = DateTime.MinValue;
         internal Thread WalkThread { get; set; }    
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
@@ -141,8 +147,8 @@ namespace Talos
             _sendQueue = new Queue<Packet>();
             _receiveQueue = new Queue<Packet>();
             Stats = new Statistics();
-            _worldObjects = new Dictionary<int, WorldObject>();
-            _nearbyPlayers = new Dictionary<string, Player>();
+            WorldObjects = new Dictionary<int, WorldObject>();
+            NearbyPlayers = new Dictionary<string, Player>();
 
         }
 
@@ -158,6 +164,29 @@ namespace Talos
             return cheats.HasFlag(value);
         }
 
+        internal bool IsCreatureNearby(VisibleObject sprite, int dist = 12)
+        {
+            if (!CreatureHashSet.Contains(sprite.ID))
+                return false;
+            return _serverLocation.DistanceFrom(sprite.Location) <= dist;
+        }
+
+        internal void NewAisling(byte objType, int objID, ushort pursuitID)
+        {
+            ReplyDialog(objType, objID, pursuitID, 52);
+            Thread.Sleep(500);
+            ReplyDialog(objType, objID, pursuitID, 66);
+            Thread.Sleep(500);
+            ReplyDialog(objType, objID, pursuitID, 69);
+            Thread.Sleep(500);
+            ReplyDialog(objType, objID, pursuitID, 72);
+            Thread.Sleep(500);
+            ReplyDialog(objType, objID, pursuitID, 75);
+            //this.client.Tasks.Stop();
+            Thread.Sleep(3000);
+            //this.client.Tasks.Start();
+        }
+
         #region Packet methods
         internal void RequestProfile()
         {
@@ -166,7 +195,7 @@ namespace Talos
 
         internal void ServerMessage(byte type, string message)
         {
-            if (!safeScreen)
+            if (!_safeScreen)
             {
                 ServerPacket serverPacket = new ServerPacket(10);
                 serverPacket.WriteByte(type);
@@ -181,6 +210,30 @@ namespace Talos
             clientPacket.WriteInt32(objectId);
             Enqueue(clientPacket);
         }
+
+        internal void ServerDialog(byte dialogType, byte objectType, int objectID, byte unknown1, ushort sprite1, byte color1, byte unknown2, ushort sprite2, byte color2,
+            ushort pursuitID, ushort dialogID, bool previousButton, bool nextButton, byte unknown3, string objectName, string message)
+        {
+            ServerPacket serverPacket = new ServerPacket(48);
+            serverPacket.WriteByte(dialogType);
+            serverPacket.WriteByte(objectType);
+            serverPacket.WriteInt32(objectID);
+            serverPacket.WriteByte(unknown1);
+            serverPacket.WriteUInt16(sprite1);
+            serverPacket.WriteByte(color1);
+            serverPacket.WriteByte(unknown2);
+            serverPacket.WriteUInt16(sprite2);
+            serverPacket.WriteByte(color2);
+            serverPacket.WriteUInt16(pursuitID);
+            serverPacket.WriteUInt16(dialogID);
+            serverPacket.WriteBoolean(previousButton);
+            serverPacket.WriteBoolean(nextButton);
+            serverPacket.WriteByte(unknown3);
+            serverPacket.WriteString8(objectName);
+            serverPacket.WriteString16(message);
+            Enqueue(serverPacket);
+        }
+
         internal void DisplayAisling(Player player)
         {
             _ = player.Location;
@@ -196,7 +249,7 @@ namespace Talos
             if (spriteID == 0)
             {
                 serverPacket.WriteUInt16(player.HeadSprite);
-                if (player.BodySprite == 0 && getCheats(Cheats.SeeHidden) && !inArena)
+                if (player.BodySprite == 0 && getCheats(Cheats.SeeHidden) && !_inArena)
                 {
                     serverPacket.WriteByte(80);
                 }
@@ -238,7 +291,7 @@ namespace Talos
             if (player.BodySprite == 0 && !getCheats(Cheats.SeeHidden))
             {
                 Map map = _map;
-                if (map != null && map.Name?.Contains("Arena") == false && !inArena)
+                if (map != null && map.Name?.Contains("Arena") == false && !_inArena)
                     serverPacket.WriteString8(string.Empty);
                 else
                     serverPacket.WriteString8(player.Name);
@@ -308,12 +361,6 @@ namespace Talos
             });
         }
 
-        private Location GetTargetLocation(Direction dir)
-        {
-            // Implement logic to calculate the target location based on the current location and direction
-            // For example, use _location.TranslatePointByDirection(dir) to get the next location
-            return new Location(_clientLocation.MapID, _clientLocation.Point.TranslatePointByDirection(dir));
-        }
 
         private void ChangeMap(short targetMapID, Location targetLocation)
         {
@@ -350,29 +397,49 @@ namespace Talos
             _serverDirection = direction;
         }
 
-        internal void RequestRefresh(bool bool_57 = true)
+        internal void RequestRefresh(bool waitForCompletion = true)
         {
+            // Check if a refresh is already in progress
             if (_isRefreshing)
             {
                 return;
             }
+
+            // Set flag to indicate refresh is in progress
             _isRefreshing = true;
+
+            // Enqueue the refresh request
             Enqueue(new ClientPacket(56));
-            if (bool_57)
+
+            // Optionally wait for the refresh to complete
+            if (waitForCompletion)
             {
-                DateTime utcNow = DateTime.UtcNow;
-                while (DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds < 1500.0)
-                {
-                    if (!_canRefresh)
-                    {
-                        Thread.Sleep(10);
-                        continue;
-                    }
-                    _canRefresh = false;
-                    break;
-                }
+                WaitForRefreshCompletion();
             }
+
+            // Reset the flag to indicate refresh is completed
             _isRefreshing = false;
+        }
+
+        private void WaitForRefreshCompletion()
+        {
+            DateTime startTime = DateTime.UtcNow;
+
+            // Wait for up to 1500 milliseconds for the refresh to complete
+            while (DateTime.UtcNow.Subtract(startTime).TotalMilliseconds < 1500.0)
+            {
+                // Check if the refresh can proceed
+                if (!_canRefresh)
+                {
+                    // If not, wait for a short duration before checking again
+                    Thread.Sleep(10);
+                    continue;
+                }
+
+                // Allow the refresh to proceed and exit the loop
+                _canRefresh = false;
+                break;
+            }
         }
 
         internal void Attributes(StatUpdateFlags value, Statistics stats)
@@ -422,7 +489,7 @@ namespace Talos
             if (value.HasFlag(StatUpdateFlags.Secondary))
             {
                 serverPacket.Write(new byte[1]);
-                if (getCheats(Cheats.NoBlind) && !inArena)
+                if (getCheats(Cheats.NoBlind) && !_inArena)
                 {
                     serverPacket.WriteByte(0);
                 }

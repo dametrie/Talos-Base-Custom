@@ -17,13 +17,14 @@ namespace Talos
 
         internal Server Server { get; private set; }
         internal int ThreadID { get; set; }
-        internal Dictionary<Client, TabPage> _clientDictionary;
+        private Dictionary<Client, TabPage> _clients = new Dictionary<Client, TabPage>();
         private IntPtr _hWnd;
         public MainForm()
         {
             InitializeComponent();
             ThreadID = Thread.CurrentThread.ManagedThreadId;
-            _clientDictionary = new Dictionary<Client, TabPage>();
+
+            CheckForIllegalCrossThreadCalls = false;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -32,27 +33,21 @@ namespace Talos
         }
         internal void RemoveClient(Client client)
         {
-            if (InvokeRequired)
-                Invoke((Action)delegate { RemoveClient(client); });
-            else
+            if (InvokeRequired) { Invoke(new Action(() => { RemoveClient(client); })); return; }
+
+            if (_clients.ContainsKey(client))
             {
-                if (_clientDictionary.ContainsKey(client))
-                {
-                    clientTabControl.Controls.Remove(_clientDictionary[client]);
-                    _clientDictionary.Remove(client);
-                    client.ClientTab.Dispose();
-                    client.Remove();
-                }
+                clientTabControl.Controls.Remove(_clients[client]);
+                _clients.Remove(client);
+                client.ClientTab.Dispose();
+                client.Remove();
             }
+
         }
 
         internal void AddClient(Client client)
         {
-            if (InvokeRequired)
-            {
-                Invoke((Action)delegate { AddClient(client); });
-                return;
-            }
+            if (InvokeRequired) { Invoke(new Action(()=> { AddClient(client); })); return; }
 
             ClientTab clientTab = new ClientTab(client)
             {
@@ -61,7 +56,7 @@ namespace Talos
             TabPage tabPage = new TabPage(client.Name);
             tabPage.Controls.Add(clientTab);
             clientTabControl.TabPages.Add(tabPage);
-            _clientDictionary.Add(client, tabPage);
+            _clients.Add(client, tabPage);
             Server._clientList.Add(client);
         }
 

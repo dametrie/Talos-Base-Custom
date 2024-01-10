@@ -15,6 +15,8 @@ using Talos.Properties;
 using Talos.Structs;
 using Talos.AStar;
 using System.Linq;
+using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace Talos
 {
@@ -41,10 +43,13 @@ namespace Talos
         private bool _initialized;
         #endregion
 
+        const int CREATURE_SPRITE_OFFSET = 16384;
+
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
         private bool _isMapping;
         internal bool _stopWalking;
+        
 
         public static object Lock { get; internal set; } = new object();
 
@@ -167,13 +172,13 @@ namespace Talos
             ServerMessage[(int)ServerOpCode.Redirect] = new ServerMessageHandler(ServerMessage_0x03_Redirect);
             ServerMessage[(int)ServerOpCode.Location] = new ServerMessageHandler(ServerMessage_0x04_Location);
             ServerMessage[(int)ServerOpCode.UserID] = new ServerMessageHandler(ServerMessage_0x05_UserID);
-            ServerMessage[(int)ServerOpCode.DisplayVisibleEntities] = new ServerMessageHandler(ServerMessage_0x07_DisplayVisibleEntities);
+            ServerMessage[(int)ServerOpCode.DisplayVisibleObjects] = new ServerMessageHandler(ServerMessage_0x07_DisplayVisibleObjects);
             ServerMessage[(int)ServerOpCode.Attributes] = new ServerMessageHandler(ServerMessage_0x08_Attributes);
             ServerMessage[(int)ServerOpCode.ServerMessage] = new ServerMessageHandler(ServerMessage_0x0A_ServerMessage);
             ServerMessage[(int)ServerOpCode.ConfirmClientWalk] = new ServerMessageHandler(ServerMessage_0x0B_ConfirmClientWalk);
             ServerMessage[(int)ServerOpCode.CreatureWalk] = new ServerMessageHandler(ServerMessage_0x0C_CreatureWalk);
             ServerMessage[(int)ServerOpCode.PublicMessage] = new ServerMessageHandler(ServerMessage_0x0D_PublicMessage);
-            ServerMessage[(int)ServerOpCode.RemoveObject] = new ServerMessageHandler(ServerMessage_0x0E_RemoveObject);
+            ServerMessage[(int)ServerOpCode.RemoveVisibleObjects] = new ServerMessageHandler(ServerMessage_0x0E_RemoveVisibleObjects);
             ServerMessage[(int)ServerOpCode.AddItemToPane] = new ServerMessageHandler(ServerMessage_0x0F_AddItemToPane);
             ServerMessage[(int)ServerOpCode.RemoveItemFromPane] = new ServerMessageHandler(ServerMessage_0x10_RemoveItemFromPane);
             ServerMessage[(int)ServerOpCode.CreatureTurn] = new ServerMessageHandler(ServerMessage_0x11_CreatureTurn);
@@ -436,6 +441,16 @@ namespace Talos
 
         private bool ClientMessage_0x43_ClickObject(Client client, ClientPacket clientPacket)
         {
+            byte num = clientPacket.ReadByte();
+            if (num == 1)
+            {
+                int key = clientPacket.ReadInt32();
+                if (client.WorldObjects.ContainsKey(key))
+                    client.ClientTab.DisplayObject(client.WorldObjects[key]);
+            }
+            if (num == 3)
+                try { clientPacket.ReadStruct(); } catch { };
+            
             return true;
         }
 
@@ -565,8 +580,137 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x07_DisplayVisibleEntities(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x07_DisplayVisibleObjects(Client client, ServerPacket serverPacket)
         {
+            List<Creature> creatures = new List<Creature>();
+            List<Objects.Object> objects = new List<Objects.Object>();
+            ushort length = serverPacket.ReadUInt16();
+            int count = 0;
+
+            try
+            {
+                while (true)
+                {
+                    if (count >= length)
+                    {
+                        foreach (Creature c in creatures)
+                        {
+                            if (!client.WorldObjects.ContainsKey(c.ID))
+                            {
+                                client.WorldObjects.Add(c.ID, c);
+                            }
+                            else
+                            {
+                                Creature creature = client.WorldObjects[c.ID] as Creature;
+                                if (creature == null)
+                                {
+                                    client.WorldObjects[c.ID] = c;
+                                }
+                                else
+                                {
+                                    creature.Location = c.Location;
+                                    creature.Sprite = c.Sprite;
+                                    creature.Type = c.Type;
+                                    creature.Direction = c.Direction;
+                                    creature.Created(c.Creation);
+                                }
+                            }
+                            if (!client.CreatureHashSet.Contains(c.ID))
+                            {
+                                client.CreatureHashSet.Add(c.ID);
+                            }
+                            if (c.Type == CreatureType.Merchant)
+                            {
+                                if (!client.NearbyNPC.ContainsKey(c.Name))
+                                {
+                                    client.NearbyNPC.Add(c.Name, c);
+                                }
+                                else
+                                {
+                                    client.NearbyNPC[c.Name] = c;
+                                }
+                            }
+                            //else if ((client.Tasks.EnemyPage != null) && !client.Tasks.method_41(c.Sprite))
+                            //{
+                            //    Enemy class1 = new Enemy(c.Sprite);
+                            //    class1.EnemyPage = client.Tasks.EnemyPage;
+                            //    Enemy class4 = class1;
+                            //    client.Tasks.method_39(class4);
+                            //}
+                            //else if (client.ClientTab != null)
+                            //{
+                            //    TabPage selectedTab;
+                            //    ClientTab clientTab = client.ClientTab;
+                            //    if (clientTab != null)
+                            //    {
+                            //        selectedTab = clientTab.monsterTabControl.SelectedTab;
+                            //    }
+                            //    else
+                            //    {
+                            //        ClientTab local1 = clientTab;
+                            //        selectedTab = null;
+                            //    }
+                            //    if (ReferenceEquals(selectedTab, client.ClientTab.nearbyEnemyTab) && ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainMonstersTab))
+                            //    {
+                            //        client.ClientTab.AddNearbyEnemy(c);
+                            //    }
+                            //}
+                        }
+
+                        foreach (Objects.Object obj in objects)
+                        {
+                            if (client.WorldObjects.ContainsKey(obj.ID))
+                            {
+                                obj.Created(client.WorldObjects[obj.ID].Creation);
+                                client.WorldObjects[obj.ID] = obj;
+                            }
+                            else if (!client.WorldObjects.ContainsKey(obj.ID))
+                            {
+                                client.WorldObjects[obj.ID] = obj;
+                            }
+                            if (!client.ObjectHashSet.Contains(obj.ID))
+                            {
+                                client.ObjectHashSet.Add(obj.ID);
+                            }
+                            if (!client.CreatureHashSet.Contains(obj.ID))
+                            {
+                                client.CreatureHashSet.Add(obj.ID);
+                            }
+                        }
+                        break;
+                    }
+
+                    Point point = serverPacket.ReadStruct();
+                    Location location = new Location(client._clientLocation.MapID, point);
+                    int id = serverPacket.ReadInt32();
+                    ushort sprite = serverPacket.ReadUInt16();
+                    if (sprite >= 32768) // Is not a creature
+                    {
+                        serverPacket.Read(3);
+                        objects.Add(new Objects.Object(id, (ushort)(sprite - 32768), location, true)); 
+                    }
+                    else // Is a creature
+                    {
+                        sprite = (ushort)(sprite - CREATURE_SPRITE_OFFSET);
+                        serverPacket.Read(4);
+                        byte direction = serverPacket.ReadByte();
+                        serverPacket.ReadByte();
+                        byte type = serverPacket.ReadByte();
+                        string name = "";
+                        if (type == (byte)CreatureType.Merchant)
+                        {
+                            name = serverPacket.ReadString8();
+                        }
+                        creatures.Add(new Creature(id, name, sprite, type, location, (Direction)direction));
+                    }
+                    count++;
+                }
+            }
+            catch
+            {
+                client.RequestRefresh(false);
+            }
+
             return true;
         }
 
@@ -578,7 +722,7 @@ namespace Talos
                 try
                 {
                     num = serverPacket.ReadByte();
-                    if ((num & 32) == 32)//StatUpdateFlags.Primary
+                    if ((num & (byte)StatUpdateFlags.Primary) == (byte)StatUpdateFlags.Primary)
                     {
                         serverPacket.Read(3);
                         stats.Level = serverPacket.ReadByte();
@@ -596,12 +740,12 @@ namespace Talos
                         stats.CurrentWeight = serverPacket.ReadInt16();
                         serverPacket.Read(4);
                     }
-                    if ((num & 16) == 16)//StatUpdateFlags.Current
+                    if ((num & (byte)StatUpdateFlags.Current) == (byte)StatUpdateFlags.Current)
                     {
                         stats.CurrentHP = serverPacket.ReadUInt32();
                         stats.CurrentMP = serverPacket.ReadUInt32();
                     }
-                    if ((num & 8) == 8)//StatUpdateFlags.Experience
+                    if ((num & (byte)StatUpdateFlags.Experience) == (byte)StatUpdateFlags.Experience)
                     {
                         stats.Experience = serverPacket.ReadUInt32();
                         stats.ToNextLevel = serverPacket.ReadUInt32();
@@ -610,11 +754,11 @@ namespace Talos
                         stats.GamePoints = serverPacket.ReadUInt32();
                         stats.Gold = serverPacket.ReadUInt32();
                     }
-                    if ((num & 4) == 4)//StatUpdateFlags.Secondary
+                    if ((num & (byte)StatUpdateFlags.Secondary) == (byte)StatUpdateFlags.Secondary)
                     {
                         serverPacket.ReadByte();
                         stats.Blind = serverPacket.ReadByte();
-                        if (client.getCheats(Cheats.NoBlind) && !client.inArena)
+                        if (client.getCheats(Cheats.NoBlind) && !client._inArena)
                         {
                             serverPacket.Position--;
                             serverPacket.WriteByte(0);
@@ -629,11 +773,11 @@ namespace Talos
                         stats.Damage = serverPacket.ReadByte();
                         stats.Hit = serverPacket.ReadByte();
                     }
-                    if (stats.Mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client.safeScreen))
+                    if (stats.Mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client._safeScreen))
                     {
                         client.ServerMessage(0, "{=qYou have received a parcel.");
                     }
-                    if ((stats.Mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client.safeScreen)
+                    if ((stats.Mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client._safeScreen)
                     {
                         client.ServerMessage(0, "{=qYou've got mail.");
                     }
@@ -645,7 +789,7 @@ namespace Talos
                 client.Stats = stats;
                 if (client.getCheats(Cheats.GmMode))
                 {
-                    num = (byte)(num | 64);//StatUpdateFlags.GameMasterA
+                    num = (byte)(num | (byte)StatUpdateFlags.GameMasterA);
                     serverPacket.Data[0] = num;
                 }
                 if (client.ClientTab != null)
@@ -696,8 +840,86 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x0E_RemoveObject(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x0E_RemoveVisibleObjects(Client client, ServerPacket serverPacket)
         {
+            int id = serverPacket.ReadInt32();
+
+            if (client.CreatureHashSet.Contains(id))
+                client.CreatureHashSet.Remove(id);
+
+            if (client.WorldObjects.ContainsKey(id))
+            {
+                if ((client.WorldObjects[id] is Objects.Object) && (client.WorldObjects[id] as Objects.Object).Exists)
+                {
+                    client.WorldObjects.Remove(id);
+
+                    if (client.ObjectHashSet.Contains(id))
+                        client.ObjectHashSet.Remove(id);
+                }
+
+                else if (!(client.WorldObjects[id] is Creature) || (client.WorldObjects[id] is Player))
+                {
+                    if (!(client.WorldObjects[id] is Player))
+                    {
+                        client.WorldObjects.Remove(id);
+                    }
+                    else
+                    {
+                        client.NearbyPlayers.Remove(client.WorldObjects[id].Name);
+                        client.NearbyGhosts.Remove(client.WorldObjects[id].Name);
+                        ClientTab clientTab = client.ClientTab;
+                        if (clientTab != null)
+                        {
+                            //clientTab.UpdateStrangerList();//ADAM
+
+                            TabPage selectedTab = clientTab.aislingTabControl.SelectedTab;
+
+                            if (ReferenceEquals(selectedTab, clientTab.nearbyAllyTab) &&
+                                ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainAislingsTab))
+                            {
+                                string name = client.WorldObjects[id].Name;
+                                //clientTab.UpdateNearbyAllyTable(name);//ADAM
+                            }
+                        }
+                    }
+                }
+
+                else
+                {
+                    Creature npc = client.WorldObjects[id] as Creature;
+                    if ((npc.Type == CreatureType.Merchant) && client.NearbyNPC.ContainsKey(npc.Name))
+                    {
+                        client.NearbyNPC.Remove(npc.Name);
+                    }
+
+                    if (client.WorldObjects.Count == 0 ||
+                        (client.WorldObjects.Count > 0 &&
+                         !client.WorldObjects.Values.Any<WorldObject>(worldObject =>
+                            worldObject is Creature &&
+                            client.IsCreatureNearby(worldObject as VisibleObject, 12) &&
+                            (worldObject as Creature).Sprite == npc.Sprite)))
+                    {
+                        ClientTab clientTab = client.ClientTab;
+
+                        if (clientTab != null)
+                        {
+                            TabPage selectedTab = clientTab.monsterTabControl.SelectedTab;
+
+                            if (ReferenceEquals(selectedTab, clientTab.nearbyEnemyTab) &&
+                                ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainMonstersTab))
+                            {
+                                //client.ClientTab.UpdateNearbyEnemyTable(npc.Sprite);ADAM
+                            }
+                        }
+
+                        //if (client.Tasks.EnemyPage != null && client.Tasks.method_41(npc.Sprite))
+                        //{
+                        //    client.Tasks.ClearEnemyLists(npc.Sprite.ToString());
+                        //}
+                    }
+                }
+            }
+
             return true;
         }
 
@@ -898,7 +1120,7 @@ namespace Talos
 
         private bool ServerMessage_0x30_Dialog(Client client, ServerPacket serverPacket)
         {
-            bool flag3;
+            bool dialogSuccess;
             byte inputLength = 0;
             string topCaption = string.Empty;
             string bottomCaption = string.Empty;
@@ -909,7 +1131,7 @@ namespace Talos
                 if (dialogType != 10)
                 {
                     byte objType = serverPacket.ReadByte();
-                    int objId = serverPacket.ReadInt32();
+                    int objID = serverPacket.ReadInt32();
                     byte unknown = serverPacket.ReadByte();
                     ushort sprite1 = serverPacket.ReadUInt16();
                     byte color1 = serverPacket.ReadByte();
@@ -926,25 +1148,174 @@ namespace Talos
                     string npcDialog = serverPacket.ReadString16();
                     int num17 = serverPacket.Position;
 
-                    client.ClientTab.UpdateNpcInfo(npcDialog, dialogID, pursuitID);
-                    //client.ClientTab.npcText.Text = npcDialog;
-                    //client.ClientTab.dialogIdLbl.Text = "Dialog ID:" + dialogID.ToString();
-                    //client.ClientTab.pursuitLbl.Text = "Pursuit ID:" + pursuitID.ToString();
-                    client._npcDialog = npcDialog;
-
+                    if (npcDialog == "You are going to be arrested for sleep-fighting ((Auto Hunting)) in five minutes unless you state that you do not wish to.")
+                    {
+                        //ThreadPool.QueueUserWorkItem(new WaitCallback(method_0));
+                    }
+                    if (npcDialog != "You have already sent a world shout in the last 5 minutes.")
+                    {
+                        client.ClientTab.UpdateNpcInfo(npcDialog, dialogID, pursuitID);
+                        client._npcDialog = npcDialog;
+                        int num12 = dialogType - 2;
+                        if (num12 != 0)
+                        {
+                            if (num12 == 2)
+                            {
+                                topCaption = serverPacket.ReadString8();
+                                inputLength = serverPacket.ReadByte();
+                                bottomCaption = serverPacket.ReadString8();
+                            }
+                        }
+                        else
+                        {
+                            byte length = serverPacket.ReadByte();
+                            for (int i = 0; i < length; i++)
+                            {
+                                options.Add(serverPacket.ReadString8());
+                            }
+                        }
+                        client.Dialog = new Dialog(dialogType, objType, objID, unknown, sprite1, color1, unknown2, sprite2, color2, pursuitID, dialogID, prevButton, nextButton, unknown3, objName, npcDialog, options, topCaption, inputLength, bottomCaption, client);
+                        if ((npcDialog == "Do you wish to go back to Chaos 1?") || (npcDialog == "You are about to enter a hostile area. Do you wish to proceed?"))
+                        {
+                            client.Dialog.DialogNext(1);
+                            return false;
+                        }
+                        if (npcDialog == "Lying in bed, your eyes become heavy. The cold and weary day has finally caught up to you. Do you want to sleep?")
+                        {
+                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1), 1);
+                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                            return false;
+                        }
+                        if ((npcDialog == "((You are entering a role-playing town where role-playing is strictly enforced. Please do not speak words that are not appropriate to the theme of Dark Ages. Any act of heresy can result in a temporary banishment from the town.))") || (npcDialog == "Congratulations in finding a Golden Starfish!"))
+                        {
+                            client.Dialog.DialogNext();
+                            return false;
+                        }
+                        if (npcDialog == "You throw the Braided Vine around the rocks hoping it gets lodged in between them.")
+                        {
+                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                            return false;
+                        }
+                        if ((npcDialog == "The Braided Vine unravels from the rocks and you loose your footing.") || (npcDialog == "I don't think this is the correct order for the story. I better look at the other Wall Tablets."))
+                        {
+                            client.Dialog.Reply();
+                            return false;
+                        }
+                        if (npcDialog == "The Braided Vine starts to unravel, but you quickly jumped to dry land.")
+                        {
+                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                            return false;
+                        }
+                        if (npcDialog == "*The Yowien Guard sniffs you, then suddenly attacks you. You run back to a safe distance*")
+                        {
+                            client.ClientTab.walkBtn.Text = "Walk";
+                        }
+                        else if (npcDialog == "This will reset your labor to one hour. You can only do this once.")
+                        {
+                            client._hasLabor = true;
+                        }
+                        else if (npcDialog == "Will you be respectful of the meditations and not reveal the secrets of meditation?")
+                        {
+                            client.Dialog.DialogNext(2);
+                        }
+                        else if (client.ClientTab.toggleHubaeBtn.Text == "Disable")
+                        {
+                            string str5;
+                            if (npcDialog == "Welcome to Dark Ages : Online Roleplaying. This tutorial will give you the facts and skills you need to begin.")
+                            {
+                                for (int i = 0; i < 6; i++)
+                                {
+                                    client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                                }
+                                Thread.Sleep(1000);
+                                return false;
+                            }
+                            if (npcDialog == "You are about to leave the tutorial. Heres a hint when starting, speak with all the mundanes (merchants) in Mileth (the starting town). Remember, this is an online world, you set your own goals and missions for your character.")
+                            {
+                                client.ReplyDialog(objType, objID, pursuitID, 2);
+                                client.ReplyDialog(objType, objID, pursuitID, 3);
+                                client.ReplyDialog(objType, objID, pursuitID, 11, 1);
+                                client.ReplyDialog(objType, objID, pursuitID, 0x13);
+                                client.ReplyDialog(objType, objID, pursuitID, 0x31);
+                                client.ReplyDialog(objType, objID, pursuitID, 0x6d, 2);
+                                client.ReplyDialog(objType, objID, pursuitID, 0x2a);
+                                Thread.Sleep(0x3e8);
+                                client.Dialog = null;
+                                return false;
+                            }
+                            if (npcDialog == "You rub your eyes...")
+                            {
+                                ThreadPool.QueueUserWorkItem(state =>
+                                {
+                                    // Cast the state parameter back to the appropriate types
+                                    var tuple = (Tuple<byte, int, ushort>)state;
+                                    client.NewAisling(tuple.Item1, tuple.Item2, tuple.Item3);
+                                },
+                                Tuple.Create(client, objType, objID, pursuitID));
+                                return false;
+                            }
+                            if (npcDialog == "You legs are the strongest.  You enemies will be scattered.")
+                            {
+                                //client.Tasks.bool_36 = true;
+                                return false;
+                            }
+                            if (npcDialog == "Over that left door, you can be born a Monk.  You will be strong in working with the Nature.  You will save the people in danger, and only you will be able to increase other peoples' mana.")
+                            {
+                                //client.Tasks.bool_37 = true;
+                                return false;
+                            }
+                            //if (!client.Tasks.bool_40 && client.Tasks.dictionary_3.TryGetValue(npcDialog, out str5))
+                            //{
+                            //    int index = 2147483647;
+                            //    index = options.IndexOf(str5);
+                            //    if (index != 2147483647)
+                            //    {
+                            //        client.Dialog.DialogNext((byte)(index + 1));
+                            //    }
+                            //}
+                            //else
+                            //{
+                            //    string str6;
+                            //    if (client.Tasks.bool_40 && client.Tasks.dictionary_4.TryGetValue(npcDialog, out str6))
+                            //    {
+                            //        int index = 2147483647;
+                            //        index = options.IndexOf(str6);
+                            //        if (index != 2147483647)
+                            //        {
+                            //            client.Dialog.DialogNext((byte)(index + 1));
+                            //        }
+                            //    }
+                            //}
+                        }
+                        if (objType == 2)
+                        {
+                            client.ObjectID[objName] = objID;
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        TimeSpan span = new TimeSpan(0, 5, 0) - DateTime.UtcNow.Subtract(client._lastWorldShout);
+                        client.ServerDialog(dialogType, objType, objID, unknown, sprite1, color1, unknown2, sprite2, color2, pursuitID, dialogID, false, false, unknown3, objName, "You may World Shout again in " + ((client._lastWorldShout != DateTime.MinValue) ? (((span.Minutes > 1) ? $"{span.Minutes} minutes and " : ((span.Minutes > 0) ? $"{span.Minutes} minutes and " : string.Empty)) + $"{span.Seconds} seconds.") : "unkown value."));
+                        dialogSuccess = false;
+                    }
                 }
                 else
                 {
                     client.Dialog = null;
-                    flag3 = true;
+                    dialogSuccess = true;
                 }
             }
             catch
             {
-                flag3 = false;
+                dialogSuccess = false;
             }
 
-            return true;
+            return dialogSuccess;
         }
 
         private bool ServerMessage_0x31_Board(Client client, ServerPacket serverPacket)
@@ -993,7 +1364,7 @@ namespace Talos
             ushort headSprite = serverPacket.ReadUInt16();
             if (headSprite == 65535)
             {
-                form = (ushort)(serverPacket.ReadUInt16() - 16384);
+                form = (ushort)(serverPacket.ReadUInt16() - CREATURE_SPRITE_OFFSET);
                 headColor = serverPacket.ReadByte();
                 bootsColor = serverPacket.ReadByte();
                 serverPacket.Read(6);
@@ -1001,7 +1372,7 @@ namespace Talos
             else
             {
                 bodySprite = serverPacket.ReadByte();
-                if ((bodySprite == 0) && (client.getCheats(Cheats.None | Cheats.SeeHidden) && !client.inArena))
+                if ((bodySprite == 0) && (client.getCheats(Cheats.None | Cheats.SeeHidden) && !client._inArena))
                 {
                     serverPacket.Position--;
                     serverPacket.WriteByte(80);
@@ -1030,18 +1401,18 @@ namespace Talos
             nameTagStyle = serverPacket.ReadByte();
             name = serverPacket.ReadString8();
             groupName = serverPacket.ReadString8();
-            if ((bodySprite == 0) && (client._worldObjects.ContainsKey(id) && (client.getCheats(Cheats.None | Cheats.SeeHidden) && !client.inArena)))
+            if ((bodySprite == 0) && (client.WorldObjects.ContainsKey(id) && (client.getCheats(Cheats.None | Cheats.SeeHidden) && !client._inArena)))
             {
                 serverPacket.Position -= (name.Length + groupName.Length) + 3;
                 nameTagStyle = ((id == client.PlayerID) || (form != 0)) ? nameTagStyle : ((byte)3);
                 serverPacket.WriteByte(nameTagStyle);
-                serverPacket.WriteString8(client._worldObjects[id].Name);
+                serverPacket.WriteString8(client.WorldObjects[id].Name);
                 serverPacket.WriteString8(groupName);
             }
             Player player = new Player(id, name, location, direction);
             if (!string.IsNullOrEmpty(player.Name))
             {
-                var playersToRemove = client._worldObjects
+                var playersToRemove = client.WorldObjects
                     .Values
                     .OfType<Player>()
                     .Where(p => p.Name.Equals(player.Name) && p.ID != id)
@@ -1049,20 +1420,20 @@ namespace Talos
 
                 foreach (var playerToRemove in playersToRemove)
                 {
-                    client._worldObjects.Remove(playerToRemove.ID);
+                    client.WorldObjects.Remove(playerToRemove.ID);
                 }
             }
-            if (!client._worldObjects.ContainsKey(id))
+            if (!client.WorldObjects.ContainsKey(id))
             {
-                client._worldObjects[id] = player;
+                client.WorldObjects[id] = player;
                 if (string.IsNullOrEmpty(name))
                     client.ClickObject(id);
             }
-            else if (!(client._worldObjects[id] is Player))
-                client._worldObjects[id] = player;
+            else if (!(client.WorldObjects[id] is Player))
+                client.WorldObjects[id] = player;
             else
             {
-                Player p = client._worldObjects[id] as Player;
+                Player p = client.WorldObjects[id] as Player;
                 p.Location = location;
                 p.Direction = direction;
                 if (string.IsNullOrEmpty(p.Name))
@@ -1079,7 +1450,7 @@ namespace Talos
             player._isHidden = isHidden;
             player.NameTagStyle = nameTagStyle;
             player.GroupName = groupName;
-            if ((bodySprite == 0) || ((id == client.PlayerID) || client.inArena))
+            if ((bodySprite == 0) || ((id == client.PlayerID) || client._inArena))
             {
                 player.HeadSprite = headSprite;
                 player.BootsSprite = bootsSprite;
@@ -1098,16 +1469,16 @@ namespace Talos
             }
             if (string.IsNullOrEmpty(player.Name))
             {
-                //client.dictionary_4[id] = player;
+                //client.playersWithNoName[id] = player;
             }
             else
             {
-                //if (client.dictionary_4.ContainsKey(id))
+                //if (client.playersWithNoName.ContainsKey(id))
                 //{
-                //    client.dictionary_4.Remove(id);
+                //    client.playersWithNoName.Remove(id);
                 //}
                 //client.Dictionary_7[player.Name] = player;
-                client._nearbyPlayers[player.Name] = player;
+                client.NearbyPlayers[player.Name] = player;
                 //client.dictGhostList.Remove(player.Name);
             }
             if (id == client.PlayerID)
@@ -1122,7 +1493,7 @@ namespace Talos
                     serverPacket.WriteByte((byte)direction);
                     serverPacket.WriteUInt32((uint)id);
                     serverPacket.WriteUInt16(65535);//maxvalue
-                    serverPacket.WriteUInt16((ushort)(client._monsterFormID + 16384));
+                    serverPacket.WriteUInt16((ushort)(client._monsterFormID + CREATURE_SPRITE_OFFSET));
                     serverPacket.WriteByte(headColor);
                     serverPacket.WriteByte(bootsColor);
                     serverPacket.Write(new byte[6]);

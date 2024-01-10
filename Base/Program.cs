@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace Talos
@@ -31,6 +32,9 @@ namespace Talos
            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            Application.ThreadException += ThreadExceptionHandler;
+            AppDomain.CurrentDomain.UnhandledException += ExceptionHandler;
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.Run(new MainForm());
         }
 
@@ -50,6 +54,16 @@ namespace Talos
             }
             text = text + DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log";
             File.WriteAllText(text, (e.ExceptionObject as Exception).ToString());
+        }
+        internal static void ThreadExceptionHandler(object sender, ThreadExceptionEventArgs e)
+        {
+            string text = AppDomain.CurrentDomain.BaseDirectory + "CrashLogs\\";
+            if (!Directory.Exists(text))
+            {
+                Directory.CreateDirectory(text);
+            }
+            text = text + DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log";
+            File.WriteAllText(text, e.Exception.ToString());
         }
     }
 }

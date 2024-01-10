@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using Talos.Networking;
 using Talos.Enumerations;
 using Talos.Structs;
+using Talos.Objects;
 
 namespace Talos.Forms
 {
@@ -29,14 +30,13 @@ namespace Talos.Forms
 
         internal void DisplayHPMP()
         {
-            if (base.InvokeRequired) { Invoke((Action)delegate { DisplayHPMP(); }); }
-            else
-            {
-                hpLbl.Text = _client.Stats.CurrentHP.ToString();
-                mpLbl.Text = _client.Stats.CurrentMP.ToString();
-                healthBar.Value = _client.Health;
-                manaBar.Value = _client.Mana;
-            }
+            if (InvokeRequired) { BeginInvoke(new Action(() => { DisplayHPMP(); })); return; }
+
+            hpLbl.Text = _client.Stats.CurrentHP.ToString();
+            mpLbl.Text = _client.Stats.CurrentMP.ToString();
+            healthBar.Value = _client.Health;
+            manaBar.Value = _client.Mana;
+
         }
 
         internal void RemoveClient()
@@ -47,9 +47,9 @@ namespace Talos.Forms
 
         internal void LogPackets(Packet p)
         {
-            if (base.InvokeRequired) { Invoke((Action)delegate { LogPackets(p); }); }
-            else
-                packetList.Items.Add(p);
+            if (InvokeRequired) { BeginInvoke(new Action(() => { LogPackets(p); })); return; }
+
+            packetList.Items.Add(p);
         }
 
         private void addMonsterText_Enter(object sender, EventArgs e)
@@ -350,32 +350,18 @@ namespace Talos.Forms
 
         internal void LogPackets(ClientPacket clientPacket)
         {
-            if (base.InvokeRequired)
-            {
-                Invoke((Action)delegate
-                {
-                    LogPackets(clientPacket);
-                });
-            }
-            else if (toggleLogSendBtn.Checked)
-            {
+            if (InvokeRequired) { BeginInvoke(new Action(() => { LogPackets(clientPacket); })); return; }
+            
+            if (toggleLogSendBtn.Checked)
                 packetList.Items.Add(clientPacket.Copy());
-            }
         }
 
         internal void LogPackets(ServerPacket serverPacket)
         {
-            if (base.InvokeRequired)
-            {
-                Invoke((Action)delegate
-                {
-                    LogPackets(serverPacket);
-                });
-            }
-            else if (toggleLogRecvBtn.Checked)
-            {
+            if (InvokeRequired) { BeginInvoke(new Action(() => { LogPackets(serverPacket); })); return; }
+            
+            if (toggleLogRecvBtn.Checked)
                 packetList.Items.Add(serverPacket.Copy());
-            }
         }
 
         private void toggleDialogBtn_Click(object sender, EventArgs e)
@@ -533,13 +519,12 @@ namespace Talos.Forms
 
         internal void UpdateNpcInfo(string npcDialog, ushort dialogID, ushort pursuitID)
         {
-            if (this.InvokeRequired) { this.Invoke(new Action(() => UpdateNpcInfo(npcDialog, dialogID, pursuitID))); }
-            else
-            {
-                npcText.Text = npcDialog;
-                dialogIdLbl.Text = "Dialog ID: " + dialogID.ToString();
-                pursuitLbl.Text = "Pursuit ID: " + pursuitID.ToString();
-            }
+            if (InvokeRequired) { BeginInvoke(new Action(() => UpdateNpcInfo(npcDialog, dialogID, pursuitID))); return; }
+
+            npcText.Text = npcDialog;
+            dialogIdLbl.Text = "Dialog ID: " + dialogID.ToString();
+            pursuitLbl.Text = "Pursuit ID: " + pursuitID.ToString();
+
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -625,18 +610,30 @@ namespace Talos.Forms
             }
         }
 
+        internal void DisplayObject(WorldObject worldObject)
+        {
+            if (InvokeRequired) { BeginInvoke(new Action(() => { DisplayObject(worldObject); })); return; }
+
+            lastClickedIDLbl.Text = "ID: " + worldObject.ID;
+            lastClickedNameLbl.Text = (worldObject.Name ?? "");
+
+            if (worldObject is VisibleObject visibleObject)
+            {
+                lastClickedSpriteLbl.Text = "Sprite: " + visibleObject.Sprite;
+                lastClickedSpriteLbl.Refresh();
+            }
+                
+
+        }
+
         internal void checkMonsterForm(bool isChecked, ushort monsterID)
         {
-            if (base.InvokeRequired)
-            {
-                Invoke((Action)delegate
-                {
-                    checkMonsterForm(isChecked, monsterID);
-                });
-                return;
-            }
+            if (InvokeRequired) { BeginInvoke(new Action(() => { checkMonsterForm(isChecked, monsterID); })); return; }
+
             formCbox.Checked = isChecked;
             formNum.Value = monsterID;
+
+
         }
     }
 }

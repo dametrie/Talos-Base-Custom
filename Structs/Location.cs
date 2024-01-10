@@ -58,6 +58,14 @@ namespace Talos.Structs
             return result;
         }
 
+        internal int DistanceFrom(Location other)
+        {
+            if (MapID != other.MapID)
+                return int.MaxValue;
+            else
+                return Point.DistanceFrom(other.Point);
+        }
+
         /// <summary>
         /// Returns true if both locations are equal
         /// </summary>
