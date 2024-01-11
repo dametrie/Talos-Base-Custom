@@ -17,6 +17,32 @@ namespace Talos.Objects
             SourceMapID = location.MapID;
             Closed = closed;
             LastClicked = DateTime.UtcNow;
-        }   
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+            Door otherDoor = (Door)obj;
+            return SourceMapID == otherDoor.SourceMapID &&
+                   SourceX == otherDoor.SourceX &&
+                   SourceY == otherDoor.SourceY &&
+                   Closed == otherDoor.Closed;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + SourceMapID.GetHashCode();
+                hash = hash * 23 + SourceX.GetHashCode();
+                hash = hash * 23 + SourceY.GetHashCode();
+                hash = hash * 23 + Closed.GetHashCode();
+                return hash;
+            }
+        }
     }
 }

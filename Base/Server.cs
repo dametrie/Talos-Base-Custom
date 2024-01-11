@@ -1295,7 +1295,7 @@ namespace Talos
                         {
                             client.ObjectID[objName] = objID;
                         }
-                        return true;
+                        return true;//may be return false but it freezes on dialog...
                     }
                     else
                     {
@@ -1316,6 +1316,7 @@ namespace Talos
             }
 
             return dialogSuccess;
+
         }
 
         private bool ServerMessage_0x31_Board(Client client, ServerPacket serverPacket)
@@ -1325,6 +1326,29 @@ namespace Talos
 
         private bool ServerMessage_0x32_Door(Client client, ServerPacket serverPacket)
         {
+            try
+            {
+                byte length = serverPacket.ReadByte();
+                for (int i = 0; i < length; i++)
+                {
+                    client._atDoor = true;
+                    byte x = serverPacket.ReadByte();
+                    byte y = serverPacket.ReadByte();
+                    bool closed = serverPacket.ReadBoolean();
+                    bool openedRight = serverPacket.ReadBoolean();
+
+                    Location currentLocation = new Location(client._map.MapID, x, y);
+                    Console.WriteLine($"Door found at: {client._map.MapID}, {x},{y}, closed: {closed}, openedRight: {openedRight}");
+                    Door door = new Door(currentLocation, closed);
+                    if (!client.Doors.Contains(door))
+                    {
+                        client.Doors.Add(door);
+                    }
+                }
+            }
+            catch
+            {
+            }
             return true;
         }
 

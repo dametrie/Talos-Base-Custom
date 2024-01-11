@@ -80,9 +80,10 @@ namespace Talos
         internal Dictionary<string, Player> NearbyGhosts{ get; private set; } = new Dictionary<string, Player>();
         internal Dictionary<string, Creature> NearbyNPC { get; private set; } = new Dictionary<string, Creature>();
         internal Dictionary<string, int> ObjectID { get; private set; } = new Dictionary<string, int>();
-
+       
         internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
+        internal HashSet<Door> Doors { get; private set; } = new HashSet<Door> { };
 
         internal bool _safeScreen;
         internal bool _inArena = false;
