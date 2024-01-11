@@ -16,7 +16,7 @@ using Talos.Structs;
 using Talos.AStar;
 using System.Linq;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
+
 
 namespace Talos
 {
@@ -758,7 +758,7 @@ namespace Talos
                     {
                         serverPacket.ReadByte();
                         stats.Blind = serverPacket.ReadByte();
-                        if (client.getCheats(Cheats.NoBlind) && !client._inArena)
+                        if (client.GetCheats(Cheats.NoBlind) && !client._inArena)
                         {
                             serverPacket.Position--;
                             serverPacket.WriteByte(0);
@@ -787,7 +787,7 @@ namespace Talos
                     return false;
                 }
                 client.Stats = stats;
-                if (client.getCheats(Cheats.GmMode))
+                if (client.GetCheats(Cheats.GmMode))
                 {
                     num = (byte)(num | (byte)StatUpdateFlags.GameMasterA);
                     serverPacket.Data[0] = num;
@@ -935,11 +935,48 @@ namespace Talos
 
         private bool ServerMessage_0x11_CreatureTurn(Client client, ServerPacket serverPacket)
         {
+            int id = serverPacket.ReadInt32();
+            Direction direction = (Direction)serverPacket.ReadByte();
+            if (client.WorldObjects.ContainsKey(id))
+            {
+                (client.WorldObjects[id] as Creature).Direction = direction;
+
+                Player player = client.WorldObjects[id] as Player;
+                if (player != null && !client.NearbyPlayers.ContainsKey(player.Name) && !client.NearbyGhosts.ContainsKey(player.Name))
+                {
+                    client.NearbyGhosts.Add(player.Name, player);
+                    if (client.GetCheats(Cheats.None | Cheats.SeeGhosts))
+                        client.SeeGhosts(player);
+                }
+
+            }
+            if (id == client.PlayerID)
+            {
+                client._clientDirection = direction;
+                client._serverDirection = direction;
+            }
+
             return true;
         }
 
         private bool ServerMessage_0x13_HealthBar(Client client, ServerPacket serverPacket)
         {
+            int id = serverPacket.ReadInt32();
+            byte who = serverPacket.ReadByte();
+            byte percent = serverPacket.ReadByte();
+            if (client.WorldObjects.ContainsKey(id)) 
+            { 
+                Creature creature = client.WorldObjects[id] as Creature;
+                if (creature == null)
+                    return true;
+                if ((creature is Player) || (percent == 100) || creature.IsDioned)
+                    return true;
+
+                creature.Health = percent;
+                creature._hitCounter++;
+                creature.SpellAnimationHistory[114] = DateTime.MinValue;//net
+                creature.SpellAnimationHistory[32] = DateTime.MinValue;//pramh
+            }
             return true;
         }
 
@@ -952,6 +989,9 @@ namespace Talos
             byte[] buffer = serverPacket.Read(2);
             ushort checksum = serverPacket.ReadUInt16();
             string name = serverPacket.ReadString8();
+
+            if (client._overrideMapFlags)
+                serverPacket.Data[4] = (byte)client._mapFlags;
 
             Map map = new Map(mapID, sizeX, sizeY, flags, checksum, name);  
 
@@ -975,15 +1015,15 @@ namespace Talos
                 temp.Checksum = flags;
                 map = temp;
             }
-            object[] args = new object[] { mapID };
-            string path = Program.WriteMapFiles(Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", args);
+            object[] obj = new object[] { mapID };
+            string path = Program.WriteMapFiles(Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", obj);
             bool initialized = false;
             if (File.Exists(path))
             {
-                byte[] buffer2 = File.ReadAllBytes(path);
-                if (CRC.Calculate(buffer2) == checksum)
+                byte[] savedMap = File.ReadAllBytes(path);
+                if (CRC.Calculate(savedMap) == checksum)
                 {
-                    map.Initialize(buffer2);
+                    map.Initialize(savedMap);
                     initialized = true;
                 }
             }
@@ -996,8 +1036,8 @@ namespace Talos
                 cp.WriteByte(sizeY);
                 cp.WriteUInt16(0);
                 cp.WriteByte(0);
-                Packet[] classArray1 = new Packet[] { cp };
-                client.Enqueue(classArray1);
+                Packet[] requestMapData = new Packet[] { cp };
+                client.Enqueue(requestMapData);
             }
             client._map = map;
             client._clientLocation.MapID = mapID;
@@ -1006,7 +1046,14 @@ namespace Talos
             Console.WriteLine("Server Location Map ID: " + map.MapID);
             _maps[mapID].Tiles = client._map.Tiles;
 
+            client._mapChangePending = false;
             client._worldMap = null;
+            client._atDoor = false;
+            client.Doors.Clear();
+            client.NearbyPlayers.Clear();
+            client.NearbyNPC.Clear();
+            client.NearbyGhosts.Clear();
+            client.CreatureHashSet.Clear();
 
             Console.WriteLine("Map ID: " + map.MapID);
             Console.WriteLine("Map Name: " + map.Name);
@@ -1396,7 +1443,7 @@ namespace Talos
             else
             {
                 bodySprite = serverPacket.ReadByte();
-                if ((bodySprite == 0) && (client.getCheats(Cheats.None | Cheats.SeeHidden) && !client._inArena))
+                if ((bodySprite == 0) && (client.GetCheats(Cheats.None | Cheats.SeeHidden) && !client._inArena))
                 {
                     serverPacket.Position--;
                     serverPacket.WriteByte(80);
@@ -1425,7 +1472,7 @@ namespace Talos
             nameTagStyle = serverPacket.ReadByte();
             name = serverPacket.ReadString8();
             groupName = serverPacket.ReadString8();
-            if ((bodySprite == 0) && (client.WorldObjects.ContainsKey(id) && (client.getCheats(Cheats.None | Cheats.SeeHidden) && !client._inArena)))
+            if ((bodySprite == 0) && (client.WorldObjects.ContainsKey(id) && (client.GetCheats(Cheats.None | Cheats.SeeHidden) && !client._inArena)))
             {
                 serverPacket.Position -= (name.Length + groupName.Length) + 3;
                 nameTagStyle = ((id == client.PlayerID) || (form != 0)) ? nameTagStyle : ((byte)3);

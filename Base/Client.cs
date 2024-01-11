@@ -67,12 +67,28 @@ namespace Talos
 
         internal Location _clientLocation;
         internal Location _serverLocation;
+        internal DateTime _lastWorldShout = DateTime.MinValue;
         internal Map _map;
         internal WorldMap _worldMap;
-        internal Cheats cheats;
+        internal Cheats _cheats;
         internal Direction _clientDirection;
         internal Direction _serverDirection;
+        internal MapFlags _mapFlags;
         internal string _npcDialog;
+        internal bool _safeScreen;
+        internal bool _inArena = false;
+        internal bool _atDoor;
+        internal bool _isCasting;
+        internal bool _isWalking;
+        internal bool _isRefreshing;
+        internal bool _canRefresh;
+        internal bool _hasLabor;
+        internal bool _bool_39;
+        internal bool _overrideMapFlags;
+        internal bool _mapChangePending;
+        internal double _walkSpeed = 420.0;
+        internal ushort _monsterFormID = 1;
+
         internal AutoResetEvent _walkSignal = new AutoResetEvent(false);
 
         internal Dictionary<int, WorldObject> WorldObjects { get; private set; } = new Dictionary<int, WorldObject>();
@@ -85,18 +101,7 @@ namespace Talos
         internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<Door> Doors { get; private set; } = new HashSet<Door> { };
 
-        internal bool _safeScreen;
-        internal bool _inArena = false;
-        internal bool _atDoor;
-        internal bool _isCasting;
-        internal bool _isWalking;
-        internal bool _isRefreshing;
-        internal bool _canRefresh;
-        internal bool _hasLabor;
-        internal bool _bool_39;
-        internal double _walkSpeed = 420.0;
-        internal ushort _monsterFormID = 1;
-        internal DateTime _lastWorldShout = DateTime.MinValue;
+
         internal Thread WalkThread { get; set; }    
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
@@ -160,9 +165,18 @@ namespace Talos
             ClientTab = null;
         }
 
-        internal bool getCheats(Cheats value)
+        internal bool GetCheats(Cheats value)
         {
-            return cheats.HasFlag(value);
+            return _cheats.HasFlag(value);
+        }
+
+        internal void SeeGhosts(Player player)
+        {
+            player.NakedPlayer();
+            player.HeadColor = 1;
+            player.BodySprite = 48;
+            DisplayAisling(player);
+            DisplayEntityRequest(player.ID);
         }
 
         internal bool IsCreatureNearby(VisibleObject sprite, int dist = 12)
@@ -189,6 +203,14 @@ namespace Talos
         }
 
         #region Packet methods
+
+        internal void DisplayEntityRequest(int id)
+        {
+            ClientPacket clientPacket = new ClientPacket(12);
+            clientPacket.WriteInt32(id);
+            Enqueue(clientPacket);
+        }
+
         internal void RequestProfile()
         {
             Enqueue(new ClientPacket(45));
@@ -250,7 +272,7 @@ namespace Talos
             if (spriteID == 0)
             {
                 serverPacket.WriteUInt16(player.HeadSprite);
-                if (player.BodySprite == 0 && getCheats(Cheats.SeeHidden) && !_inArena)
+                if (player.BodySprite == 0 && GetCheats(Cheats.SeeHidden) && !_inArena)
                 {
                     serverPacket.WriteByte(80);
                 }
@@ -289,7 +311,7 @@ namespace Talos
                 serverPacket.WriteUInt32(0u);
             }
             serverPacket.WriteByte(player.NameTagStyle);
-            if (player.BodySprite == 0 && !getCheats(Cheats.SeeHidden))
+            if (player.BodySprite == 0 && !GetCheats(Cheats.SeeHidden))
             {
                 Map map = _map;
                 if (map != null && map.Name?.Contains("Arena") == false && !_inArena)
@@ -446,7 +468,7 @@ namespace Talos
         internal void Attributes(StatUpdateFlags value, Statistics stats)
         {
             ServerPacket serverPacket = new ServerPacket(8);
-            if (getCheats(Cheats.GmMode))
+            if (GetCheats(Cheats.GmMode))
             {
                 value |= StatUpdateFlags.GameMasterA;
             }
@@ -490,7 +512,7 @@ namespace Talos
             if (value.HasFlag(StatUpdateFlags.Secondary))
             {
                 serverPacket.Write(new byte[1]);
-                if (getCheats(Cheats.NoBlind) && !_inArena)
+                if (GetCheats(Cheats.NoBlind) && !_inArena)
                 {
                     serverPacket.WriteByte(0);
                 }
