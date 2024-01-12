@@ -197,9 +197,7 @@ namespace Talos
             ReplyDialog(objType, objID, pursuitID, 72);
             Thread.Sleep(500);
             ReplyDialog(objType, objID, pursuitID, 75);
-            //this.client.Tasks.Stop();
             Thread.Sleep(3000);
-            //this.client.Tasks.Start();
         }
 
         #region Packet methods
