@@ -20,7 +20,7 @@ namespace Talos.Objects
         internal bool IsMeleeWeapon { get; set; }
         internal bool IsBow { get; set; }
 
-        internal Item(byte slot, ushort sprite, byte color, string name, int quantity, bool stackable, int maximumDurability, int currentDurability, DateTime lastUsed, bool isRenamed, bool isIdentified)
+        internal Item(byte slot, ushort sprite, byte color, string name, int quantity, bool stackable, int maximumDurability, int currentDurability)
         {
             Slot = slot;
             Sprite = sprite;
@@ -30,9 +30,9 @@ namespace Talos.Objects
             Stackable = stackable;
             MaximumDurability = maximumDurability;
             CurrentDurability = currentDurability;
-            LastUsed = lastUsed;
-            IsRenamed = isRenamed;
-            IsIdentified = isIdentified;
+            LastUsed = DateTime.MinValue;
+            IsRenamed = false;
+            IsIdentified = false;
         }
     }
 }

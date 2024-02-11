@@ -16,6 +16,7 @@ using Talos.Structs;
 using Talos.AStar;
 using System.Linq;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 
 
 namespace Talos
@@ -565,6 +566,11 @@ namespace Talos
             client._serverLocation.X = location.X;
             client._serverLocation.Y = location.Y;
 
+            if (client.staffList.Count == 0)
+                client.LoadStavesAndBows();
+            if (client.meleeList.Count == 0)
+                client.LoadMeleeWeapons();
+
             return true;
         }
 
@@ -925,6 +931,28 @@ namespace Talos
 
         private bool ServerMessage_0x0F_AddItemToPane(Client client, ServerPacket serverPacket)
         {
+            byte slot = serverPacket.ReadByte();
+            ushort sprite = serverPacket.ReadUInt16();
+            byte color = serverPacket.ReadByte();
+            string name = serverPacket.ReadString8();
+            int quantity = serverPacket.ReadInt32();
+            bool stackable = serverPacket.ReadBoolean();
+            int maximumDurability = serverPacket.ReadInt32();
+            int currentDurability = serverPacket.ReadInt32();
+
+            if (name == "World Shout")
+            {
+                Item existingWorldShout = client.Inventory[name];
+                if (existingWorldShout != null && quantity == existingWorldShout.Quantity - 1)
+                {
+                    client._lastWorldShout = DateTime.UtcNow;
+                }
+            }
+
+            Item item = new Item(slot, sprite, color, name, quantity, stackable, maximumDurability, currentDurability);
+
+            client.Inventory[slot] = item;
+
             return true;
         }
 
@@ -1078,6 +1106,32 @@ namespace Talos
 
         private bool ServerMessage_0x17_AddSpellToPane(Client client, ServerPacket serverPacket)
         {
+            byte slot = serverPacket.ReadByte();
+            ushort sprite = serverPacket.ReadUInt16();
+            byte type = serverPacket.ReadByte();
+            string name = serverPacket.ReadString8();
+            string prompt = serverPacket.ReadString8();
+            byte castLines = serverPacket.ReadByte();
+            byte currentLevel = 0;
+            byte maximumLevel = 0;
+            Match match = Regex.Match(name, @"^(.*?) \([a-zA-Z]+:(\d+)/(\d+)\)$");
+            if (match.Success)
+            {
+                name = match.Groups[1].Value;
+                byte.TryParse(match.Groups[2].Value, out currentLevel);
+                byte.TryParse(match.Groups[3].Value, out maximumLevel);
+            }
+            Spell spell = new Spell(slot, name, type, sprite, prompt, castLines, currentLevel, maximumLevel);
+            client.Spellbook.AddOrUpdateSpell(spell);
+            //if ((client.ClientTab != null) && ((CurrentLevel == MaximumLevel) && (client.Map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab.list_3.Contains(spell.Name)))))
+            //{
+            //    client.ClientTab.method_54(client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name], new EventArgs());
+            //    client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name].Dispose();
+            //}
+            if (!client.AvailableSpellsAndCastLines.ContainsKey(name))
+            {
+                client.AvailableSpellsAndCastLines.Add(name, castLines);
+            }
             return true;
         }
 
@@ -1102,6 +1156,8 @@ namespace Talos
 
         private bool ServerMessage_0x1F_MapChangeComplete(Client client, ServerPacket serverPacket)
         {
+            client._mapChangePending = false;
+            client._lastMapChange = DateTime.UtcNow;
             return true;
         }
 
