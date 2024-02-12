@@ -124,6 +124,7 @@
     <Compile Include="Networking\ServerPacket.cs" />
     <Compile Include="Objects\Animation.cs" />
     <Compile Include="Objects\Bow.cs" />
+    <Compile Include="Objects\Caster.cs" />
     <Compile Include="Objects\Creature.cs" />
     <Compile Include="Objects\Door.cs" />
     <Compile Include="Objects\Inventory.cs" />

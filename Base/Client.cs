@@ -89,6 +89,7 @@ namespace Talos
         internal bool _mapChangePending;
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
+        internal Spell _spell;
 
         internal AutoResetEvent _walkSignal = new AutoResetEvent(false); 
         
@@ -127,6 +128,7 @@ namespace Talos
         internal uint PlayerID { get; set; }
         internal bool InMonsterForm { get; set; }
         internal Player Player { get; set; }
+        internal Creature CreatureTarget {  get; set; }
         internal int Health
         {
             get

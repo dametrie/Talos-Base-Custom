@@ -17,6 +17,7 @@ using Talos.AStar;
 using System.Linq;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
 
 
 namespace Talos
@@ -298,6 +299,9 @@ namespace Talos
 
         private bool ClientMessage_0x0B_ExitRequest(Client client, ClientPacket clientPacket)
         {
+            if (clientPacket.ReadByte() == 0)
+                client._connected = false;
+
             return true;
         }
 
@@ -313,12 +317,62 @@ namespace Talos
 
         private bool ClientMessage_0x0E_PublicMessage(Client client, ClientPacket clientPacket)
         {
-            return true;
+            string text;
+            clientPacket.ReadByte();
+            text = clientPacket.ReadString8();
+
+            if (!text.StartsWith("/"))
+                return true;
+            //
+            //ThreadPool.QueueUserWorkItem(new WaitCallback(ParseSlashCommands));
+            return false;
         }
 
         private bool ClientMessage_0x0F_UseSpell(Client client, ClientPacket clientPacket)
         {
-            return true;
+            byte num = clientPacket.ReadByte();
+            Spell spell = client.Spellbook[num];
+            if (spell != null)
+            {
+                client._spell = spell;
+                if (clientPacket.Data.Length <= 2)
+                {
+                    client.CreatureTarget = null;
+                }
+                else
+                {
+                    try
+                    {
+                        client.CreatureTarget = client.WorldObjects[(int)clientPacket.ReadUInt32()] as Creature;
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        client.CreatureTarget = client.Player;
+                    }
+                }
+                if (!(spell is Caster))
+                {
+                    return true;
+                }
+                Caster caster = spell as Caster;
+                switch (caster.Type)
+                {
+                    case 1:
+                        caster.SpellCastDelegate(client, 0, clientPacket.ReadString());
+                        break;
+
+                    case 2:
+                        caster.SpellCastDelegate(client, clientPacket.ReadUInt32(), string.Empty);
+                        break;
+
+                    case 5:
+                        caster.SpellCastDelegate(client, 0, string.Empty);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return false;
         }
 
         private bool ClientMessage_0x10_JoinClient(Client client, ClientPacket clientPacket)
@@ -334,6 +388,8 @@ namespace Talos
 
         private bool ClientMessage_0x11_Turn(Client client, ClientPacket clientPacket)
         {
+            Direction direction = (Direction)clientPacket.ReadByte();
+            client._serverDirection = direction;
             return true;
         }
 
@@ -354,6 +410,7 @@ namespace Talos
 
         private bool ClientMessage_0x1B_UserOptionToggle(Client client, ClientPacket clientPacket)
         {
+            clientPacket.ReadByte();
             return true;
         }
 
@@ -407,26 +464,46 @@ namespace Talos
 
         private bool ClientMessage_0x30_SwapSlot(Client client, ClientPacket clientPacket)
         {
+            clientPacket.ReadByte();
+            clientPacket.ReadByte();
+            clientPacket.ReadByte();
             return true;
         }
 
         private bool ClientMessage_0x38_RefreshRequest(Client client, ClientPacket clientPacket)
         {
+
             return true;
         }
 
         private bool ClientMessage_0x39_PursuitRequest(Client client, ClientPacket clientPacket)
         {
+            clientPacket.ReadByte();
+            clientPacket.ReadInt32();
+            clientPacket.ReadUInt16();
             return true;
         }
 
         private bool ClientMessage_0x3A_DialogResponse(Client client, ClientPacket clientPacket)
         {
+            byte objType = clientPacket.ReadByte();
+            int objID = clientPacket.ReadInt32();
+            ushort pursuitID = clientPacket.ReadUInt16();
+            ushort dialogID = clientPacket.ReadUInt16();
+            if ((client.Dialog != null) && ((client.Dialog.ObjectType == objType) && ((client.Dialog.ObjectID == objID) && ((pursuitID == 0) && (dialogID == 1)))))
+                client.Dialog = null;
+
             return true;
         }
 
         private bool ClientMessage_0x3B_BoardRequest(Client client, ClientPacket clientPacket)
         {
+            byte num = clientPacket.ReadByte();
+            if ((num != 1) && (num == 2))
+            {
+                clientPacket.ReadUInt16();
+                clientPacket.ReadUInt16();
+            }
             return true;
         }
 
