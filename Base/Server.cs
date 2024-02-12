@@ -952,12 +952,16 @@ namespace Talos
             Item item = new Item(slot, sprite, color, name, quantity, stackable, maximumDurability, currentDurability);
 
             client.Inventory[slot] = item;
-
             return true;
         }
 
         private bool ServerMessage_0x10_RemoveItemFromPane(Client client, ServerPacket serverPacket)
         {
+            byte num = serverPacket.ReadByte();
+            if ((client.Inventory[num] != null) && (client.Inventory[num].Name == "World Shout"))
+                client._lastWorldShout = DateTime.UtcNow;
+
+            client.Inventory[num] = null;
             return true;
         }
 
@@ -1137,6 +1141,8 @@ namespace Talos
 
         private bool ServerMessage_0x18_RemoveSpellFromPane(Client client, ServerPacket serverPacket)
         {
+            byte slot = serverPacket.ReadByte();
+            client.Spellbook.RemoveSpell(slot);
             return true;
         }
 
@@ -1178,11 +1184,32 @@ namespace Talos
 
         private bool ServerMessage_0x2C_AddSkillToPane(Client client, ServerPacket serverPacket)
         {
+            byte slot = serverPacket.ReadByte();
+            ushort sprite = serverPacket.ReadUInt16();
+            string name = serverPacket.ReadString8();
+            byte currentLevel = 0;
+            byte maximumLevel = 0;
+            Match match = Regex.Match(name, @"^(.*?) \([a-zA-Z]+:(\d+)/(\d+)\)$");
+            if (match.Success)
+            {
+                name = match.Groups[1].Value;
+                byte.TryParse(match.Groups[2].Value, out currentLevel);
+                byte.TryParse(match.Groups[3].Value, out maximumLevel);
+            }
+            Skill skill = new Skill(slot, name, sprite, currentLevel, maximumLevel);
+            //if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client.Map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab.list_2.Contains(skill.Name)))))
+            //{
+            //    client.ClientTab.method_53(client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name], new EventArgs());
+            //    client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name].Dispose();
+            //}
+            client.Skillbook.AddOrUpdateSkill(skill);
             return true;
         }
 
         private bool ServerMessage_0x2D_RemoveSkillFromPane(Client client, ServerPacket serverPacket)
         {
+            byte num = serverPacket.ReadByte();
+            client.Skillbook.RemoveSkill(num);
             return true;
         }
 
@@ -1424,6 +1451,33 @@ namespace Talos
 
         private bool ServerMessage_0x31_Board(Client client, ServerPacket serverPacket)
         {
+            byte num = serverPacket.ReadByte();
+            serverPacket.ReadByte();
+            if (num.Equals((byte)2))
+            {
+                serverPacket.ReadUInt16();
+                serverPacket.ReadString8();
+                byte num2 = serverPacket.ReadByte();
+                for (int i = 0; i < num2; i++)
+                {
+                    serverPacket.Read(1);
+                    serverPacket.ReadUInt16();
+                    serverPacket.ReadString8();
+                    serverPacket.ReadByte();
+                    serverPacket.ReadByte();
+                    serverPacket.ReadString8();
+                }
+            }
+            if (num.Equals((byte)3))
+            {
+                serverPacket.ReadUInt16();
+                serverPacket.ReadByte();
+                serverPacket.ReadString8();
+                serverPacket.ReadByte();
+                serverPacket.ReadByte();
+                serverPacket.ReadString8();
+                serverPacket.ReadString16();
+            }
             return true;
         }
 
@@ -1668,12 +1722,33 @@ namespace Talos
 
         private bool ServerMessage_0x3A_Effect(Client client, ServerPacket serverPacket)
         {
+            ushort effect = serverPacket.ReadUInt16();
+            if (serverPacket.ReadByte() != 0)
+            {
+                if (!client.EffectsBarHashSet.Contains(effect))
+                {
+                    client.EffectsBarHashSet.Add(effect);
+                }
+            }
+            else if (client.EffectsBarHashSet.Contains(effect))
+            {
+                client.EffectsBarHashSet.Remove(effect);
+                if ((effect == 19) && !client._inArena)//bday or incapacitate
+                {
+                    //ThreadPool.QueueUserWorkItem(new WaitCallback(client.ReEquipItem));//ADAM
+                }
+            }
             return true;
         }
 
         private bool ServerMessage_0x3B_HeartbeatResponse(Client client, ServerPacket serverPacket)
         {
-            return true;
+            ClientPacket clientPacket = new ClientPacket(0x45);
+            clientPacket.WriteByte(serverPacket.ReadByte());
+            clientPacket.WriteByte(serverPacket.ReadByte());
+            Packet[] classArray1 = new Packet[] { clientPacket };
+            client.Enqueue(classArray1);
+            return false;
         }
 
         /// <summary>
@@ -1710,6 +1785,26 @@ namespace Talos
 
         private bool ServerMessage_0x3F_Cooldown(Client client, ServerPacket serverPacket)
         {
+            byte slot = serverPacket.ReadByte();
+            uint ticks = serverPacket.ReadUInt32();
+            if (serverPacket.ReadByte() == 0)
+            {
+                Spell spell = client.Spellbook[slot];
+                if (spell != null)
+                {
+                    spell.Cooldown = DateTime.UtcNow;
+                    spell.Ticks = ticks;
+                }
+            }
+            else
+            {
+                Skill skill = client.Skillbook[slot];
+                if (skill != null)
+                {
+                    skill.Cooldown = DateTime.UtcNow;
+                    skill.Ticks = ticks;
+                }
+            }
             return true;
         }
 
@@ -1746,9 +1841,8 @@ namespace Talos
         private bool ServerMessage_0x58_MapLoadComplete(Client client, ServerPacket serverPacket)
         {
             if (client._isRefreshing)
-            {
                 client._canRefresh = true;
-            }
+
             return true;
         }
 
@@ -1764,17 +1858,31 @@ namespace Talos
 
         private bool ServerMessage_0x66_LoginControls(Client client, ServerPacket serverPacket)
         {
+            if (serverPacket.ReadByte() == 3)
+            {
+                ServerPacket newServerPacket = new ServerPacket(0x66);
+                newServerPacket.WriteByte(4);
+                serverPacket.WriteByte(1);
+                Packet[] toSend = new Packet[] { newServerPacket };
+                client.Enqueue(toSend);
+            }
             return true;
         }
 
         private bool ServerMessage_0x67_MapChangePending(Client client, ServerPacket serverPacket)
         {
+            client._mapChangePending = true;
             return true;
         }
 
         private bool ServerMessage_0x68_SynchronizeTicks(Client client, ServerPacket serverPacket)
         {
-            return true;
+            ClientPacket clientPacket = new ClientPacket(0x75);
+            clientPacket.WriteInt32(serverPacket.ReadInt32());
+            clientPacket.WriteInt32(Environment.TickCount);
+            Packet[] toSend = new Packet[] { clientPacket };
+            client.Enqueue(toSend);
+            return false;
         }
 
         private bool ServerMessage_0x6F_MetaData(Client client, ServerPacket serverPacket)

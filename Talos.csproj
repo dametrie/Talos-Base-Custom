@@ -133,6 +133,7 @@
     <Compile Include="Objects\Object.cs" />
     <Compile Include="Objects\Player.cs" />
     <Compile Include="Objects\Skill.cs" />
+    <Compile Include="Objects\Skillbook.cs" />
     <Compile Include="Objects\Spell.cs" />
     <Compile Include="Objects\Spellbook.cs" />
     <Compile Include="Objects\Staff.cs" />

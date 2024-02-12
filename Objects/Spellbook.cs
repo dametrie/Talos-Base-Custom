@@ -18,9 +18,7 @@ namespace Talos.Objects
         internal void AddOrUpdateSpell(Spell spell)
         {
             if (spell == null)
-            {
                 return;
-            }
 
             if (SpellbookDictionary.TryGetValue(spell.Name, out var existingSpell))
             {

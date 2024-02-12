@@ -107,6 +107,7 @@ namespace Talos
        
         internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
+        internal HashSet<ushort> EffectsBarHashSet { get; set; } = new HashSet<ushort>();
         internal HashSet<Door> Doors { get; private set; } = new HashSet<Door> { };
 
 
@@ -114,8 +115,9 @@ namespace Talos
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
         internal Dialog Dialog { get; set; }
-        internal Inventory Inventory { get; set; } 
-        internal Spellbook Spellbook { get; set; }
+        internal Inventory Inventory { get; set; } = new Inventory(60);
+        internal Spellbook Spellbook { get; set; } = new Spellbook();
+        internal Skillbook Skillbook { get; set; } = new Skillbook();
         internal string Name { get; set; }
         internal byte Path { get; set; }
         internal byte StepCount { get; set; }
@@ -163,10 +165,8 @@ namespace Talos
             _sendQueue = new Queue<Packet>();
             _receiveQueue = new Queue<Packet>();
             Stats = new Statistics();
-            WorldObjects = new Dictionary<int, WorldObject>();
-            NearbyPlayers = new Dictionary<string, Player>();
-            Inventory = new Inventory(60);
-            Spellbook = new Spellbook();
+
+
         }
 
 
@@ -453,7 +453,7 @@ namespace Talos
 
         #region Packet methods
 
-            internal void DisplayEntityRequest(int id)
+        internal void DisplayEntityRequest(int id)
         {
             ClientPacket clientPacket = new ClientPacket(12);
             clientPacket.WriteInt32(id);
