@@ -47,7 +47,7 @@ namespace Talos.Objects
         internal bool IsCursed => DateTime.UtcNow.Subtract(LastCursed).TotalSeconds < CurseDuration;
         internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;
         internal bool IsAited => DateTime.UtcNow.Subtract(LastAited).TotalSeconds < AiteDuration;
-        internal bool IsWff
+        internal bool IsWFF
         {
             get 
             { 

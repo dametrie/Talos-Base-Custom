@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Talos.Objects
+{
+    internal class CreatureToSpell
+    {
+        internal Spell Spell { get; set; }
+        internal Creature Creature { get; set; }
+        internal CreatureToSpell(Spell spell, Creature creature)
+        {
+            Spell = spell;
+            Creature = creature;
+        }
+    }
+}

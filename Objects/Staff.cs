@@ -35,5 +35,18 @@ namespace Talos.Objects
             MasterRequired = masterRequired;
             _temuairClass = temuairClass;
         }
+
+        internal bool CanUse(byte currentAbility, byte currentInsight, uint toNextLevel, TemuairClass temuairClass)
+        {
+            if (currentAbility >= AbilityRequired && currentInsight >= InsightRequired && (!MasterRequired || toNextLevel == 0))
+            {
+                if (_temuairClass != 0)
+                {
+                    return _temuairClass == temuairClass;
+                }
+                return true;
+            }
+            return false;
+        }
     }
 }

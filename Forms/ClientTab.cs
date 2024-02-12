@@ -7,6 +7,7 @@ using Talos.Networking;
 using Talos.Enumerations;
 using Talos.Structs;
 using Talos.Objects;
+using System.Threading;
 
 namespace Talos.Forms
 {
@@ -50,6 +51,12 @@ namespace Talos.Forms
             if (InvokeRequired) { BeginInvoke(new Action(() => { LogPackets(p); })); return; }
 
             packetList.Items.Add(p);
+        }
+
+        internal void UpdateStrangerListAfterCharge()
+        {
+            Thread.Sleep(1600);
+            //UpdateStrangerList();/ADAM
         }
 
         private void addMonsterText_Enter(object sender, EventArgs e)

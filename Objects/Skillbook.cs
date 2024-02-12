@@ -10,7 +10,7 @@ namespace Talos.Objects
     internal sealed class Skillbook : IEnumerable
     {
 
-        private Dictionary<string, Skill> SkillbookDictionary { get; } = new Dictionary<string, Skill>();
+        internal Dictionary<string, Skill> SkillbookDictionary { get; } = new Dictionary<string, Skill>();
         private Skill?[] SkillArray { get; } = new Skill?[90];
 
         internal int MaxSkills => 90;

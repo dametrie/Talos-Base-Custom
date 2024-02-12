@@ -51,7 +51,8 @@ namespace Talos
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
         private bool _isMapping;
         internal bool _stopWalking;
-        
+        internal bool _stopCasting;
+
 
         public static object Lock { get; internal set; } = new object();
 
@@ -643,9 +644,9 @@ namespace Talos
             client._serverLocation.X = location.X;
             client._serverLocation.Y = location.Y;
 
-            if (client.staffList.Count == 0)
+            if (client._staffList.Count == 0)
                 client.LoadStavesAndBows();
-            if (client.meleeList.Count == 0)
+            if (client._meleeList.Count == 0)
                 client.LoadMeleeWeapons();
 
             return true;
