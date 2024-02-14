@@ -8,6 +8,8 @@ using Talos.Enumerations;
 using Talos.Structs;
 using Talos.Objects;
 using System.Threading;
+using System.Linq;
+using System.ComponentModel;
 
 namespace Talos.Forms
 {
@@ -27,6 +29,11 @@ namespace Talos.Forms
             _client = client;
             _client.ClientTab = this;
             InitializeComponent();
+            worldObjectListBox.DataSource = client._worldObjectBindingList;
+            creatureHashListBox.DataSource = client._creatureBindingList;
+
+
+
         }
 
         internal void DisplayHPMP()
@@ -58,7 +65,31 @@ namespace Talos.Forms
             Thread.Sleep(1600);
             //UpdateStrangerList();/ADAM
         }
+        internal void UpdateBindingList<T>(BindingList<T> bindingList, ListBox listBox, T item)
+        {
+            if (item != null && listBox != null)
+            {
+                
+                if (bindingList.Contains(item))
+                {
 
+                    //bindingList.Remove(item);
+                }
+                else
+                {
+                    
+                    //bindingList.Add(item);
+                }
+
+                // Update the DataSource of the ListBox
+                listBox.DataSource = null; // Reset the DataSource
+                listBox.DataSource = bindingList; // Reassign the DataSource
+
+                listBox.Invoke((MethodInvoker)delegate {
+                    listBox.Refresh(); // Refresh the ListBox to reflect changes
+                });
+            }
+        }
         private void addMonsterText_Enter(object sender, EventArgs e)
         {
 
@@ -557,48 +588,40 @@ namespace Talos.Forms
 
         private void button5_Click(object sender, EventArgs e)
         {
-            if (textMaptext != null && textXtext != null && textYtext != null)
-            {
-                Location targetLocation = new Location(textMap, new Point(textX, testY));
-                //while (!(_client._clientLocation.Equals(targetLocation)))
-                //{
-                    _client.WalkToLocation(targetLocation);
-                //}
-                   
-            }
+
 
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
+        private void textBox6_TextChanged(object sender, EventArgs e)
         {
             //take in contents of textbox and store to variable of short type
-            textMaptext = textBox1.Text;
+            textMaptext = textBox6.Text;
             short.TryParse(textMaptext, out textMap);
         }
 
-        private void textBox2_TextChanged(object sender, EventArgs e)
+        private void textBox5_TextChanged(object sender, EventArgs e)
         {
-            textXtext = textBox2.Text;
+            textXtext = textBox5.Text;
             short.TryParse(textXtext, out textX);
         }
 
-        private void textBox3_TextChanged(object sender, EventArgs e)
+        private void textBox4_TextChanged(object sender, EventArgs e)
         {
-            textYtext = textBox3.Text;
+            textYtext = textBox4.Text;
             short.TryParse(textYtext, out testY);
 
         }
 
-        private void button6_Click(object sender, EventArgs e)
+        private void button7_Click(object sender, EventArgs e)
         {
             if (_client._isRefreshing)
             {
-                button6.Text = "Refresh";
+                button7.Text = "Refresh";
                 _client._isRefreshing = false;
             }
             else
             {
-                button6.Text = "Stop Refreshing";
+                button7.Text = "Stop Refreshing";
                 _client._isRefreshing = true;
             }   
         }
@@ -641,6 +664,32 @@ namespace Talos.Forms
             formNum.Value = monsterID;
 
 
+        }
+
+        private void button13_Click(object sender, EventArgs e)
+        {
+            string spellName = this.spellName.Text;
+          
+
+            _client.UseSpell(spellName, _client.Player, true, false);
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            if (textBox6 != null && textBox5 != null && textBox4 != null)
+            {
+                Location targetLocation = new Location(textMap, new Point(textX, testY));
+                //while (!(_client._clientLocation.Equals(targetLocation)))
+                //{
+                _client.WalkToLocation(targetLocation);
+                //}
+
+            }
+        }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            _client.RemoveShield();
         }
     }
 }

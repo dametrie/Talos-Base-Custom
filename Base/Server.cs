@@ -46,6 +46,7 @@ namespace Talos
         #endregion
 
         const int CREATURE_SPRITE_OFFSET = 16384;
+        const int ITEM_SPRITE_OFFSET = 32768;
 
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
@@ -335,7 +336,7 @@ namespace Talos
             Spell spell = client.Spellbook[num];
             if (spell != null)
             {
-                client._spell = spell;
+                client._currentSpell = spell;
                 if (clientPacket.Data.Length <= 2)
                 {
                     client.CreatureTarget = null;
@@ -644,10 +645,20 @@ namespace Talos
             client._serverLocation.X = location.X;
             client._serverLocation.Y = location.Y;
 
-            if (client._staffList.Count == 0)
+            if (client._staffList.Count == 0 || client._bowList.Count == 0 || client._meleeList.Count == 0)
+            {
                 client.LoadStavesAndBows();
-            if (client._meleeList.Count == 0)
                 client.LoadMeleeWeapons();
+                foreach (Item item in client.Inventory)
+                {
+                    client.CheckWeaponType(item);
+                }
+                Item mainHandItem = client.EquippedItems[1];
+                if (mainHandItem != null)
+                {
+                    client.CheckWeaponType(mainHandItem);
+                }
+            }
 
             return true;
         }
@@ -663,115 +674,33 @@ namespace Talos
             _mainForm.AddClient(client);
             return true;
         }
-
         private bool ServerMessage_0x07_DisplayVisibleObjects(Client client, ServerPacket serverPacket)
         {
-            List<Creature> creatures = new List<Creature>();
-            List<Objects.Object> objects = new List<Objects.Object>();
             ushort length = serverPacket.ReadUInt16();
             int count = 0;
 
             try
             {
-                while (true)
+                while (count < length)
                 {
-                    if (count >= length)
-                    {
-                        foreach (Creature c in creatures)
-                        {
-                            if (!client.WorldObjects.ContainsKey(c.ID))
-                            {
-                                client.WorldObjects.Add(c.ID, c);
-                            }
-                            else
-                            {
-                                Creature creature = client.WorldObjects[c.ID] as Creature;
-                                if (creature == null)
-                                {
-                                    client.WorldObjects[c.ID] = c;
-                                }
-                                else
-                                {
-                                    creature.Location = c.Location;
-                                    creature.Sprite = c.Sprite;
-                                    creature.Type = c.Type;
-                                    creature.Direction = c.Direction;
-                                    creature.Created(c.Creation);
-                                }
-                            }
-                            if (!client.CreatureHashSet.Contains(c.ID))
-                            {
-                                client.CreatureHashSet.Add(c.ID);
-                            }
-                            if (c.Type == CreatureType.Merchant)
-                            {
-                                if (!client.NearbyNPC.ContainsKey(c.Name))
-                                {
-                                    client.NearbyNPC.Add(c.Name, c);
-                                }
-                                else
-                                {
-                                    client.NearbyNPC[c.Name] = c;
-                                }
-                            }
-                            //else if ((client.Tasks.EnemyPage != null) && !client.Tasks.method_41(c.Sprite))
-                            //{
-                            //    Enemy class1 = new Enemy(c.Sprite);
-                            //    class1.EnemyPage = client.Tasks.EnemyPage;
-                            //    Enemy class4 = class1;
-                            //    client.Tasks.method_39(class4);
-                            //}
-                            //else if (client.ClientTab != null)
-                            //{
-                            //    TabPage selectedTab;
-                            //    ClientTab clientTab = client.ClientTab;
-                            //    if (clientTab != null)
-                            //    {
-                            //        selectedTab = clientTab.monsterTabControl.SelectedTab;
-                            //    }
-                            //    else
-                            //    {
-                            //        ClientTab local1 = clientTab;
-                            //        selectedTab = null;
-                            //    }
-                            //    if (ReferenceEquals(selectedTab, client.ClientTab.nearbyEnemyTab) && ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainMonstersTab))
-                            //    {
-                            //        client.ClientTab.AddNearbyEnemy(c);
-                            //    }
-                            //}
-                        }
-
-                        foreach (Objects.Object obj in objects)
-                        {
-                            if (client.WorldObjects.ContainsKey(obj.ID))
-                            {
-                                obj.Created(client.WorldObjects[obj.ID].Creation);
-                                client.WorldObjects[obj.ID] = obj;
-                            }
-                            else if (!client.WorldObjects.ContainsKey(obj.ID))
-                            {
-                                client.WorldObjects[obj.ID] = obj;
-                            }
-                            if (!client.ObjectHashSet.Contains(obj.ID))
-                            {
-                                client.ObjectHashSet.Add(obj.ID);
-                            }
-                            if (!client.CreatureHashSet.Contains(obj.ID))
-                            {
-                                client.CreatureHashSet.Add(obj.ID);
-                            }
-                        }
-                        break;
-                    }
-
                     Point point = serverPacket.ReadStruct();
                     Location location = new Location(client._clientLocation.MapID, point);
                     int id = serverPacket.ReadInt32();
                     ushort sprite = serverPacket.ReadUInt16();
-                    if (sprite >= 32768) // Is not a creature
+
+                    if (sprite >= ITEM_SPRITE_OFFSET) // Is not a creature
                     {
                         serverPacket.Read(3);
-                        objects.Add(new Objects.Object(id, (ushort)(sprite - 32768), location, true)); 
+                        var obj = new Objects.Object(id, (ushort)(sprite - ITEM_SPRITE_OFFSET), location, true);
+                        if (!client.WorldObjects.ContainsKey(id))
+                            client.WorldObjects[id] = obj;
+
+                        if (!client.ObjectHashSet.Contains(id)) 
+                            client.ObjectHashSet.Add(id);
+
+                        client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, id);
+                        //if (!client._objectBindingList.Contains(id))
+                        //    client._objectBindingList.Add(id);
                     }
                     else // Is a creature
                     {
@@ -781,11 +710,30 @@ namespace Talos
                         serverPacket.ReadByte();
                         byte type = serverPacket.ReadByte();
                         string name = "";
+
                         if (type == (byte)CreatureType.Merchant)
                         {
                             name = serverPacket.ReadString8();
                         }
-                        creatures.Add(new Creature(id, name, sprite, type, location, (Direction)direction));
+
+                        var creature = new Creature(id, name, sprite, type, location, (Direction)direction);
+                        if (!client.WorldObjects.ContainsKey(id))
+                            client.WorldObjects[id] = creature;
+
+                        if (!client.CreatureHashSet.Contains(id))
+                            client.CreatureHashSet.Add(id);
+
+                        client.ClientTab.UpdateBindingList(client._creatureBindingList, client.ClientTab.creatureHashListBox, id);
+                        //if (!client._creatureBindingList.Contains(id))
+                        //    client._creatureBindingList.Add(id);
+
+                        if (type == (byte)CreatureType.Merchant)
+                        {
+                            client.NearbyNPC[name] = creature;
+                        }
+                        
+                      
+
                     }
                     count++;
                 }
@@ -797,6 +745,32 @@ namespace Talos
 
             return true;
         }
+        //else if ((client.Tasks.EnemyPage != null) && !client.Tasks.method_41(c.Sprite))
+        //{
+        //    Enemy class1 = new Enemy(c.Sprite);
+        //    class1.EnemyPage = client.Tasks.EnemyPage;
+        //    Enemy class4 = class1;
+        //    client.Tasks.method_39(class4);
+        //}
+        //else if (client.ClientTab != null)
+        //{
+        //    TabPage selectedTab;
+        //    ClientTab clientTab = client.ClientTab;
+        //    if (clientTab != null)
+        //    {
+        //        selectedTab = clientTab.monsterTabControl.SelectedTab;
+        //    }
+        //    else
+        //    {
+        //        ClientTab local1 = clientTab;
+        //        selectedTab = null;
+        //    }
+        //    if (ReferenceEquals(selectedTab, client.ClientTab.nearbyEnemyTab) && ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainMonstersTab))
+        //    {
+        //        client.ClientTab.AddNearbyEnemy(c);
+        //    }
+        //}
+
 
         private bool ServerMessage_0x08_Attributes(Client client, ServerPacket serverPacket)
         {
@@ -928,72 +902,64 @@ namespace Talos
         {
             int id = serverPacket.ReadInt32();
 
-            if (client.CreatureHashSet.Contains(id))
-                client.CreatureHashSet.Remove(id);
-
             if (client.WorldObjects.ContainsKey(id))
             {
-                if ((client.WorldObjects[id] is Objects.Object) && (client.WorldObjects[id] as Objects.Object).Exists)
-                {
-                    client.WorldObjects.Remove(id);
+                var worldObject = client.WorldObjects[id];
 
-                    if (client.ObjectHashSet.Contains(id))
-                        client.ObjectHashSet.Remove(id);
-                }
-
-                else if (!(client.WorldObjects[id] is Creature) || (client.WorldObjects[id] is Player))
+                if (worldObject is Objects.Object obj && obj.Exists)
                 {
-                    if (!(client.WorldObjects[id] is Player))
+                    client.WorldObjects.Remove(worldObject.ID);
+
+                    if (client.ObjectHashSet.Contains(worldObject.ID))
                     {
-                        client.WorldObjects.Remove(id);
+                        client.ObjectHashSet.Remove(worldObject.ID);
+                        client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, id);
+                        //client._objectBindingList.Remove(worldObject.ID);
                     }
-                    else
+
+                }
+                else if (worldObject is Player) 
+                {
+                    if (worldObject is Player)
                     {
-                        client.NearbyPlayers.Remove(client.WorldObjects[id].Name);
-                        client.NearbyGhosts.Remove(client.WorldObjects[id].Name);
+                        var player = (Player)worldObject;
+                        client.NearbyPlayers.Remove(player.Name);
+                        client.NearbyGhosts.Remove(player.Name);
+
+                        client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, player.ID);
                         ClientTab clientTab = client.ClientTab;
-                        if (clientTab != null)
+                        if (clientTab != null && clientTab.aislingTabControl.SelectedTab == clientTab.nearbyAllyTab &&
+                            clientTab.clientTabControl.SelectedTab == clientTab.mainAislingsTab)
                         {
-                            //clientTab.UpdateStrangerList();//ADAM
-
-                            TabPage selectedTab = clientTab.aislingTabControl.SelectedTab;
-
-                            if (ReferenceEquals(selectedTab, clientTab.nearbyAllyTab) &&
-                                ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainAislingsTab))
-                            {
-                                string name = client.WorldObjects[id].Name;
-                                //clientTab.UpdateNearbyAllyTable(name);//ADAM
-                            }
+                            // clientTab.UpdateNearbyAllyTable(player.Name);
                         }
                     }
+                    client.WorldObjects.Remove(id);
                 }
-
-                else
+                else //is a creature
                 {
-                    Creature npc = client.WorldObjects[id] as Creature;
-                    if ((npc.Type == CreatureType.Merchant) && client.NearbyNPC.ContainsKey(npc.Name))
+                    var creature = (Creature)worldObject;
+                    if (creature.Type == CreatureType.Merchant && client.NearbyNPC.ContainsKey(creature.Name))
                     {
-                        client.NearbyNPC.Remove(npc.Name);
+                        client.NearbyNPC.Remove(creature.Name);
                     }
 
-                    if (client.WorldObjects.Count == 0 ||
-                        (client.WorldObjects.Count > 0 &&
-                         !client.WorldObjects.Values.Any<WorldObject>(worldObject =>
-                            worldObject is Creature &&
-                            client.IsCreatureNearby(worldObject as VisibleObject, 12) &&
-                            (worldObject as Creature).Sprite == npc.Sprite)))
+                    if (client.CreatureHashSet.Contains(creature.ID))
+                    {
+                        client.CreatureHashSet.Remove(creature.ID);
+                        client.ClientTab.UpdateBindingList(client._creatureBindingList, client.ClientTab.creatureHashListBox, creature.ID);
+                        //client._creatureBindingList.Remove(creature.ID);
+                    }
+
+                    if (!client.WorldObjects.Values.Any(worldObj =>
+                        worldObj is Creature && client.IsCreatureNearby(worldObj as VisibleObject, 12) &&
+                        (worldObj as Creature).Sprite == creature.Sprite))
                     {
                         ClientTab clientTab = client.ClientTab;
-
-                        if (clientTab != null)
+                        if (clientTab != null && clientTab.monsterTabControl.SelectedTab == clientTab.nearbyEnemyTab &&
+                            clientTab.clientTabControl.SelectedTab == clientTab.mainMonstersTab)
                         {
-                            TabPage selectedTab = clientTab.monsterTabControl.SelectedTab;
-
-                            if (ReferenceEquals(selectedTab, clientTab.nearbyEnemyTab) &&
-                                ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainMonstersTab))
-                            {
-                                //client.ClientTab.UpdateNearbyEnemyTable(npc.Sprite);ADAM
-                            }
+                            // client.ClientTab.UpdateNearbyEnemyTable(npc.Sprite);
                         }
 
                         //if (client.Tasks.EnemyPage != null && client.Tasks.method_41(npc.Sprite))
@@ -1030,6 +996,7 @@ namespace Talos
             Item item = new Item(slot, sprite, color, name, quantity, stackable, maximumDurability, currentDurability);
 
             client.Inventory[slot] = item;
+            client.CheckWeaponType(item);
             return true;
         }
 
@@ -1783,8 +1750,35 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x37_AddEquipment(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x37_AddEquipment(Client client, ServerPacket packet)
         {
+            byte slot = packet.ReadByte();
+            ushort sprite = packet.ReadUInt16();
+            byte color = packet.ReadByte();
+            string itemName = packet.ReadString8();
+            byte idk = packet.ReadByte();
+            int maxDurability = packet.ReadInt32();
+            int currDurability = packet.ReadInt32();
+
+            Item item = new Item(slot, sprite, color, itemName, 1, maxDurability, currDurability);
+            client.EquippedItems[slot] = item;
+
+            // Find the staff or bow in the respective lists
+            Staff foundStaff = client._staffList.FirstOrDefault(staff => staff.Name == itemName);
+            Bow foundBow = client._bowList.FirstOrDefault(bow => bow.Name == itemName);
+
+            // Update the item properties based on what was found
+            if (foundStaff != null)
+            {
+                item.IsStaff = true;
+                item.Staff = foundStaff;
+            }
+            else if (foundBow != null)
+            {
+                item.IsBow = true;
+                item.Bow = foundBow;
+            }
+
             return true;
         }
 
@@ -1795,6 +1789,89 @@ namespace Talos
 
         private bool ServerMessage_0x39_SelfProfle(Client client, ServerPacket serverPacket)
         {
+            //if (client.Tasks.AllyPage != null)//ADAM
+            //{
+            //    foreach (string str4 in client.AllyList_Hash)
+            //    {
+            //        if (((client.Tasks.AllyPage == null) || (this.method_76(str4) == null)) && client.Tasks.method_44(str4))
+            //        {
+            //            client.Tasks.RemoveAlly(str4);
+            //        }
+            //    }
+            //}
+            int nation = serverPacket.ReadByte();
+            serverPacket.ReadString8();
+            serverPacket.ReadString8();
+            string str = serverPacket.ReadString8();
+            serverPacket.ReadBoolean();
+            if (serverPacket.ReadBoolean())
+            {
+                serverPacket.ReadString8();
+                serverPacket.ReadString8();
+                serverPacket.Read(13);
+            }
+            int temClass = serverPacket.ReadByte();
+            serverPacket.Read(2);
+            if (temClass != null) SetTemuairClass(client, temClass);
+            string medClass = serverPacket.ReadString8();
+            if (medClass != null) SetMedeniaClass(client, medClass);
+            string guildName = serverPacket.ReadString8();
+            byte legendLength = serverPacket.ReadByte();
+            for (int i = 0; i < legendLength; i++)
+            {
+                serverPacket.ReadByte();
+                serverPacket.ReadByte();
+                string legendText = serverPacket.ReadString8();
+                Console.WriteLine(legendText);
+                if ((legendText != null) && legendText.StartsWith("C"))
+                {
+                    SetPreviousClass(client, legendText);
+                }
+                if ((legendText != null) && legendText.StartsWith("Dgn-"))
+                {
+                    SetDugon(client, legendText);
+                }
+                if ((legendText != null) && legendText.Equals("_Unr"))
+                {
+                    client._isRegistered = false;
+                }
+                serverPacket.ReadString8();
+            }
+            client.Nation = (Nation)((byte)nation);
+            //client._allyList_Hash.Clear();
+            if (str.StartsWith("Group members"))
+            {
+                char[] separator = new char[] { '\n' };
+                foreach (string str7 in str.Split(separator))
+                {
+                    if (str7.StartsWith("  ") || str7.StartsWith("* "))
+                    {
+                        string item = str7.Substring(2);
+                        if (item != client.Name)
+                        {
+                            //client._allyList_Hash.Add(item);
+                        }
+                    }
+                }
+            }
+            client.GuildName = guildName;
+            //client.ClientTab.UpdateGroupList();
+            //client.ClientTab.UpdateStrangerList();
+            //client.ClientTab.AddFriends();
+            //client.ClientTab.UpdateChatPanelMaxLength(client);
+            //client.ClientTab.DisplayUsableSpellsSkills();
+            //if (client.Tasks.AllyPage != null)
+            //{
+            //    client.ClientTab.method_9();
+            //}
+            //if (this.mainForm.nameAssociatedWithKey.Equals("Brandon") || (this.mainForm.nameAssociatedWithKey.Equals("Michael") || this.mainForm.nameAssociatedWithKey.Equals("Dominic")))
+            //{
+            //client.ClientTab.chkMappingToggle.Enabled = true;
+            //}
+            //if (client.ClientTab.toggleDmuCbox.Checked)
+            //{
+            //    client.DisplayUser(client.player);
+            //}
             return true;
         }
 
@@ -1973,6 +2050,100 @@ namespace Talos
             return true;
         }
         #endregion
+
+        internal void SetDugon(Client client, string dugonLevel)
+        {
+            Dictionary<string, Dugon> dugonMappings = new Dictionary<string, Dugon>
+            {
+                { "Dgn-0", Dugon.White },
+                { "Dgn-1", Dugon.Green },
+                { "Dgn-2", Dugon.Blue },
+                { "Dgn-3", Dugon.Yellow },
+                { "Dgn-4", Dugon.Purple },
+                { "Dgn-5", Dugon.Brown },
+                { "Dgn-6", Dugon.Red },
+                { "Dgn-7", Dugon.Black }
+            };
+
+            // Default Dugon if no match found
+            Dugon defaultDugon = Dugon.White; // Change this to the appropriate default value
+
+            // Check if string_8 matches any mapping, otherwise use defaultDugon
+            Dugon dugon = dugonMappings.TryGetValue(dugonLevel, out Dugon mappedDugon)
+                ? mappedDugon
+                : defaultDugon;
+
+            client.SetDugon(dugon);
+        }
+        internal void SetTemuairClass(Client client, int temClass)
+        {
+            Dictionary<int, TemuairClass> classMappings = new Dictionary<int, TemuairClass>
+            {
+                { 0, TemuairClass.Peasant },
+                { 1, TemuairClass.Peasant | TemuairClass.Warrior },
+                { 2, TemuairClass.Peasant | TemuairClass.Rogue },
+                { 3, TemuairClass.Peasant | TemuairClass.Wizard },
+                { 4, TemuairClass.Peasant | TemuairClass.Priest },
+                { 5, TemuairClass.Peasant | TemuairClass.Monk }
+            };
+
+            // Default TemuairClass if no match found
+            TemuairClass defaultClass = TemuairClass.Peasant;
+
+            // Check if temClass matches any mapping, otherwise use defaultClass
+            TemuairClass temuairClass = classMappings.TryGetValue(temClass, out TemuairClass mappedClass)
+                ? mappedClass
+                : defaultClass;
+
+            client.SetTemuairClass(temuairClass);
+        }
+
+        internal void SetMedeniaClass(Client client, string className)
+        {
+            Dictionary<string, MedeniaClass> classMappings = new Dictionary<string, MedeniaClass>
+            {
+                { "Gladiator", MedeniaClass.Gladiator },
+                { "Druid", MedeniaClass.Druid },
+                { "Bard", MedeniaClass.Bard },
+                { "Archer", MedeniaClass.Archer },
+                { "Summoner", MedeniaClass.Summoner }
+
+            };
+
+            // Default MedeniaClass if no match found
+            MedeniaClass defaultClass = MedeniaClass.NonMed;
+
+            // Check if className matches any mapping, otherwise use defaultClass
+            MedeniaClass medeniaClass = classMappings.TryGetValue(className, out MedeniaClass mappedClass)
+                ? mappedClass
+                : defaultClass;
+
+            client.SetMedeniaClass(medeniaClass);
+        }
+
+        internal void SetPreviousClass(Client client, string className)
+        {
+            Dictionary<string, PreviousClass> classMappings = new Dictionary<string, PreviousClass>
+            {
+                { "CMonk", PreviousClass.Monk },
+                { "CPriest", PreviousClass.Priest },
+                { "CMage", PreviousClass.Wizard },
+                { "CWarrior", PreviousClass.Warrior },
+                { "CWarror", PreviousClass.Warrior },
+                { "CRogue", PreviousClass.Rogue },
+                { "CThief", PreviousClass.Rogue },
+            };
+
+            // Default PreviousClass if no match found
+            PreviousClass defaultClass = PreviousClass.Pure;
+
+            // Check if text matches any mapping, otherwise use defaultClass
+            PreviousClass previousClass = classMappings.TryGetValue(className, out PreviousClass mappedClass)
+                ? mappedClass
+                : defaultClass;
+
+            client.SetPreviousClass(previousClass);
+        }
 
 
         /// <summary>

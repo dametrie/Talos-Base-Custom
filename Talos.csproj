@@ -96,6 +96,7 @@
     <Compile Include="Enumerations\StatUpdateFlags.cs" />
     <Compile Include="Enumerations\TemuairClass.cs" />
     <Compile Include="Enumerations\WaitEventResult.cs" />
+    <Compile Include="Forms\UI\ChatPanel.cs" />
     <Compile Include="Forms\ClientTab.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -35,15 +35,6 @@ namespace Talos.Forms
         {
             this.clientTabControl = new System.Windows.Forms.TabControl();
             this.mainCoverTab = new System.Windows.Forms.TabPage();
-            this.button6 = new System.Windows.Forms.Button();
-            this.textBox3 = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.button5 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
             this.coverMapInfoGrp = new System.Windows.Forms.GroupBox();
             this.mapInfoInfoLbl = new System.Windows.Forms.Label();
             this.lastClickedSpriteLbl = new System.Windows.Forms.Label();
@@ -474,6 +465,26 @@ namespace Talos.Forms
             this.clearPacketLogBtn = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleDialogBtn = new System.Windows.Forms.ToolStripButton();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.creatureHashListBox = new System.Windows.Forms.ListBox();
+            this.worldObjectListBox = new System.Windows.Forms.ListBox();
+            this.targetName = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.spellName = new System.Windows.Forms.TextBox();
+            this.button13 = new System.Windows.Forms.Button();
+            this.button7 = new System.Windows.Forms.Button();
+            this.textBox4 = new System.Windows.Forms.TextBox();
+            this.textBox5 = new System.Windows.Forms.TextBox();
+            this.textBox6 = new System.Windows.Forms.TextBox();
+            this.button8 = new System.Windows.Forms.Button();
+            this.button9 = new System.Windows.Forms.Button();
+            this.button10 = new System.Windows.Forms.Button();
+            this.button11 = new System.Windows.Forms.Button();
+            this.button12 = new System.Windows.Forms.Button();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.startStrip = new System.Windows.Forms.ToolStripMenuItem();
             this.clearStrip = new System.Windows.Forms.ToolStripMenuItem();
@@ -489,6 +500,8 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manaBar = new Talos.Forms.UI.ResourceBar();
             this.healthBar = new Talos.Forms.UI.ResourceBar();
+            this.button1 = new System.Windows.Forms.Button();
+            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -597,6 +610,7 @@ namespace Talos.Forms
             this.packetBottomPanel.SuspendLayout();
             this.packetBottomRightPanel.SuspendLayout();
             this.packetStrip.SuspendLayout();
+            this.tabPage1.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -613,6 +627,7 @@ namespace Talos.Forms
             this.clientTabControl.Controls.Add(this.comboTab);
             this.clientTabControl.Controls.Add(this.infoTab);
             this.clientTabControl.Controls.Add(this.packetTab);
+            this.clientTabControl.Controls.Add(this.tabPage1);
             this.clientTabControl.ForeColor = System.Drawing.Color.Black;
             this.clientTabControl.HotTrack = true;
             this.clientTabControl.Location = new System.Drawing.Point(0, 24);
@@ -626,15 +641,6 @@ namespace Talos.Forms
             // mainCoverTab
             // 
             this.mainCoverTab.BackColor = System.Drawing.Color.White;
-            this.mainCoverTab.Controls.Add(this.button6);
-            this.mainCoverTab.Controls.Add(this.textBox3);
-            this.mainCoverTab.Controls.Add(this.textBox2);
-            this.mainCoverTab.Controls.Add(this.textBox1);
-            this.mainCoverTab.Controls.Add(this.button5);
-            this.mainCoverTab.Controls.Add(this.button4);
-            this.mainCoverTab.Controls.Add(this.button3);
-            this.mainCoverTab.Controls.Add(this.button2);
-            this.mainCoverTab.Controls.Add(this.button1);
             this.mainCoverTab.Controls.Add(this.coverMapInfoGrp);
             this.mainCoverTab.Controls.Add(this.lastClickedSpriteLbl);
             this.mainCoverTab.Controls.Add(this.mpLbl);
@@ -646,96 +652,13 @@ namespace Talos.Forms
             this.mainCoverTab.Controls.Add(this.coverEXPGrp);
             this.mainCoverTab.Controls.Add(this.manaBar);
             this.mainCoverTab.Controls.Add(this.healthBar);
+            this.mainCoverTab.Controls.Add(this.chatPanel);
             this.mainCoverTab.ForeColor = System.Drawing.Color.Black;
             this.mainCoverTab.Location = new System.Drawing.Point(4, 24);
             this.mainCoverTab.Name = "mainCoverTab";
             this.mainCoverTab.Size = new System.Drawing.Size(842, 516);
             this.mainCoverTab.TabIndex = 0;
             this.mainCoverTab.Text = "Cover";
-            // 
-            // button6
-            // 
-            this.button6.Location = new System.Drawing.Point(458, 406);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(139, 23);
-            this.button6.TabIndex = 143;
-            this.button6.Text = "Stop Walking";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
-            // 
-            // textBox3
-            // 
-            this.textBox3.Location = new System.Drawing.Point(493, 345);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(100, 23);
-            this.textBox3.TabIndex = 142;
-            this.textBox3.TextChanged += new System.EventHandler(this.textBox3_TextChanged);
-            // 
-            // textBox2
-            // 
-            this.textBox2.Location = new System.Drawing.Point(493, 316);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(100, 23);
-            this.textBox2.TabIndex = 141;
-            this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
-            // 
-            // textBox1
-            // 
-            this.textBox1.Location = new System.Drawing.Point(493, 287);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(100, 23);
-            this.textBox1.TabIndex = 140;
-            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
-            // 
-            // button5
-            // 
-            this.button5.Location = new System.Drawing.Point(412, 309);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(75, 23);
-            this.button5.TabIndex = 139;
-            this.button5.Text = "set location";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
-            // 
-            // button4
-            // 
-            this.button4.Location = new System.Drawing.Point(394, 374);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(75, 23);
-            this.button4.TabIndex = 138;
-            this.button4.Text = "E";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(232, 374);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
-            this.button3.TabIndex = 137;
-            this.button3.Text = "W";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(313, 390);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 136;
-            this.button2.Text = "S";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(313, 356);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 135;
-            this.button1.Text = "N";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // coverMapInfoGrp
             // 
@@ -5996,6 +5919,200 @@ namespace Talos.Forms
             this.toggleDialogBtn.Text = "Block Dialogs";
             this.toggleDialogBtn.Click += new System.EventHandler(this.toggleDialogBtn_Click);
             // 
+            // tabPage1
+            // 
+            this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.button1);
+            this.tabPage1.Controls.Add(this.label13);
+            this.tabPage1.Controls.Add(this.label12);
+            this.tabPage1.Controls.Add(this.creatureHashListBox);
+            this.tabPage1.Controls.Add(this.worldObjectListBox);
+            this.tabPage1.Controls.Add(this.targetName);
+            this.tabPage1.Controls.Add(this.label11);
+            this.tabPage1.Controls.Add(this.label10);
+            this.tabPage1.Controls.Add(this.label9);
+            this.tabPage1.Controls.Add(this.spellName);
+            this.tabPage1.Controls.Add(this.button13);
+            this.tabPage1.Controls.Add(this.button7);
+            this.tabPage1.Controls.Add(this.textBox4);
+            this.tabPage1.Controls.Add(this.textBox5);
+            this.tabPage1.Controls.Add(this.textBox6);
+            this.tabPage1.Controls.Add(this.button8);
+            this.tabPage1.Controls.Add(this.button9);
+            this.tabPage1.Controls.Add(this.button10);
+            this.tabPage1.Controls.Add(this.button11);
+            this.tabPage1.Controls.Add(this.button12);
+            this.tabPage1.ForeColor = System.Drawing.Color.Black;
+            this.tabPage1.Location = new System.Drawing.Point(4, 24);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Size = new System.Drawing.Size(842, 516);
+            this.tabPage1.TabIndex = 14;
+            this.tabPage1.Text = "DEBUG";
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(208, 320);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(71, 15);
+            this.label13.TabIndex = 153;
+            this.label13.Text = "Creature IDs";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(34, 320);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(96, 15);
+            this.label12.TabIndex = 152;
+            this.label12.Text = "World Object IDs";
+            // 
+            // creatureHashListBox
+            // 
+            this.creatureHashListBox.FormattingEnabled = true;
+            this.creatureHashListBox.ItemHeight = 15;
+            this.creatureHashListBox.Location = new System.Drawing.Point(190, 349);
+            this.creatureHashListBox.Name = "creatureHashListBox";
+            this.creatureHashListBox.Size = new System.Drawing.Size(106, 154);
+            this.creatureHashListBox.TabIndex = 151;
+            // 
+            // worldObjectListBox
+            // 
+            this.worldObjectListBox.FormattingEnabled = true;
+            this.worldObjectListBox.ItemHeight = 15;
+            this.worldObjectListBox.Location = new System.Drawing.Point(27, 349);
+            this.worldObjectListBox.Name = "worldObjectListBox";
+            this.worldObjectListBox.Size = new System.Drawing.Size(103, 154);
+            this.worldObjectListBox.TabIndex = 150;
+            // 
+            // targetName
+            // 
+            this.targetName.Location = new System.Drawing.Point(251, 261);
+            this.targetName.Name = "targetName";
+            this.targetName.Size = new System.Drawing.Size(125, 23);
+            this.targetName.TabIndex = 149;
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(410, 117);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(14, 15);
+            this.label11.TabIndex = 148;
+            this.label11.Text = "Y";
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(410, 88);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(14, 15);
+            this.label10.TabIndex = 147;
+            this.label10.Text = "X";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(394, 59);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(42, 15);
+            this.label9.TabIndex = 146;
+            this.label9.Text = "mapID";
+            // 
+            // spellName
+            // 
+            this.spellName.Location = new System.Drawing.Point(112, 261);
+            this.spellName.Name = "spellName";
+            this.spellName.Size = new System.Drawing.Size(100, 23);
+            this.spellName.TabIndex = 145;
+            // 
+            // button13
+            // 
+            this.button13.Location = new System.Drawing.Point(17, 261);
+            this.button13.Name = "button13";
+            this.button13.Size = new System.Drawing.Size(75, 23);
+            this.button13.TabIndex = 144;
+            this.button13.Text = "Cast Spell";
+            this.button13.UseVisualStyleBackColor = true;
+            this.button13.Click += new System.EventHandler(this.button13_Click);
+            // 
+            // button7
+            // 
+            this.button7.Location = new System.Drawing.Point(583, 74);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(139, 23);
+            this.button7.TabIndex = 143;
+            this.button7.Text = "Stop Walking";
+            this.button7.UseVisualStyleBackColor = true;
+            this.button7.Click += new System.EventHandler(this.button7_Click);
+            // 
+            // textBox4
+            // 
+            this.textBox4.Location = new System.Drawing.Point(442, 114);
+            this.textBox4.Name = "textBox4";
+            this.textBox4.Size = new System.Drawing.Size(100, 23);
+            this.textBox4.TabIndex = 142;
+            // 
+            // textBox5
+            // 
+            this.textBox5.Location = new System.Drawing.Point(442, 85);
+            this.textBox5.Name = "textBox5";
+            this.textBox5.Size = new System.Drawing.Size(100, 23);
+            this.textBox5.TabIndex = 141;
+            // 
+            // textBox6
+            // 
+            this.textBox6.Location = new System.Drawing.Point(442, 56);
+            this.textBox6.Name = "textBox6";
+            this.textBox6.Size = new System.Drawing.Size(100, 23);
+            this.textBox6.TabIndex = 140;
+            // 
+            // button8
+            // 
+            this.button8.Location = new System.Drawing.Point(291, 74);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(97, 23);
+            this.button8.TabIndex = 139;
+            this.button8.Text = "set location";
+            this.button8.UseVisualStyleBackColor = true;
+            this.button8.Click += new System.EventHandler(this.button8_Click);
+            // 
+            // button9
+            // 
+            this.button9.Location = new System.Drawing.Point(179, 74);
+            this.button9.Name = "button9";
+            this.button9.Size = new System.Drawing.Size(75, 23);
+            this.button9.TabIndex = 138;
+            this.button9.Text = "E";
+            this.button9.UseVisualStyleBackColor = true;
+            // 
+            // button10
+            // 
+            this.button10.Location = new System.Drawing.Point(17, 74);
+            this.button10.Name = "button10";
+            this.button10.Size = new System.Drawing.Size(75, 23);
+            this.button10.TabIndex = 137;
+            this.button10.Text = "W";
+            this.button10.UseVisualStyleBackColor = true;
+            // 
+            // button11
+            // 
+            this.button11.Location = new System.Drawing.Point(98, 90);
+            this.button11.Name = "button11";
+            this.button11.Size = new System.Drawing.Size(75, 23);
+            this.button11.TabIndex = 136;
+            this.button11.Text = "S";
+            this.button11.UseVisualStyleBackColor = true;
+            // 
+            // button12
+            // 
+            this.button12.Location = new System.Drawing.Point(98, 56);
+            this.button12.Name = "button12";
+            this.button12.Size = new System.Drawing.Size(75, 23);
+            this.button12.TabIndex = 135;
+            this.button12.Text = "N";
+            this.button12.UseVisualStyleBackColor = true;
+            // 
             // menuStrip
             // 
             this.menuStrip.BackColor = System.Drawing.Color.White;
@@ -6099,6 +6216,19 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.fullscreenToolStripMenuItem.Text = "Fullscreen";
             // 
+            // chatPanel
+            // 
+            this.chatPanel.BackColor = System.Drawing.Color.White;
+            this.chatPanel.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel.AutoDetectUrls = true;
+            this.chatPanel.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel.Name = "chatPanel";
+            this.chatPanel.Size = new Size(508, 225);
+            this.chatPanel.TabIndex = 0;
+            this.chatPanel.Text = "";
+            this.chatPanel.ReadOnly = true;
+            this.chatPanel.Font = new Font("Courier New", 9f, FontStyle.Bold, GraphicsUnit.Point, 0);
+            // 
             // manaBar
             // 
             this.manaBar.BackColor = System.Drawing.Color.White;
@@ -6121,6 +6251,16 @@ namespace Talos.Forms
             this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.healthBar.TabIndex = 14;
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(413, 260);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(112, 23);
+            this.button1.TabIndex = 154;
+            this.button1.Text = "RemoveShield";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click_1);
+            // 
             // ClientTab
             // 
             this.AllowDrop = true;
@@ -6137,7 +6277,6 @@ namespace Talos.Forms
             this.Size = new System.Drawing.Size(850, 568);
             this.clientTabControl.ResumeLayout(false);
             this.mainCoverTab.ResumeLayout(false);
-            this.mainCoverTab.PerformLayout();
             this.coverMapInfoGrp.ResumeLayout(false);
             this.friendsGroup.ResumeLayout(false);
             this.strangerGroup.ResumeLayout(false);
@@ -6296,6 +6435,8 @@ namespace Talos.Forms
             this.packetBottomRightPanel.ResumeLayout(false);
             this.packetStrip.ResumeLayout(false);
             this.packetStrip.PerformLayout();
+            this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
             this.ResumeLayout(false);
@@ -6752,14 +6893,27 @@ namespace Talos.Forms
         internal Button pursuitIdsBtn;
         internal ResourceBar manaBar;
         internal ResourceBar healthBar;
-        private Button button4;
-        private Button button3;
-        private Button button2;
+        internal ChatPanel chatPanel;
+        internal TabPage tabPage1;
+        private TextBox spellName;
+        private Button button13;
+        private Button button7;
+        private TextBox textBox4;
+        private TextBox textBox5;
+        private TextBox textBox6;
+        private Button button8;
+        private Button button9;
+        private Button button10;
+        private Button button11;
+        private Button button12;
+        private Label label10;
+        private Label label9;
+        private Label label11;
+        private TextBox targetName;
+        internal ListBox creatureHashListBox;
+        internal ListBox worldObjectListBox;
+        private Label label13;
+        private Label label12;
         private Button button1;
-        private Button button5;
-        private TextBox textBox3;
-        private TextBox textBox2;
-        private TextBox textBox1;
-        private Button button6;
     }
 }

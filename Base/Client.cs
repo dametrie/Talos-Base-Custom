@@ -20,6 +20,8 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 using System.Xml.Linq;
 using Talos.Properties;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
+using System.ComponentModel;
 
 
 namespace Talos
@@ -87,7 +89,6 @@ namespace Talos
         internal Dugon _dugon;
         internal string _npcDialog;
         internal string _currentSkill = "";
-        internal string _currentSpell = "";
         internal string _currentItem = "";
         internal bool _safeScreen;
         internal bool _inArena = false;
@@ -100,11 +101,13 @@ namespace Talos
         internal bool _bool_39;
         internal bool _overrideMapFlags;
         internal bool _mapChangePending;
+        internal bool _isRegistered = true;
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
         internal int _spellCounter;
+        private int _customSpellLineCounter;
         internal byte _comboScrollCounter;
-        internal Spell _spell;
+        internal Spell _currentSpell;
         internal System.Windows.Forms.Timer _spellTimer;
 
         internal readonly object Lock = new object();
@@ -112,12 +115,13 @@ namespace Talos
         internal AutoResetEvent _walkSignal = new AutoResetEvent(false); 
         
         internal List<Staff> _staffList = new List<Staff>();
-
         internal List<MeleeWeapon> _meleeList = new List<MeleeWeapon>();
-
         internal List<Bow> _bowList = new List<Bow>();
-        
         internal List<CreatureToSpell> _creatureToSpellList = new List<CreatureToSpell>();
+
+        internal BindingList<int> _worldObjectBindingList = new BindingList<int>();
+        internal BindingList<int> _creatureBindingList = new BindingList<int>();
+
 
         private readonly List<string> _archerSpells = new List<string>
         {
@@ -148,15 +152,17 @@ namespace Talos
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
 
+
         internal Thread WalkThread { get; set; }    
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
         internal Dialog Dialog { get; set; }
         internal Inventory Inventory { get; set; } = new Inventory(60);
-        internal Item[] Item { get; set; } = new Item[20];
+        internal Item[] EquippedItems { get; set; } = new Item[20];
         internal Spellbook Spellbook { get; set; } = new Spellbook();
         internal Skillbook Skillbook { get; set; } = new Skillbook();
         internal string Name { get; set; }
+        internal string GuildName { get; set; }
         internal byte Path { get; set; }
         internal byte StepCount { get; set; }
         internal DateTime LastStep { get; set; }
@@ -166,6 +172,8 @@ namespace Talos
         internal bool InMonsterForm { get; set; }
         internal Player Player { get; set; }
         internal Creature CreatureTarget {  get; set; }
+        internal Nation Nation { get; set; }
+
         internal int Health
         {
             get
@@ -274,15 +282,12 @@ namespace Talos
         }
         internal bool CanUseSpell(Spell spell, Creature creature = null)
         {
-            if (spell.CanUse && _map.CanUseSpells && (creature == null || CreatureHashSet.Contains(creature.ID)))
+            if (spell.CanUse && _map.CanUseSpells && (creature == null || creature == Player || CreatureHashSet.Contains(creature.ID)))
             {
-                if (AoSuainHashSet.Contains(spell.Name))
-                    return true;
+                if (HasEffect(EffectsBar.Pramh) || HasEffect(EffectsBar.Suain))
+                    return AoSuainHashSet.Contains(spell.Name);
 
-                if (!HasEffect(EffectsBar.Pramh))
-                    return !HasEffect(EffectsBar.Suain);
-
-                return false;
+                return true; // If neither Pramh nor Suain is active, always return true
             }
             return false;
         }
@@ -584,7 +589,7 @@ namespace Talos
             DateTime utcNow = DateTime.UtcNow;
             while (true)
             {
-                if (_spell != null)
+                if (_currentSpell != null)
                 {
                     if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 1.5))
                     {
@@ -595,7 +600,7 @@ namespace Talos
                 }
                 return true;
             }
-            _spell = null;
+            _currentSpell = null;
             return false;
         }
         internal void SeeGhosts(Player player)
@@ -613,35 +618,40 @@ namespace Talos
             return _serverLocation.DistanceFrom(sprite.Location) <= dist;
         }
 
-        private bool SwapWeapon(Spell spell, out byte castLines)
+        private bool CheckWeaponCastLines(Spell spell, out byte castLines)
         {
+            bool swappingWeapons = false;
             castLines = spell.CastLines;
-            Staff staff = new Staff();
-            Item obj = Item[1];
-            Bow Bow = (obj != null && obj.IsBow) ? Item[1].Bow : new Bow();
+           
+            Item obj = EquippedItems[1];
+            Bow bow = (obj != null && obj.IsBow) ? EquippedItems[1].Bow : new Bow();
+            Staff staff = (obj != null && obj.IsStaff) ? EquippedItems[1].Staff : new Staff();
+            MeleeWeapon meleeWeapon = (obj != null && obj.IsMeleeWeapon) ? EquippedItems[1].Melee : new MeleeWeapon();
+
+
             bool hasArcherSpells = _archerSpells.Any((string spellName) => spell.Name.Contains(spellName) || spell.Name.Equals(spellName, StringComparison.InvariantCultureIgnoreCase));
             DateTime utcNow = DateTime.UtcNow;
             if (hasArcherSpells && int.TryParse(Skillbook.SkillbookDictionary.Keys.FirstOrDefault((string string_0) => string_0.Contains("Archery ")).Replace("Archery ", ""), out int currentArcherySkill))
             {
                 foreach (Item item in new List<Item>(Inventory))
                 {
-                    if (item.IsBow && item.Bow.CanUse(Ability, currentArcherySkill) && item.Bow.AbilityRequired > Bow.AbilityRequired)
+                    if (item.IsBow && item.Bow.CanUse(Ability, currentArcherySkill) && item.Bow.AbilityRequired > bow.AbilityRequired)
                     {
-                        Bow = item.Bow;
+                        bow = item.Bow;
                     }
                 }
-                string text = Bow.Name;
-                Item obj2 = Item[1];
-                if (text.Equals(((obj2 != null && obj2.IsBow) ? Item[1].Bow : new Bow()).Name, StringComparison.CurrentCultureIgnoreCase))
+                string text = bow.Name;
+                Item obj2 = EquippedItems[1];
+                if (text.Equals(((obj2 != null && obj2.IsBow) ? EquippedItems[1].Bow : new Bow()).Name, StringComparison.CurrentCultureIgnoreCase))
                 {
                     return true;
                 }
                 RemoveShield();
-                UseItem(Bow.Name);
+                UseItem(bow.Name);
                 while (true)
                 {
-                    Item obj3 = Item[1];
-                    if (obj3 != null && obj3.Name.Equals(Bow.Name, StringComparison.CurrentCultureIgnoreCase))
+                    Item obj3 = EquippedItems[1];
+                    if (obj3 != null && obj3.Name.Equals(bow.Name, StringComparison.CurrentCultureIgnoreCase))
                     {
                         break;
                     }
@@ -659,11 +669,19 @@ namespace Talos
             }
             else
             {
-                foreach (Item item2 in new List<Item>(Inventory))
+                foreach (Item item in Inventory.Where(i => i.IsStaff))
                 {
-                    if (item2.IsStaff && item2.Staff.CanUse(Ability, Level, ToNextLevel, _temuairClass) && item2.Staff.CastLines[spell.Name] < spell.CastLines && (item2.Staff.AbilityRequired > staff.AbilityRequired || item2.Staff.InsightRequired > staff.InsightRequired || (!staff.MasterRequired && item2.Staff.MasterRequired)))
+                    if (item.Staff.CanUse(Ability, Level, ToNextLevel, _temuairClass))
                     {
-                        staff = item2.Staff;
+                        if (item.Staff.CastLines[spell.Name] < spell.CastLines)
+                        {
+                            if(item.Staff.AbilityRequired > staff.AbilityRequired || item.Staff.InsightRequired >= staff.InsightRequired || (item.Staff.MasterRequired && !staff.MasterRequired))
+                            {
+                                staff = item.Staff;
+                                swappingWeapons = true;
+                                break; // Exit the loop early since we found a suitable staff
+                            }
+                        }
                     }
                 }
                 if (staff.Name == new Staff().Name)
@@ -674,29 +692,34 @@ namespace Talos
                     }
                     staff = _staffList[0];
                 }
-                RemoveShield();
-                if (staff.Name == "Barehand")
+                
+                if (swappingWeapons)
                 {
                     RemoveShield();
-                }
-                else
-                {
-                    UseItem(staff.Name);
-                }
-                while (Spellbook[spell.Name]?.CastLines != staff.CastLines[spell.Name])
-                {
-                    if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
+                    if (staff.Name == "Barehand")
                     {
-                        ClientTab.Invoke((Action)delegate
-                        {
-                            //ClientTab.currentAction.Text = action + "Swapping to " + staff.Name;//Adam
-                        });
-                        Thread.Sleep(5);
-                        continue;
+                        RemoveShield();
                     }
-                    return false;
+                    else
+                    {
+                        Console.WriteLine($"Euipping {staff.Name} to cast {spell.Name}");
+                        UseItem(staff.Name);
+                    }
+                    while (Spellbook[spell.Name]?.CastLines != staff.CastLines[spell.Name])
+                    {
+                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
+                        {
+                            ClientTab.Invoke((Action)delegate
+                            {
+                                //ClientTab.currentAction.Text = action + "Swapping to " + staff.Name;//Adam
+                            });
+                            Thread.Sleep(5);
+                            continue;
+                        }
+                        return false;
+                    }
+                    Thread.Sleep(100);
                 }
-                Thread.Sleep(100);
             }
             castLines = Spellbook[spell.Name].CastLines;
             return true;
@@ -781,13 +804,6 @@ namespace Talos
             _meleeList.Add(new MeleeWeapon("Tilian Claw", 0, 99, true, true, TemuairClass.Monk));
             _meleeList.Add(new MeleeWeapon("Wolf Claw", 0, 50, false, true, TemuairClass.Monk));
             _meleeList.Add(new MeleeWeapon("Wolf Claws", 0, 50, false, true, TemuairClass.Monk));
-            foreach (Item item in new List<Item>(Inventory))
-            {
-                if (_meleeList.Any((MeleeWeapon melee) => melee.Name == item.Name))
-                {
-                    item.IsMeleeWeapon = true;
-                }
-            }
         }
         internal void LoadStavesAndBows()
         {
@@ -940,18 +956,27 @@ namespace Talos
             _staffList.Add(new Staff("Yowien's Claw1", AvailableSpellsAndCastLines, 65, 99, true, TemuairClass.Monk));
             _staffList.Add(new Staff("Blackstar Night Claw", AvailableSpellsAndCastLines, 95, 99, true, TemuairClass.Monk));
             //Adam Add Arsaid Aon weapons
-            foreach (Item item in new List<Item>(Inventory))
+        }
+
+        internal void CheckWeaponType(Item item)
+        {
+            if (_staffList.Any(Staff => Staff.Name == item.Name))
             {
-                if (_staffList.Any((Staff staff) => staff.Name == item.Name))
-                {
-                    item.IsStaff = true;
-                }
-                else if (_bowList.Any((Bow bow) => bow.Name == item.Name))
-                {
-                    item.IsBow = true;
-                }
+                item.IsStaff = true;
+                item.Staff = _staffList.First(Staff => Staff.Name == item.Name);
+            }
+            if (_bowList.Any(Bow => Bow.Name == item.Name))
+            {
+                item.IsBow = true;
+                item.Bow = _bowList.First(Bow => Bow.Name == item.Name);
+            }
+            if (_meleeList.Any(MeleeWeapon => MeleeWeapon.Name == item.Name))
+            {
+                item.IsMeleeWeapon = true;
+                item.Melee = _meleeList.First(MeleeWeapon =>  MeleeWeapon.Name == item.Name);
             }
         }
+
         private string[] LoadSavedChants(string spellName)
         {
             string[] chants = new string[10];
@@ -993,6 +1018,17 @@ namespace Talos
             return chants;
         }
 
+        private string ParseCustomSpellLines()
+        {
+            string[] array = Regex.Split(ClientTab.customLinesBox.Text, "\r\n");
+            _customSpellLineCounter++;
+            if (_customSpellLineCounter > array.Count() - 1)
+            {
+                _customSpellLineCounter = 0;
+            }
+            return array[_customSpellLineCounter];
+        }
+
         #region Packet methods
 
         internal void DisplayEntityRequest(int id)
@@ -1005,7 +1041,7 @@ namespace Talos
         internal bool UseItem(string itemName)
         {
             Item item = Inventory.FirstOrDefault((Item item2) => item2.Name.Equals(itemName, StringComparison.CurrentCultureIgnoreCase));
-            if (item != null && !HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && _server._stopCasting)
+            if (item != null && !HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && !_server._stopCasting)
             {
                 ClientPacket clientPacket = new ClientPacket(28);
                 clientPacket.WriteByte(item.Slot);
@@ -1079,12 +1115,16 @@ namespace Talos
                 }
 
                 byte castLines = sp.CastLines;
-                if (staffSwitch && SwapWeapon(sp, out castLines) && !CanUseSpell(sp, creature))//ADAM
+                if (staffSwitch)
                 {
-                    return false;
+                    if (!CheckWeaponCastLines(sp, out castLines))
+                    {
+                        Console.WriteLine("Error in Client.cs UseSpell: staffSwitch was true but SwapWeapon returned false");
+                        return false;
+                    }
                 }
 
-                if (_spell != sp)
+                if (_currentSpell != sp)
                 {
                     ClientTab.Invoke((Action)delegate
                     {
@@ -1095,7 +1135,7 @@ namespace Talos
                 ClientPacket clientPacket = new ClientPacket(15);
                 clientPacket.WriteByte(sp.Slot);
 
-                if (creature != null && CreatureHashSet.Contains(creature.ID))
+                if (creature != null && (CreatureHashSet.Contains(creature.ID) || creature is Player))
                 {
                     clientPacket.WriteInt32(creature.ID);
                     clientPacket.WriteStruct(creature.Location);
@@ -1108,55 +1148,91 @@ namespace Talos
                         _isCasting = false;
                         return false;
                     }
-
                     string[] chantArray = LoadSavedChants(spellName);
                     lock (Lock)
                     {
                         _isCasting = true;
-                        ClientPacket class3 = new ClientPacket(77); //begin chant
-                        class3.WriteByte(castLines);
-                        Enqueue(class3);
-
+                        ClientPacket chantPacket = new ClientPacket(77);//begin chant
+                        chantPacket.WriteByte(castLines);
+                        Enqueue(chantPacket);
                         for (int i = 0; i < castLines; i++)
                         {
-                            if (!IsValidSpell(this, sp.Name, creature))
+                            if (ClientTab.hideLinesCbox.Checked)
+                            {
+                                DisplayChant(" ");
+                            }
+                            else if (!string.IsNullOrWhiteSpace(ClientTab.customLinesBox.Text))// && !tasks.shouldBotStop)//ADAM
+                            {
+                                DisplayChant(ParseCustomSpellLines());
+                            }
+                            else if (!string.IsNullOrWhiteSpace(chantArray[i]))
+                            {
+                                DisplayChant(chantArray[i]);
+                            }
+                            DateTime utcNow = DateTime.UtcNow;
+                            //Client client = (creature != null) ? Server.method_76(creature.Name) : this;
+                            while (DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds < 1000.0)
+                            {
+                                if (!IsValidSpell(this, sp.Name, creature))
+                                {
+                                    _isCasting = false;
+                                    return false;
+                                }
+                                Thread.Sleep(10);
+                            }
+                            if (!_isCasting || !CanUseSpell(sp, creature))
                             {
                                 _isCasting = false;
                                 return false;
                             }
-                            Thread.Sleep(10);
                         }
-
-                        if (sp.Name == "fas spiorad" && ClientTab.safeFSCbox.Checked)
+                        if (ClientTab.hideLinesCbox.Checked)
                         {
-                            if (!int.TryParse(ClientTab.safeFSTbox.Text, out int result) || Health < result)
+                            DisplayChant(" ");
+                        }
+                        else
+                        {
+                            if (sp.Name == "fas spiorad" && !Tasks.needFasSpiorad && !Tasks.bool_17)//ADAM
                             {
                                 _isCasting = false;
                                 return false;
                             }
+                            DisplayChant(sp.Name);
                         }
-
-                        CreatureTarget = creature ?? Player;
-
-                        if (ReadyToSpell(sp.Name))
-                        {
-                            _creatureToSpellList.Add(new CreatureToSpell(sp, CreatureTarget));
-                        }
-
-                        Enqueue(clientPacket);
-                        _spellCounter++;
-                        //Tasks.dateTime_5 = DateTime.UtcNow;ADAM
-                        sp.LastUsed = DateTime.UtcNow;
-                        _isCasting = false;
-                        _spell = keepSpellAfterUse ? sp : null;
-                        if (sp.Name != "Gem Polishing" || sp.Name.Contains("Prayer"))
-                        {
-                            _spell = sp;
-                        }
-                        return !keepSpellAfterUse || ClearSpell();
                     }
                 }
-                return false;
+                if (sp.Name == "fas spiorad" && ClientTab.safeFSCbox.Checked)
+                {
+                    if (!int.TryParse(ClientTab.safeFSTbox.Text, out int result))
+                    {
+                        if ((double)Stats.CurrentHP < (double)Stats.MaximumMP * 0.5)
+                        {
+                            _isCasting = false;
+                            return false;
+                        }
+                    }
+                    else if (Stats.CurrentHP < result)
+                    {
+                        _isCasting = false;
+                        return false;
+                    }
+                }
+                this.CreatureTarget = (creature ?? Player);
+                if (ReadyToSpell(sp.Name))
+                {
+                    _creatureToSpellList.Add(new CreatureToSpell(sp, CreatureTarget));
+                }
+                Enqueue(clientPacket);
+                _spellCounter++;
+                //Tasks.dateTime_5 = DateTime.UtcNow;ADAM
+                sp.LastUsed = DateTime.UtcNow;
+                _isCasting = false;
+                _currentSpell = (keepSpellAfterUse ? sp : null);
+                if (sp.Name != "Gem Polishing" || sp.Name.Contains("Prayer"))
+                {
+                    _currentSpell = sp;
+                }
+                return !keepSpellAfterUse || ClearSpell();
             }
         }
 

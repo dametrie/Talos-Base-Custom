@@ -21,6 +21,7 @@ namespace Talos.Objects
         internal bool IsBow { get; set; }
         internal Bow Bow { get; set; }
         internal Staff Staff { get; set; }
+        internal MeleeWeapon Melee { get; set; }
 
         internal Item(byte slot, ushort sprite, byte color, string name, int quantity, bool stackable, int maximumDurability, int currentDurability)
         {
@@ -30,6 +31,20 @@ namespace Talos.Objects
             Name = name;
             Quantity = quantity;
             Stackable = stackable;
+            MaximumDurability = maximumDurability;
+            CurrentDurability = currentDurability;
+            LastUsed = DateTime.MinValue;
+            IsRenamed = false;
+            IsIdentified = false;
+        }
+
+        internal Item(byte slot, ushort sprite, byte color, string name, int quantity, int maximumDurability, int currentDurability)
+        {
+            Slot = slot;
+            Sprite = sprite;
+            Color = color;
+            Name = name;
+            Quantity = quantity;
             MaximumDurability = maximumDurability;
             CurrentDurability = currentDurability;
             LastUsed = DateTime.MinValue;

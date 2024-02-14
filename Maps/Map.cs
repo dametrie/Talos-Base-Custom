@@ -36,6 +36,8 @@ namespace Talos.Maps
             Flags = flags;
             Name = name;
             Music = music;
+            CanUseSkills = true;
+            CanUseSpells = true;
             Tiles = new Dictionary<Point, Tile>();
             Exits = new Dictionary<Point, Warp>();
             WorldMaps = new Dictionary<Point, WorldMap>();
@@ -49,6 +51,8 @@ namespace Talos.Maps
             Flags = flags;
             Checksum = checksum;
             Name = name;
+            CanUseSkills = true;
+            CanUseSpells = true;
             Tiles = new Dictionary<Point, Tile>();
             Exits = new Dictionary<Point, Warp>();
             WorldMaps = new Dictionary<Point, WorldMap>();
