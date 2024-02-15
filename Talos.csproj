@@ -54,11 +54,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AStar\Pathfinding.cs" />
-    <Compile Include="Base\Bot.cs" />
+    <Compile Include="Base\BotBase.cs" />
     <Compile Include="Base\Client.cs" />
     <Compile Include="Base\Program.cs" />
     <Compile Include="Base\Server.cs" />
-    <Compile Include="Base\Tasks.cs" />
+    <Compile Include="Base\Bot.cs" />
     <Compile Include="Capricorn\Drawing\DAGraphics.cs" />
     <Compile Include="Capricorn\Drawing\EPFFrame.cs" />
     <Compile Include="Capricorn\Drawing\EPFImage.cs" />
@@ -95,6 +95,7 @@
     <Compile Include="Enumerations\PreviousClass.cs" />
     <Compile Include="Enumerations\ProcessAccess.cs" />
     <Compile Include="Enumerations\ProcessCreationFlags.cs" />
+    <Compile Include="Enumerations\ServerMessageType.cs" />
     <Compile Include="Enumerations\StatUpdateFlags.cs" />
     <Compile Include="Enumerations\TemuairClass.cs" />
     <Compile Include="Enumerations\WaitEventResult.cs" />

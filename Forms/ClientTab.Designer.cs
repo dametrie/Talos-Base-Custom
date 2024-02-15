@@ -3735,6 +3735,7 @@ namespace Talos.Forms
             this.unifiedGuildChatCbox.TabIndex = 1;
             this.unifiedGuildChatCbox.Text = "Unified Guild Chat";
             this.unifiedGuildChatCbox.UseVisualStyleBackColor = true;
+            this.unifiedGuildChatCbox.CheckedChanged += new System.EventHandler(this.unifiedGuildChatCbox_CheckedChanged);
             // 
             // mapFlagsGroup
             // 

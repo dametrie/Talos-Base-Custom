@@ -11,6 +11,7 @@ namespace Talos.Base
         internal bool _needFasSpiorad = true;
         internal bool _manaLessThanEightyPct = true;
         internal bool _shouldBotStop = false;
+        internal byte _fowlCount;
         internal Bot(Client client, Server server) : base(client, server) 
         { 
             

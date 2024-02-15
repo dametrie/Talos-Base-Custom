@@ -19,6 +19,7 @@ namespace Talos
         internal Server Server { get; private set; }
         internal int ThreadID { get; set; }
         private Dictionary<Client, TabPage> _clients = new Dictionary<Client, TabPage>();
+        internal Dictionary<string, DateTime> _consecutiveLogin = new Dictionary<string, DateTime>();
         private IntPtr _hWnd;
         public MainForm()
         {
@@ -31,6 +32,16 @@ namespace Talos
         private void MainForm_Load(object sender, EventArgs e)
         {
             Server = new Server(this);
+        }
+
+        internal void CheckBelt(Client client)
+        {
+            client._isCheckingBelt = true;
+            client.UseSkill("Sense");
+            while (client._isCheckingBelt)
+            {
+                Thread.Sleep(5);
+            }
         }
         internal void RemoveClient(Client client)
         {

@@ -11,6 +11,7 @@ using System.Threading;
 using System.Linq;
 using System.ComponentModel;
 using Talos.Base;
+using System.Collections.Generic;
 
 namespace Talos.Forms
 {
@@ -24,7 +25,17 @@ namespace Talos.Forms
         short textMap;
         short textX;
         short testY;
-            
+
+        internal List<string> chatPanelList = new List<string>
+        {
+            "",
+            "",
+            "",
+            "",
+            ""
+        };
+        internal ulong _sessionExperience;
+
         internal ClientTab(Client client)
         {
             _client = client;
@@ -90,6 +101,102 @@ namespace Talos.Forms
                     listBox.Refresh(); // Refresh the ListBox to reflect changes
                 });
             }
+        }
+
+        internal void AddMessageToChatPanel(System.Drawing.Color color, string message)
+        {
+            if (base.InvokeRequired)
+            {
+                Invoke((Action)delegate
+                {
+                    AddMessageToChatPanel(color, message);
+                });
+                return;
+            }
+            if (chatPanel.TextLength != 0)
+            {
+                message = System.Environment.NewLine + message;
+            }
+            MatchCollection matchCollection;
+            if ((matchCollection = Regex.Matches(message, "({=[a-zA-Z])")).Count > 0)
+            {
+                foreach (Match item in matchCollection)
+                {
+                    if (item.Success)
+                    {
+                        foreach (Group group in item.Groups)
+                        {
+                            message = message.Replace(group.Value, "");
+                        }
+                    }
+                }
+            }
+            _ = chatPanel.Text.Length;
+            bool flag = chatPanel.IsScrollBarAtBottom();
+            SetChatPanelTextColor(color);
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                chatPanel.AppendText(message);
+            }
+            SetChatPanelTextColor(chatPanel.ForeColor);
+            if (flag)
+            {
+                chatPanel.ScrollToCaret();
+            }
+        }
+        internal void UpdateChatPanel(string input)
+        {
+            // Use pattern matching to extract the first match from the input string
+            Match match = Regex.Match(input, @"(\[!|<!|[a-zA-Z]+)");
+
+            // If there is no match, return early
+            if (!match.Success)
+            {
+                return;
+            }
+
+            // Extract the matched text
+            string text = match.Groups[1].Value;
+
+            // Replace specific patterns with their corresponding replacements
+            text = text switch
+            {
+                "[!" => "!!",
+                "<!" => "!",
+                _ => text
+            };
+
+            // Update the chat panel list based on the extracted text
+            if (chatPanelList.Contains(text))
+            {
+                int index = chatPanelList.IndexOf(text);
+                ShiftListItemsDown(index);
+                chatPanelList[0] = text;
+            }
+            else
+            {
+                ShiftListItemsDown(chatPanelList.Count - 1);
+                chatPanelList[0] = text;
+            }
+        }
+
+        private void ShiftListItemsDown(int endIndex)
+        {
+            for (int i = endIndex; i > 0; i--)
+            {
+                chatPanelList[i] = chatPanelList[i - 1];
+            }
+        }
+
+        internal void SetChatPanelTextColor(System.Drawing.Color color)
+        {
+            chatPanel.SelectionStart = chatPanel.TextLength;
+            chatPanel.SelectionLength = 0;
+            chatPanel.SelectionColor = color;
+        }
+        private void unifiedGuildChatCbox_CheckedChanged(object sender, EventArgs e)
+        {
+            _client.UnifiedGuildChat = unifiedGuildChatCbox.Checked;
         }
         private void addMonsterText_Enter(object sender, EventArgs e)
         {

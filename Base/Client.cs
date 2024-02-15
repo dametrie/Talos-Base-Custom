@@ -58,6 +58,7 @@ namespace Talos.Base
         internal DateTime _lastWorldShout = DateTime.MinValue;
         internal DateTime _lastMapChange = DateTime.MinValue;
         internal DateTime _comboScrollLastUsed = DateTime.MinValue;
+        internal DateTime _arenaAnnounceTimer = DateTime.MinValue;
         internal Map _map;
         internal WorldMap _worldMap;
         internal Cheats _cheats;
@@ -69,6 +70,7 @@ namespace Talos.Base
         internal MedeniaClass _medeniaClass;
         internal PreviousClass _previousClass;
         internal Dugon _dugon;
+        internal Element _element;
         internal string _npcDialog;
         internal string _currentSkill = "";
         internal string _currentItem = "";
@@ -83,6 +85,7 @@ namespace Talos.Base
         internal bool _overrideMapFlags;
         internal bool _mapChangePending;
         internal bool _isRegistered = true;
+        internal bool _isCheckingBelt;
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
         internal int _spellCounter;
@@ -104,7 +107,6 @@ namespace Talos.Base
         internal BindingList<int> _worldObjectBindingList = new BindingList<int>();
         internal BindingList<int> _creatureBindingList = new BindingList<int>();
 
-
         private readonly List<string> _archerSpells = new List<string>
         {
         "Star Arrow",
@@ -114,6 +116,7 @@ namespace Talos.Base
         "Barrage"
         };
 
+        internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
         internal Dictionary<int, WorldObject> WorldObjects { get; private set; } = new Dictionary<int, WorldObject>();
         internal Dictionary<string, Player> NearbyPlayers { get; private set; } = new Dictionary<string, Player>();
         internal Dictionary<string, Player> NearbyGhosts { get; private set; } = new Dictionary<string, Player>();
@@ -134,7 +137,7 @@ namespace Talos.Base
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
 
-        internal Bot Tasks { get; set; }
+        internal Bot Bot { get; set; }
         internal Thread WalkThread { get; set; }
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
@@ -171,6 +174,7 @@ namespace Talos.Base
                 return mapName?.Contains("Coliseum") == true;
             }
         }
+        internal bool UnifiedGuildChat { get; set; }
         internal Player Player { get; set; }
         internal Creature CreatureTarget { get; set; }
         internal Nation Nation { get; set; }
@@ -220,7 +224,7 @@ namespace Talos.Base
             };
             _spellTimer.Tick += SpellTimerTick;
             Stats = new Statistics();
-            Tasks = new Bot(this, server);
+            Bot = new Bot(this, server);
 
 
         }
@@ -444,7 +448,7 @@ namespace Talos.Base
 
                     case 674409180: // Lyliac Plant
                     case 2793184655: // Lyliac Vineyard
-                        Tasks._needFasSpiorad = true;
+                        Bot._needFasSpiorad = true;
                         return false;
 
                     case 2996522388: //ao puinsein
@@ -558,7 +562,7 @@ namespace Talos.Base
                 case "Mesmerize":
                     return client != null && client.HasEffect(EffectsBar.Pramh);
                 case "fas spiorad":
-                    return !Tasks._needFasSpiorad && !Tasks._manaLessThanEightyPct;
+                    return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;
                 case "beag fas nadur":
                 case "fas nadur":
                 case "mor fas nadur":
@@ -1153,7 +1157,7 @@ namespace Talos.Base
                             {
                                 DisplayChant(" ");
                             }
-                            else if (!string.IsNullOrWhiteSpace(ClientTab.customLinesBox.Text) && !Tasks._shouldBotStop)
+                            else if (!string.IsNullOrWhiteSpace(ClientTab.customLinesBox.Text) && !Bot._shouldBotStop)
                             {
                                 DisplayChant(ParseCustomSpellLines());
                             }
@@ -1184,7 +1188,7 @@ namespace Talos.Base
                         }
                         else
                         {
-                            if (sp.Name == "fas spiorad" && !Tasks._needFasSpiorad && !Tasks._manaLessThanEightyPct)
+                            if (sp.Name == "fas spiorad" && !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct)
                             {
                                 _isCasting = false;
                                 return false;

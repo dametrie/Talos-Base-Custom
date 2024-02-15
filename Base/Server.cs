@@ -19,6 +19,11 @@ using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
 using Talos.Base;
+using System.Diagnostics;
+using System.Drawing;
+using System.Media;
+using System.Reflection;
+using Point = Talos.Structs.Point;
 
 
 namespace Talos
@@ -54,6 +59,10 @@ namespace Talos
         private bool _isMapping;
         internal bool _stopWalking;
         internal bool _stopCasting;
+
+        
+
+
 
 
         public static object Lock { get; internal set; } = new object();
@@ -531,7 +540,7 @@ namespace Talos
             }
             if (num == 3)
                 try { clientPacket.ReadStruct(); } catch { };
-            
+
             return true;
         }
 
@@ -696,7 +705,7 @@ namespace Talos
                         if (!client.WorldObjects.ContainsKey(id))
                             client.WorldObjects[id] = obj;
 
-                        if (!client.ObjectHashSet.Contains(id)) 
+                        if (!client.ObjectHashSet.Contains(id))
                             client.ObjectHashSet.Add(id);
 
                         client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, id);
@@ -732,8 +741,8 @@ namespace Talos
                         {
                             client.NearbyNPC[name] = creature;
                         }
-                        
-                      
+
+
 
                     }
                     count++;
@@ -865,8 +874,101 @@ namespace Talos
 
         private bool ServerMessage_0x0A_ServerMessage(Client client, ServerPacket serverPacket)
         {
-            return true;
+            byte num;
+            string str;
+            string str5;
+            Creature creature;
+            uint FNVhash;
+            Creature class4;
+            Spell spell;
+            try
+            {
+                num = serverPacket.ReadByte();
+                str = serverPacket.ReadString16();
+            }
+            catch
+            {
+                return false;
+            }
+            switch (num)
+            {
+                case (byte)ServerMessageType.Whisper:
+                    if (client.ClientTab != null)
+                    {
+                        client.ClientTab.AddMessageToChatPanel(Color.Magenta, str);
+                        client.ClientTab.UpdateChatPanel(str);
+                    }
+
+                    return true;
+
+                case (byte)ServerMessageType.OrangeBar1:
+                case (byte)ServerMessageType.OrangeBar2:
+                case (byte)ServerMessageType.OrangeBar3:
+                case (byte)ServerMessageType.OrangeBar5:
+                case (byte)ServerMessageType.NonScrollWindow:
+                case (byte)ServerMessageType.WoodenBoard:
+                    return true;
+
+
+                case (byte)ServerMessageType.UserOptions:
+                    string[] parts = str.Split(new[] { "ON", "OFF" }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length == 8)
+                    {
+                        string[] optionNames = { "Listen to whisper", "Join a group", "Listen to shout", "Believe in wisdom", "Believe in magic", "Exchange", "Fast Move", "Clan whisper" };
+                        client.UserOptions = optionNames.ToDictionary(option => option, option => parts[Array.IndexOf(optionNames, option)].Trim());
+                    }
+                    return true;
+
+                case (byte)ServerMessageType.ScrollWindow:
+                    if (str.Contains("DEFENSE NATURE:"))
+                    {
+                        string defenseNatureValue = str.Split(':')[1].Trim();
+                        if (defenseNatureValue == "No attributes")
+                            client._element = Element.None;
+                        else
+                            Enum.TryParse(defenseNatureValue, out client._element);
+                    }
+                    client._isCheckingBelt = false;
+                    return true;
+
+                case (byte)ServerMessageType.GroupChat:
+                    if (client.ClientTab != null)
+                    {
+                        client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.DarkOliveGreen, str);
+                        client.ClientTab.UpdateChatPanel(str);
+                    }
+                    return true;
+
+                case (byte)ServerMessageType.GuildChat:
+                    if (client.ClientTab != null)
+                    {
+                        client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.DarkCyan, str);
+                        client.ClientTab.UpdateChatPanel(str);
+                    }
+
+                    Match match = Regex.Match(str, @"^<!([a-zA-Z]+)> (.*)$");
+                    if (match.Success)
+                    {
+                        string senderName = match.Groups[1].Value;
+                        string message = match.Groups[2].Value;
+                        string formattedMessage = $"<!{senderName}({client.GuildName})> ";
+
+                        foreach (Client recipient in _clientList)
+                        {
+                            if (recipient.UnifiedGuildChat && recipient.GuildName != client.GuildName)
+                            {
+                                recipient.ServerMessage(12, formattedMessage + message);
+                            }
+                        }
+                    }
+                    return true;
+
+                default:
+                    return (num == 0x12);
+            }
+
         }
+
 
         private bool ServerMessage_0x0B_ConfirmClientWalk(Client client, ServerPacket serverPacket)
         {
@@ -896,6 +998,25 @@ namespace Talos
 
         private bool ServerMessage_0x0D_PublicMessage(Client client, ServerPacket serverPacket)
         {
+            byte type = serverPacket.ReadByte();
+            int ID = serverPacket.ReadInt32();
+            string message = serverPacket.ReadString8();
+
+            if ((client != null) && ((client._map != null) && (client._map.Name.Contains("Mount Giragan") && (client.WorldObjects.ContainsKey(ID) && ((client.WorldObjects[ID] is Creature) && !(client.WorldObjects[ID] is Player))))))
+            {
+                return false;
+            }
+            if ((client != null) && (client.ClientTab != null))
+            {
+                if (type == 1) //Worldshout
+                {
+                    client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.DarkOrchid, message);
+                }
+                else if (type == 0) //Normal chat message
+                {
+                    client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.Black, message);
+                }
+            }
             return true;
         }
 
@@ -919,7 +1040,7 @@ namespace Talos
                     }
 
                 }
-                else if (worldObject is Player) 
+                else if (worldObject is Player)
                 {
                     if (worldObject is Player)
                     {
@@ -1042,8 +1163,8 @@ namespace Talos
             int id = serverPacket.ReadInt32();
             byte who = serverPacket.ReadByte();
             byte percent = serverPacket.ReadByte();
-            if (client.WorldObjects.ContainsKey(id)) 
-            { 
+            if (client.WorldObjects.ContainsKey(id))
+            {
                 Creature creature = client.WorldObjects[id] as Creature;
                 if (creature == null)
                     return true;
@@ -1071,7 +1192,7 @@ namespace Talos
             if (client._overrideMapFlags)
                 serverPacket.Data[4] = (byte)client._mapFlags;
 
-            Map map = new Map(mapID, sizeX, sizeY, flags, checksum, name);  
+            Map map = new Map(mapID, sizeX, sizeY, flags, checksum, name);
 
             if (_maps.TryGetValue(map.MapID, out map) && (map.Checksum == checksum))
             {
@@ -1585,7 +1706,7 @@ namespace Talos
 
 
             Point point = serverPacket.ReadStruct();
-            Location location = new Location(client._clientLocation.MapID, point);  
+            Location location = new Location(client._clientLocation.MapID, point);
             Direction direction = (Direction)serverPacket.ReadByte();
             int id = serverPacket.ReadInt32();
             ushort headSprite = serverPacket.ReadUInt16();
