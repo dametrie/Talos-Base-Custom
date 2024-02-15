@@ -54,9 +54,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AStar\Pathfinding.cs" />
+    <Compile Include="Base\Bot.cs" />
     <Compile Include="Base\Client.cs" />
     <Compile Include="Base\Program.cs" />
     <Compile Include="Base\Server.cs" />
+    <Compile Include="Base\Tasks.cs" />
     <Compile Include="Capricorn\Drawing\DAGraphics.cs" />
     <Compile Include="Capricorn\Drawing\EPFFrame.cs" />
     <Compile Include="Capricorn\Drawing\EPFImage.cs" />

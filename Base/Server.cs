@@ -18,6 +18,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
+using Talos.Base;
 
 
 namespace Talos
@@ -816,7 +817,7 @@ namespace Talos
                     {
                         serverPacket.ReadByte();
                         stats.Blind = serverPacket.ReadByte();
-                        if (client.GetCheats(Cheats.NoBlind) && !client._inArena)
+                        if (client.GetCheats(Cheats.NoBlind) && !client.InArena)
                         {
                             serverPacket.Position--;
                             serverPacket.WriteByte(0);
@@ -854,8 +855,8 @@ namespace Talos
                 {
                     //client.ClientTab.DisplaySessionStats();
                     client.ClientTab.DisplayHPMP();
-                    Console.WriteLine("Health: " + stats.CurrentHP);
-                    Console.WriteLine("Mana: " + stats.CurrentMP);
+                    //Console.WriteLine("Health: " + stats.CurrentHP);
+                    //Console.WriteLine("Mana: " + stats.CurrentMP);
                 }
                 client.Attributes((StatUpdateFlags)num, stats);
                 return false;
@@ -1598,7 +1599,7 @@ namespace Talos
             else
             {
                 bodySprite = serverPacket.ReadByte();
-                if ((bodySprite == 0) && (client.GetCheats(Cheats.None | Cheats.SeeHidden) && !client._inArena))
+                if ((bodySprite == 0) && (client.GetCheats(Cheats.None | Cheats.SeeHidden) && !client.InArena))
                 {
                     serverPacket.Position--;
                     serverPacket.WriteByte(80);
@@ -1627,7 +1628,7 @@ namespace Talos
             nameTagStyle = serverPacket.ReadByte();
             name = serverPacket.ReadString8();
             groupName = serverPacket.ReadString8();
-            if ((bodySprite == 0) && (client.WorldObjects.ContainsKey(id) && (client.GetCheats(Cheats.None | Cheats.SeeHidden) && !client._inArena)))
+            if ((bodySprite == 0) && (client.WorldObjects.ContainsKey(id) && (client.GetCheats(Cheats.None | Cheats.SeeHidden) && !client.InArena)))
             {
                 serverPacket.Position -= (name.Length + groupName.Length) + 3;
                 nameTagStyle = ((id == client.PlayerID) || (form != 0)) ? nameTagStyle : ((byte)3);
@@ -1676,7 +1677,7 @@ namespace Talos
             player._isHidden = isHidden;
             player.NameTagStyle = nameTagStyle;
             player.GroupName = groupName;
-            if ((bodySprite == 0) || ((id == client.PlayerID) || client._inArena))
+            if ((bodySprite == 0) || ((id == client.PlayerID) || client.InArena))
             {
                 player.HeadSprite = headSprite;
                 player.BootsSprite = bootsSprite;
@@ -1888,7 +1889,7 @@ namespace Talos
             else if (client.EffectsBarHashSet.Contains(effect))
             {
                 client.EffectsBarHashSet.Remove(effect);
-                if ((effect == 19) && !client._inArena)//bday or incapacitate
+                if ((effect == 19) && !client.InArena)//bday or incapacitate
                 {
                     //ThreadPool.QueueUserWorkItem(new WaitCallback(client.ReEquipItem));//ADAM
                 }

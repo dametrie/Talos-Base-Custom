@@ -9,6 +9,7 @@ using Talos.Forms;
 using Talos.PInvoke;
 using Talos.Properties;
 using MapsCacheEditor;
+using Talos.Base;
 
 namespace Talos
 {

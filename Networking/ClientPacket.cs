@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using Talos;
+using Talos.Base;
 using Talos.Cryptography;
 using Talos.Enumerations;
 

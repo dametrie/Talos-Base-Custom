@@ -10,6 +10,7 @@ using Talos.Objects;
 using System.Threading;
 using System.Linq;
 using System.ComponentModel;
+using Talos.Base;
 
 namespace Talos.Forms
 {
@@ -117,7 +118,13 @@ namespace Talos.Forms
 
         private void effectBtn_Click(object sender, EventArgs e)
         {
-
+                ServerPacket serverPacket = new ServerPacket(41);
+                serverPacket.WriteUInt32(_client.PlayerID);
+                serverPacket.WriteUInt32(_client.PlayerID);
+                serverPacket.WriteUInt16((ushort)effectNum.Value);
+                serverPacket.WriteUInt16((ushort)effectNum.Value);
+                serverPacket.WriteUInt16(90);
+                _client.Enqueue(serverPacket);
         }
 
         private void spellBarIdsBtn_Click(object sender, EventArgs e)
