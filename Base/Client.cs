@@ -582,7 +582,7 @@ namespace Talos.Base
                 case "naomh aite":
                 case "mor naomh aite":
                 case "ard naomh aite":
-                    return client != null && client.HasEffect(EffectsBar.NaomhAite);
+                    return client != null && client.HasEffect(EffectsBar.Aite);
                 default:
                     return false;
             }
@@ -632,14 +632,13 @@ namespace Talos.Base
                         newCreature.Curse = curseName;
                         targetClient.WorldObjects[creatureID] = newCreature;
                     }
-                    // Assuming only one client needs to be processed per invocation
+
                     break;
                 }
             }
             catch (Exception ex)
             {
-                // Handle or log the exception
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"An error occurred when trying to update curse targets: {ex.Message}");
             }
         }
         internal void SeeGhosts(Player player)

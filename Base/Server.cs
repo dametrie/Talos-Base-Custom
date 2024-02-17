@@ -1019,10 +1019,10 @@ namespace Talos
                     break;
 
                 case 2552142370://"You have found sanctuary."
-                    client.AddEffect(EffectsBar.NaomhAite);
+                    client.AddEffect(EffectsBar.Aite);
                     break;
                 case 1508060010://"You feel vulnerable again."
-                    client.ClearEffect(EffectsBar.NaomhAite);
+                    client.ClearEffect(EffectsBar.Aite);
                     break;
 
                 case 2378444523://"You cast Disenchanter."
