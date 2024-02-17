@@ -136,6 +136,12 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
+        internal int _stuckCounter;
+        internal DateTime _lastFrozen;
+        internal int stuckCounter;
+        internal bool _inventoryFull;
+        internal string _offenseElement;
+        internal bool _shouldEquipBow;
 
         internal Bot Bot { get; set; }
         internal Thread WalkThread { get; set; }
@@ -599,6 +605,42 @@ namespace Talos.Base
             }
             _currentSpell = null;
             return false;
+        }
+
+        internal void UpdateCurseTargets(Client invokingClient, int creatureID, string curseName)
+        {
+            if (!invokingClient._map.Name.Contains("Plamit"))
+            {
+                return;
+            }
+
+            try
+            {
+                foreach (Client targetClient in _server._clientList)
+                {
+                    if (targetClient.WorldObjects.TryGetValue(creatureID, out WorldObject worldObject) && worldObject is Creature creature)
+                    {
+                        creature.CurseDuration = Spell.GetSpellDuration(curseName);
+                        creature.LastCursed = DateTime.UtcNow;
+                        creature.Curse = curseName;
+                    }
+                    else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
+                    {
+                        Creature newCreature = new Creature(originalCreature.ID, originalCreature.Name, originalCreature.Sprite, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
+                        newCreature.CurseDuration = Spell.GetSpellDuration(curseName);
+                        newCreature.LastCursed = DateTime.UtcNow;
+                        newCreature.Curse = curseName;
+                        targetClient.WorldObjects[creatureID] = newCreature;
+                    }
+                    // Assuming only one client needs to be processed per invocation
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle or log the exception
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
         }
         internal void SeeGhosts(Player player)
         {

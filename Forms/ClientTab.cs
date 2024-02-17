@@ -805,6 +805,11 @@ namespace Talos.Forms
         {
             _client.RemoveShield();
         }
+
+        internal void UpdateStrangerList()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
 

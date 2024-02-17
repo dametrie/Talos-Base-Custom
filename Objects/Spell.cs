@@ -37,7 +37,7 @@ namespace Talos.Objects
                 return true;
             }
         }
-        internal Dictionary<string, double> SpellDuration = new Dictionary<string, double>
+        internal static Dictionary<string, double> SpellDuration = new Dictionary<string, double>
         {
             { "dion", 10.0 },
             { "Draco Stance", 10.0 },
@@ -84,7 +84,7 @@ namespace Talos.Objects
             LastUsed = DateTime.MinValue;
         }
 
-        internal double GetSpellDuration(string spellName)
+        internal static double GetSpellDuration(string spellName)
         {
             if (SpellDuration.ContainsKey(spellName))
                 return SpellDuration[spellName];

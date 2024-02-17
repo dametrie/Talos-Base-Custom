@@ -12,6 +12,12 @@ namespace Talos.Base
         internal bool _manaLessThanEightyPct = true;
         internal bool _shouldBotStop = false;
         internal byte _fowlCount;
+        internal DateTime _lastKill = DateTime.MinValue;
+        internal DateTime _lastDisenchanterCast;
+        internal DateTime _lastGrimeScentCast;
+        internal bool _shouldAlertItemCap;
+        internal bool _recentlyAoSithed;
+
         internal Bot(Client client, Server server) : base(client, server) 
         { 
             
