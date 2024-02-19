@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using Talos.Structs;
+using Talos.Definitions;
 
 namespace Talos.PInvoke
 {
@@ -24,7 +25,7 @@ namespace Talos.PInvoke
         internal static extern UIntPtr GetProcAddress(IntPtr hModule, string procName);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern IntPtr OpenProcess(ProcessAccess processAccess, bool bInheritHandle, int processId);
+        internal static extern IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId);
 
         [DllImport("kernel32.dll", EntryPoint = "OpenProcess")]
         internal static extern IntPtr OpenProcess_1(uint uint_0, int int_0, int int_1);

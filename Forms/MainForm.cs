@@ -10,6 +10,7 @@ using Talos.PInvoke;
 using Talos.Properties;
 using MapsCacheEditor;
 using Talos.Base;
+using Talos.Definitions;
 
 namespace Talos
 {
@@ -94,7 +95,7 @@ namespace Talos
                 InjectDLL(intptr_, darkAgesPath.Replace("Darkages.exe", "dawnd.dll"));
             }
             using (ProcMemoryStream stream = new ProcMemoryStream(information.ProcessId,
-                ProcessAccess.VmOperation | ProcessAccess.VmRead | ProcessAccess.VmWrite))
+                ProcessAccessFlags.VmOperation | ProcessAccessFlags.VmRead | ProcessAccessFlags.VmWrite))
             {
                 if (noWalls)
                 {

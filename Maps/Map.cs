@@ -58,7 +58,7 @@ namespace Talos.Maps
             WorldMaps = new Dictionary<Point, WorldMap>();
         }
 
-        internal void Initialize(byte[] byte_3)
+        internal void Initialize(byte[] data)
         {
             Tiles.Clear();
             int index = 0;
@@ -67,10 +67,10 @@ namespace Talos.Maps
                 for (short x = 0; x < SizeX; x = (short)(x + 1))
                 {
                     Point key = new Point(x, y);
-                    short short_ = (short)(byte_3[index++] | (byte_3[index++] << 8));
-                    short short_2 = (short)(byte_3[index++] | (byte_3[index++] << 8));
-                    short short_3 = (short)(byte_3[index++] | (byte_3[index++] << 8));
-                    Tiles[key] = new Tile(short_, short_2, short_3);
+                    short bg = (short)(data[index++] | (data[index++] << 8));
+                    short lf = (short)(data[index++] | (data[index++] << 8));
+                    short rf = (short)(data[index++] | (data[index++] << 8));
+                    Tiles[key] = new Tile(bg, lf, rf);
                 }
             }
             IsLoaded = true;

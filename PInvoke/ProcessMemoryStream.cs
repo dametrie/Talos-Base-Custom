@@ -5,12 +5,13 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Talos.Definitions;
 
 namespace Talos.PInvoke
 {
     internal sealed class ProcMemoryStream : Stream, IDisposable
     {
-        private readonly ProcessAccess _accessType;
+        private readonly ProcessAccessFlags _accessType;
 
         private bool _disposed;
 
@@ -22,14 +23,14 @@ namespace Talos.PInvoke
 
         public override bool CanSeek => true;
 
-        public override bool CanRead => (_accessType & ProcessAccess.VmRead) > ProcessAccess.None;
+        public override bool CanRead => (_accessType & ProcessAccessFlags.VmRead) > ProcessAccessFlags.None;
 
-        public override bool CanWrite => (_accessType & (ProcessAccess.VmOperation | ProcessAccess.VmWrite)) > ProcessAccess.None;
+        public override bool CanWrite => (_accessType & (ProcessAccessFlags.VmOperation | ProcessAccessFlags.VmWrite)) > ProcessAccessFlags.None;
 
         public override long Length => throw new NotSupportedException("Length is not supported.");
 
 
-        internal ProcMemoryStream(int processId, ProcessAccess access)
+        public ProcMemoryStream(int processId, ProcessAccessFlags access)
         {
             ProcessId = processId;
             _accessType = access;
@@ -75,7 +76,7 @@ namespace Talos.PInvoke
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (this._disposed)
+            if (_disposed)
                 throw new ObjectDisposedException("ProcessMemoryStream");
             if (this._pocessHandle == IntPtr.Zero)
                 throw new InvalidOperationException("Process is not open.");
@@ -109,7 +110,7 @@ namespace Talos.PInvoke
             base.Close();
         }
 
-        protected void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (!_disposed)
             {

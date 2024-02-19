@@ -72,26 +72,9 @@
     <Compile Include="Cryptography\CRC.cs" />
     <Compile Include="Cryptography\CRC32.cs" />
     <Compile Include="Cryptography\Crypto.cs" />
-    <Compile Include="Enumerations\Cheats.cs" />
-    <Compile Include="Enumerations\CreatureType.cs" />
-    <Compile Include="Enumerations\Direction.cs" />
-    <Compile Include="Enumerations\Dugon.cs" />
-    <Compile Include="Enumerations\EffectsBar.cs" />
-    <Compile Include="Enumerations\Element.cs" />
-    <Compile Include="Enumerations\EncryptMethod.cs" />
-    <Compile Include="Enumerations\Mail.cs" />
-    <Compile Include="Enumerations\MapFlags.cs" />
-    <Compile Include="Enumerations\MedeniaClass.cs" />
-    <Compile Include="Enumerations\MessageColor.cs" />
-    <Compile Include="Enumerations\Nation.cs" />
-    <Compile Include="Enumerations\PreviousClass.cs" />
-    <Compile Include="Enumerations\ProcessAccess.cs" />
-    <Compile Include="Enumerations\ProcessCreationFlags.cs" />
-    <Compile Include="Enumerations\ServerMessageType.cs" />
-    <Compile Include="Enumerations\SpellAnimation.cs" />
-    <Compile Include="Enumerations\StatUpdateFlags.cs" />
-    <Compile Include="Enumerations\TemuairClass.cs" />
-    <Compile Include="Enumerations\WaitEventResult.cs" />
+    <Compile Include="Definitions\CONSTANTS.cs" />
+    <Compile Include="Definitions\Enums.cs" />
+    <Compile Include="Definitions\Flags.cs" />
     <Compile Include="Forms\AllyPage.cs">
       <SubType>UserControl</SubType>
     </Compile>

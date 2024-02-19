@@ -1154,49 +1154,49 @@ namespace Talos.Forms
             ally.AllyPage.allypictureCharacter.Image = image;
 
             aislingTabControl.TabPages.Add(tabPage);
-            UpdateNearbyAllyTable(name);
-            RefreshNearbyAllyTable();
+            //UpdateNearbyAllyTable(name);
+            //RefreshNearbyAllyTable();
             _client.Bot.UpdateAllyList(ally);
 
         }
 
-        internal void UpdateNearbyAllyTable(string name)
-        {
-            if (!nearbyAllyTable.Controls.ContainsKey(name))
-            {
-                return;
-            }
+        //internal void UpdateNearbyAllyTable(string name)
+        //{
+        //    if (!nearbyAllyTable.Controls.ContainsKey(name))
+        //    {
+        //        return;
+        //    }
 
-            Control allyControl = nearbyAllyTable.Controls[name];
+        //    Control allyControl = nearbyAllyTable.Controls[name];
 
-            WaitForCondition(allyControl, control => ((NearbyAlly)control).bool_0);
+        //    WaitForCondition(allyControl, control => ((NearbyAlly)control).bool_0);
 
-            allyControl.Dispose();
-        }
+        //    allyControl.Dispose();
+        //}
 
-        internal void UpdateNearbyEnemyTable(ushort sprite)
-        {
-            if (_client.Bot.EnemyPage != null || !nearbyEnemyTable.Controls.ContainsKey(sprite.ToString()))
-            {
-                return;
-            }
+        //internal void UpdateNearbyEnemyTable(ushort sprite)
+        //{
+        //    if (_client.Bot.EnemyPage != null || !nearbyEnemyTable.Controls.ContainsKey(sprite.ToString()))
+        //    {
+        //        return;
+        //    }
 
-            Control enemyControl = nearbyEnemyTable.Controls[sprite.ToString()];
+        //    Control enemyControl = nearbyEnemyTable.Controls[sprite.ToString()];
 
-            WaitForCondition(enemyControl, control => ((NearbyEnemy)control).bool_0);
+        //    WaitForCondition(enemyControl, control => ((NearbyEnemy)control).bool_0);
 
-            enemyControl.Dispose();
-        }
+        //    enemyControl.Dispose();
+        //}
 
-        private void RefreshNearbyAllyTable()
-        {
-            List<NearbyAlly> allies = nearbyAllyTable.Controls.OfType<NearbyAlly>().ToList();
-            nearbyAllyTable.Controls.Clear();
-            foreach (NearbyAlly ally in allies)
-            {
-                nearbyAllyTable.Controls.Add(ally);
-            }
-        }
+        //private void RefreshNearbyAllyTable()
+        //{
+        //    List<NearbyAlly> allies = nearbyAllyTable.Controls.OfType<NearbyAlly>().ToList();
+        //    nearbyAllyTable.Controls.Clear();
+        //    foreach (NearbyAlly ally in allies)
+        //    {
+        //        nearbyAllyTable.Controls.Add(ally);
+        //    }
+        //}
 
         private void WaitForCondition(Control control, Func<Control, bool> condition)
         {

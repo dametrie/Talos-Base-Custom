@@ -14,6 +14,7 @@ using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
 using Talos.AStar;
+using Talos.Definitions;
 using System.Linq;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
@@ -24,6 +25,7 @@ using System.Drawing;
 using System.Media;
 using System.Reflection;
 using Point = Talos.Structs.Point;
+
 
 
 namespace Talos

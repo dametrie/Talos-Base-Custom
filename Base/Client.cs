@@ -17,6 +17,7 @@ using Talos.Structs;
 using Talos.Maps;
 using Talos.AStar;
 using Talos.Properties;
+using Talos.Definitions;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 using Talos.Base;
