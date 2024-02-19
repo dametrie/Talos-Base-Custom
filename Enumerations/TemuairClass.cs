@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace Talos.Enumerations
 {
-    [Flags]
     internal enum TemuairClass : byte
     {
         Peasant = 0,

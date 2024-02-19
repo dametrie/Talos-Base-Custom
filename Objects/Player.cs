@@ -32,25 +32,14 @@ namespace Talos.Objects
         internal string GroupName { get; set; }
         internal bool NeedsHeal { get; set; }
         internal new string Name { get { return base.Name; } set { base.Name = value; } }
-        internal DateTime LastArmachd { get; set; }
-        internal bool HasArmachd
-        {
-            get
-            {
-                if (!base.SpellAnimationHistory.ContainsKey(20))
-                    return false;
-                if (!(DateTime.UtcNow.Subtract(LastArmachd).TotalMinutes < 30.0))
-                    return DateTime.UtcNow.Subtract(base.SpellAnimationHistory[20]).TotalMinutes < 2.5;
-                return true;
-            }
-        }
+       
         internal bool IsSkulled
         {
             get
             {
-                if (!base.SpellAnimationHistory.ContainsKey(24))
+                if (!base.SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Skull))
                     return false;
-                return DateTime.UtcNow.Subtract(base.SpellAnimationHistory[24]).TotalSeconds < 2.0;
+                return DateTime.UtcNow.Subtract(base.SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds < 2.0;
             }
         }
 
@@ -58,7 +47,7 @@ namespace Talos.Objects
             : base(id, name, 0, (byte)CreatureType.Aisling, location, direction)
         {
             Type = CreatureType.Aisling;
-            LastArmachd = DateTime.MinValue;
+
         }
 
         internal void NakedPlayer()

@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using Talos.Base;
 using Talos.Forms.UI;
 
 namespace Talos.Forms
 {
     partial class ClientTab
     {
+      
         /// <summary> 
         /// Required designer variable.
         /// </summary>
@@ -466,6 +469,7 @@ namespace Talos.Forms
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleDialogBtn = new System.Windows.Forms.ToolStripButton();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.button1 = new System.Windows.Forms.Button();
             this.label13 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.creatureHashListBox = new System.Windows.Forms.ListBox();
@@ -500,7 +504,6 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manaBar = new Talos.Forms.UI.ResourceBar();
             this.healthBar = new Talos.Forms.UI.ResourceBar();
-            this.button1 = new System.Windows.Forms.Button();
             this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
@@ -1039,6 +1042,7 @@ namespace Talos.Forms
             this.addAislingBtn.TabIndex = 0;
             this.addAislingBtn.Text = "Ally";
             this.addAislingBtn.UseVisualStyleBackColor = true;
+            this.addAislingBtn.Click += new System.EventHandler(this.addAislingBtn_Click);
             // 
             // addMonsterText
             // 
@@ -4878,6 +4882,7 @@ namespace Talos.Forms
             this.dojoRefreshBtn.TabIndex = 8;
             this.dojoRefreshBtn.Text = "Refresh Skills/Spells";
             this.dojoRefreshBtn.UseVisualStyleBackColor = true;
+            this.dojoRefreshBtn.Click += new System.EventHandler(this.dojoRefreshBtn_Click);
             // 
             // dojoCounterAttackCbox
             // 
@@ -5950,6 +5955,16 @@ namespace Talos.Forms
             this.tabPage1.TabIndex = 14;
             this.tabPage1.Text = "DEBUG";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(413, 260);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(112, 23);
+            this.button1.TabIndex = 154;
+            this.button1.Text = "RemoveShield";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click_1);
+            // 
             // label13
             // 
             this.label13.AutoSize = true;
@@ -6217,19 +6232,6 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.fullscreenToolStripMenuItem.Text = "Fullscreen";
             // 
-            // chatPanel
-            // 
-            this.chatPanel.BackColor = System.Drawing.Color.White;
-            this.chatPanel.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel.AutoDetectUrls = true;
-            this.chatPanel.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel.Name = "chatPanel";
-            this.chatPanel.Size = new Size(508, 225);
-            this.chatPanel.TabIndex = 0;
-            this.chatPanel.Text = "";
-            this.chatPanel.ReadOnly = true;
-            this.chatPanel.Font = new Font("Courier New", 9f, FontStyle.Bold, GraphicsUnit.Point, 0);
-            // 
             // manaBar
             // 
             this.manaBar.BackColor = System.Drawing.Color.White;
@@ -6252,15 +6254,18 @@ namespace Talos.Forms
             this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.healthBar.TabIndex = 14;
             // 
-            // button1
+            // chatPanel
             // 
-            this.button1.Location = new System.Drawing.Point(413, 260);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(112, 23);
-            this.button1.TabIndex = 154;
-            this.button1.Text = "RemoveShield";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click_1);
+            this.chatPanel.AutoDetectUrls = true;
+            this.chatPanel.BackColor = System.Drawing.Color.White;
+            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel.Name = "chatPanel";
+            this.chatPanel.ReadOnly = true;
+            this.chatPanel.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel.TabIndex = 0;
+            this.chatPanel.Text = "";
             // 
             // ClientTab
             // 

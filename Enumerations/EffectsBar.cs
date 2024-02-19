@@ -3,7 +3,6 @@
 
 namespace Talos.Enumerations
 {
-    [Flags]
     internal enum EffectsBar : uint
     {
         None = 0,
@@ -11,7 +10,8 @@ namespace Talos.Enumerations
         Dall = 3,
         Blind = 3,
         BeagCradh = 5,          
-        EisdCreature = 7,       
+        EisdCreature = 7,  
+        BonusExperience = 8,
         Hide = 10,              
         Aite = 11,
         CreagNeart = 13,
@@ -61,10 +61,10 @@ namespace Talos.Enumerations
         //find these out
         //doesnt hurt since they are different numbers
         //but would be nice to know the effect bar/spell icon #
-        Halt = 99995,
-        Coma = 99996,
-        DragonsFire = 99997,
-        PotentMantidScent = 99998,
-        SpellSkillBonus1 = 99998
+        Halt = 251,
+        Coma = 252,
+        DragonsFire = 253,
+        PotentMantidScent = 254,
+        SpellSkillBonus1 = 255
     }
 }

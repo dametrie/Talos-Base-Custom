@@ -20,6 +20,8 @@ namespace Talos.Objects
         internal DateTime LastAited { get; set; }
         internal DateTime LastWalked { get; set; }
         internal DateTime LastDioned { get; set; }
+        internal DateTime LastSuained { get; set; }
+        internal DateTime LastArmachd { get; set; }
         internal double CurseDuration { get; set; }
         internal double FasDuration { get; set; }
         internal double AiteDuration { get; set; }
@@ -47,23 +49,41 @@ namespace Talos.Objects
         internal bool IsCursed => DateTime.UtcNow.Subtract(LastCursed).TotalSeconds < CurseDuration;
         internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;
         internal bool IsAited => DateTime.UtcNow.Subtract(LastAited).TotalSeconds < AiteDuration;
-        internal bool IsWFF
+
+        internal bool HasArmachd
+        {
+            get
+            {
+                if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Armachd))
+                    return false;
+                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Armachd]).TotalSeconds < 150.0;
+            }
+        }
+        internal bool IsSuained
         {
             get 
-            { 
-                //wff
-                if (!SpellAnimationHistory.ContainsKey(40)) { return false; }
-                return DateTime.UtcNow.Subtract(SpellAnimationHistory[40]).TotalSeconds < 1.5;
+            {
+                if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Suain))
+                    return false;
+                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Suain]).TotalSeconds < 2.0;
+            }
+        }
+        internal bool IsWFF
+        {
+            get
+            {
+                if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Suain))
+                    return false;
+                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Suain]).TotalSeconds < 2.0;
             }
         }
         internal bool IsFrozen
         {
             get
-            {   //frost arrow
-                if (SpellAnimationHistory.ContainsKey(235) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[235]).TotalSeconds >= 2.0))
+            {
+                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.FrostArrow) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.FrostArrow]).TotalSeconds >= 2.0))
                     return true;
-                //forst strike
-                if (SpellAnimationHistory.ContainsKey(377) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[377]).TotalSeconds >= 1.0))
+                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.FrostStrike) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.FrostStrike]).TotalSeconds >= 1.0))
                     return true;
                 return false;
             }
@@ -72,27 +92,25 @@ namespace Talos.Objects
         {
             get
             {
-                //mes
-                if (SpellAnimationHistory.ContainsKey(117) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[117]).TotalSeconds >= 1.5))
+                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Mesmerize) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Mesmerize]).TotalSeconds >= 1.5))
                     return true;
-                //pramh
-                if (SpellAnimationHistory.ContainsKey(32) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[32]).TotalSeconds >= 3.0))
+                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Pramh) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Pramh]).TotalSeconds >= 3.0))
                     return true;
                 return false;
             }
         }
-        internal bool IsPoisined
+        internal bool IsPoisoned
         {
             get
             {
                 //pink poison
-                if (SpellAnimationHistory.ContainsKey(25) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[25]).TotalSeconds >= 1.5))
+                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.PinkPoison) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.PinkPoison]).TotalSeconds >= 1.5))
                     return true;
                 //green bubble poison
-                if (SpellAnimationHistory.ContainsKey(247) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[247]).TotalSeconds >= 3.0))
+                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.GreenBubblePoison) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.GreenBubblePoison]).TotalSeconds >= 3.0))
                     return true;
                 //med poison
-                if (SpellAnimationHistory.ContainsKey(295) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[295]).TotalSeconds >= 3.0))
+                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.MedeniaPoison) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.MedeniaPoison]).TotalSeconds >= 3.0))
                     return true;
                 return false;
             }
@@ -111,6 +129,7 @@ namespace Talos.Objects
             LastFassed = DateTime.MinValue;
             LastAited = DateTime.MinValue;
             LastDioned = DateTime.MinValue;
+            LastArmachd = DateTime.MinValue;
             Curse = "";
             Dion = "";
         }

@@ -12,3 +12,4 @@ C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\bin\Debug\MapsCa
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.csproj.CopyComplete
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.exe
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.pdb
+C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.Forms.AllyPage.resources

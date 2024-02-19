@@ -314,9 +314,10 @@ namespace Talos
 
         private bool ClientMessage_0x0B_ExitRequest(Client client, ClientPacket clientPacket)
         {
-            if (clientPacket.ReadByte() == 0)
-                client._connected = false;
-
+            //code below will force close the client if the exit request is sent
+            //rather than waiting and having to click confirm
+            //if (clientPacket.ReadByte() == 0)
+            //    client._connected = false;
             return true;
         }
 
@@ -875,286 +876,7 @@ namespace Talos
             }
         }
 
-        internal void ProcessEffects(Client client, string str)
-        {
-            uint FNVhash = Utility.CalculateFNV(str);
-
-            switch (FNVhash)
-            {
-                case 4027842876://"You feel better."
-                    client.ClearEffect(EffectsBar.Poison);
-                    break;
-                case 3158204625://"Poison"
-                    client.AddEffect(EffectsBar.Poison);
-                    break;
-
-                case 4066440408://"Your armor is strengthened."
-                    client.AddEffect(EffectsBar.Armachd);
-                    break;
-                case 292046419://"Your armor spell wore off."
-                    client.ClearEffect(EffectsBar.Armachd);
-                    break;
-
-                case 3925226909://"The magic has been deflected."
-                    break;
-
-                case 894217765://"You can't cast that spell right now."
-                    break;
-
-                case 3934387738://"Your Will is too weak."
-                    if (client._creatureToSpellList.Count > 0)
-                        client._creatureToSpellList.RemoveAt(0);
-                    client.Bot._needFasSpiorad = true;
-                    break;
-
-                case 3882714826://"Cannot find group member."
-                    break;
-                case 287351992://"Group disbanded."
-                    //Adam add logic to clear group member vars allyhashes
-                    //update group list
-                    //update stranger list
-                    break;
-
-                case 3796079290://"You can't perceive the invisible."
-                    client.ClearEffect(EffectsBar.EisdCreature);
-                    break;
-                case 1623995801://"You can perceive the invisible."
-                    client.AddEffect(EffectsBar.EisdCreature);
-                    break;
-
-                case 3713273917://"In sleep"
-                case 3777649476://"beag pramh"
-                case 2647647615://"pramh"
-                    client.AddEffect(EffectsBar.Pramh);
-                    break;
-                case 2135297916://"Awake"
-                    client.ClearEffect(EffectsBar.Pramh);
-                    break;
-
-                case 1157218093://"Pause"
-                    client.AddEffect(EffectsBar.Pause);
-                    break;
-                case 3481732772://"Pause end"
-                    client.ClearEffect(EffectsBar.Pause);
-                    break;
-
-                case 1685152619://"Normal power."
-                    client.ClearEffect(EffectsBar.FasDeireas);
-                    break;
-                case 3476133035://"You feel more powerful."
-                    client.AddEffect(EffectsBar.FasDeireas);
-                    break;
-
-                case 3513302066://"End of blessing."
-                    client.ClearEffect(EffectsBar.Beannaich);
-                    break;
-                case 1846913620://"You have been blessed."
-                    client.AddEffect(EffectsBar.Beannaich);
-                    break;
-
-                case 3592879486://"Inner warmth begins to regenerate you."
-                    client.AddEffect(EffectsBar.InnerFire);
-                    break;
-                case 720468513://"Inner warmth of regeneration dissipates."
-                    client.ClearEffect(EffectsBar.InnerFire);
-                    break;
-
-                case 1866308318://"Purify"
-                    client.AddEffect(EffectsBar.Purify);
-                    break;
-                case 3586447399://"Purify end"
-                    client.ClearEffect(EffectsBar.Purify);
-                    break;
-                case 3282997055://"You won't die from any spell."
-                    client.AddEffect(EffectsBar.PerfectDefense);
-                    break;
-                case 3408792044://"You cast Spell/Skill Level Bonus."
-                    client.AddEffect(EffectsBar.SpellSkillBonus1);
-                    break;
-                case 3359459158://"You become normal."
-                    client.ClearEffect(EffectsBar.PerfectDefense);
-                    break;
-
-                case 0xbf22e250://"Something went wrong."
-                    break;
-
-                case 3043892759://"Already a member of another group."
-                    break;
-
-                case 2028874497://"beag cradh end."
-                case 3602589804://"cradh end."
-                case 998049790://"mor cradh end."
-                case 2562210611://"ard cradh end."
-                case 600131675://"Dark Seal end."
-                case 2939018740://"Darker Seal end."
-                case 3068783401://"Demise end."
-                    client.Player.Curse = "";
-                    client.Player.CurseDuration = 0.0;
-                    break;
-
-                case 2960171689://"You can't cast a spell."
-                    break;
-
-                case 2848971440://"beag cradh"
-                case 1149628551://"cradh"
-                case 1281358573://"mor cradh"
-                case 2118188214://"ard cradh"
-                case 1928539694://"Dark Seal"
-                case 219207967://"Darker Seal"
-                case 928817768: //"Demise"
-                    client.Player.Curse = str;
-                    client.Player.CurseDuration = Spell.GetSpellDuration(str);
-                    client.Player.LastCursed = DateTime.UtcNow;
-                    break;
-
-                case 2935187000://"double attribute"
-                    client.AddEffect(EffectsBar.FasNadur);
-                    break;
-                case 581253709://"normal nature."
-                    client.ClearEffect(EffectsBar.FasNadur);
-                    break;
-
-                case 2555448388://"Stunned"
-                    client.AddEffect(EffectsBar.BeagSuain);
-                    break;
-
-                case 2552142370://"You have found sanctuary."
-                    client.AddEffect(EffectsBar.Aite);
-                    break;
-                case 1508060010://"You feel vulnerable again."
-                    client.ClearEffect(EffectsBar.Aite);
-                    break;
-
-                case 2378444523://"You cast Disenchanter."
-                    client.Bot._lastDisenchanterCast = DateTime.UtcNow;
-                    break;
-
-                case 2493960518://"You canot see anything."
-                    client.AddEffect(EffectsBar.Dall);
-                    break;
-                case 941715929://"You can see again."
-                    client.ClearEffect(EffectsBar.Dall);
-                    break;
-
-                case 99546938://"Invisible."
-                    client.AddEffect(EffectsBar.Hide);
-                    break;
-                case 2397648253://"You are no longer invisible."
-                    client.ClearEffect(EffectsBar.Hide);
-                    break;
-
-                case 2293203598://"Failed."
-                    break;
-                case 2316657437://"You cannot attack."
-                    break;
-
-                case 3740145550://"asgall faileas")
-                    client.AddEffect(EffectsBar.AsgallFaileas);
-                    break;
-                case 2066555451://"asgall faileas end."
-                    client.ClearEffect(EffectsBar.AsgallFaileas);
-                    break;
-
-                case 2049393198://"You feel quicker."
-                    client.AddEffect(EffectsBar.Mist);
-                    break;
-                case 17992052://"Your reflexes return to normal."
-                    client.ClearEffect(EffectsBar.Mist);
-                    break;
-
-                case 232053100://"Reflect."
-                    client.AddEffect(EffectsBar.DeireasFaileas);
-                    break;
-                case 2047960911://"Reflect end."
-                    client.ClearEffect(EffectsBar.DeireasFaileas);
-                    break;
-
-
-                case 1855901756://"You were distracted"
-                    client._currentSpell = null;
-                    break;
-
-                case 1760243994://"Halt"
-                    client.AddEffect(EffectsBar.Halt);
-                    break;
-                case 94082891://"Halt end"
-                    client.ClearEffect(EffectsBar.Halt);
-                    break;
-
-                case 1837439800://"You cast Light SealLR."
-                    client.Bot._lastGrimeScentCast = DateTime.UtcNow;
-                    break;
-
-                case 1412479591://"Your body thaws."
-                    client.ClearEffect(EffectsBar.Suain);
-                    break;
-                case 2999347600://"Your body is freezing."
-                    if (DateTime.UtcNow.Subtract(client._lastFrozen).TotalSeconds < 6.0)
-                        client.AddEffect(EffectsBar.Suain);
-                    break;
-                case 182868580://"You are in hibernation."
-                    client.AddEffect(EffectsBar.None | EffectsBar.Suain);
-                    client._lastFrozen = DateTime.UtcNow;
-                    break;
-
-                case 1550634232://"You already cast that spell."
-                    if (client._creatureToSpellList.Count > 0)
-                        RemoveFirstCreatureToSpell(client);
-                    break;
-
-                case 1261155619://"Harden body spell"
-                    client.AddEffect(EffectsBar.Dion);
-                    break;
-                case 620501045://"Your skin turns back to flesh."
-                    client.ClearEffect(EffectsBar.Dion);
-                    break;
-
-
-                case 1152003485://"You are not well."
-                    client.AddEffect(EffectsBar.DragonsFire);
-                    break;
-                case 4203873400://"No longer dragon."
-                    client.ClearEffect(EffectsBar.DragonsFire);
-                    break;
-
-                case 653271281://"It does not touch the spirit world."
-                    if ((client._creatureToSpellList.Count > 0) && client.CreatureHashSet.Contains(client._creatureToSpellList[0].Creature.ID))
-                    {
-                        client.CreatureHashSet.Remove(client._creatureToSpellList[0].Creature.ID);
-                        client._creatureToSpellList.RemoveAt(0);
-                    }
-                    break;
-
-                case 685956376://"You are stuck."
-                    if (client._creatureToSpellList.Count > 0)
-                        client._creatureToSpellList.RemoveAt(0);
-                    client._currentSpell = null;
-                    client.CreatureTarget = null;
-                    client.stuckCounter++;
-                    if ((client.stuckCounter > 4) && (!client.Bot._shouldBotStop || !client.ClientTab.rangerStopCbox.Checked))
-                    {
-                        //ADAM insert logic to get a list of points around the carachter
-                        //check for walls, check for creatures
-                    }
-                    if (client.stuckCounter > 6)
-                        SystemSounds.Beep.Play();
-                    break;
-
-                case 578119696://"You can't use skills here."
-                    client._map.CanUseSkills = false;
-                    break;
-                case 310412199://"That doesn't work here."
-                    client._map.CanUseSpells = false;
-                    client._currentSpell = null;
-                    client.CreatureTarget = null;
-                    if (client._creatureToSpellList.Count > 0)
-                        client._creatureToSpellList.RemoveAt(0);
-                    break;
-
-                default:
-                    break;
-            }
-        }
+        
         private bool ServerMessage_0x0A_ServerMessage(Client client, ServerPacket serverPacket)
         {
             byte messageType;
@@ -1242,7 +964,6 @@ namespace Talos
                 default:
                     return (messageType == (byte)ServerMessageType.TopRight);
             }
-          
         }
 
 
@@ -2181,6 +1902,12 @@ namespace Talos
             return true;
         }
 
+        /// <summary>
+        /// Packet sent to the client whenever an item is unequipped from the player's equipment slots.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="serverPacket"></param>
+        /// <returns></returns>
         private bool ServerMessage_0x38_Unequip(Client client, ServerPacket serverPacket)
         {
             return true;
@@ -2221,7 +1948,7 @@ namespace Talos
                 serverPacket.ReadByte();
                 serverPacket.ReadByte();
                 string legendText = serverPacket.ReadString8();
-                Console.WriteLine(legendText);
+                //Console.WriteLine(legendText);
                 if ((legendText != null) && legendText.StartsWith("C"))
                 {
                     SetPreviousClass(client, legendText);
@@ -2271,9 +1998,16 @@ namespace Talos
             //{
             //    client.DisplayUser(client.player);
             //}
+            client.ClientTab.SetClassSpecificSpells();
             return true;
         }
 
+        /// <summary>
+        /// Packet sent to the client whenever an effect is added or removed from the effects bar.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="serverPacket"></param>
+        /// <returns></returns>
         private bool ServerMessage_0x3A_Effect(Client client, ServerPacket serverPacket)
         {
             ushort effect = serverPacket.ReadUInt16();
@@ -2281,11 +2015,14 @@ namespace Talos
             {
                 if (!client.EffectsBarHashSet.Contains(effect))
                 {
+                    Console.WriteLine("Adding effect: " + effect);
                     client.EffectsBarHashSet.Add(effect);
+                    Console.WriteLine("total items in hashset: " + client.EffectsBarHashSet.Count);
                 }
             }
             else if (client.EffectsBarHashSet.Contains(effect))
             {
+                Console.WriteLine("Removing effect: " + effect);
                 client.EffectsBarHashSet.Remove(effect);
                 if ((effect == 19) && !client.InArena)//bday or incapacitate
                 {
@@ -2452,7 +2189,8 @@ namespace Talos
 
         internal void RemoveFirstCreatureToSpell(Client client)
         {
-            client._creatureToSpellList.RemoveAt(0);
+            if (client._creatureToSpellList != null && client._creatureToSpellList.Count > 0)
+                client._creatureToSpellList.RemoveAt(0);
         }
         internal void SetDugon(Client client, string dugonLevel)
         {
@@ -2471,7 +2209,7 @@ namespace Talos
             // Default Dugon if no match found
             Dugon defaultDugon = Dugon.White; // Change this to the appropriate default value
 
-            // Check if string_8 matches any mapping, otherwise use defaultDugon
+            // Check if dugonLevel matches any mapping, otherwise use defaultDugon
             Dugon dugon = dugonMappings.TryGetValue(dugonLevel, out Dugon mappedDugon)
                 ? mappedDugon
                 : defaultDugon;

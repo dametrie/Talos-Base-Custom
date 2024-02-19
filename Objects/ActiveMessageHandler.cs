@@ -27,6 +27,7 @@ namespace Talos.Objects
                 { "Your AP is too high", HandleLastKillMessage },
                 { "You have reached level 99, the maximum for the free trial.", HandleLastKillMessage },
                 { "You can't have more.", HandleInventoryMessage },
+                { "You are not a member of the Training Grounds", HandleTrainingGroundsMessage },
                 { "You feel better.", HandlePoisonMessage },
                 { "Poison", HandlePoisonMessage },
                 { "Your armor is strengthened.", HandleArmachdMessage },
@@ -129,6 +130,8 @@ namespace Talos.Objects
             };
         }
 
+
+
         // Public static property to provide access to the single instance
         public static ActiveMessageHandler Instance => instance;
 
@@ -153,13 +156,66 @@ namespace Talos.Objects
         }
         private static void HandleSpellCastMessage(Client client, Match match)
         {
-            Creature creature = client._creatureToSpellList[0].Creature;
-            string spell = match.Groups[1].Value;
+            Creature creature = client._creatureToSpellList.Count > 0 ? client._creatureToSpellList[0].Creature : null;
+            string spellName = match.Groups[1].Value;
 
             //adam add spells - pramh, ards?
             //You cast Master Karura Form
-            switch (spell)
+            switch (spellName)
             {
+                case "beag naomh aite":
+                case "naomh aite":
+                case "mor naomh aite":
+                case "ard naomh aite":
+                    if (creature != null)
+                    {
+                        creature.AiteDuration = Spell.GetSpellDuration(spellName);
+                        creature.LastAited = DateTime.UtcNow;
+                    }
+                    break;
+                case "beag cradh":
+                case "cradh":
+                case "mor cradh":
+                case "ard cradh":
+                case "Dark Seal":
+                case "Darker Seal":
+                case "Demise":
+                    if (creature != null)
+                    {
+                        Console.WriteLine("Setting curse inside MessageHandler");
+                        creature.Curse = spellName;
+                        Console.WriteLine("Curse set to " + creature.Curse);
+                        creature.CurseDuration = Spell.GetSpellDuration(spellName);
+                        Console.WriteLine("Curse duration set to " + creature.CurseDuration);
+                        creature.LastCursed = DateTime.UtcNow;
+                        Console.WriteLine("Last cursed set to " + creature.LastCursed);
+                        if (creature.ID != client.Player.ID)
+                            client.UpdateCurseTargets(client, creature.ID, spellName);
+                    }
+                    break;
+                case "beag fas nadur":
+                case "fas nadur":
+                case "mor fas nadur":
+                case "ard fas nadur":
+                    if (creature != null)
+                    {
+                        creature.FasDuration = Spell.GetSpellDuration(spellName);
+                        creature.LastFassed = DateTime.UtcNow;
+                        if (creature.ID != client.Player.ID)
+                            client.UpdateFasTargets(client, creature.ID, creature.FasDuration);
+                    }
+                    break;
+                case "dion":
+                case "Draco Stance":
+                case "Stone Skin":
+                case "mor dion":
+                case "Iron Skin":
+                case "Wings of Protection":
+                case "dionLR":
+                    client.Player.Dion = spellName;
+                    client.Player.LastDioned = DateTime.UtcNow;
+                    client.Player.DionDuration = Spell.GetSpellDuration(spellName);
+                    break;
                 case "fas spiorad":
                     client.Bot._needFasSpiorad = false;
                     client.Bot._manaLessThanEightyPct = false;
@@ -181,22 +237,16 @@ namespace Talos.Objects
                     client._currentSpell = client.Spellbook["Gem Polishing"];
                     break;
                 case "armachd":
-                    creature = client._creatureToSpellList[0].Creature;
-                    creature.SpellAnimationHistory[20] = DateTime.UtcNow;
-                    client._creatureToSpellList.RemoveAt(0);
+                    client._server.RemoveFirstCreatureToSpell(client);
                     break;
                 case "Mesmerize":
-                    creature = client._creatureToSpellList[0].Creature;
-                    creature.SpellAnimationHistory[117] = DateTime.UtcNow;
-                    client._creatureToSpellList.RemoveAt(0);
+                    client._server.RemoveFirstCreatureToSpell(client);
                     break;
                 case "suain":
-                    creature = client._creatureToSpellList[0].Creature;
-                    creature.SpellAnimationHistory[40] = DateTime.UtcNow;
-                    client._creatureToSpellList.RemoveAt(0);
+                    client._server.RemoveFirstCreatureToSpell(client);
                     break;
                 case "Master Karurua Form"://Adam add others
-                    client.AddEffect(EffectsBar.BirdForm);//need to figure out how to clear it because there is no orange message when it drops
+                    client.EffectsBarHashSet.Add((ushort)EffectsBar.BirdForm);//need to figure out how to clear it because there is no orange message when it drops
                     break;
                 default:
                     if (client._creatureToSpellList.Count <= 0)
@@ -224,7 +274,7 @@ namespace Talos.Objects
         }
         private void HandleNecklaceMessage(Client client, Match match)
         {
-            //Adam update necks
+
             string necklaceName = match.Groups[1].Value;
 
             switch (necklaceName)
@@ -315,20 +365,22 @@ namespace Talos.Objects
                 //client.Bot.bool_16 = true;
             }
         }
-
+        private void HandleTrainingGroundsMessage(Client client, string message)
+        {
+            client._trainingGroundsMember = false;
+        }
         private void HandleStuckMessage(Client client, string message)
         {
-            if (client._creatureToSpellList.Count > 0)
-                client._creatureToSpellList.RemoveAt(0);
+            client._server.RemoveFirstCreatureToSpell(client);
             client._currentSpell = null;
             client.CreatureTarget = null;
-            client.stuckCounter++;
-            if ((client.stuckCounter > 4) && (!client.Bot._shouldBotStop || !client.ClientTab.rangerStopCbox.Checked))
+            client._stuckCounter++;
+            if ((client._stuckCounter > 4) && (!client.Bot._shouldBotStop || !client.ClientTab.rangerStopCbox.Checked))
             {
                 //ADAM insert logic to get a list of points around the carachter
                 //check for walls, check for creatures etc.
             }
-            if (client.stuckCounter > 6)
+            if (client._stuckCounter > 6)
                 SystemSounds.Beep.Play();
         }
 
@@ -337,32 +389,32 @@ namespace Talos.Objects
             if ((client._creatureToSpellList.Count > 0) && client.CreatureHashSet.Contains(client._creatureToSpellList[0].Creature.ID))
             {
                 client.CreatureHashSet.Remove(client._creatureToSpellList[0].Creature.ID);
-                client._creatureToSpellList.RemoveAt(0);
+                client._server.RemoveFirstCreatureToSpell(client);
             }
         }
 
         private void HandleDragonMessage(Client client, string message)
         {
             if (message == "No longer dragon.")
-                client.ClearEffect(EffectsBar.DragonsFire);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.DragonsFire);
             else
-                client.AddEffect(EffectsBar.DragonsFire);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.DragonsFire);
         }
 
         private void HandleDionMessage(Client client, string message)
         {
             if (message == "Your skin turns back to flesh.")
             {
-                client.ClearEffect(EffectsBar.Dion);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Dion);
                 client.Player.Dion = "";
                 client.Player.DionDuration = 0.0;
             }
-            else
+            else if (message == "Harden body spell")
             {
-                client.AddEffect(EffectsBar.Dion);
-                client.Player.Dion = message;
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Dion);
                 client.Player.LastDioned = DateTime.UtcNow;
-                client.Player.DionDuration = Spell.GetSpellDuration(message);
+                client.Player.DionDuration = Spell.GetSpellDuration("mor dion");//if we login and have dion there is no way to know the duration so we assume it is max
+
             }
 
         }
@@ -376,20 +428,20 @@ namespace Talos.Objects
         private void HandleSuainMessage(Client client, string message)
         {
             if (message == "Your body thaws.")
-                client.ClearEffect(EffectsBar.Suain);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Suain);
             else if (message == "Your body is freezing.")
             {
-                if (DateTime.UtcNow.Subtract(client._lastFrozen).TotalSeconds < 6.0)
+                if (DateTime.UtcNow.Subtract(client.Player.LastSuained).TotalSeconds < 6.0)
                 {
-                    client.AddEffect(EffectsBar.Suain);
-                    client._lastFrozen = DateTime.UtcNow;
+                    client.EffectsBarHashSet.Add((ushort)EffectsBar.Suain);
+                    client.Player.LastSuained = DateTime.UtcNow;
                 }
 
             }
             else if (message == "You are in hibernation.")
             {
-                client.AddEffect(EffectsBar.Suain);
-                client._lastFrozen = DateTime.UtcNow;
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Suain);
+                client.Player.LastSuained = DateTime.UtcNow;
             }
         }
 
@@ -401,33 +453,33 @@ namespace Talos.Objects
         private void HandleHaltMessage(Client client, string message)
         {
             if (message == "Halt end.")
-                client.ClearEffect(EffectsBar.Halt);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Halt);
             else
-                client.AddEffect(EffectsBar.Halt);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Halt);
         }
 
         private void HandleDeireasFaileasMessage(Client client, string message)
         {
             if (message == "Reflect end.")
-                client.ClearEffect(EffectsBar.DeireasFaileas);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.DeireasFaileas);
             else
-                client.AddEffect(EffectsBar.DeireasFaileas);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.DeireasFaileas);
         }
 
         private void HandleMistMessage(Client client, string message)
         {
             if (message == "Your reflexes return to normal.")
-                client.ClearEffect(EffectsBar.Mist);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Mist);
             else
-                client.AddEffect(EffectsBar.Mist);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Mist);
         }
 
         private void HandleAsgallMessage(Client client, string message)
         {
             if (message == "asgall faileas end.")
-                client.ClearEffect(EffectsBar.AsgallFaileas);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.AsgallFaileas);
             else
-                client.AddEffect(EffectsBar.AsgallFaileas);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.AsgallFaileas);
         }
 
         private void HandleCantAttackMessage(Client client, string message)
@@ -443,17 +495,17 @@ namespace Talos.Objects
         private void HandleHideMessage(Client client, string message)
         {
             if (message == "You are no longer invisible.")
-                client.ClearEffect(EffectsBar.Hide);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Hide);
             else
-                client.AddEffect(EffectsBar.Hide);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Hide);
         }
 
         private void HandleDallMessage(Client client, string message)
         {
             if (message == "You can see again.")
-                client.ClearEffect(EffectsBar.Dall);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Dall);
             else
-                client.AddEffect(EffectsBar.Dall);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Dall);
         }
 
         private void HandleDisenchanterMessage(Client client, string message)
@@ -465,25 +517,40 @@ namespace Talos.Objects
         private void HandleAiteMessage(Client client, string message)
         {
             if (message == "You feel vulnerable again.")
-                client.ClearEffect(EffectsBar.Aite);
+            {
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Aite);
+                client.Player.AiteDuration = 0.0;
+            }
+               
             else
-                client.AddEffect(EffectsBar.Aite);
+            {
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Aite);
+                client.Player.LastAited = DateTime.UtcNow;
+                client.Player.AiteDuration = Spell.GetSpellDuration("ard naomh aite");//if we login and have aite there is no way to know the duration so we assume it is max
+            }    
         }
 
         private void HandleBeagSuainMessage(Client client, string message)
         {
             if (message == "You can move again.")
-                client.ClearEffect(EffectsBar.BeagSuain);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.BeagSuain);
             else
-                client.AddEffect(EffectsBar.BeagSuain);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.BeagSuain);
         }
 
         private void HandleFasMessage(Client client, string message)
         {
             if (message == "normal nature.")
-                client.ClearEffect(EffectsBar.FasNadur);
+            {
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.FasNadur);
+                client.Player.FasDuration = 0.0;
+            }               
             else
-                client.AddEffect(EffectsBar.FasNadur);
+            {
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.FasNadur);
+                client.Player.LastFassed = DateTime.UtcNow;
+                client.Player.FasDuration = Spell.GetSpellDuration("mor fas nadur");//if we login and have fas there is no way to know the duration so we assume it is max
+            }             
         }
 
         private void HandleCurseBeginMessage(Client client, string message)
@@ -507,71 +574,71 @@ namespace Talos.Objects
         private void HandleBonusMessage(Client client, string message)
         {
             //Adam check other bonuses - stars/vdays double shrooms
-            client.AddEffect(EffectsBar.SpellSkillBonus1);
+            client.EffectsBarHashSet.Add((ushort)EffectsBar.SpellSkillBonus1);
         }
 
         private void HandlePerfectDefenseMessage(Client client, string message)
         {
             if (message == "You become normal.")
-                client.ClearEffect(EffectsBar.PerfectDefense);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.PerfectDefense);
             else
-                client.AddEffect(EffectsBar.PerfectDefense);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.PerfectDefense);
         }
 
         private void HandlePurifyMessage(Client client, string message)
         {
             if (message == "Purify end")
-                client.ClearEffect(EffectsBar.Purify);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Purify);
             else
-                client.AddEffect(EffectsBar.Purify);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Purify);
         }
 
         private void HandleInnerFireMessage(Client client, string message)
         {
             if (message == "Inner warmth of regeneration dissipates.")
-                client.ClearEffect(EffectsBar.InnerFire);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.InnerFire);
             else
-                client.AddEffect(EffectsBar.InnerFire);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.InnerFire);
         }
 
         private void HandleBeannaichMessage(Client client, string message)
         {
             if (message == "End of blessing.")
-                client.ClearEffect(EffectsBar.Beannaich);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Beannaich);
             else
-                client.AddEffect(EffectsBar.Beannaich);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Beannaich);
         }
 
         private void HandleFasDeireasMessage(Client client, string message)
         {
             if (message == "Normal power.")
-                client.ClearEffect(EffectsBar.FasDeireas);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.FasDeireas);
             else
-                client.AddEffect(EffectsBar.FasDeireas);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.FasDeireas);
         }
 
         private void HandlePauseMessage(Client client, string message)
         {
             if (message == "Pause")
-                client.AddEffect(EffectsBar.Pause);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Pause);
             else
-                client.ClearEffect(EffectsBar.Pause);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Pause);
         }
 
         private void HandlePramhMessage(Client client, string message)
         {
             if (message == "Awake")
-                client.ClearEffect(EffectsBar.Pramh);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Pramh);
             else
-                client.AddEffect(EffectsBar.Pramh);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Pramh);
         }
 
         private void HandleCatsMessage(Client client, string message)
         {
             if (message == "You can perceive the invisible.")
-                client.AddEffect(EffectsBar.EisdCreature);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.EisdCreature);
             else
-                client.ClearEffect(EffectsBar.EisdCreature);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.EisdCreature);
         }
 
         private void HandleGroupMessage(Client client, string message)
@@ -594,11 +661,10 @@ namespace Talos.Objects
 
         private void HandleNoManaMessage(Client client, string message)
         {
-            if (client._creatureToSpellList.Count > 0)
-                client._creatureToSpellList.RemoveAt(0);
+            client._server.RemoveFirstCreatureToSpell(client);
             client.Bot._needFasSpiorad = true;
         }
-
+        
         private void HandleCantCastMessage(Client client, string message)
         {
             if (message == "You can't cast a spell.")
@@ -618,8 +684,7 @@ namespace Talos.Objects
                 client._map.CanUseSpells = false;
                 client._currentSpell = null;
                 client.CreatureTarget = null;
-                if (client._creatureToSpellList.Count > 0)
-                    client._creatureToSpellList.RemoveAt(0);
+                client._server.RemoveFirstCreatureToSpell(client);
             }
         }
 
@@ -631,9 +696,9 @@ namespace Talos.Objects
         private void HandlePreventAfflictionMessage(Client client, Match match)
         {
             if (match.Value.Equals("PreventAffliction end."))
-                client.ClearEffect(EffectsBar.PreventAffliction);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.PreventAffliction);
             else
-                client.AddEffect(EffectsBar.PreventAffliction);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.PreventAffliction);
         }
         private void HandleCurseMessage(Client client, Match match)
         {
@@ -643,7 +708,7 @@ namespace Talos.Objects
                 client._creatureToSpellList[0].Creature.CurseDuration = 30.0;
                 client._creatureToSpellList[0].Creature.Curse = match.Groups[1].Value;
                 client.UpdateCurseTargets(client, client._creatureToSpellList[0].Creature.ID, match.Groups[1].Value);
-                client._creatureToSpellList.RemoveAt(0);
+                client._server.RemoveFirstCreatureToSpell(client);
             }
             client._currentSpell = null;
         }
@@ -651,17 +716,17 @@ namespace Talos.Objects
         private void HandleArmachdMessage(Client client, string message)
         {
             if (message == "Your armor is strengthened.")
-                client.AddEffect(EffectsBar.Armachd);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Armachd);
             else
-                client.ClearEffect(EffectsBar.Armachd);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Armachd);
         }
 
         private void HandlePoisonMessage(Client client, string message)
         {
             if (message == "You feel better.")
-                client.ClearEffect(EffectsBar.Poison);
+                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Poison);
             else
-                client.AddEffect(EffectsBar.Poison);
+                client.EffectsBarHashSet.Add((ushort)EffectsBar.Poison);
         }
 
         private void HandleArenaBroadcastMessage(Client client, string message)

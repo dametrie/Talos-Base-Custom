@@ -12,6 +12,8 @@ using System.Linq;
 using System.ComponentModel;
 using Talos.Base;
 using System.Collections.Generic;
+using System.Drawing;
+using Talos.Forms.UI;
 
 namespace Talos.Forms
 {
@@ -36,6 +38,8 @@ namespace Talos.Forms
         };
         internal ulong _sessionExperience;
 
+        
+
         internal ClientTab(Client client)
         {
             _client = client;
@@ -43,9 +47,292 @@ namespace Talos.Forms
             InitializeComponent();
             worldObjectListBox.DataSource = client._worldObjectBindingList;
             creatureHashListBox.DataSource = client._creatureBindingList;
+            OnlyDisplaySpellsWeHave();
+
+        }
+
+        private void OnlyDisplaySpellsWeHave()
+        {
+            //setup heals combo box
+            healCombox.Items.Clear();
+            string[] heals = { "nuadhaich", "ard ioc", "mor ioc", "ioc", "beag ioc", "Cold Blood", "Spirit Essence" };
+            foreach (string spell in heals)
+            {
+                if (_client.Spellbook[spell] != null)
+                    healCombox.Items.Add(spell);
+            }
+            if (healCombox.Items.Count > 0)
+                healCombox.SelectedIndex = 0;
+            else
+            {
+                healCbox.Enabled = false;
+                healCombox.Enabled = false;
+                healCombox.Text = String.Empty;
+                healPctNum.Enabled = false;
+                healPctNum.Value = 0;
+            }
+
+            //setup dion combo box
+            dionCombox.Items.Clear();
+            string[] dions = { "mor dion", "Iron Skin", "Wings of Protection", "Draco Stance", "dion", "Stone Skin", "Glowing Stone" };
+            foreach (string spell in dions)
+            {
+                if (_client.Spellbook[spell] != null)
+                    dionCombox.Items.Add(spell);
+            }
+            if (_client.HasItem("Glowing Stone"))
+                dionCombox.Items.Add("Glowing Stone");
+            if (dionCombox.Items.Count > 0)
+                dionCombox.SelectedIndex = 0;
+            else
+            {
+                dionCbox.Enabled = false;
+                dionCombox.Enabled = false;
+                dionCombox.Text = String.Empty;
+                dionWhenCombox.Enabled = false;
+                dionWhenCombox.Text = String.Empty;
+                dionPctNum.Enabled = false;
+                dionPctNum.Value = 0;
+                aoSithCbox.Enabled = false;
+            }
+
+            //deireas faileas checkbox
+            if (_client.Spellbook["deireas faileas"] != null)
+                deireasFaileasCbox.Enabled = true;
+            else
+                deireasFaileasCbox.Enabled = false;
+
+            //setup fas combo box  
+            fasCombox.Items.Clear();
+            string[] fases = { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" };
+            foreach (string spell in fases)
+            {
+                if (_client.Spellbook[spell] != null)
+                    fasCombox.Items.Add(spell);
+            }
+            if (fasCombox.Items.Count > 0)
+                fasCombox.SelectedIndex = 0;
+            else
+            {
+                fasCbox.Enabled = false;
+                fasCombox.Enabled = false;
+                fasCombox.Text = String.Empty;
+            }
 
 
+            //setup aite combo box
+            aiteCombox.Items.Clear();
+            string[] aites = { "ard naomh aite", "mor naomh aite", "naomh aite", "beag naomh aite" };
+            foreach (string spell in aites)
+            {
+                if (_client.Spellbook[spell] != null)
+                {
+                    aiteCombox.Items.Add(spell);
+                }
 
+            }
+            if (aiteCombox.Items.Count > 0)
+                aiteCombox.SelectedIndex = 0;
+            else
+            {
+                aiteCbox.Enabled = false;
+                aiteCombox.Enabled = false;
+                aiteCombox.Text = String.Empty;
+            }
+
+            //ao suain check box
+            if (_client.Spellbook["ao suain"] != null || _client.Spellbook["Leafhopper Chirp"] != null)
+                aoSuainCbox.Enabled = true;
+            else
+                aoSuainCbox.Enabled = false;
+
+            //ao curse check box
+            //Adam add grim scent or make new checkbox?
+            if (_client.Spellbook["ao beag cradh"] != null || _client.Spellbook["ao cradh"] != null
+                || _client.Spellbook["ao mor cradh"] != null || _client.Spellbook["ao ard cradh"] != null)
+                aoCurseCbox.Enabled = true;
+            else
+                aoCurseCbox.Enabled = false;
+
+            //ao puinsein check box
+            if (_client.Spellbook["ao puinsein"] != null)
+                aoPoisonCbox.Enabled = true;
+            else
+                aoPoisonCbox.Enabled = false;
+
+            //bubble block
+            if (_client.Spellbook["Bubble Block"] != null)
+            {
+                bubbleBlockCbox.Enabled = true;
+                spamBubbleCbox.Enabled = true;
+            }
+            else
+            {
+                bubbleBlockCbox.Enabled = false;
+                spamBubbleCbox.Enabled = false;
+            }
+
+            //class specific group
+
+
+            //fungus extract check box
+            if (_client.HasItem("Fungus Beetle Extract"))
+                fungusExtractCbox.Enabled = true;
+            else
+                fungusExtractCbox.Enabled = false;
+
+            //Mantid Scent check box
+            if (_client.HasItem("Mantid Scent") || _client.HasItem("Potent Mantid Scent"))
+                mantidScentCbox.Enabled = true;
+            else
+                mantidScentCbox.Enabled = false;
+        }
+
+        internal void SetClassSpecificSpells()
+        {
+            string medeniaClass = _client._medeniaClass.ToString();
+            string previousClass = _client._previousClass.ToString();
+            string temuairClass = _client._temuairClass.ToString();
+
+            // Display check boxes based on Medenia class
+            switch (medeniaClass)
+            {
+                case "Archer":
+                    if (_client.HasItem("Nerve Stimulant"))
+                        nerveStimulantCbox.Visible = true;
+
+                    if (previousClass == "Pure")
+                    {
+                        if (_client.HasItem("Vanishing Elixir"))
+                            vanishingElixirCbox.Visible = true;
+                    }
+                    break;
+                case "Gladiator":
+                    if (_client.HasItem("Muscle Stimulant"))
+                        muscleStimulantCbox.Visible = true;
+
+                    if (previousClass == "Pure")
+                    {
+                        if (_client.Spellbook["Aegis Sphere"] != null)
+                            aegisSphereCbox.Visible = true;
+
+                        if (_client.HasItem("Monster Call"))
+                            monsterCallCbox.Visible = true;
+                    }
+                    break;
+                case "Summoner":
+                    if (_client.HasItem("Dragon's Scale"))
+                        dragonScaleCbox.Enabled = true;;
+                    
+                    if (previousClass == "Pure")
+                    {
+                        if (_client.Spellbook["Lyliac Vineyard"] != null)
+                        {
+                            vineyardCbox.Visible = true;
+                            vineCombox.Visible = true;
+                            vineText.Visible = true;
+                        }
+
+                        if (_client.Spellbook["Disenchanter"] != null)
+                            disenchanterCbox.Visible = true;
+
+                        if (_client.Spellbook["Mana Ward"] != null)
+                            manaWardCbox.Visible = true;
+
+                        if (_client.HasItem("Dragon's Fire"))
+                            dragonsFireCbox.Visible = true;
+                    }
+                    break;
+                case "Bard":
+                    if (_client.Spellbook["Regeneration"] != null || _client.Spellbook["Increased Regeneration"] != null)
+                        regenerationCbox.Visible = true;
+
+                    if (_client.HasItem("Wake Scroll"))
+                        wakeScrollCbox.Visible = true;
+                    break;
+                case "Druid":
+                    bool hasSpellWithForm = _client.Spellbook.Any(spell => spell.Name.Contains("Form"));
+                    if (hasSpellWithForm)
+                        druidFormCbox.Visible = true;
+                    break;
+            }
+
+            // Display check boxes based on Temuair class
+            switch (temuairClass)
+            {
+                case "Rogue":
+                    if (_client.Spellbook["Hide"] != null)
+                        hideCbox.Visible = true;
+                    break;
+                case "Warrior":
+                    if (previousClass == "Pure")
+                    {
+                        if (_client.Spellbook["Asgall Faileas"] != null)
+                            asgallCbox.Visible = true;
+
+                        if (_client.Skillbook["Perfect Defense"] != null)
+                            perfectDefenseCbox.Visible = true;
+                    }
+                    break;
+                case "Wizard":
+                    if (_client.Spellbook["fas spiorad"] != null)
+                    {
+                        fasSpioradCbox.Visible = true;
+                        fasSpioradText.Visible = true;
+                    }
+                    break;
+                case "Priest":
+                    if (_client.Spellbook["armachd"] != null)
+                        armachdCbox.Visible = true;
+
+                    if (_client.Spellbook["beag cradh"] != null)
+                        beagCradhCbox.Visible = true;
+                    break;
+                case "Monk":
+                    if (_client.Spellbook["Mist"] != null)
+                        mistCbox.Visible = true;
+
+                    if (_client.Spellbook["White Bat Stance"] != null)
+                        hideCbox.Visible = true;
+                    break;
+            }
+
+            // Display check boxes based on previous class
+            switch (previousClass)
+            {
+                case "Rogue":
+                    if (_client.Spellbook["Hide"] != null)
+                        hideCbox.Visible = true;
+                    break;
+                case "Warrior":
+                    if (previousClass == "Pure")
+                    {
+                        asgallCbox.Visible = true;
+                        perfectDefenseCbox.Visible = true;
+                    }
+                    break;
+                case "Wizard":
+                    if (_client.Spellbook["fas spiorad"] != null)
+                    {
+                        fasSpioradCbox.Visible = true;
+                        fasSpioradText.Visible = true;
+                    }
+                    break;
+                case "Priest":
+                    if (_client.Spellbook["armachd"] != null)
+                        armachdCbox.Visible = true;
+
+                    if (_client.Spellbook["beag cradh"] != null)
+                        beagCradhCbox.Visible = true;
+                    break;
+                case "Monk":
+                    if (_client.Spellbook["Mist"] != null)
+                        mistCbox.Visible = true;
+
+                    if (_client.Spellbook["White Bat Stance"] != null)
+                        hideCbox.Visible = true;
+                    break;
+            }
         }
 
         internal void DisplayHPMP()
@@ -792,7 +1079,7 @@ namespace Talos.Forms
         {
             if (textBox6 != null && textBox5 != null && textBox4 != null)
             {
-                Location targetLocation = new Location(textMap, new Point(textX, testY));
+                Location targetLocation = new Location(textMap, new Structs.Point(textX, testY));
                 //while (!(_client._clientLocation.Equals(targetLocation)))
                 //{
                 _client.WalkToLocation(targetLocation);
@@ -810,6 +1097,125 @@ namespace Talos.Forms
         {
             throw new NotImplementedException();
         }
+
+        private void dojoRefreshBtn_Click(object sender, EventArgs e)
+        {
+            OnlyDisplaySpellsWeHave();
+            SetClassSpecificSpells();
+            //LoadUnMaxedSkills();
+            //LoadUnMaxedSpells();  
+        }
+
+        private void addAislingBtn_Click(object sender, EventArgs e)
+        {
+            string text = addAislingText.Text;
+        }
+
+        private bool ParseAllyTextBox(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                MessageDialog.Show(_client._server._mainForm, "Your ally target cannot be empty.");
+                return false;
+            }
+            if (!name.All(char.IsLetter))
+            {
+                MessageDialog.Show(_client._server._mainForm, "Your ally target cannot contain noncharacters.");
+                return false;
+            }
+            if (_client.Bot.IsAllyAlreadyListed(name))
+            {
+                MessageDialog.Show(_client._server._mainForm, "Ally already in list.");
+                return false;
+            }
+            if (name.Equals(_client.Name, StringComparison.CurrentCultureIgnoreCase))
+            {
+                MessageDialog.Show(_client._server._mainForm, "Cannot add yourself to ally list.");
+                return false;
+            }
+            return true;
+        }
+
+        internal void AddAlly(string name, Image image = null)
+        {
+            if (_client.Bot.IsAllyAlreadyListed(name))
+            {
+                return;
+            }
+
+            Ally ally = new Ally(name);
+            ally.AllyPage = new AllyPage(ally, _client);
+
+            TabPage tabPage = new TabPage(ally.ToString())
+            {
+                Name = name
+            };
+            tabPage.Controls.Add(ally.AllyPage);
+            ally.AllyPage.allypictureCharacter.Image = image;
+
+            aislingTabControl.TabPages.Add(tabPage);
+            UpdateNearbyAllyTable(name);
+            RefreshNearbyAllyTable();
+            _client.Bot.UpdateAllyList(ally);
+
+        }
+
+        internal void UpdateNearbyAllyTable(string name)
+        {
+            if (!nearbyAllyTable.Controls.ContainsKey(name))
+            {
+                return;
+            }
+
+            Control allyControl = nearbyAllyTable.Controls[name];
+
+            WaitForCondition(allyControl, control => ((NearbyAlly)control).bool_0);
+
+            allyControl.Dispose();
+        }
+
+        internal void UpdateNearbyEnemyTable(ushort sprite)
+        {
+            if (_client.Bot.EnemyPage != null || !nearbyEnemyTable.Controls.ContainsKey(sprite.ToString()))
+            {
+                return;
+            }
+
+            Control enemyControl = nearbyEnemyTable.Controls[sprite.ToString()];
+
+            WaitForCondition(enemyControl, control => ((NearbyEnemy)control).bool_0);
+
+            enemyControl.Dispose();
+        }
+
+        private void RefreshNearbyAllyTable()
+        {
+            List<NearbyAlly> allies = nearbyAllyTable.Controls.OfType<NearbyAlly>().ToList();
+            nearbyAllyTable.Controls.Clear();
+            foreach (NearbyAlly ally in allies)
+            {
+                nearbyAllyTable.Controls.Add(ally);
+            }
+        }
+
+        private void WaitForCondition(Control control, Func<Control, bool> condition)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            while (true)
+            {
+                if (DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds < 250.0)
+                {
+                    if (condition(control))
+                    {
+                        break;
+                    }
+                    Thread.Sleep(25);
+                    continue;
+                }
+                return;
+            }
+        }
+
     }
 }
 

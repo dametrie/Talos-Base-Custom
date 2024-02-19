@@ -2,7 +2,6 @@
 
 namespace Talos
 {
-    [Flags]
     internal enum WaitEventResult
     {
         Signaled = 0x0,

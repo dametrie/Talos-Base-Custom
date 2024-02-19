@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace Talos.Enumerations
 {
-    [Flags]
     internal enum PreviousClass : byte
     {
         Pure = 0,

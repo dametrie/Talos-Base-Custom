@@ -2,7 +2,6 @@
 
 namespace Talos.Enumerations
 {
-    [Flags]
     internal enum Element : byte
     {
         None = 0,

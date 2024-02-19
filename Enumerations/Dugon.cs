@@ -3,11 +3,10 @@
 
 namespace Talos.Enumerations
 {
-    [Flags]
     internal enum Dugon
     {
         White = 0,
-        Green = 0,
+        Green = 1,
         Blue = 2,
         Yellow = 3,
         Purple = 4,

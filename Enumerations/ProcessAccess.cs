@@ -2,7 +2,6 @@
 
 namespace Talos
 {
-    [Flags]
     internal enum ProcessAccess
     {
         None = 0x0,
@@ -20,7 +19,6 @@ namespace Talos
         QueryLimitedInformation = 0x1000
     }
 
-    [Flags]
     internal enum ProcessCreationFlags
     {
         DebugProcess = 0x1,

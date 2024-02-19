@@ -3,7 +3,6 @@
 
 namespace Talos.Enumerations
 {
-    [Flags]
     internal enum MessageColor : byte
     {
         Red = 98,

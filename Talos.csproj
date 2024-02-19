@@ -60,22 +60,14 @@
     <Compile Include="Base\Server.cs" />
     <Compile Include="Base\Bot.cs" />
     <Compile Include="Capricorn\Drawing\DAGraphics.cs" />
-    <Compile Include="Capricorn\Drawing\EPFFrame.cs" />
-    <Compile Include="Capricorn\Drawing\EPFImage.cs" />
-    <Compile Include="Capricorn\Drawing\HPFImage.cs" />
-    <Compile Include="Capricorn\Drawing\ImageType.cs" />
-    <Compile Include="Capricorn\Drawing\MAPFile.cs" />
-    <Compile Include="Capricorn\Drawing\MapTile.cs" />
-    <Compile Include="Capricorn\Drawing\MPFFrame.cs" />
-    <Compile Include="Capricorn\Drawing\MPFImage.cs" />
-    <Compile Include="Capricorn\Drawing\Palette256.cs" />
-    <Compile Include="Capricorn\Drawing\PaletteTable.cs" />
-    <Compile Include="Capricorn\Drawing\PaletteTableEntry.cs" />
+    <Compile Include="Capricorn\Drawing\EPF.cs" />
+    <Compile Include="Capricorn\Drawing\HPF.cs" />
+    <Compile Include="Capricorn\Drawing\MAP.cs" />
+    <Compile Include="Capricorn\Drawing\MPF.cs" />
+    <Compile Include="Capricorn\Drawing\Palette.cs" />
     <Compile Include="Capricorn\Drawing\Tileset.cs" />
-    <Compile Include="Capricorn\IO\Compression\HPFCompression.cs" />
-    <Compile Include="Capricorn\IO\DATArchive.cs" />
-    <Compile Include="Capricorn\IO\DATFileEntry.cs" />
-    <Compile Include="Capricorn\IO\KhanArchive.cs" />
+    <Compile Include="Capricorn\IO\Compression\Compression.cs" />
+    <Compile Include="Capricorn\IO\DAT.cs" />
     <Compile Include="Cryptography\Abstractions\Definitions\Enums.cs" />
     <Compile Include="Cryptography\CRC.cs" />
     <Compile Include="Cryptography\CRC32.cs" />
@@ -96,9 +88,17 @@
     <Compile Include="Enumerations\ProcessAccess.cs" />
     <Compile Include="Enumerations\ProcessCreationFlags.cs" />
     <Compile Include="Enumerations\ServerMessageType.cs" />
+    <Compile Include="Enumerations\SpellAnimation.cs" />
     <Compile Include="Enumerations\StatUpdateFlags.cs" />
     <Compile Include="Enumerations\TemuairClass.cs" />
     <Compile Include="Enumerations\WaitEventResult.cs" />
+    <Compile Include="Forms\AllyPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\AllyPage.Designer.cs">
+      <DependentUpon>AllyPage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\UI\Ally.cs" />
     <Compile Include="Forms\UI\ChatPanel.cs" />
     <Compile Include="Forms\ClientTab.cs">
       <SubType>Form</SubType>
@@ -159,6 +159,9 @@
     <Compile Include="Structs\Point.cs" />
     <Compile Include="Structs\Tile.cs" />
     <Compile Include="Utility\Utility.cs" />
+    <EmbeddedResource Include="Forms\AllyPage.resx">
+      <DependentUpon>AllyPage.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\ClientTab.resx" />
     <EmbeddedResource Include="Forms\MainForm.resx" />
     <EmbeddedResource Include="Forms\MessageDialog.resx" />
@@ -172,6 +175,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="Capricorn\COPYRIGHT" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

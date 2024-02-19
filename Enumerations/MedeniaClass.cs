@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace Talos.Enumerations
 {
-    [Flags]
     internal enum MedeniaClass : byte
     {
         NonMed = 0,

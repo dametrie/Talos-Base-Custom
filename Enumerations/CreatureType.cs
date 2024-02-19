@@ -3,7 +3,6 @@
 
 namespace Talos.Enumerations
 {
-    [Flags]
     public enum CreatureType : byte
     {
         Normal = 0,

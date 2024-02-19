@@ -2,7 +2,6 @@
 
 namespace Talos.Enumerations
 {
-    [Flags]
     internal enum StatUpdateFlags : byte
     {
         None = 0,
