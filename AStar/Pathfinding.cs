@@ -167,7 +167,7 @@ namespace Talos.AStar
         private static bool IsValidNeighbor(Map map, Point current, Point neighbor)
         {
             // Check if the neighbor is within the map boundaries
-            if (neighbor.X < 0 || neighbor.X >= map.SizeX || neighbor.Y < 0 || neighbor.Y >= map.SizeY)
+            if (neighbor.X < 0 || neighbor.X >= map.Width || neighbor.Y < 0 || neighbor.Y >= map.Height)
             {
                 Console.WriteLine($"Invalid neighbor: Out of bounds - {neighbor}");
                 return false;

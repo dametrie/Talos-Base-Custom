@@ -25,6 +25,7 @@ using System.Drawing;
 using System.Media;
 using System.Reflection;
 using Point = Talos.Structs.Point;
+using System.Threading.Tasks;
 
 
 
@@ -1030,7 +1031,7 @@ namespace Talos
 
                 if (worldObject is Objects.Object obj && obj.Exists)
                 {
-                    client.WorldObjects.Remove(worldObject.ID);
+                    client.WorldObjects.TryRemove(worldObject.ID, out _);
 
                     if (client.ObjectHashSet.Contains(worldObject.ID))
                     {
@@ -1056,7 +1057,7 @@ namespace Talos
                             // clientTab.UpdateNearbyAllyTable(player.Name);
                         }
                     }
-                    client.WorldObjects.Remove(id);
+                    client.WorldObjects.TryRemove(id, out _);
                 }
                 else //is a creature
                 {
@@ -1253,12 +1254,13 @@ namespace Talos
             client.NearbyNPC.Clear();
             client.NearbyGhosts.Clear();
             client.CreatureHashSet.Clear();
+            client.Pathfinder = new Pathfinder(client);
 
             Console.WriteLine("Map ID: " + map.MapID);
             Console.WriteLine("Map Name: " + map.Name);
             Console.WriteLine("Map Checksum: " + map.Checksum);
-            Console.WriteLine("Map SizeX: " + map.SizeX);
-            Console.WriteLine("Map SizeY: " + map.SizeY);
+            Console.WriteLine("Map SizeX: " + map.Width);
+            Console.WriteLine("Map SizeY: " + map.Height);
             Console.WriteLine("Map Flags: " + map.Flags);
             Console.WriteLine("Map tiles: " + client._map.Tiles);
 
@@ -1768,7 +1770,7 @@ namespace Talos
 
                 foreach (var playerToRemove in playersToRemove)
                 {
-                    client.WorldObjects.Remove(playerToRemove.ID);
+                    client.WorldObjects.TryRemove(playerToRemove.ID, out _);
                 }
             }
             if (!client.WorldObjects.ContainsKey(id))
@@ -2056,16 +2058,16 @@ namespace Talos
             object[] mapID = new object[] { client._map.MapID };
             string path = Program.WriteMapFiles(System.Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", mapID);
             FileStream output = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
-            output.Seek((long)((client._map.SizeX * 6) * num), SeekOrigin.Begin);
+            output.Seek((long)((client._map.Width * 6) * num), SeekOrigin.Begin);
             BinaryWriter writer = new BinaryWriter(output);
-            for (short i = 0; i < client._map.SizeX; i = (short)(i + 1))
+            for (short i = 0; i < client._map.Width; i = (short)(i + 1))
             {
                 writer.Write(serverPacket.ReadInt16());
                 writer.Write(serverPacket.ReadInt16());
                 writer.Write(serverPacket.ReadInt16());
             }
             writer.Close();
-            if (num == (client._map.SizeY - 1))
+            if (num == (client._map.Height - 1))
             {
                 byte[] buffer = File.ReadAllBytes(path);
                 if (CRC.Calculate(buffer) == client._map.Checksum)

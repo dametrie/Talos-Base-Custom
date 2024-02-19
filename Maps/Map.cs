@@ -6,7 +6,9 @@ using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Talos.Base;
 using Talos.Enumerations;
+using Talos.Objects;
 using Talos.Structs;
 
 namespace Talos.Maps
@@ -15,8 +17,8 @@ namespace Talos.Maps
     {
         internal bool IsLoaded { get; private set; }
         internal short MapID { get; }
-        internal byte SizeX { get; }
-        internal byte SizeY { get; }
+        internal byte Width { get; }
+        internal byte Height { get; }
         internal byte Flags { get; set; }
         internal ushort Checksum { get; set; }  
         internal string Name { get; set; }
@@ -31,8 +33,8 @@ namespace Talos.Maps
         internal Map(short mapID, byte sizeX, byte sizeY, byte flags, string name, sbyte music)
         {
             MapID = mapID;
-            SizeX = sizeX;
-            SizeY = sizeY;
+            Width = sizeX;
+            Height = sizeY;
             Flags = flags;
             Name = name;
             Music = music;
@@ -46,8 +48,8 @@ namespace Talos.Maps
         internal Map(short mapID, byte sizeX, byte sizeY, byte flags, ushort checksum, string name)
         {
             MapID = mapID;
-            SizeX = sizeX;
-            SizeY = sizeY;
+            Width = sizeX;
+            Height = sizeY;
             Flags = flags;
             Checksum = checksum;
             Name = name;
@@ -62,9 +64,9 @@ namespace Talos.Maps
         {
             Tiles.Clear();
             int index = 0;
-            for (short y = 0; y < SizeY; y = (short)(y + 1))
+            for (short y = 0; y < Height; y = (short)(y + 1))
             {
-                for (short x = 0; x < SizeX; x = (short)(x + 1))
+                for (short x = 0; x < Width; x = (short)(x + 1))
                 {
                     Point key = new Point(x, y);
                     short bg = (short)(data[index++] | (data[index++] << 8));
@@ -74,6 +76,34 @@ namespace Talos.Maps
                 }
             }
             IsLoaded = true;
+        }
+
+        internal bool IsLocationWithinBounds(Location loc)
+        {
+            return WithinGrid(loc.X, loc.Y);
+        }
+
+        internal bool WithinGrid(short x, short y)
+        {
+            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            {
+                Point key = new Point(x, y);
+                return Tiles[key].IsWall;
+            }
+            return true;
+        }
+
+        internal bool IsLocationOpenForInteraction(Client client, Location location)
+        {
+            if (!IsLocationWithinBounds(location))
+            {
+                return !client.GetWorldObjects().Any(delegate (WorldObject worldEntity)
+                {
+                    Creature creature = worldEntity as Creature;
+                    return creature != null && Location.Equals(creature.Location, location) && (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && creature != client.Player;
+                });
+            }
+            return false;
         }
     }
 }

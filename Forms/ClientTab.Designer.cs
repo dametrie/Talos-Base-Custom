@@ -88,6 +88,9 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
+            this.manaBar = new Talos.Forms.UI.ResourceBar();
+            this.healthBar = new Talos.Forms.UI.ResourceBar();
+            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -502,9 +505,6 @@ namespace Talos.Forms
             this.smallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.largeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.manaBar = new Talos.Forms.UI.ResourceBar();
-            this.healthBar = new Talos.Forms.UI.ResourceBar();
-            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -1258,6 +1258,41 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // manaBar
+            // 
+            this.manaBar.BackColor = System.Drawing.Color.White;
+            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.manaBar.Location = new System.Drawing.Point(65, 282);
+            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.manaBar.Name = "manaBar";
+            this.manaBar.Size = new System.Drawing.Size(50, 196);
+            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.manaBar.TabIndex = 15;
+            // 
+            // healthBar
+            // 
+            this.healthBar.BackColor = System.Drawing.Color.White;
+            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
+            this.healthBar.Location = new System.Drawing.Point(6, 282);
+            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.healthBar.Name = "healthBar";
+            this.healthBar.Size = new System.Drawing.Size(50, 196);
+            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.healthBar.TabIndex = 14;
+            // 
+            // chatPanel
+            // 
+            this.chatPanel.AutoDetectUrls = true;
+            this.chatPanel.BackColor = System.Drawing.Color.White;
+            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel.Name = "chatPanel";
+            this.chatPanel.ReadOnly = true;
+            this.chatPanel.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel.TabIndex = 0;
+            this.chatPanel.Text = "";
             // 
             // mainAislingsTab
             // 
@@ -6068,6 +6103,7 @@ namespace Talos.Forms
             this.textBox4.Name = "textBox4";
             this.textBox4.Size = new System.Drawing.Size(100, 23);
             this.textBox4.TabIndex = 142;
+            this.textBox4.TextChanged += new System.EventHandler(this.textBox6_TextChanged);
             // 
             // textBox5
             // 
@@ -6101,6 +6137,7 @@ namespace Talos.Forms
             this.button9.TabIndex = 138;
             this.button9.Text = "E";
             this.button9.UseVisualStyleBackColor = true;
+            this.button9.Click += new System.EventHandler(this.button9_Click);
             // 
             // button10
             // 
@@ -6110,6 +6147,7 @@ namespace Talos.Forms
             this.button10.TabIndex = 137;
             this.button10.Text = "W";
             this.button10.UseVisualStyleBackColor = true;
+            this.button10.Click += new System.EventHandler(this.button10_Click);
             // 
             // button11
             // 
@@ -6119,6 +6157,7 @@ namespace Talos.Forms
             this.button11.TabIndex = 136;
             this.button11.Text = "S";
             this.button11.UseVisualStyleBackColor = true;
+            this.button11.Click += new System.EventHandler(this.button11_Click);
             // 
             // button12
             // 
@@ -6128,6 +6167,7 @@ namespace Talos.Forms
             this.button12.TabIndex = 135;
             this.button12.Text = "N";
             this.button12.UseVisualStyleBackColor = true;
+            this.button12.Click += new System.EventHandler(this.button12_Click);
             // 
             // menuStrip
             // 
@@ -6231,41 +6271,6 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem.Name = "fullscreenToolStripMenuItem";
             this.fullscreenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.fullscreenToolStripMenuItem.Text = "Fullscreen";
-            // 
-            // manaBar
-            // 
-            this.manaBar.BackColor = System.Drawing.Color.White;
-            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.manaBar.Location = new System.Drawing.Point(65, 282);
-            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.manaBar.Name = "manaBar";
-            this.manaBar.Size = new System.Drawing.Size(50, 196);
-            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.manaBar.TabIndex = 15;
-            // 
-            // healthBar
-            // 
-            this.healthBar.BackColor = System.Drawing.Color.White;
-            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
-            this.healthBar.Location = new System.Drawing.Point(6, 282);
-            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.healthBar.Name = "healthBar";
-            this.healthBar.Size = new System.Drawing.Size(50, 196);
-            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.healthBar.TabIndex = 14;
-            // 
-            // chatPanel
-            // 
-            this.chatPanel.AutoDetectUrls = true;
-            this.chatPanel.BackColor = System.Drawing.Color.White;
-            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel.Name = "chatPanel";
-            this.chatPanel.ReadOnly = true;
-            this.chatPanel.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel.TabIndex = 0;
-            this.chatPanel.Text = "";
             // 
             // ClientTab
             // 
@@ -6448,6 +6453,11 @@ namespace Talos.Forms
             this.ResumeLayout(false);
             this.PerformLayout();
 
+        }
+
+        private void TextBox4_TextChanged(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
 

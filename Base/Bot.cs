@@ -48,5 +48,10 @@ namespace Talos.Base
                 this._allyListName.Add(ally.Name);
             }
         }
+
+        internal bool IsStrangerNearby()
+        {
+            return false;
+        }
     }
 }

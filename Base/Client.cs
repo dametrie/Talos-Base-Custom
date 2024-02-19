@@ -21,6 +21,7 @@ using Talos.Definitions;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 using Talos.Base;
+using System.Collections.Concurrent;
 
 
 namespace Talos.Base
@@ -96,8 +97,9 @@ namespace Talos.Base
         internal byte _comboScrollCounter;
         internal Spell _currentSpell;
         internal System.Windows.Forms.Timer _spellTimer;
-
-   
+        internal Stack<Location> pathStack = new Stack<Location>();
+        internal Pathfinder Pathfinder { get; set; }
+        internal Location lastDestination;
 
         internal readonly object Lock = new object();
 
@@ -121,7 +123,7 @@ namespace Talos.Base
         };
 
         internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
-        internal Dictionary<int, WorldObject> WorldObjects { get; private set; } = new Dictionary<int, WorldObject>();
+        internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
         internal Dictionary<string, Player> NearbyPlayers { get; private set; } = new Dictionary<string, Player>();
         internal Dictionary<string, Player> NearbyGhosts { get; private set; } = new Dictionary<string, Player>();
         internal Dictionary<string, Creature> NearbyNPC { get; private set; } = new Dictionary<string, Creature>();
@@ -140,7 +142,7 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
-       
+        private bool shouldRefresh;
 
         internal Bot Bot { get; set; }
         internal Thread WalkThread { get; set; }
@@ -243,7 +245,7 @@ namespace Talos.Base
             ClientTab = null;
         }
 
-        internal bool QueryEffectsBar(ushort effectID) => EffectsBarHashSet.Contains(effectID);
+        internal bool HasEffect(EffectsBar effectID) => EffectsBarHashSet.Contains((ushort)effectID);
         internal bool GetMapFlags(MapFlags flagID) => _mapFlags.HasFlag(flagID);
         internal void SetMapFlags(MapFlags flagID) => _mapFlags |= flagID;
         internal void SetTemuairClass(TemuairClass temClass) => _temuairClass |= temClass;
@@ -297,27 +299,22 @@ namespace Talos.Base
         }
         internal List<Player> GetNearbyAllies()
         {
-            List<Player> list = new List<Player>();
-            if (Monitor.TryEnter(Server.Lock, 1000))
+            var nearbyAllies = new List<Player>();
+
+            lock (Server.Lock)
             {
-                try
+                foreach (var player in NearbyPlayers.Values)
                 {
-                    foreach (Player value in NearbyPlayers.Values)
+                    if (AllyListHashSet.Contains(player.Name))
                     {
-                        if (AllyListHashSet.Contains(value.Name))
-                        {
-                            list.Add(value);
-                        }
+                        nearbyAllies.Add(player);
                     }
-                    return list;
-                }
-                finally
-                {
-                    Monitor.Exit(Server.Lock);
                 }
             }
-            return list;
+
+            return nearbyAllies;
         }
+
         private bool IsValidSpell(Client client, string spellName, Creature creature)
         {
             // Guard clause: Reject spell if Suain effect is active and spell is not allowed
@@ -1291,6 +1288,20 @@ namespace Talos.Base
                 return !keepSpellAfterUse || ClearSpell();
             }
         }
+        internal List<WorldObject> GetWorldObjects()
+        {
+            var worldObjects = new List<WorldObject>();
+
+            foreach (var item in CreatureHashSet)
+            {
+                if (WorldObjects.TryGetValue(item, out var worldObject))
+                {
+                    worldObjects.Add(worldObject);
+                }
+            }
+
+            return worldObjects;
+        }
 
         internal void RequestProfile()
         {
@@ -1348,6 +1359,16 @@ namespace Talos.Base
             ClientPacket clientPacket = new ClientPacket(67);
             clientPacket.WriteByte(1);
             clientPacket.WriteInt32(objectId);
+            Enqueue(clientPacket);
+        }
+
+        internal void ClickObject(Location location)
+        {
+            Point point = new Point(location.X, location.Y);
+            ClientPacket clientPacket = new ClientPacket(67);
+            clientPacket.WriteByte(3);
+            clientPacket.WriteStruct(point);
+            clientPacket.WriteByte(0);
             Enqueue(clientPacket);
         }
 
@@ -1445,8 +1466,8 @@ namespace Talos.Base
             if (Dialog == null && !_server._stopWalking && dir != Direction.Invalid && !_isRefreshing)
             {
                 _walkSignal.Set(); // Always signal at the beginning
+                shouldRefresh = true;
 
-                LastStep = DateTime.UtcNow;
 
                 if (_serverDirection != dir)
                 {
@@ -1466,6 +1487,7 @@ namespace Talos.Base
 
                 _clientLocation.TranslateLocationByDirection(dir);
                 LastMoved = DateTime.UtcNow;
+                LastStep = DateTime.UtcNow;
             }
             else
             {
@@ -1474,8 +1496,27 @@ namespace Talos.Base
             }
         }
 
+
+
         internal void WalkToLocation(Location targetLocation)
         {
+            // Add logic to ensure method is not called too frequently
+            while (true)
+            {
+                double totalMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+                if (Bot.IsStrangerNearby() || Bot._shouldBotStop)
+                {
+                    if (totalMilliseconds >= 420.0)
+                    {
+                        break;
+                    }
+                }
+                else if (!(totalMilliseconds < _walkSpeed))
+                {
+                    break;
+                }
+                Thread.Sleep(10);
+            }
 
             _isWalking = true;
             _walkSignal.Set(); // Ensure the WalkToLocation thread starts
@@ -1501,6 +1542,193 @@ namespace Talos.Base
             });
         }
 
+        internal bool TryWalkToLocation(Location destination, short followDistance = 1, bool allowAutoWalking = true, bool ignoreObstacles = true)
+        {
+            //if (PlayersWithNoName.Count > 0 || _isCasting)//Adam
+            if (_isCasting)
+            {
+                if (!_isWalking)
+                {
+                    return false;
+                }
+                _isCasting = false;
+            }
+            if ((!_map.IsLocationWithinBounds(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any((Creature creature) => creature != Player && creature.Type != CreatureType.WalkThrough && destination.Equals(creature.Location)))) || (!shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
+            {
+                if (followDistance != 0 && _clientLocation.DistanceFrom(destination) <= followDistance)
+                {
+                    Thread.Sleep(25);
+                    return false;
+                }
+                if (Location.Equals(_clientLocation, destination))
+                {
+                    if (shouldRefresh || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
+                    {
+                        if (_stuckCounter == 0)
+                        {
+                            RequestRefresh();
+                        }
+                        shouldRefresh = false;
+                    }
+                    return true;
+                }
+                while (true)
+                {
+                    double totalMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+                    if (Bot.IsStrangerNearby() || Bot._shouldBotStop)
+                    {
+                        if (totalMilliseconds >= 420.0)
+                        {
+                            break;
+                        }
+                    }
+                    else if (!(totalMilliseconds < _walkSpeed))
+                    {
+                        break;
+                    }
+                    Thread.Sleep(10);
+                }
+                if (Location.NotEquals(destination, lastDestination) || pathStack.Count == 0)
+                {
+                    lastDestination = destination;
+                    pathStack = Pathfinder.FindPath(_clientLocation, destination, ignoreObstacles, followDistance);
+                }
+                if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && shouldRefresh)
+                {
+                    pathStack = Pathfinder.FindPath(_serverLocation, destination, ignoreObstacles, followDistance);
+                    if (pathStack.Count == 0)
+                    {
+                        return false;
+                    }
+                    RequestRefresh();
+                    shouldRefresh = false;
+                    return false;
+                }
+                if (pathStack.Count == 0)
+                {
+                    return false;
+                }
+                List<Creature> nearbyCreatures = (from creature in GetWorldObjects().OfType<Creature>()
+                                                  where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(_serverLocation) <= 11
+                                                  select creature).ToList();
+                foreach (Location loc in pathStack)
+                {
+                    if (Doors.Count > 0 && Doors.Any(door => Location.Equals(door.Location, loc) && door.Closed && !door.RecentlyClosed))
+                    {
+                        ClickObject(loc);
+                    }
+                    if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(delegate (Creature npc)
+                    {
+                        if (Location.NotEquals(loc, destination) && Location.Equals(npc.Location, loc))
+                        {
+                            return true;
+                        }
+                        return !this.HasEffect(EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.Sprite) && GetCreatureCoverage(npc).Contains(loc);
+                    }))
+                    {
+                        pathStack = Pathfinder.FindPath(_clientLocation, destination, ignoreObstacles, followDistance);
+                        return false;
+                    }
+                }
+                Location nextPosition = pathStack.Pop();
+                if (nextPosition.DistanceFrom(_clientLocation) != 1)
+                {
+                    if (nextPosition.DistanceFrom(_clientLocation) > 2 && shouldRefresh)
+                    {
+                        if (_stuckCounter == 0)
+                        {
+                            RequestRefresh();
+                        }
+                        shouldRefresh = false;
+                    }
+                    pathStack = Pathfinder.FindPath(_clientLocation, destination, ignoreObstacles, followDistance);
+                    return false;
+                }
+                Direction directionToWalk = nextPosition.Point.GetDirection(_clientLocation.Point);
+                if (allowAutoWalking)
+                {
+                    lock (Lock)
+                    {
+                        if (!HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
+                        {
+                            Walk(directionToWalk);
+                        }
+                    }
+                }
+                else if (!HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
+                {
+                    Walk(directionToWalk);
+                }
+                return true;
+            }
+            RequestRefresh();
+            shouldRefresh = false;
+            return false;
+        }
+        internal List<Location> GetCreatureCoverage(Creature creature)
+        {
+            if (HasEffect(EffectsBar.Hide))
+            {
+                return new List<Location>();
+            }
+            return new List<Location>
+            {
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 2), creature.Location.Y)),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), (short)(creature.Location.Y + 1))),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), creature.Location.Y)),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), (short)(creature.Location.Y - 1))),
+                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y + 2))),
+                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y + 1))),
+                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y - 1))),
+                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y - 2))),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), (short)(creature.Location.Y + 1))),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), creature.Location.Y)),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), (short)(creature.Location.Y - 1))),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 2), creature.Location.Y))
+            };
+        }
+
+        internal List<Location> GetObstacleLocations(Location location)
+        {
+            if (!_server._maps.TryGetValue(location.MapID, out Map value))
+            {
+                return new List<Location>();
+            }
+
+            var obstacleLocations = value.Exits
+                .Where(item => !location.Point.Equals(item.Key))
+                .Select(item => new Location(location.MapID, item.Key))
+                .ToList();
+
+            obstacleLocations.AddRange(value.WorldMaps
+                .Where(item => !location.Point.Equals(item.Key))
+                .Select(item => new Location(location.MapID, item.Key)));
+
+            return obstacleLocations;
+        }
+
+        internal List<Creature> GetCreaturesInRange(int distance = 12, params ushort[] creatureArray)
+        {
+            var creatureList = new List<Creature>();
+            var hashSet = new HashSet<ushort>(creatureArray);
+
+            lock (Server.Lock)
+            {
+                foreach (var creature in GetWorldObjects().OfType<Creature>())
+                {
+                    if ((creature.Type == CreatureType.Normal || creature.Type == CreatureType.WalkThrough)
+                        && IsCreatureNearby(creature, distance)
+                        && creature.Sprite > 0 && creature.Sprite <= 1000
+                        && !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.Sprite)
+                        && hashSet.Contains(creature.Sprite))
+                    {
+                        creatureList.Add(creature);
+                    }
+                }
+            }
+
+            return creatureList;
+        }
 
         private void ChangeMap(short targetMapID, Location targetLocation)
         {
@@ -1581,6 +1809,7 @@ namespace Talos.Base
                 break;
             }
         }
+
 
         internal void Attributes(StatUpdateFlags value, Statistics stats)
         {

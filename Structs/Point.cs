@@ -62,6 +62,19 @@ namespace Talos.Structs
             };
         }
 
+        internal Direction GetDirection(Point loc)
+        {
+            if (Y == loc.Y)
+            {
+                if (X == loc.X)
+                {
+                    return Direction.Invalid;
+                }
+                return X < loc.X ? Direction.West : Direction.East;
+            }
+            return Y < loc.Y ? Direction.North : Direction.South;
+        }
+
         /// <summary>
         /// Create a new point objbect the represents the current point translated by the direction
         /// </summary>

@@ -368,15 +368,12 @@ namespace Talos.Forms
         {
             if (item != null && listBox != null)
             {
-                
                 if (bindingList.Contains(item))
                 {
-
                     //bindingList.Remove(item);
                 }
                 else
                 {
-                    
                     //bindingList.Add(item);
                 }
 
@@ -384,7 +381,8 @@ namespace Talos.Forms
                 listBox.DataSource = null; // Reset the DataSource
                 listBox.DataSource = bindingList; // Reassign the DataSource
 
-                listBox.Invoke((MethodInvoker)delegate {
+                // Asynchronously refresh the ListBox
+                listBox.BeginInvoke((MethodInvoker)delegate {
                     listBox.Refresh(); // Refresh the ListBox to reflect changes
                 });
             }
@@ -973,7 +971,7 @@ namespace Talos.Forms
 
         private void button2_Click(object sender, EventArgs e)
         {
-            _client.Walk(Direction.South);
+            
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -1080,10 +1078,11 @@ namespace Talos.Forms
             if (textBox6 != null && textBox5 != null && textBox4 != null)
             {
                 Location targetLocation = new Location(textMap, new Structs.Point(textX, testY));
-                //while (!(_client._clientLocation.Equals(targetLocation)))
-                //{
-                _client.WalkToLocation(targetLocation);
-                //}
+                while (!(_client._clientLocation.Equals(targetLocation)))
+                {
+                    //_client.WalkToLocation(targetLocation);
+                    _client.TryWalkToLocation(targetLocation);
+                }
 
             }
         }
@@ -1216,6 +1215,25 @@ namespace Talos.Forms
             }
         }
 
+        private void button11_Click(object sender, EventArgs e)
+        {
+            _client.Walk(Direction.South);
+        }
+
+        private void button12_Click(object sender, EventArgs e)
+        {
+            _client.Walk(Direction.North);
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            _client.Walk(Direction.East);
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            _client.Walk(Direction.West);
+        }
     }
 }
 

@@ -73,6 +73,16 @@ namespace Talos.Structs
         /// <returns></returns>
         public bool Equals(Location other) => MapID == other.MapID && Point.Equals(other.Point);
 
+        internal static bool Equals(Location location1, Location location2)
+        {
+            return location1.MapID == location2.MapID && location1.Point.Equals(location2.Point);
+        }
+
+        internal static bool NotEquals(Location location1, Location location2)
+        {
+            return !Equals(location1, location2);
+        }
+
         /// <summary>
         /// Prints the value of the point to a string
         /// </summary>
