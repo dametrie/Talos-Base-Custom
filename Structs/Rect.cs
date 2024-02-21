@@ -97,7 +97,7 @@ namespace Talos.Structs
             _bottom = bottom;
         }
 
-        internal Rect(Rectangle rect) : this(rect.Left, rect.Top, rect.Right, rect.Bottom) { }
+        internal Rect(System.Drawing.Rectangle rect) : this(rect.Left, rect.Top, rect.Right, rect.Bottom) { }
 
 
         public override string ToString()

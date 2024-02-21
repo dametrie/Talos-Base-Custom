@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Talos.AStar;
 using Talos.Enumerations;
 
 namespace Talos.Structs
@@ -126,6 +127,10 @@ namespace Talos.Structs
             return true;
         }
 
-
+        internal int DistanceFrom(PathNode2 node)
+        {
+            //check the distance from location to node
+            return Math.Abs(X - node.X) + Math.Abs(Y - node.Y);
+        }
     }
 }

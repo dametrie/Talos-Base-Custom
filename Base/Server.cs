@@ -984,10 +984,10 @@ namespace Talos
             client._clientDirection = direction;
             client.LastMoved = DateTime.Now;
 
-            //Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
-            //Console.WriteLine("SERVER Last moved = " + client.LastMoved);
-            //Console.WriteLine("SERVER Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
-            //Console.WriteLine("SERVER Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
+            Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
+            Console.WriteLine("SERVER Last moved = " + client.LastMoved);
+            Console.WriteLine("SERVER Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
+            Console.WriteLine("SERVER Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
 
             return true;
         }
@@ -1254,7 +1254,9 @@ namespace Talos
             client.NearbyNPC.Clear();
             client.NearbyGhosts.Clear();
             client.CreatureHashSet.Clear();
-            client.Pathfinder = new Pathfinder(client);
+            //client.Pathfinder = new Pathfinder(client);
+            //client.Pathfinding = new Pathfinding(client);   
+
 
             Console.WriteLine("Map ID: " + map.MapID);
             Console.WriteLine("Map Name: " + map.Name);
@@ -2138,6 +2140,8 @@ namespace Talos
             if (client._isRefreshing)
                 client._canRefresh = true;
 
+            client.Pathfinder2 = new Pathfinder2(client._map);
+
             return true;
         }
 
@@ -2357,7 +2361,6 @@ namespace Talos
                 {
                 }
             }
-            Pathfinding.SetMaps(this._maps);
             binaryReader.Close();
             return true;
         }

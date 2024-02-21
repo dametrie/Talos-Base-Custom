@@ -371,6 +371,7 @@ namespace Talos.Objects
         }
         private void HandleStuckMessage(Client client, string message)
         {
+            Console.WriteLine("Stuck message received");
             client._server.RemoveFirstCreatureToSpell(client);
             client._currentSpell = null;
             client.CreatureTarget = null;

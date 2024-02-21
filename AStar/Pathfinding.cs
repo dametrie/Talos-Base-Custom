@@ -3,22 +3,30 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Talos.Base;
 using Talos.Enumerations;
 using Talos.Maps;
 using Talos.Structs;
 
 namespace Talos.AStar
 {
-    internal static class Pathfinding
+    internal class Pathfinding
     {
+        private Client _client;
+        private Map _map;
+        private readonly byte _mapWidth;
+        private readonly byte _mapHeight;
         // ... other methods ...
-        
+
         private static Dictionary <short, Map> _maps;
 
 
-        internal static void SetMaps(Dictionary<short, Map> maps)
+        internal Pathfinding(Client client)
         {
-            _maps = maps;
+            _client = client;
+            _map = client._map;
+            _mapWidth = _map.Width;
+            _mapHeight = _map.Height;
         }
 
         public static (List<Direction> pathDirections, short targetMapID) FindPath(Map map, Location start, Location goal)

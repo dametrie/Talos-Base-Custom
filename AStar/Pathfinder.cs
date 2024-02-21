@@ -16,16 +16,18 @@ namespace Talos.AStar
         private PathNode[,] _pathNodes;
         private readonly byte _mapWidth;
         private readonly byte _mapHeight;
-        private List<PathNode> _blockedNodes;
+        private List<PathNode> _openNodes;
         private Map _map;
         private Client _client;
 
         internal static Dictionary<short, Location[]> _specialLocations = new Dictionary<short, Location[]>
         {
-            //{
-            //    3058, // Pravat Deep?
-            //   /new Rectangle(new Location(3, new Point(3, 9)), new Location(3, new Point(3, 3))).LocationList.Concat(new RectangleZeus(new Location(9, new Point(9, 1)), new Location(9, new Point(3, 3))).LocationList).ToArray()
-            //}
+            {
+                3058, // Pravat Deep
+                Rectangle.CreateRectangleLocations(3058, 3, 9, 3, 3)
+                    .Concat(Rectangle.CreateRectangleLocations(3058, 9, 1, 3, 3))
+                    .ToArray()
+            }
         };
 
         internal Pathfinder(Client client)
@@ -34,14 +36,18 @@ namespace Talos.AStar
             _map = client._map;
             _mapWidth = _map.Width;
             _mapHeight = _map.Height;
-            _blockedNodes = new List<PathNode>();
+            _openNodes = new List<PathNode>();
             InitializePathNodes(true);
         }
-
-        private void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool includeAdditionalObstacles = true)
+        public bool IsLocationBlocked(Location loc)
+        {
+            return !_pathNodes[loc.Point.X, loc.Point.Y].IsOpen;
+        }
+        private void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool includeExits = true)
         {
             if (initializeBlockedNodes)
             {
+                Console.WriteLine("Initializing path nodes...");
                 _pathNodes = new PathNode[_mapWidth, _mapHeight];
                 for (short x = 0; x < _mapWidth; x++)
                 {
@@ -49,10 +55,13 @@ namespace Talos.AStar
                     {
                         _pathNodes[x, y] = new PathNode(_map.MapID, x, y)
                         {
-                            IsBlocked = !_map.WithinGrid(x, y)
+                            IsOpen = !_map.IsTileWall(x, y)
                         };
                     }
                 }
+                Console.WriteLine("Path nodes initialization complete.");
+
+                Console.WriteLine("Initializing neighbors.");
                 for (short x = 0; x < _mapWidth; x++)
                 {
                     for (short y = 0; y < _mapHeight; y++)
@@ -77,64 +86,90 @@ namespace Talos.AStar
                         }
                     }
                 }
-            }
+                Console.WriteLine("Neighbors initialization complete.");
+            
+        }
+            Console.WriteLine("Collecting obstacles...");
             List<Location> obstacles = new List<Location>(from creature in _client.GetWorldObjects().OfType<Creature>()
                                                           where (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && creature != _client.Player
                                                           select creature.Location);
+            Console.WriteLine("Obstacles from world objects:");
+            foreach (var obstacle in obstacles)
+            {
+                Console.WriteLine($"- {obstacle}");
+            }
+
+            Console.WriteLine("Obstacles from special locations:");
             if (_specialLocations.TryGetValue(_map.MapID, out Location[] specialObstacles))
             {
-                foreach (Location location1 in specialObstacles)
+                foreach (var obstacle in specialObstacles)
                 {
-                    if (!obstacles.Contains(location1))
+                    Console.WriteLine($"- {obstacle}");
+                    if (!obstacles.Contains(obstacle))
                     {
-                        obstacles.Add(location1);
+                        obstacles.Add(obstacle);
                     }
                 }
             }
-            if (includeAdditionalObstacles)
+
+            if (includeExits)
             {
-                foreach (Location location2 in _client.GetObstacleLocations(location))
+                Console.WriteLine("Obstacles from exits:");
+
+                foreach (Location location2 in _client.GetExitLocations(location))
                 {
+                    Console.WriteLine($"- {location2}");
                     if (!obstacles.Contains(location2))
                     {
                         obstacles.Add(location2);
                     }
                 }
             }
+
+            Console.WriteLine("Obstacles from creature coverage:");
             foreach (Creature creature in _client.GetCreaturesInRange(12, CONSTANTS.GREEN_BOROS.ToArray()))
             {
                 foreach (Location loc in _client.GetCreatureCoverage(creature))
                 {
+                    Console.WriteLine($"- {loc}");
                     if (!obstacles.Contains(loc))
                     {
                         obstacles.Add(loc);
                     }
                 }
             }
+
+            Console.WriteLine("Obstacles collection complete.");
+            Console.WriteLine("Resetting path nodes properties...");
             for (short x = 0; x < _mapWidth; x++)
             {
                 for (short y = 0; y < _mapHeight; y++)
                 {
                     PathNode currentNode = _pathNodes[x, y];
-                    currentNode.IsBlocked = !_map.IsLocationWithinBounds(_pathNodes[x, y].Location);
+                    currentNode.IsOpen = !_map.IsLocationWall(_pathNodes[x, y].Location);
+                    //Console.WriteLine($"- {currentNode.Location} is open: {currentNode.IsOpen}");
                     currentNode.IsVisited = false;
                     currentNode.IsInOpenSet = false;
                     currentNode.GCost = 0f;
                     currentNode.FCost = 0f;
                 }
             }
+            Console.WriteLine("Setting obstacles...");
             foreach (Location obstacle in obstacles)
             {
-                _pathNodes[obstacle.Point.X, obstacle.Point.Y].IsBlocked = true;
+                _pathNodes[obstacle.X, obstacle.Y].IsOpen = true;
             }
-            _blockedNodes.Clear();
+            //Console.WriteLine("Clearing open nodes list...");
+            _openNodes.Clear();
         }
+
+
 
         private PathNode GetNextNode()
         {
             PathNode result = null;
             float minCost = float.MaxValue;
-            foreach (PathNode node in _blockedNodes)
+            foreach (PathNode node in _openNodes)
             {
                 if (node != null && node.FCost < minCost)
                 {
@@ -147,44 +182,62 @@ namespace Talos.AStar
 
         internal Stack<Location> FindPath(Location start, Location end, bool ignoreObstacles = true, short threshold = 1)
         {
+            Console.WriteLine("Initializing path nodes...");
             InitializePathNodes(false, end, ignoreObstacles);
+            Console.WriteLine("Path nodes initialization complete.");
+
             if (Location.Equals(start, end))
             {
+                Console.WriteLine("Start and end locations are the same. Returning empty path.");
                 return new Stack<Location>();
             }
-            PathNode startNode = _pathNodes[start.Point.X, start.Point.Y];
-            PathNode endNode = _pathNodes[end.Point.X, end.Point.Y];
-            if (startNode.IsBlocked && endNode.IsBlocked && startNode != null && endNode != null)
+
+            PathNode startNode = _pathNodes[start.X, start.Y];
+            PathNode endNode = _pathNodes[end.X, end.Y];
+
+            if (startNode.IsOpen && endNode.IsOpen && startNode != null && endNode != null)
             {
+                Console.WriteLine("Start and end nodes are open and not null. Proceeding with pathfinding.");
+
                 startNode.IsInOpenSet = true;
                 startNode.GCost = start.DistanceFrom(end);
                 startNode.FCost = 0f;
-                _blockedNodes.Add(startNode);
+                _openNodes.Add(startNode);
+
                 while (true)
                 {
-                    if (_blockedNodes.Count > 0)
+                    if (_openNodes.Count > 0)
                     {
+                        Console.WriteLine("Nodes in open set. Proceeding with pathfinding loop.");
+
                         PathNode currentNode = GetNextNode();
+
                         if (currentNode == null)
                         {
+                            Console.WriteLine("Current node is null. Exiting pathfinding loop.");
                             break;
                         }
+
                         if (currentNode != endNode)
                         {
+                            Console.WriteLine("Current node is not the end node. Exploring neighbors.");
+
                             PathNode[] adjacentNodes = currentNode.Neighbors;
+
                             foreach (PathNode nextNode in adjacentNodes)
                             {
-                                if (nextNode != null && !nextNode.IsVisited && (nextNode == endNode || nextNode.IsBlocked))
+                                if (nextNode != null && !nextNode.IsVisited && (nextNode == endNode || nextNode.IsOpen))
                                 {
                                     float newGCost = currentNode.GCost + 1f;
                                     float newFCost = newGCost + nextNode.Location.DistanceFrom(end);
+
                                     if (!nextNode.IsInOpenSet)
                                     {
                                         nextNode.GCost = newGCost;
                                         nextNode.FCost = newFCost;
                                         nextNode.ParentNode = currentNode;
                                         nextNode.IsInOpenSet = true;
-                                        _blockedNodes.Add(nextNode);
+                                        _openNodes.Add(nextNode);
                                     }
                                     else if (nextNode.GCost > newGCost)
                                     {
@@ -194,12 +247,16 @@ namespace Talos.AStar
                                     }
                                 }
                             }
-                            _blockedNodes.Remove(currentNode);
+                            _openNodes.Remove(currentNode);
                             currentNode.IsVisited = true;
                             currentNode.IsInOpenSet = false;
                             continue;
                         }
+
+                        Console.WriteLine("End node reached. Constructing path.");
+
                         Stack<Location> path = new Stack<Location>();
+
                         while (currentNode != startNode)
                         {
                             if (currentNode.Location.DistanceFrom(end) >= threshold)
@@ -208,15 +265,26 @@ namespace Talos.AStar
                             }
                             currentNode = currentNode.ParentNode;
                         }
+                        Console.WriteLine($"Returning path: {path}");
                         return path;
                     }
+
+                    Console.WriteLine("No nodes in open set. Exiting pathfinding loop.");
                     return new Stack<Location>();
                 }
+
+                Console.WriteLine("Requesting refresh from client.");
                 _client.RequestRefresh();
                 return new Stack<Location>();
             }
+
+            Console.WriteLine("Start or end node is closed or null. Returning empty path.");
             return new Stack<Location>();
         }
+
+
+
+
 
         [CompilerGenerated]
         private bool FilterCreature(Creature creature)
@@ -237,7 +305,7 @@ namespace Talos.AStar
             private set;
         }
 
-        internal bool IsBlocked
+        internal bool IsOpen
         {
             get;
             set;

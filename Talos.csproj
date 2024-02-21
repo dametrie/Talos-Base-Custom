@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AStar\Pathfinder.cs" />
+    <Compile Include="AStar\Pathfinder2.cs" />
     <Compile Include="AStar\Pathfinding.cs" />
     <Compile Include="AStar\Pathnode.cs" />
     <Compile Include="Base\BotBase.cs" />
@@ -142,6 +143,7 @@
     <Compile Include="Objects\Statistics.cs" />
     <Compile Include="Structs\Location.cs" />
     <Compile Include="Structs\Point.cs" />
+    <Compile Include="Structs\Rectangle.cs" />
     <Compile Include="Structs\Tile.cs" />
     <Compile Include="Utility\Utility.cs" />
     <EmbeddedResource Include="Forms\AllyPage.resx">

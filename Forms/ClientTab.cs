@@ -1081,7 +1081,8 @@ namespace Talos.Forms
                 while (!(_client._clientLocation.Equals(targetLocation)))
                 {
                     //_client.WalkToLocation(targetLocation);
-                    _client.TryWalkToLocation(targetLocation);
+                    //_client.TryWalkToLocation(_client.Pathfinder, targetLocation, 0);
+                    _client.TryWalkToLocation3(targetLocation, 0, true);
                 }
 
             }

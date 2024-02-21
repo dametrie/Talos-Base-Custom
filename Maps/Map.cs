@@ -78,24 +78,33 @@ namespace Talos.Maps
             IsLoaded = true;
         }
 
-        internal bool IsLocationWithinBounds(Location loc)
+        internal bool IsLocationWall(Location loc)
         {
-            return WithinGrid(loc.X, loc.Y);
+            return IsTileWall(loc.X, loc.Y);
         }
 
-        internal bool WithinGrid(short x, short y)
+        internal bool IsTileWall(short x, short y)
         {
+            //Console.WriteLine($"Checking coordinates: ({x}, {y})");
+
             if (x >= 0 && y >= 0 && x < Width && y < Height)
             {
                 Point key = new Point(x, y);
-                return Tiles[key].IsWall;
+                bool isWall = Tiles[key].IsWall;
+                //Console.WriteLine($"Tile at coordinates ({x}, {y}) is{(isWall ? "" : " not")} a wall.");
+                return isWall;
             }
-            return true;
+            else
+            {
+                //Console.WriteLine($"Coordinates ({x}, {y}) are outside the map boundaries.");
+                return false;
+            }
         }
+
 
         internal bool IsLocationOpenForInteraction(Client client, Location location)
         {
-            if (!IsLocationWithinBounds(location))
+            if (!IsLocationWall(location))
             {
                 return !client.GetWorldObjects().Any(delegate (WorldObject worldEntity)
                 {
