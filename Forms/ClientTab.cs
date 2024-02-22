@@ -14,21 +14,25 @@ using Talos.Base;
 using System.Collections.Generic;
 using System.Drawing;
 using Talos.Forms.UI;
+using Talos.Definitions;
 
 namespace Talos.Forms
 {
     public partial class ClientTab : UserControl
     {
 
-        internal Client _client;
-        string textMaptext = string.Empty;
-        string textXtext = string.Empty;
-        string textYtext = string.Empty;
-        short textMap;
-        short textX;
-        short testY;
+        private Client _client;
+        private bool _isBotRunning = false;
+        private string textMaptext = string.Empty;
+        private string textXtext = string.Empty;
+        private string textYtext = string.Empty;
+        private short textMap;
+        private short textX;
+        private short testY;
 
-        internal List<string> chatPanelList = new List<string>
+        internal ulong _sessionExperience;
+
+        private List<string> _chatPanelList = new List<string>
         {
             "",
             "",
@@ -36,17 +40,47 @@ namespace Talos.Forms
             "",
             ""
         };
-        internal ulong _sessionExperience;
+        internal BindingList<string> trashToDrop = new BindingList<string>
+		{
+			"fior sal",
+			"fior creag",
+			"fior srad",
+			"fior athar",
+			"Purple Potion",
+			"Blue Potion",
+			"Light Belt",
+			"Passion Flower",
+			"Gold Jade Necklace",
+			"Bone Necklace",
+			"Amber Necklace",
+			"Half Talisman",
+			"Iron Greaves",
+			"Goblin Helmet",
+			"Cordovan Boots",
+			"Shagreen Boots",
+			"Magma Boots",
+			"Hy-brasyl Bracer",
+			"Hy-brasyl Gauntlet",
+			"Hy-brasyl Belt",
+			"Magus Apollo",
+			"Holy Apollo",
+			"Magus Diana",
+			"Holy Diana",
+			"Magus Gaea",
+			"Holy Gaea"
+		};
 
-        
 
-        internal ClientTab(Client client)
+
+
+    internal ClientTab(Client client)
         {
             _client = client;
             _client.ClientTab = this;
             InitializeComponent();
             worldObjectListBox.DataSource = client._worldObjectBindingList;
             creatureHashListBox.DataSource = client._creatureBindingList;
+            trashList.DataSource = trashToDrop;
             OnlyDisplaySpellsWeHave();
 
         }
@@ -62,8 +96,8 @@ namespace Talos.Forms
             SetupCheckbox(aoSuainCbox, "ao suain", "Leafhopper Chirp");
             SetupCheckbox(aoCurseCbox, "ao beag cradh", "ao cradh", "ao mor cradh", "ao ard cradh");
             SetupCheckbox(aoPoisonCbox, "ao puinsein");
-            SetupCheckbox(bubbleBlockCbox, "Bubble Block");
-            SetupCheckbox(spamBubbleCbox, "Bubble Block");
+            SetupCheckbox(bubbleBlockCbox, "Bubble Block", "Bubble Shield");
+            SetupCheckbox(spamBubbleCbox, "Bubble Block", "Bubble Shield");
             SetupCheckbox(fungusExtractCbox, "Fungus Beetle Extract");
             SetupCheckbox(mantidScentCbox, "Mantid Scent", "Potent Mantid Scent");
         }
@@ -123,17 +157,17 @@ namespace Talos.Forms
             {
                 case "Archer":
                     SetControlVisibility(nerveStimulantCbox, "Nerve Stimulant");
-                    SetPureClassItems("Vanishing Elixir", vanishingElixirCbox);
+                    SetPureClassItems(vanishingElixirCbox, "Vanishing Elixir");
                     break;
                 case "Gladiator":
                     SetControlVisibility(muscleStimulantCbox, "Muscle Stimulant");
                     SetPureClassSpells(aegisSphereCbox, "Aegis Sphere");
-                    SetPureClassItems("Monster Call", monsterCallCbox);
+                    SetPureClassItems(monsterCallCbox, "Monster Call");
                     break;
                 case "Summoner":
                     SetControlVisibility(dragonScaleCbox, "Dragon's Scale", true);
                     SetPureClassSpells(new[] { vineyardCbox, disenchanterCbox, manaWardCbox }, new[] { "Lyliac Vineyard", "Disenchanter", "Mana Ward" });
-                    SetPureClassItems("Dragon's Fire", dragonsFireCbox);
+                    SetPureClassItems(dragonsFireCbox, "Dragon's Fire");
                     SetVineyardVisibility();
                     break;
                 case "Bard":
@@ -164,7 +198,10 @@ namespace Talos.Forms
                     break;
                 case "Wizard":
                     SetControlVisibility(fasSpioradCbox, "fas spiorad", spellBased: true);
-                    fasSpioradText.Visible = true;
+                    fasSpioradCbox.VisibleChanged += (sender, e) =>
+                    {
+                        fasSpioradText.Visible = fasSpioradCbox.Visible;
+                    };
                     break;
                 case "Priest":
                     SetControlVisibility(armachdCbox, "armachd", spellBased: true);
@@ -191,7 +228,10 @@ namespace Talos.Forms
                     break;
                 case "Wizard":
                     SetControlVisibility(fasSpioradCbox, "fas spiorad", spellBased: true);
-                    fasSpioradText.Visible = true;
+                    fasSpioradCbox.VisibleChanged += (sender, e) =>
+                    {
+                        fasSpioradText.Visible = fasSpioradCbox.Visible;
+                    };
                     break;
                 case "Priest":
                     SetControlVisibility(armachdCbox, "armachd", spellBased: true);
@@ -221,7 +261,7 @@ namespace Talos.Forms
             if (_client._previousClass.ToString() == "Pure" && _client.Spellbook[spellName] != null)
                 control.Visible = true;
         }
-        private void SetPureClassItems(string itemName, Control control)
+        private void SetPureClassItems(Control control, string itemName)
         {
             if (_client._previousClass.ToString() == "Pure" && _client.HasItem(itemName))
                 control.Visible = true;
@@ -383,16 +423,16 @@ namespace Talos.Forms
             };
 
             // Update the chat panel list based on the extracted text
-            if (chatPanelList.Contains(text))
+            if (_chatPanelList.Contains(text))
             {
-                int index = chatPanelList.IndexOf(text);
+                int index = _chatPanelList.IndexOf(text);
                 ShiftListItemsDown(index);
-                chatPanelList[0] = text;
+                _chatPanelList[0] = text;
             }
             else
             {
-                ShiftListItemsDown(chatPanelList.Count - 1);
-                chatPanelList[0] = text;
+                ShiftListItemsDown(_chatPanelList.Count - 1);
+                _chatPanelList[0] = text;
             }
         }
 
@@ -400,7 +440,7 @@ namespace Talos.Forms
         {
             for (int i = endIndex; i > 0; i--)
             {
-                chatPanelList[i] = chatPanelList[i - 1];
+                _chatPanelList[i] = _chatPanelList[i - 1];
             }
         }
 
@@ -1165,6 +1205,49 @@ namespace Talos.Forms
         private void button10_Click(object sender, EventArgs e)
         {
             _client.Walk(Direction.West);
+        }
+
+
+
+        private void startStrip_Click_1(object sender, EventArgs e)
+        {
+            _isBotRunning = !_isBotRunning; // Toggle the running state
+
+            if (_isBotRunning)
+            {
+                StartBot();
+            }
+            else
+            {
+                StopBot();
+            }
+        }
+
+        private void StartBot()
+        {
+            startStrip.Text = "Stop";
+
+            // Initialize BotBase only if it's different from the current Bot
+            if (_client.BotBase != _client.Bot)
+            {
+                _client.BotBase = _client.Bot;
+                _client.BotBase.Client = _client;
+                _client.BotBase.Server = _client._server;
+            }
+
+            _client.BotBase.Start();
+            _client.ServerMessage(1, "Bot Started");
+        }
+
+        private void StopBot()
+        {
+            startStrip.Text = "Start";
+            _client.BotBase.Stop();
+
+            _client._isWalking = false;
+            _client._isCasting = false;
+
+            _client.ServerMessage(1, "Bot Stopped");
         }
     }
 }

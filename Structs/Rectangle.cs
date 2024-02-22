@@ -84,6 +84,13 @@ namespace Talos.Structs
             Width = size.X;
             Height = size.Y;
         }
+        internal Rectangle(Location location, Point size) : this()
+        {
+            X = location.X;
+            Y = location.Y;
+            Width = size.X;
+            Height = size.Y;
+        }
 
         public static bool Equal(Rectangle rect1, Rectangle rect2)
         {
@@ -95,12 +102,12 @@ namespace Talos.Structs
             return !rect1.Equals(rect2);
         }
 
-        internal bool method_0(Point location)
+        internal bool ContainsPoint(Point location)
         {
-            return method_1(location.X, location.Y);
+            return ContainsCoordinates(location.X, location.Y);
         }
 
-        internal bool method_1(short x, short y)
+        internal bool ContainsCoordinates(short x, short y)
         {
             if (x >= this.X && x < this.X + Width && y >= this.Y)
             {
@@ -109,7 +116,7 @@ namespace Talos.Structs
             return false;
         }
 
-        internal bool method_2(Rectangle rect)
+        internal bool ContainsRectangle(Rectangle rect)
         {
             if (rect.X >= X && rect.Y >= Y && rect.X + rect.Width <= X + Width)
             {

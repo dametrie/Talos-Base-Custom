@@ -22,6 +22,7 @@ using System.Text.RegularExpressions;
 using System.ComponentModel;
 using Talos.Base;
 using System.Collections.Concurrent;
+using Object = Talos.Objects.Object;
 
 
 namespace Talos.Base
@@ -150,6 +151,7 @@ namespace Talos.Base
         private bool shouldRefresh;
 
         internal Bot Bot { get; set; }
+        internal BotBase BotBase { get; set; }
         internal Thread WalkThread { get; set; }
         internal ClientTab ClientTab { get; set; }
         internal Statistics Stats { get; set; }
@@ -317,6 +319,30 @@ namespace Talos.Base
 
             return nearbyAllies;
         }
+
+        internal List<Object> GetNearbyLootableObjects(int distance = 12)
+        {
+            // If the lock is not acquired, return an empty list immediately.
+            if (!Monitor.TryEnter(Server.Lock, 1000))
+            {
+                return new List<Object>();
+            }
+            try
+            {
+                //return world objects within the distance specified
+                //where object is not of type player or creature
+                return WorldObjects.Values
+                    .OfType<Object>()
+                    .Where(obj => obj.GetType() == typeof(Objects.Object))
+                    .Where(obj => _serverLocation.DistanceFrom(obj.Location) <= distance)
+                    .ToList();
+            }
+            finally
+            {
+                Monitor.Exit(Server.Lock);
+            }
+        }
+
 
         private bool IsValidSpell(Client client, string spellName, Creature creature)
         {
@@ -1092,6 +1118,22 @@ namespace Talos.Base
 
         #region Packet methods
 
+        internal void Pickup(byte inventorySlot, Location location)
+        {
+            ClientPacket clientPacket = new ClientPacket(7);
+            clientPacket.WriteByte(inventorySlot);
+            clientPacket.WriteStruct(location.Point);
+            Enqueue(clientPacket);
+        }
+
+        internal void Drop(byte inventorySlot, Location location, int count = 1)
+        {
+            ClientPacket clientPacket = new ClientPacket(8);
+            clientPacket.WriteByte(inventorySlot);
+            clientPacket.WriteStruct(location.Point);
+            clientPacket.WriteInt32(count);
+            Enqueue(clientPacket);
+        }
         internal void DisplayEntityRequest(int id)
         {
             ClientPacket clientPacket = new ClientPacket(12);
@@ -1295,7 +1337,7 @@ namespace Talos.Base
         {
             var worldObjects = new List<WorldObject>();
 
-            foreach (var item in CreatureHashSet)
+            foreach (var item in CreatureHashSet)//Adam check this.. it looks like it only iterates through the creature hashset
             {
                 if (WorldObjects.TryGetValue(item, out var worldObject))
                 {

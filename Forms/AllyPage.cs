@@ -27,130 +27,68 @@ namespace Talos.Forms
 
         private void OnlyDisplaySpellsWeHave()
         {
-            //setup heals combo box
-            dbIocCombox.Items.Clear();
-            string[] heals = { "nuadhaich", "ard ioc", "ard ioc comlha", "mor ioc", "mor ioc comlha", "ioc", "beag ioc", };
-            foreach (string spell in heals)
-            {
-                if (_client.Spellbook[spell] != null)
-                    dbIocCombox.Items.Add(spell);
-            }
-            if (dbIocCombox.Items.Count > 0)
-                dbIocCombox.SelectedIndex = 0;
-            else
-            {
-                dbIocCbox.Enabled = false;
-                dbIocCombox.Enabled = false;
-                dbIocCombox.Text = String.Empty;
-                dbIocNumPct.Enabled = false;
-                dbIocNumPct.Value = 0;
-            }
+            SetupComboBox(dbIocCombox, new[] { "nuadhaich", "ard ioc", "ard ioc comlha", "mor ioc", "mor ioc comlha", "ioc", "beag ioc" }, dbIocCbox, dbIocNumPct);
+            SetupComboBox(dbFasCombox, new[] { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" }, dbFasCbox);
+            SetupComboBox(dbAiteCombox, new[] { "ard naomh aite", "mor naomh aite", "naomh aite", "beag naomh aite" }, dbAiteCbox);
 
-            //setup fas combo box  
-            dbFasCombox.Items.Clear();
-            string[] fases = { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" };
-            foreach (string spell in fases)
-            {
-                if (_client.Spellbook[spell] != null)
-                    dbFasCombox.Items.Add(spell);
-            }
-            if (dbFasCombox.Items.Count > 0)
-                dbFasCombox.SelectedIndex = 0;
-            else
-            {
-                dbFasCbox.Enabled = false;
-                dbFasCombox.Enabled = false;
-                dbFasCombox.Text = String.Empty;
-            }
+            SetControlEnabled(dispelSuainCbox, new[] { "ao suain", "Leafhopper Chirp" });
+            SetControlEnabled(dispelCurseCbox, new[] { "ao beag cradh", "ao cradh", "ao mor cradh", "ao ard cradh" });
+            SetControlEnabled(dispelPoisonCbox, "ao puinsein");
+            SetControlEnabled(dbArmachdCbox, "armachd");
+            SetControlEnabled(dbBCCbox, "beag cradh");
+            SetControlEnabled(dbRegenCbox, new[] { "Regeneration", "Increased Regeneration" });
+            SetControlEnabled(miscLyliacCbox, "Lyliac Plant", additionalControl: miscLyliacTbox);
 
-            //setup aite combo box
-            dbAiteCombox.Items.Clear();
-            string[] aites = { "ard naomh aite", "mor naomh aite", "naomh aite", "beag naomh aite" };
-            foreach (string spell in aites)
-            {
-                if (_client.Spellbook[spell] != null)
-                {
-                    dbAiteCombox.Items.Add(spell);
-                }
-
-            }
-            if (dbAiteCombox.Items.Count > 0)
-                dbAiteCombox.SelectedIndex = 0;
-            else
-            {
-                dbAiteCbox.Enabled = false;
-                dbAiteCombox.Enabled = false;
-                dbAiteCombox.Text = String.Empty;
-            }
-
-            //ao suain check box
-            if (_client.Spellbook["ao suain"] != null || _client.Spellbook["Leafhopper Chirp"] != null)
-                dispelSuainCbox.Enabled = true;
-            else
-                dispelSuainCbox.Enabled = false;
-
-            //ao curse check box
-            //Adam add grim scent or make new checkbox?
-            if (_client.Spellbook["ao beag cradh"] != null || _client.Spellbook["ao cradh"] != null
-                || _client.Spellbook["ao mor cradh"] != null || _client.Spellbook["ao ard cradh"] != null)
-                dispelCurseCbox.Enabled = true;
-            else
-                dispelCurseCbox.Enabled = false;
-
-            //ao puinsein check box
-            if (_client.Spellbook["ao puinsein"] != null)
-                dispelPoisonCbox.Enabled = true;
-            else
-                dispelPoisonCbox.Enabled = false;
-
-
-            //armachd
-            if (_client.Spellbook["armachd"] != null)
-                dbArmachdCbox.Enabled = true;
-            else
-                dbArmachdCbox.Enabled = false;
-
-            //beag cradh
-            if (_client.Spellbook["beag cradh"] != null)
-                dbBCCbox.Enabled = true;
-            else
-                dbBCCbox.Enabled = false;
-
-            //regeneration
-            if (_client.Spellbook["Regeneration"] != null || _client.Spellbook["Increased Regeneration"] != null)
-                dbRegenCbox.Enabled = true;
-            else
-                dbRegenCbox.Enabled = false;
-
-            //Lyliac
-            if (_client.Spellbook["Lyliac Plant"] != null)
-            {
-                miscLyliacCbox.Enabled = true;
-                miscLyliacTbox.Enabled = true;
-            }
-            else
-            {
-                miscLyliacCbox.Enabled = false;
-                miscLyliacTbox.Enabled = false;
-            }
-
-            //MDC
-            if (_client.Spellbook["mor dion comlha"] != null)
-            {
-                allyMDCRbtn.Enabled = true;
-                allyMDCSpamRbtn.Enabled = true;
-            }
-            else
-            {
-                allyMDCRbtn.Enabled = false;
-                allyMDCSpamRbtn.Enabled = false;
-            }
-
-            //MIC
-            if (_client.Spellbook["mor ioc comlha"] != null)
-                allyMICSpamRbtn.Enabled = true;
-            else
-                allyMICSpamRbtn.Enabled = false;
+            SetRadioButtonEnabled(allyMDCRbtn, "mor dion comlha");
+            SetRadioButtonEnabled(allyMDCSpamRbtn, "mor dion comlha");
+            SetRadioButtonEnabled(allyMICSpamRbtn, "mor ioc comlha");
         }
+
+        private void SetupComboBox(ComboBox comboBox, string[] spells, Control disableControl, NumericUpDown numericUpDown = null)
+        {
+            comboBox.Items.Clear();
+            foreach (var spell in spells)
+            {
+                if (_client.Spellbook[spell] != null)
+                    comboBox.Items.Add(spell);
+            }
+
+            bool hasSpells = comboBox.Items.Count > 0;
+            comboBox.Enabled = hasSpells;
+            if (hasSpells)
+                comboBox.SelectedIndex = 0;
+            else
+            {
+                disableControl.Enabled = false;
+                comboBox.Text = string.Empty;
+                if (numericUpDown != null)
+                {
+                    numericUpDown.Enabled = false;
+                    numericUpDown.Value = 0;
+                }
+            }
+        }
+
+        private void SetControlEnabled(Control control, string spellOrItemName, Control additionalControl = null)
+        {
+            bool isEnabled = _client.Spellbook[spellOrItemName] != null || _client.HasItem(spellOrItemName);
+            control.Enabled = isEnabled;
+            if (additionalControl != null)
+                additionalControl.Enabled = isEnabled;
+        }
+
+        private void SetControlEnabled(Control control, string[] spellOrItemNames, Control additionalControl = null)
+        {
+            bool isEnabled = spellOrItemNames.Any(name => _client.Spellbook[name] != null || _client.HasItem(name));
+            control.Enabled = isEnabled;
+            if (additionalControl != null)
+                additionalControl.Enabled = isEnabled;
+        }
+
+        private void SetRadioButtonEnabled(RadioButton radioButton, string spellName)
+        {
+            radioButton.Enabled = _client.Spellbook[spellName] != null;
+        }
+
     }
 }

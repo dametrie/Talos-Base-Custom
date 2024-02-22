@@ -6198,6 +6198,7 @@ namespace Talos.Forms
             this.startStrip.Padding = new System.Windows.Forms.Padding(0);
             this.startStrip.Size = new System.Drawing.Size(35, 24);
             this.startStrip.Text = "Start";
+            this.startStrip.Click += new System.EventHandler(this.startStrip_Click_1);
             // 
             // clearStrip
             // 

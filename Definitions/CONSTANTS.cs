@@ -166,6 +166,38 @@ namespace Talos.Definitions
             "and"
         };
 
+        public static readonly IReadOnlyCollection<string> TRASH_ITEMS = new string[]
+        {
+            "fior sal",
+            "fior creag",
+            "fior srad",
+            "fior athar",
+            "Purple Potion",
+            "Blue Potion",
+            "Light Belt",
+            "Passion Flower",
+            "Gold Jade Necklace",
+            "Bone Necklace",
+            "Amber Necklace",
+            "Half Talisman",
+            "Iron Greaves",
+            "Goblin Helmet",
+            "Cordovan Boots",
+            "Shagreen Boots",
+            "Magma Boots",
+            "Hy-brasyl Bracer",
+            "Hy-brasyl Gauntlet",
+            "Hy-brasyl Belt",
+            "Magus Apollo",
+            "Holy Apollo",
+            "Magus Diana",
+            "Holy Diana",
+            "Magus Gaea",
+            "Holy Gaea"
+        };
+
+
+
 
     }
 }

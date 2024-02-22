@@ -23,6 +23,12 @@ namespace Talos.Structs
             Y = y;
         }
 
+        internal Point(int x, int y)
+        {
+            X = (short)x;
+            Y = (short)y;
+        }
+
         /// <summary>
         /// Return the distance between this point and another
         /// </summary>
