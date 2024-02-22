@@ -53,288 +53,219 @@ namespace Talos.Forms
 
         private void OnlyDisplaySpellsWeHave()
         {
-            //setup heals combo box
-            healCombox.Items.Clear();
-            string[] heals = { "nuadhaich", "ard ioc", "mor ioc", "ioc", "beag ioc", "Cold Blood", "Spirit Essence" };
-            foreach (string spell in heals)
-            {
-                if (_client.Spellbook[spell] != null)
-                    healCombox.Items.Add(spell);
-            }
-            if (healCombox.Items.Count > 0)
-                healCombox.SelectedIndex = 0;
-            else
-            {
-                healCbox.Enabled = false;
-                healCombox.Enabled = false;
-                healCombox.Text = String.Empty;
-                healPctNum.Enabled = false;
-                healPctNum.Value = 0;
-            }
+            SetupComboBox(healCombox, new[] { "nuadhaich", "ard ioc", "mor ioc", "ioc", "beag ioc", "Cold Blood", "Spirit Essence" }, healCbox, healPctNum);
+            SetupComboBox(dionCombox, new[] { "mor dion", "Iron Skin", "Wings of Protection", "Draco Stance", "dion", "Stone Skin", "Glowing Stone" }, dionCbox, dionPctNum, dionWhenCombox, aoSithCbox);
+            SetupComboBox(fasCombox, new[] { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" }, fasCbox);
+            SetupComboBox(aiteCombox, new[] { "ard naomh aite", "mor naomh aite", "naomh aite", "beag naomh aite" }, aiteCbox);
 
-            //setup dion combo box
-            dionCombox.Items.Clear();
-            string[] dions = { "mor dion", "Iron Skin", "Wings of Protection", "Draco Stance", "dion", "Stone Skin", "Glowing Stone" };
-            foreach (string spell in dions)
-            {
-                if (_client.Spellbook[spell] != null)
-                    dionCombox.Items.Add(spell);
-            }
-            if (_client.HasItem("Glowing Stone"))
-                dionCombox.Items.Add("Glowing Stone");
-            if (dionCombox.Items.Count > 0)
-                dionCombox.SelectedIndex = 0;
-            else
-            {
-                dionCbox.Enabled = false;
-                dionCombox.Enabled = false;
-                dionCombox.Text = String.Empty;
-                dionWhenCombox.Enabled = false;
-                dionWhenCombox.Text = String.Empty;
-                dionPctNum.Enabled = false;
-                dionPctNum.Value = 0;
-                aoSithCbox.Enabled = false;
-            }
-
-            //deireas faileas checkbox
-            if (_client.Spellbook["deireas faileas"] != null)
-                deireasFaileasCbox.Enabled = true;
-            else
-                deireasFaileasCbox.Enabled = false;
-
-            //setup fas combo box  
-            fasCombox.Items.Clear();
-            string[] fases = { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" };
-            foreach (string spell in fases)
-            {
-                if (_client.Spellbook[spell] != null)
-                    fasCombox.Items.Add(spell);
-            }
-            if (fasCombox.Items.Count > 0)
-                fasCombox.SelectedIndex = 0;
-            else
-            {
-                fasCbox.Enabled = false;
-                fasCombox.Enabled = false;
-                fasCombox.Text = String.Empty;
-            }
-
-
-            //setup aite combo box
-            aiteCombox.Items.Clear();
-            string[] aites = { "ard naomh aite", "mor naomh aite", "naomh aite", "beag naomh aite" };
-            foreach (string spell in aites)
+            SetupCheckbox(deireasFaileasCbox, "deireas faileas");
+            SetupCheckbox(aoSuainCbox, "ao suain", "Leafhopper Chirp");
+            SetupCheckbox(aoCurseCbox, "ao beag cradh", "ao cradh", "ao mor cradh", "ao ard cradh");
+            SetupCheckbox(aoPoisonCbox, "ao puinsein");
+            SetupCheckbox(bubbleBlockCbox, "Bubble Block");
+            SetupCheckbox(spamBubbleCbox, "Bubble Block");
+            SetupCheckbox(fungusExtractCbox, "Fungus Beetle Extract");
+            SetupCheckbox(mantidScentCbox, "Mantid Scent", "Potent Mantid Scent");
+        }
+        private void SetupComboBox(ComboBox comboBox, string[] spells, Control control1, Control control2 = null, Control control3 = null, Control control4 = null)
+        {
+            comboBox.Items.Clear();
+            foreach (var spell in spells)
             {
                 if (_client.Spellbook[spell] != null)
                 {
-                    aiteCombox.Items.Add(spell);
+                    comboBox.Items.Add(spell);
                 }
-
             }
-            if (aiteCombox.Items.Count > 0)
-                aiteCombox.SelectedIndex = 0;
+
+            if (comboBox.Items.Count > 0)
+                comboBox.SelectedIndex = 0;
             else
             {
-                aiteCbox.Enabled = false;
-                aiteCombox.Enabled = false;
-                aiteCombox.Text = String.Empty;
+                control1.Enabled = false;
+                comboBox.Enabled = false;
+                comboBox.Text = String.Empty;
+                if (control2 is not null)
+                {
+                    control2.Enabled = false;
+                    if (control2 is NumericUpDown numericUpDown)
+                        numericUpDown.Value = 0;
+                }
+                if(control3 is not null)
+                {
+                    control3.Enabled = false;
+                    if (control3 is TextBox textBox)
+                        textBox.Text = String.Empty;
+                }
+                if(control4 is not null)
+                    control4.Enabled = false;
             }
+        }
 
-            //ao suain check box
-            if (_client.Spellbook["ao suain"] != null || _client.Spellbook["Leafhopper Chirp"] != null)
-                aoSuainCbox.Enabled = true;
-            else
-                aoSuainCbox.Enabled = false;
-
-            //ao curse check box
-            //Adam add grim scent or make new checkbox?
-            if (_client.Spellbook["ao beag cradh"] != null || _client.Spellbook["ao cradh"] != null
-                || _client.Spellbook["ao mor cradh"] != null || _client.Spellbook["ao ard cradh"] != null)
-                aoCurseCbox.Enabled = true;
-            else
-                aoCurseCbox.Enabled = false;
-
-            //ao puinsein check box
-            if (_client.Spellbook["ao puinsein"] != null)
-                aoPoisonCbox.Enabled = true;
-            else
-                aoPoisonCbox.Enabled = false;
-
-            //bubble block
-            if (_client.Spellbook["Bubble Block"] != null)
-            {
-                bubbleBlockCbox.Enabled = true;
-                spamBubbleCbox.Enabled = true;
-            }
-            else
-            {
-                bubbleBlockCbox.Enabled = false;
-                spamBubbleCbox.Enabled = false;
-            }
-
-            //class specific group
-
-
-            //fungus extract check box
-            if (_client.HasItem("Fungus Beetle Extract"))
-                fungusExtractCbox.Enabled = true;
-            else
-                fungusExtractCbox.Enabled = false;
-
-            //Mantid Scent check box
-            if (_client.HasItem("Mantid Scent") || _client.HasItem("Potent Mantid Scent"))
-                mantidScentCbox.Enabled = true;
-            else
-                mantidScentCbox.Enabled = false;
+        private void SetupCheckbox(CheckBox checkBox, params string[] spellOrItemNames)
+        {
+            bool enabled = spellOrItemNames.Any(name => _client.Spellbook[name] != null || _client.HasItem(name));
+            checkBox.Enabled = enabled;
         }
 
         internal void SetClassSpecificSpells()
         {
-            string medeniaClass = _client._medeniaClass.ToString();
-            string previousClass = _client._previousClass.ToString();
-            string temuairClass = _client._temuairClass.ToString();
+            SetVisibilityBasedOnMedeniaClass();
+            SetVisibilityBasedOnTemuairClass();
+            SetVisibilityBasedOnPreviousClass();
+        }
 
-            // Display check boxes based on Medenia class
+        private void SetVisibilityBasedOnMedeniaClass()
+        {
+            string medeniaClass = _client._medeniaClass.ToString();
+
             switch (medeniaClass)
             {
                 case "Archer":
-                    if (_client.HasItem("Nerve Stimulant"))
-                        nerveStimulantCbox.Visible = true;
-
-                    if (previousClass == "Pure")
-                    {
-                        if (_client.HasItem("Vanishing Elixir"))
-                            vanishingElixirCbox.Visible = true;
-                    }
+                    SetControlVisibility(nerveStimulantCbox, "Nerve Stimulant");
+                    SetPureClassItems("Vanishing Elixir", vanishingElixirCbox);
                     break;
                 case "Gladiator":
-                    if (_client.HasItem("Muscle Stimulant"))
-                        muscleStimulantCbox.Visible = true;
-
-                    if (previousClass == "Pure")
-                    {
-                        if (_client.Spellbook["Aegis Sphere"] != null)
-                            aegisSphereCbox.Visible = true;
-
-                        if (_client.HasItem("Monster Call"))
-                            monsterCallCbox.Visible = true;
-                    }
+                    SetControlVisibility(muscleStimulantCbox, "Muscle Stimulant");
+                    SetPureClassSpells(aegisSphereCbox, "Aegis Sphere");
+                    SetPureClassItems("Monster Call", monsterCallCbox);
                     break;
                 case "Summoner":
-                    if (_client.HasItem("Dragon's Scale"))
-                        dragonScaleCbox.Enabled = true;;
-                    
-                    if (previousClass == "Pure")
-                    {
-                        if (_client.Spellbook["Lyliac Vineyard"] != null)
-                        {
-                            vineyardCbox.Visible = true;
-                            vineCombox.Visible = true;
-                            vineText.Visible = true;
-                        }
-
-                        if (_client.Spellbook["Disenchanter"] != null)
-                            disenchanterCbox.Visible = true;
-
-                        if (_client.Spellbook["Mana Ward"] != null)
-                            manaWardCbox.Visible = true;
-
-                        if (_client.HasItem("Dragon's Fire"))
-                            dragonsFireCbox.Visible = true;
-                    }
+                    SetControlVisibility(dragonScaleCbox, "Dragon's Scale", true);
+                    SetPureClassSpells(new[] { vineyardCbox, disenchanterCbox, manaWardCbox }, new[] { "Lyliac Vineyard", "Disenchanter", "Mana Ward" });
+                    SetPureClassItems("Dragon's Fire", dragonsFireCbox);
+                    SetVineyardVisibility();
                     break;
                 case "Bard":
-                    if (_client.Spellbook["Regeneration"] != null || _client.Spellbook["Increased Regeneration"] != null)
-                        regenerationCbox.Visible = true;
-
-                    if (_client.HasItem("Wake Scroll"))
-                        wakeScrollCbox.Visible = true;
+                    SetRegenerationVisibility();
+                    SetControlVisibility(wakeScrollCbox, "Wake Scroll");
                     break;
                 case "Druid":
-                    bool hasSpellWithForm = _client.Spellbook.Any(spell => spell.Name.Contains("Form"));
-                    if (hasSpellWithForm)
-                        druidFormCbox.Visible = true;
-                    break;
-            }
-
-            // Display check boxes based on Temuair class
-            switch (temuairClass)
-            {
-                case "Rogue":
-                    if (_client.Spellbook["Hide"] != null)
-                        hideCbox.Visible = true;
-                    break;
-                case "Warrior":
-                    if (previousClass == "Pure")
-                    {
-                        if (_client.Spellbook["Asgall Faileas"] != null)
-                            asgallCbox.Visible = true;
-
-                        if (_client.Skillbook["Perfect Defense"] != null)
-                            perfectDefenseCbox.Visible = true;
-                    }
-                    break;
-                case "Wizard":
-                    if (_client.Spellbook["fas spiorad"] != null)
-                    {
-                        fasSpioradCbox.Visible = true;
-                        fasSpioradText.Visible = true;
-                    }
-                    break;
-                case "Priest":
-                    if (_client.Spellbook["armachd"] != null)
-                        armachdCbox.Visible = true;
-
-                    if (_client.Spellbook["beag cradh"] != null)
-                        beagCradhCbox.Visible = true;
-                    break;
-                case "Monk":
-                    if (_client.Spellbook["Mist"] != null)
-                        mistCbox.Visible = true;
-
-                    if (_client.Spellbook["White Bat Stance"] != null)
-                        hideCbox.Visible = true;
-                    break;
-            }
-
-            // Display check boxes based on previous class
-            switch (previousClass)
-            {
-                case "Rogue":
-                    if (_client.Spellbook["Hide"] != null)
-                        hideCbox.Visible = true;
-                    break;
-                case "Warrior":
-                    if (previousClass == "Pure")
-                    {
-                        asgallCbox.Visible = true;
-                        perfectDefenseCbox.Visible = true;
-                    }
-                    break;
-                case "Wizard":
-                    if (_client.Spellbook["fas spiorad"] != null)
-                    {
-                        fasSpioradCbox.Visible = true;
-                        fasSpioradText.Visible = true;
-                    }
-                    break;
-                case "Priest":
-                    if (_client.Spellbook["armachd"] != null)
-                        armachdCbox.Visible = true;
-
-                    if (_client.Spellbook["beag cradh"] != null)
-                        beagCradhCbox.Visible = true;
-                    break;
-                case "Monk":
-                    if (_client.Spellbook["Mist"] != null)
-                        mistCbox.Visible = true;
-
-                    if (_client.Spellbook["White Bat Stance"] != null)
-                        hideCbox.Visible = true;
+                    SetDruidFormVisibility();
                     break;
             }
         }
 
+        private void SetVisibilityBasedOnTemuairClass()
+        {
+            string temuairClass = _client._temuairClass.ToString();
+
+            switch (temuairClass)
+            {
+                case "Rogue":
+                    SetControlVisibility(hideCbox, "Hide", spellBased: true);
+                    break;
+                case "Warrior":
+                    if (_client._previousClass.ToString() == "Pure")
+                    {
+                        SetPureClassSpells(asgallCbox, "Asgall Faileas");
+                        SetPureClassSkills(perfectDefenseCbox, "Perfect Defense");
+                    }
+                    break;
+                case "Wizard":
+                    SetControlVisibility(fasSpioradCbox, "fas spiorad", spellBased: true);
+                    fasSpioradText.Visible = true;
+                    break;
+                case "Priest":
+                    SetControlVisibility(armachdCbox, "armachd", spellBased: true);
+                    SetControlVisibility(beagCradhCbox, "beag cradh", spellBased: true);
+                    break;
+                case "Monk":
+                    SetControlVisibility(mistCbox, "Mist", spellBased: true);
+                    SetControlVisibility(hideCbox, "White Bat Stance", spellBased: true);
+                    break;
+            }
+        }
+        private void SetVisibilityBasedOnPreviousClass()
+        {
+            string previousClass = _client._previousClass.ToString();
+
+            switch (previousClass)
+            {
+                case "Rogue":
+                    SetControlVisibility(hideCbox, "Hide", spellBased: true);
+                    break;
+                case "Warrior":
+                    SetControlVisibility(asgallCbox, "Asgall Faileas", spellBased: true);
+                    SetControlVisibility(perfectDefenseCbox, "Perfect Defense", spellBased: true);
+                    break;
+                case "Wizard":
+                    SetControlVisibility(fasSpioradCbox, "fas spiorad", spellBased: true);
+                    fasSpioradText.Visible = true;
+                    break;
+                case "Priest":
+                    SetControlVisibility(armachdCbox, "armachd", spellBased: true);
+                    SetControlVisibility(beagCradhCbox, "beag cradh", spellBased: true);
+                    break;
+                case "Monk":
+                    SetControlVisibility(mistCbox, "Mist", spellBased: true);
+                    SetControlVisibility(hideCbox, "White Bat Stance", spellBased: true);
+                    break;
+            }
+        }
+
+
+        private void SetControlVisibility(Control control, string name, bool spellBased = false)
+        {
+            bool isVisible = spellBased ? _client.Spellbook[name] != null : _client.HasItem(name);
+            control.Visible = isVisible;
+        }
+
+        private void SetPureClassSkills(Control control, string skillName)
+        {
+            if (_client._previousClass.ToString() == "Pure" && _client.Skillbook[skillName] != null)
+                control.Visible = true;
+        }
+        private void SetPureClassSpells(Control control, string spellName)
+        {
+            if (_client._previousClass.ToString() == "Pure" && _client.Spellbook[spellName] != null)
+                control.Visible = true;
+        }
+        private void SetPureClassItems(string itemName, Control control)
+        {
+            if (_client._previousClass.ToString() == "Pure" && _client.HasItem(itemName))
+                control.Visible = true;
+        }
+
+        private void SetPureClassSpells(Control[] controls, string[] spellNames)
+        {
+            if (_client._previousClass.ToString() == "Pure")
+            {
+                for (int i = 0; i < spellNames.Length; i++)
+                {
+                    if (_client.Spellbook[spellNames[i]] != null)
+                        controls[i].Visible = true;
+                }
+            }
+        }
+
+
+
+        private void SetRegenerationVisibility()
+        {
+            if (_client.Spellbook["Regeneration"] != null || _client.Spellbook["Increased Regeneration"] != null)
+                regenerationCbox.Visible = true;
+        }
+
+        private void SetDruidFormVisibility()
+        {
+            bool hasSpellWithForm = _client.Spellbook.Any(spell => spell.Name.Contains("Form"));
+            if (hasSpellWithForm)
+                druidFormCbox.Visible = true;
+        }
+
+        private void SetVineyardVisibility()
+        {
+            if (_client._previousClass.ToString() == "Pure" && _client.Spellbook["Lyliac Vineyard"] != null)
+            {
+                vineyardCbox.Visible = true;
+                vineCombox.Visible = true;
+                vineText.Visible = true;
+            }
+        }
+
+
+        
         internal void DisplayHPMP()
         {
             if (InvokeRequired) { BeginInvoke(new Action(() => { DisplayHPMP(); })); return; }

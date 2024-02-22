@@ -128,5 +128,44 @@ namespace Talos.Definitions
             456,
             53
         };
+
+        public static readonly IReadOnlyCollection<string> KNOWN_RANGERS = new string[]
+        {       
+            "justyce",
+            "justice",
+            "gargoyle",
+            "justify",
+            "herb",
+            "hulk",
+            "tormund",
+            "evanora",
+            "reyakeely",
+            "ishikawa",
+            "listen",
+            "error",
+            "firewind",
+            "xerge",
+            "duenanknute",
+            "joeker",
+            "trial",
+            "angelique",
+            "evokation",
+            "malache",
+            "martrim",
+            "ukkyo",
+            "etienne",
+            "algiza",
+            "topic",
+            "kremline",
+            "venezia",
+            "dionia",
+            "etna",
+            "viveena",
+            "ladieerror",
+            "errorjr",
+            "and"
+        };
+
+
     }
 }
