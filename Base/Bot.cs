@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Talos.Forms.UI;
 using Talos.Objects;
@@ -11,6 +12,8 @@ namespace Talos.Base
 {
     internal class Bot : BotBase
     {
+        private static object _lockObject { get; set; } = new object();
+        private int _dropCounter;
 
         internal Client _client;
         internal Server _server;
@@ -28,10 +31,6 @@ namespace Talos.Base
 
         internal List<Ally> _allyList = new List<Ally>();
         internal HashSet<string> _allyListName = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
-        private int dropCounter;
-
-        private static object LockObject { get; set; } = new object();
-
 
 
         internal Bot(Client client, Server server) : base(client, server) 
@@ -41,12 +40,24 @@ namespace Talos.Base
 
         private void BotLoop()
         {
-            this.Loot();
+            while (true)
+            {
+                try
+                {
+                    Console.WriteLine("BotLoop running");
+                    this.Loot();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception in BotLoop: {ex.Message}");
+                }
+                Thread.Sleep(1000); //Adam check this delay
+            }
         }
 
         internal bool IsAllyAlreadyListed(string name)
         {
-            lock (Bot.LockObject)
+            lock (Bot._lockObject)
             {
                 return _allyListName.Contains(name, StringComparer.CurrentCultureIgnoreCase);
             }
@@ -54,7 +65,7 @@ namespace Talos.Base
 
         internal void UpdateAllyList(Ally ally)
         {
-            lock (Bot.LockObject)
+            lock (Bot._lockObject)
             {
                 this._allyList.Add(ally);
                 this._allyListName.Add(ally.Name);
@@ -68,6 +79,7 @@ namespace Talos.Base
 
         private void Loot()
         {
+            Console.WriteLine("Loot method running");
             if (!Client.ClientTab.pickupGoldCbox.Checked && !Client.ClientTab.pickupItemsCbox.Checked && !Client.ClientTab.dropTrashCbox.Checked)
             {
                 return;
@@ -82,16 +94,15 @@ namespace Talos.Base
 
                     if (nearbyObjects.Count > 0)
                     {
-                        //make sure objects are not of type Creature or Player
                         ProcessLoot(nearbyObjects, lootArea);
                     }
 
                     HandleTrashItems();
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                Console.WriteLine("Error in Loot()");
+                Console.WriteLine($"Error in Loot: {ex.Message}");
             }
         }
 
@@ -128,7 +139,7 @@ namespace Talos.Base
         {
             if (Client.ClientTab.dropTrashCbox.Checked)
             {
-                if (dropCounter >= 15)
+                if (_dropCounter >= 15)
                 {
                     foreach (Item item in Client.Inventory.ToList())
                     {
@@ -137,11 +148,11 @@ namespace Talos.Base
                             Client.Drop(item.Slot, Client._serverLocation, item.Quantity);
                         }
                     }
-                    dropCounter = 0;
+                    _dropCounter = 0;
                 }
                 else
                 {
-                    dropCounter++;
+                    _dropCounter++;
                 }
             }
         }
