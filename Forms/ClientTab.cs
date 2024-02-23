@@ -70,17 +70,22 @@ namespace Talos.Forms
 			"Holy Gaea"
 		};
 
+        private readonly object _lock = new object();
 
 
-
-    internal ClientTab(Client client)
+        internal ClientTab(Client client)
         {
             _client = client;
             _client.ClientTab = this;
             InitializeComponent();
+
             worldObjectListBox.DataSource = client._worldObjectBindingList;
             creatureHashListBox.DataSource = client._creatureBindingList;
+            strangerList.DataSource = client._strangerBindingList;
+            friendList.DataSource = client._friendBindingList;
+
             trashList.DataSource = trashToDrop;
+
             OnlyDisplaySpellsWeHave();
 
         }
@@ -330,32 +335,18 @@ namespace Talos.Forms
             packetList.Items.Add(p);
         }
 
-        internal void UpdateStrangerListAfterCharge()
+        internal void UpdateBindingList(BindingList<string> bindingList, ListBox listBox, string name)
         {
-            Thread.Sleep(1600);
-            //UpdateStrangerList();/ADAM
-        }
-        internal void UpdateBindingList<T>(BindingList<T> bindingList, ListBox listBox, T item)
-        {
-            if (item != null && listBox != null)
+            if (!string.IsNullOrEmpty(name) && listBox != null)
             {
-                if (bindingList.Contains(item))
+                if (bindingList.Count != 0)
                 {
-                    //bindingList.Remove(item);
+                    bindingList.Add(name);
+                    return;
                 }
-                else
-                {
-                    //bindingList.Add(item);
-                }
-
-                // Update the DataSource of the ListBox
-                listBox.DataSource = null; // Reset the DataSource
-                listBox.DataSource = bindingList; // Reassign the DataSource
-
-                // Asynchronously refresh the ListBox
-                listBox.BeginInvoke((MethodInvoker)delegate {
-                    listBox.Refresh(); // Refresh the ListBox to reflect changes
-                });
+                listBox.DataSource = null;
+                bindingList.Add(name);
+                listBox.DataSource = bindingList;
             }
         }
 
@@ -863,6 +854,8 @@ namespace Talos.Forms
             }
         }
 
+
+
         private void sendPacketToClientBtn_Click(object sender, EventArgs e)
         {
             string[] lines = packetInputText.Lines;
@@ -1064,9 +1057,51 @@ namespace Talos.Forms
             _client.RemoveShield();
         }
 
+
+
+        internal void UpdateStrangerListAfterCharge()
+        {
+            Thread.Sleep(1600);
+            UpdateStrangerList();
+        }
+
         internal void UpdateStrangerList()
         {
-            throw new NotImplementedException();
+            
+            lock (_lock)
+            {
+                bool isChargeSkillUsedRecently = _client.HasSkill("Charge") && (DateTime.UtcNow - _client.Skillbook["Charge"].LastUsed).TotalMilliseconds < 1500.0;
+                bool isSprintPotionUsedRecently = _client.HasItem("Sprint Potion") && (DateTime.UtcNow - _client.Inventory.HasItemReturnSlot("Sprint Potion").LastUsed).TotalMilliseconds < 1500.0;
+
+                if (!isChargeSkillUsedRecently && !isSprintPotionUsedRecently)
+                {
+                    HashSet<string> nearbyPlayers = new HashSet<string>(_client.GetNearbyPlayers().Select(player => player.Name), StringComparer.CurrentCultureIgnoreCase);
+                    HashSet<string> nonStrangers = new HashSet<string>(_client.AllyListHashSet.Concat(_client._friendBindingList), StringComparer.CurrentCultureIgnoreCase);
+
+                    foreach (string name in new List<string>(_client._strangerBindingList))
+                    {
+                        if (nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) || !nearbyPlayers.Contains(name, StringComparer.CurrentCultureIgnoreCase))
+                        {
+                            _client._strangerBindingList.Remove(name);
+                        }
+                    }
+                    foreach (string name in nearbyPlayers)
+                    {
+                        if (!nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) && !_client._strangerBindingList.Contains(name, StringComparer.CurrentCultureIgnoreCase))
+                        {
+                            UpdateBindingList(_client._strangerBindingList, strangerList, name);
+                        }
+                    }
+                    foreach (string name in new List<string>(_client._strangerBindingList))
+                    {
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            _client.DictLastSeen[name] = DateTime.UtcNow;
+                        }
+                    }
+                    _client.DictLastSeen = _client.DictLastSeen.OrderByDescending((KeyValuePair<string, DateTime> kvp) => kvp.Value).Take(5).ToDictionary((KeyValuePair<string, DateTime> kvp) => kvp.Key, (KeyValuePair<string, DateTime> kvp) => kvp.Value);
+                }
+            }
         }
 
         private void dojoRefreshBtn_Click(object sender, EventArgs e)
@@ -1248,6 +1283,22 @@ namespace Talos.Forms
             _client._isCasting = false;
 
             _client.ServerMessage(1, "Bot Stopped");
+        }
+
+        private void lastSeenBtn_Click(object sender, EventArgs e)
+        {
+            _client.ServerMessage(0, "- Last 5 strangers sighted -");
+
+            // Take only the top 5 most recently seen strangers
+            var lastSeenStrangers = _client.DictLastSeen
+                .OrderByDescending(kvp => kvp.Value)
+                .Take(5);
+
+            foreach (var item in lastSeenStrangers)
+            {
+                string message = $"{item.Key}: {item.Value.ToLocalTime():t}";
+                _client.ServerMessage(0, message);
+            }
         }
     }
 }

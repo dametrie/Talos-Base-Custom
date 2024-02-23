@@ -119,6 +119,9 @@ namespace Talos.Base
         internal BindingList<int> _worldObjectBindingList = new BindingList<int>();
         internal BindingList<int> _creatureBindingList = new BindingList<int>();
 
+        internal BindingList<string> _strangerBindingList = new BindingList<string>();
+        internal BindingList<string> _friendBindingList = new BindingList<string>();
+
         private readonly List<string> _archerSpells = new List<string>
         {
         "Star Arrow",
@@ -135,6 +138,7 @@ namespace Talos.Base
         internal Dictionary<string, Creature> NearbyNPC { get; private set; } = new Dictionary<string, Creature>();
         internal Dictionary<string, int> ObjectID { get; private set; } = new Dictionary<string, int>();
         internal Dictionary<string, byte> AvailableSpellsAndCastLines { get; set; } = new Dictionary<string, byte>();
+        internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
 
         internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
@@ -149,6 +153,7 @@ namespace Talos.Base
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
         private bool shouldRefresh;
+
 
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }
@@ -302,35 +307,54 @@ namespace Talos.Base
             }
             return false;
         }
+
+        internal List<Player> GetNearbyPlayers()
+        {
+            if (!Monitor.TryEnter(Server.Lock, 1000))
+            {
+                return new List<Player>();
+            }
+            try
+            {
+                return NearbyPlayers.Values
+                    .Where(player => !string.IsNullOrEmpty(player.Name))
+                    .ToList();
+            }
+            finally
+            {
+                Monitor.Exit(Server.Lock);
+            }
+        }
+          
+        
         internal List<Player> GetNearbyAllies()
         {
-            var nearbyAllies = new List<Player>();
 
-            lock (Server.Lock)
+            if (!Monitor.TryEnter(Server.Lock, 1000))
             {
-                foreach (var player in NearbyPlayers.Values)
-                {
-                    if (AllyListHashSet.Contains(player.Name))
-                    {
-                        nearbyAllies.Add(player);
-                    }
-                }
+                return new List<Player>();
             }
-
-            return nearbyAllies;
+            try
+            {
+                return NearbyPlayers.Values
+                    .Where(player => AllyListHashSet.Contains(player.Name))
+                    .ToList();
+            }
+            finally
+            {
+                Monitor.Exit(Server.Lock);
+            }
         }
 
-        internal List<Object> GetNearbyLootableObjects(int distance = 12)
+
+        internal List<Object> GetNearbyObjects(int distance = 12)
         {
-            // If the lock is not acquired, return an empty list immediately.
             if (!Monitor.TryEnter(Server.Lock, 1000))
             {
                 return new List<Object>();
             }
             try
             {
-                //return world objects within the distance specified
-                //where object is not of type player or creature
                 return WorldObjects.Values
                     .OfType<Object>()
                     .Where(obj => obj.GetType() == typeof(Objects.Object))

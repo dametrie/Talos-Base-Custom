@@ -715,7 +715,7 @@ namespace Talos
                         if (!client.ObjectHashSet.Contains(id))
                             client.ObjectHashSet.Add(id);
 
-                        client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, id);
+                        //client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, id);
                         //if (!client._objectBindingList.Contains(id))
                         //    client._objectBindingList.Add(id);
                     }
@@ -740,7 +740,7 @@ namespace Talos
                         if (!client.CreatureHashSet.Contains(id))
                             client.CreatureHashSet.Add(id);
 
-                        client.ClientTab.UpdateBindingList(client._creatureBindingList, client.ClientTab.creatureHashListBox, id);
+                        //client.ClientTab.UpdateBindingList(client._creatureBindingList, client.ClientTab.creatureHashListBox, id);
                         //if (!client._creatureBindingList.Contains(id))
                         //    client._creatureBindingList.Add(id);
 
@@ -1036,7 +1036,7 @@ namespace Talos
                     if (client.ObjectHashSet.Contains(worldObject.ID))
                     {
                         client.ObjectHashSet.Remove(worldObject.ID);
-                        client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, id);
+                        //client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, id);
                         //client._objectBindingList.Remove(worldObject.ID);
                     }
 
@@ -1049,13 +1049,21 @@ namespace Talos
                         client.NearbyPlayers.Remove(player.Name);
                         client.NearbyGhosts.Remove(player.Name);
 
-                        client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, player.ID);
+                        //client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, player.ID);
+
                         ClientTab clientTab = client.ClientTab;
-                        if (clientTab != null && clientTab.aislingTabControl.SelectedTab == clientTab.nearbyAllyTab &&
-                            clientTab.clientTabControl.SelectedTab == clientTab.mainAislingsTab)
+                        if (clientTab != null)
                         {
-                            // clientTab.UpdateNearbyAllyTable(player.Name);
+                            clientTab.UpdateStrangerList();
+
+                            if (clientTab.aislingTabControl.SelectedTab == clientTab.nearbyAllyTab &&
+                            clientTab.clientTabControl.SelectedTab == clientTab.mainAislingsTab)
+                            {
+                                // clientTab.UpdateNearbyAllyTable(player.Name);
+                            }
                         }
+                        
+                        
                     }
                     client.WorldObjects.TryRemove(id, out _);
                 }
@@ -1070,7 +1078,7 @@ namespace Talos
                     if (client.CreatureHashSet.Contains(creature.ID))
                     {
                         client.CreatureHashSet.Remove(creature.ID);
-                        client.ClientTab.UpdateBindingList(client._creatureBindingList, client.ClientTab.creatureHashListBox, creature.ID);
+                        //client.ClientTab.UpdateBindingList(client._creatureBindingList, client.ClientTab.creatureHashListBox, creature.ID);
                         //client._creatureBindingList.Remove(creature.ID);
                     }
 
@@ -1254,6 +1262,9 @@ namespace Talos
             client.NearbyNPC.Clear();
             client.NearbyGhosts.Clear();
             client.CreatureHashSet.Clear();
+
+            client.ClientTab.UpdateStrangerList();
+
             //client.Pathfinder = new Pathfinder(client);
             //client.Pathfinding = new Pathfinding(client);   
 
@@ -1855,6 +1866,11 @@ namespace Talos
                 }
             }
 
+            if (client.ClientTab != null)
+            {
+                client.ClientTab.UpdateStrangerList();
+            }
+
             client.DisplayAisling(player);
 
             return true;
@@ -1988,7 +2004,7 @@ namespace Talos
             }
             client.GuildName = guildName;
             //client.ClientTab.UpdateGroupList();
-            //client.ClientTab.UpdateStrangerList();
+            client.ClientTab.UpdateStrangerList();
             //client.ClientTab.AddFriends();
             //client.ClientTab.UpdateChatPanelMaxLength(client);
             //client.ClientTab.DisplayUsableSpellsSkills();

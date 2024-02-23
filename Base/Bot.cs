@@ -72,6 +72,7 @@ namespace Talos.Base
             }
         }
 
+      
         internal bool IsStrangerNearby()
         {
             return false;
@@ -90,7 +91,7 @@ namespace Talos.Base
                 if (!IsStrangerNearby())
                 {
                     var lootArea = new Structs.Rectangle(new Point(Client._serverLocation.X - 2, Client._serverLocation.Y - 2), new Point(5, 5));
-                    List<Objects.Object> nearbyObjects = Client.GetNearbyLootableObjects(4);
+                    List<Objects.Object> nearbyObjects = Client.GetNearbyObjects(4);
 
                     if (nearbyObjects.Count > 0)
                     {
@@ -106,7 +107,7 @@ namespace Talos.Base
             }
         }
 
-        private void ProcessLoot(List<Objects.Object> nearbyObjects, Structs.Rectangle lootArea)
+        private void ProcessLoot(List<Objects.Object> nearbyObjects, Rectangle lootArea)
         {
             if (Client.ClientTab.pickupGoldCbox.Checked)
             {
@@ -125,12 +126,12 @@ namespace Talos.Base
             }
         }
 
-        private bool IsGold(Objects.Object obj, Structs.Rectangle lootArea)
+        private bool IsGold(Objects.Object obj, Rectangle lootArea)
         {
             return lootArea.ContainsPoint(obj.Location.Point) && obj.Sprite == 140 && DateTime.UtcNow.Subtract(obj.Creation).TotalSeconds > 2.0;
         }
 
-        private bool IsLootableItem(Objects.Object obj, Structs.Rectangle lootArea)
+        private bool IsLootableItem(Objects.Object obj, Rectangle lootArea)
         {
             return lootArea.ContainsPoint(obj.Location.Point) && obj.Sprite != 140 && DateTime.UtcNow.Subtract(obj.Creation).TotalSeconds > 2.0;
         }

@@ -813,6 +813,7 @@ namespace Talos.Forms
             this.lastSeenBtn.TabIndex = 4;
             this.lastSeenBtn.Text = "Last Seen";
             this.lastSeenBtn.UseVisualStyleBackColor = true;
+            this.lastSeenBtn.Click += new System.EventHandler(this.lastSeenBtn_Click);
             // 
             // friendStrangerBtn
             // 
