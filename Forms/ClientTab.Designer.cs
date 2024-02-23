@@ -743,6 +743,7 @@ namespace Talos.Forms
             this.removeFriendBtn.TabIndex = 4;
             this.removeFriendBtn.Text = "Remove Selected";
             this.removeFriendBtn.UseVisualStyleBackColor = true;
+            this.removeFriendBtn.Click += new System.EventHandler(this.removeFriendBtn_Click);
             // 
             // targetFriendBtn
             // 
@@ -765,6 +766,7 @@ namespace Talos.Forms
             this.friendAltsBtn.TabIndex = 2;
             this.friendAltsBtn.Text = "Add Alts";
             this.friendAltsBtn.UseVisualStyleBackColor = true;
+            this.friendAltsBtn.Click += new System.EventHandler(this.friendAltsBtn_Click);
             // 
             // groupFriendBtn
             // 
@@ -776,6 +778,7 @@ namespace Talos.Forms
             this.groupFriendBtn.TabIndex = 1;
             this.groupFriendBtn.Text = "Group Selected";
             this.groupFriendBtn.UseVisualStyleBackColor = true;
+            this.groupFriendBtn.Click += new System.EventHandler(this.groupFriendBtn_Click);
             // 
             // friendList
             // 
@@ -825,6 +828,7 @@ namespace Talos.Forms
             this.friendStrangerBtn.TabIndex = 3;
             this.friendStrangerBtn.Text = "Friend Selected";
             this.friendStrangerBtn.UseVisualStyleBackColor = true;
+            this.friendStrangerBtn.Click += new System.EventHandler(this.friendStrangerBtn_Click);
             // 
             // targetStrangerBtn
             // 
@@ -847,6 +851,7 @@ namespace Talos.Forms
             this.groupStrangerBtn.TabIndex = 1;
             this.groupStrangerBtn.Text = "Group Selected";
             this.groupStrangerBtn.UseVisualStyleBackColor = true;
+            this.groupStrangerBtn.Click += new System.EventHandler(this.groupStrangerBtn_Click);
             // 
             // strangerList
             // 
@@ -882,6 +887,7 @@ namespace Talos.Forms
             this.friendGroupBtn.TabIndex = 4;
             this.friendGroupBtn.Text = "Friend Selected";
             this.friendGroupBtn.UseVisualStyleBackColor = true;
+            this.friendGroupBtn.Click += new System.EventHandler(this.friendGroupBtn_Click);
             // 
             // groupAltsBtn
             // 
@@ -893,6 +899,7 @@ namespace Talos.Forms
             this.groupAltsBtn.TabIndex = 2;
             this.groupAltsBtn.Text = "Group Alts";
             this.groupAltsBtn.UseVisualStyleBackColor = true;
+            this.groupAltsBtn.Click += new System.EventHandler(this.groupAltsBtn_Click);
             // 
             // kickGroupedBtn
             // 
@@ -904,6 +911,7 @@ namespace Talos.Forms
             this.kickGroupedBtn.TabIndex = 1;
             this.kickGroupedBtn.Text = "Kick Selected";
             this.kickGroupedBtn.UseVisualStyleBackColor = true;
+            this.kickGroupedBtn.Click += new System.EventHandler(this.kickGroupedBtn_Click);
             // 
             // groupList
             // 

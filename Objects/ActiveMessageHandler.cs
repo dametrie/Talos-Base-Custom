@@ -114,12 +114,12 @@ namespace Talos.Objects
                 { new Regex(@"^([a-zA-Z]+) is (?:joining|leaving) this group.$"), HandleJoinLeaveGroupMessage },
                 { new Regex(@"^You cast (.*?)\.$"), HandleSpellCastMessage },
                 { new Regex(@"The durability of ([a-zA-Z]+) is now (\d+)%$"), HandleItemDamageMessage },
-                { new Regex("experience!"), HandleExperienceMessage },
-                { new Regex("AP went up"), HandleExperienceMessage },
-                { new Regex(@"^\(\( 4 Temuairan days = 12 (Terran|real-life) hours \)\)$"), HandleLaborMessage },
-                { new Regex(@"You do not have time for these 4 Temuairan days"), HandleLaborMessage },
-                { new Regex("[a-zA-Z] works for you for 1 day"), HandleLaborMessage },
-                { new Regex(@"You work for \w+, although the Aisling didn't need much done"), HandleLaborMessage },
+                { new Regex("experience!"), HandleExperienceMessage },//Adam fix this
+                { new Regex("AP went up"), HandleExperienceMessage }, //Adam fix this
+                { new Regex(@"^\(\( 4 Temuairan days = 12 (Terran|real-life) hours \)\)$"), HandleLaborMessage },//Adam check
+                { new Regex(@"You do not have time for these 4 Temuairan days"), HandleLaborMessage },//Adam check
+                { new Regex("[a-zA-Z] works for you for 1 day"), HandleLaborMessage },//Adam check
+                { new Regex(@"You work for \w+, although the Aisling didn't need much done"), HandleLaborMessage },//Adam check
                 { new Regex(@"n:Necklace:([a-zA-Z \'0-9]+)\t Armor class"), HandleNecklaceMessage },
                 { new Regex("([a-zA-Z0-9 ]+), You can't have more than [0-9]+"), HandleInventoryFullMessage },
                 { new Regex("^.*? ao sith .*?"), HandleAoSithMessage },
@@ -128,6 +128,12 @@ namespace Talos.Objects
                 { new Regex(@"^\w+ attacks you with PreventAffliction spell\.$"), HandlePreventAfflictionMessage },
                 { new Regex("PreventAffliction end."), HandlePreventAfflictionMessage },
             };
+
+        }
+
+        private void HandleGroupRegExMessage(Client client, string message)
+        {
+            client.ClientTab.UpdateGroupList();
         }
 
 
@@ -646,13 +652,13 @@ namespace Talos.Objects
         {
             if (message == "Group disbanded.")
             {
-                //Adam add logic to clear group member vars allyhashes
-                //update group list
-                //update stranger list
+                client.AllyListHashSet.Clear();
+                client.ClientTab.UpdateGroupList();
+                client.ClientTab.UpdateStrangerList();
             }
             else if (message == "Already a member of another group.")
             {
-                //Cannot find group member.
+                //Already a member of another group.
             }
             else if (message == "Cannot find group member.")
             {

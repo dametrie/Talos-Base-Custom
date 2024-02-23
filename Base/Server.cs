@@ -1986,7 +1986,7 @@ namespace Talos
                 serverPacket.ReadString8();
             }
             client.Nation = (Nation)((byte)nation);
-            //client._allyList_Hash.Clear();
+            client.AllyListHashSet.Clear();
             if (str.StartsWith("Group members"))
             {
                 char[] separator = new char[] { '\n' };
@@ -1997,13 +1997,13 @@ namespace Talos
                         string item = str7.Substring(2);
                         if (item != client.Name)
                         {
-                            //client._allyList_Hash.Add(item);
+                            client.AllyListHashSet.Add(item);
                         }
                     }
                 }
             }
             client.GuildName = guildName;
-            //client.ClientTab.UpdateGroupList();
+            client.ClientTab.UpdateGroupList();
             client.ClientTab.UpdateStrangerList();
             //client.ClientTab.AddFriends();
             //client.ClientTab.UpdateChatPanelMaxLength(client);

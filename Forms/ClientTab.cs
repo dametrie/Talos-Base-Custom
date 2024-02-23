@@ -472,13 +472,13 @@ namespace Talos.Forms
 
         private void effectBtn_Click(object sender, EventArgs e)
         {
-                ServerPacket serverPacket = new ServerPacket(41);
-                serverPacket.WriteUInt32(_client.PlayerID);
-                serverPacket.WriteUInt32(_client.PlayerID);
-                serverPacket.WriteUInt16((ushort)effectNum.Value);
-                serverPacket.WriteUInt16((ushort)effectNum.Value);
-                serverPacket.WriteUInt16(90);
-                _client.Enqueue(serverPacket);
+            ServerPacket serverPacket = new ServerPacket(41);
+            serverPacket.WriteUInt32(_client.PlayerID);
+            serverPacket.WriteUInt32(_client.PlayerID);
+            serverPacket.WriteUInt16((ushort)effectNum.Value);
+            serverPacket.WriteUInt16((ushort)effectNum.Value);
+            serverPacket.WriteUInt16(90);
+            _client.Enqueue(serverPacket);
         }
 
         private void spellBarIdsBtn_Click(object sender, EventArgs e)
@@ -811,28 +811,28 @@ namespace Talos.Forms
             {
                 string text = Regex.Replace(lines[i], "\"(.*?)\"([012]?)", delegate (Match match_0)
                 {
-                    int num2 = 1;
+                    int prefixLength = 1;
                     if (!string.IsNullOrEmpty(match_0.Groups[2].Value))
                     {
-                        num2 = int.Parse(match_0.Groups[2].Value);
+                        prefixLength = int.Parse(match_0.Groups[2].Value);
                     }
-                    byte[] array2 = Encoding.GetEncoding(949).GetBytes(match_0.Groups[1].Value.Replace("\\r", "\r").Replace("\\n", "\n").Replace("\\t", "\t"));
-                    if (num2 != 0)
+                    byte[] contentBytes = Encoding.GetEncoding(949).GetBytes(match_0.Groups[1].Value.Replace("\\r", "\r").Replace("\\n", "\n").Replace("\\t", "\t"));
+                    if (prefixLength != 0)
                     {
-                        int num3 = array2.Length;
-                        Array.Resize(ref array2, num3 + num2);
-                        Buffer.BlockCopy(array2, 0, array2, num2, num3);
-                        if (num2 == 1)
+                        int contentLength = contentBytes.Length;
+                        Array.Resize(ref contentBytes, contentLength + prefixLength);
+                        Buffer.BlockCopy(contentBytes, 0, contentBytes, prefixLength, contentLength);
+                        if (prefixLength == 1)
                         {
-                            array2[0] = (byte)num3;
+                            contentBytes[0] = (byte)contentLength;
                         }
                         else
                         {
-                            array2[0] = (byte)(num3 >> 8);
-                            array2[1] = (byte)num3;
+                            contentBytes[0] = (byte)(contentLength >> 8);
+                            contentBytes[1] = (byte)contentLength;
                         }
                     }
-                    return BitConverter.ToString(array2);
+                    return BitConverter.ToString(contentBytes);
                 }).Replace("-", string.Empty).Replace(" ", string.Empty);
                 if (text.Length < 2 || text.Length % 2 != 0 || !Regex.IsMatch(text, "^[a-f0-9]+$", RegexOptions.IgnoreCase))
                 {
@@ -842,13 +842,13 @@ namespace Talos.Forms
                 if (text.Length > 2)
                 {
                     int num = (text.Length - 2) / 2;
-                    byte[] array = new byte[num];
+                    byte[] toSend = new byte[num];
                     for (int j = 0; j < num; j++)
                     {
                         int startIndex = 2 + j * 2;
-                        array[j] = byte.Parse(text.Substring(startIndex, 2), NumberStyles.HexNumber);
+                        toSend[j] = byte.Parse(text.Substring(startIndex, 2), NumberStyles.HexNumber);
                     }
-                    clientPacket.Write(array);
+                    clientPacket.Write(toSend);
                 }
                 _client.Enqueue(clientPacket);
             }
@@ -863,28 +863,28 @@ namespace Talos.Forms
             {
                 string text = Regex.Replace(lines[i], "\"(.*?)\"([012]?)", delegate (Match match_0)
                 {
-                    int num2 = 1;
+                    int prefixLength = 1;
                     if (!string.IsNullOrEmpty(match_0.Groups[2].Value))
                     {
-                        num2 = int.Parse(match_0.Groups[2].Value);
+                        prefixLength = int.Parse(match_0.Groups[2].Value);
                     }
-                    byte[] array2 = Encoding.GetEncoding(949).GetBytes(match_0.Groups[1].Value.Replace("\\r", "\r").Replace("\\n", "\n").Replace("\\t", "\t"));
-                    if (num2 != 0)
+                    byte[] contentBytes = Encoding.GetEncoding(949).GetBytes(match_0.Groups[1].Value.Replace("\\r", "\r").Replace("\\n", "\n").Replace("\\t", "\t"));
+                    if (prefixLength != 0)
                     {
-                        int num3 = array2.Length;
-                        Array.Resize(ref array2, num3 + num2);
-                        Buffer.BlockCopy(array2, 0, array2, num2, num3);
-                        if (num2 == 1)
+                        int contentLength = contentBytes.Length;
+                        Array.Resize(ref contentBytes, contentLength + prefixLength);
+                        Buffer.BlockCopy(contentBytes, 0, contentBytes, prefixLength, contentLength);
+                        if (prefixLength == 1)
                         {
-                            array2[0] = (byte)num3;
+                            contentBytes[0] = (byte)contentLength;
                         }
                         else
                         {
-                            array2[0] = (byte)(num3 >> 8);
-                            array2[1] = (byte)num3;
+                            contentBytes[0] = (byte)(contentLength >> 8);
+                            contentBytes[1] = (byte)contentLength;
                         }
                     }
-                    return BitConverter.ToString(array2);
+                    return BitConverter.ToString(contentBytes);
                 }).Replace("-", string.Empty).Replace(" ", string.Empty);
                 if (text.Length < 2 || text.Length % 2 != 0 || !Regex.IsMatch(text, "^[a-f0-9]+$", RegexOptions.IgnoreCase))
                 {
@@ -894,13 +894,13 @@ namespace Talos.Forms
                 if (text.Length > 2)
                 {
                     int num = (text.Length - 2) / 2;
-                    byte[] array = new byte[num];
+                    byte[] toSend = new byte[num];
                     for (int j = 0; j < num; j++)
                     {
                         int startIndex = 2 + j * 2;
-                        array[j] = byte.Parse(text.Substring(startIndex, 2), NumberStyles.HexNumber);
+                        toSend[j] = byte.Parse(text.Substring(startIndex, 2), NumberStyles.HexNumber);
                     }
-                    serverPacket.Write(array);
+                    serverPacket.Write(toSend);
                 }
                 _client.Enqueue(serverPacket);
             }
@@ -1166,6 +1166,13 @@ namespace Talos.Forms
 
         }
 
+        internal void UpdateGroupList()
+        {
+            groupList.DataSource = null;
+            _client._groupBindingList = new BindingList<string>(_client.AllyListHashSet.ToList());
+            groupList.DataSource = _client._groupBindingList;
+        }
+
         //internal void UpdateNearbyAllyTable(string name)
         //{
         //    if (!nearbyAllyTable.Controls.ContainsKey(name))
@@ -1298,6 +1305,94 @@ namespace Talos.Forms
             {
                 string message = $"{item.Key}: {item.Value.ToLocalTime():t}";
                 _client.ServerMessage(0, message);
+            }
+        }
+
+        private void friendStrangerBtn_Click(object sender, EventArgs e)
+        {
+            foreach (string selectedItem in strangerList.SelectedItems.OfType<string>().ToList())
+            {
+                UpdateBindingList(_client._friendBindingList, friendList, selectedItem);
+                _client._strangerBindingList.Remove(selectedItem);             
+            }
+            //Adam add method to save friends to file. 
+            //Load it on startup
+        }
+
+        private void removeFriendBtn_Click(object sender, EventArgs e)
+        {
+            foreach (string seletedItem in friendList.SelectedItems.OfType<string>().ToList())
+            {
+                UpdateBindingList(_client._strangerBindingList, strangerList, seletedItem);
+                _client._friendBindingList.Remove(seletedItem);
+                if (_client.DictLastSeen.ContainsKey(seletedItem))
+                {
+                    _client.DictLastSeen.Remove(seletedItem);
+                }
+                UpdateStrangerList();
+            }
+        }
+
+        private void groupStrangerBtn_Click(object sender, EventArgs e)
+        {
+            foreach (string selectedItem in strangerList.SelectedItems.OfType<string>().ToList())
+            {
+                _client.RequestGroup(selectedItem);
+            }
+        }
+
+        private void groupFriendBtn_Click(object sender, EventArgs e)
+        {
+            foreach (string selectedItem in friendList.SelectedItems.OfType<string>().ToList())
+            {
+                _client.RequestGroup(selectedItem);
+            }
+        }
+
+        private void groupAltsBtn_Click(object sender, EventArgs e)
+        {
+            foreach (Client client in _client._server._clientList)
+            {
+                if (!_client.AllyListHashSet.Contains(client.Name) && _client != client)
+                {
+                    _client.RequestGroup(client.Name);
+                }
+            }
+        }
+
+        private void friendGroupBtn_Click(object sender, EventArgs e)
+        {
+            foreach (string selectedItem in groupList.SelectedItems.OfType<string>().ToList())
+            {
+                if (!_client._friendBindingList.Contains(selectedItem))
+                {
+                    UpdateBindingList(_client._friendBindingList, friendList, selectedItem);
+                }
+            }
+        }
+
+        private void kickGroupedBtn_Click(object sender, EventArgs e)
+        {
+            foreach (string selectedItem in groupList.SelectedItems.OfType<string>().ToList())
+            {
+                _client.RequestGroup(selectedItem);
+            }
+
+        }
+
+        private void friendAltsBtn_Click(object sender, EventArgs e)
+        {
+            BindingList<string> friends = _client._friendBindingList;
+            foreach (Client client in _client._server._clientList)
+            {
+                if (!friends.Contains(client.Name) && _client != client)
+                {
+                    UpdateBindingList(friends, friendList, client.Name);
+                }
+                if (_client._strangerBindingList.Contains(client.Name))
+                {
+                    _client._strangerBindingList.Remove(client.Name);
+                }
             }
         }
     }

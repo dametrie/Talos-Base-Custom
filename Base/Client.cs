@@ -121,6 +121,7 @@ namespace Talos.Base
 
         internal BindingList<string> _strangerBindingList = new BindingList<string>();
         internal BindingList<string> _friendBindingList = new BindingList<string>();
+        internal BindingList<string> _groupBindingList = new BindingList<string>();
 
         private readonly List<string> _archerSpells = new List<string>
         {
@@ -365,6 +366,22 @@ namespace Talos.Base
             {
                 Monitor.Exit(Server.Lock);
             }
+        }
+
+
+        internal List<WorldObject> GetWorldObjects()
+        {
+            var worldObjects = new List<WorldObject>();
+
+            foreach (var item in CreatureHashSet)//Adam check this.. it looks like it only iterates through the creature hashset
+            {
+                if (WorldObjects.TryGetValue(item, out var worldObject))
+                {
+                    worldObjects.Add(worldObject);
+                }
+            }
+
+            return worldObjects;
         }
 
 
@@ -732,7 +749,6 @@ namespace Talos.Base
                 return false;
             return _serverLocation.DistanceFrom(sprite.Location) <= dist;
         }
-
         private bool CheckWeaponCastLines(Spell spell, out byte castLines)
         {
             bool swappingWeapons = false;
@@ -834,7 +850,6 @@ namespace Talos.Base
             castLines = Spellbook[spell.Name].CastLines;
             return true;
         }
-
         internal void NewAisling(byte objType, int objID, ushort pursuitID)
         {
             ReplyDialog(objType, objID, pursuitID, 52);
@@ -1357,26 +1372,27 @@ namespace Talos.Base
                 return !keepSpellAfterUse || ClearSpell();
             }
         }
-        internal List<WorldObject> GetWorldObjects()
-        {
-            var worldObjects = new List<WorldObject>();
-
-            foreach (var item in CreatureHashSet)//Adam check this.. it looks like it only iterates through the creature hashset
-            {
-                if (WorldObjects.TryGetValue(item, out var worldObject))
-                {
-                    worldObjects.Add(worldObject);
-                }
-            }
-
-            return worldObjects;
-        }
+        
 
         internal void RequestProfile()
         {
             Enqueue(new ClientPacket(45));
         }
 
+        internal void RequestGroup(string playerName)
+        {
+            ClientPacket clientPacket = new ClientPacket(46);
+            clientPacket.WriteByte(2);
+            clientPacket.WriteString8(playerName);
+            Enqueue(clientPacket);
+        }
+        internal void RequestGroupForced(string playerName)
+        {
+            ClientPacket clientPacket = new ClientPacket(46);
+            clientPacket.WriteByte(3);
+            clientPacket.WriteString8(playerName);
+            Enqueue(clientPacket);
+        }
         internal bool UseSkill(string skillName)
         {
             Skill skill = Skillbook[skillName];
