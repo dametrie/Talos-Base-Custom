@@ -366,6 +366,7 @@
             this.allyRemoveBtn.TabIndex = 21;
             this.allyRemoveBtn.Text = "Remove";
             this.allyRemoveBtn.UseVisualStyleBackColor = true;
+            this.allyRemoveBtn.Click += new System.EventHandler(this.allyRemoveBtn_Click);
             // 
             // AllyPage
             // 

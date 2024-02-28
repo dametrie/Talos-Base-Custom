@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MessageDialog));
             this.messageLbl = new System.Windows.Forms.Label();
             this.cancelBtn = new System.Windows.Forms.Button();
             this.okBtn = new System.Windows.Forms.Button();
@@ -53,6 +52,7 @@
             this.cancelBtn.TabIndex = 4;
             this.cancelBtn.Text = "Cancel";
             this.cancelBtn.UseVisualStyleBackColor = true;
+            this.cancelBtn.Click += new System.EventHandler(this.cancelBtn_Click);
             // 
             // okBtn
             // 
@@ -63,6 +63,7 @@
             this.okBtn.TabIndex = 3;
             this.okBtn.Text = "Ok";
             this.okBtn.UseVisualStyleBackColor = true;
+            this.okBtn.Click += new System.EventHandler(this.okBtn_Click);
             // 
             // MessageDialog
             // 
@@ -72,7 +73,7 @@
             this.Controls.Add(this.messageLbl);
             this.Controls.Add(this.cancelBtn);
             this.Controls.Add(this.okBtn);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Icon = global::Talos.Properties.Resources.Talos;
             this.Name = "MessageDialog";
             this.Text = "Message";
             this.ResumeLayout(false);

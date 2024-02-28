@@ -10,7 +10,7 @@ namespace Talos.Objects
             : base(id, string.Empty, sprite, location)
         {
             Exists = exists;
-            Sprite = sprite;
+            SpriteID = sprite;
         }
     }
 }

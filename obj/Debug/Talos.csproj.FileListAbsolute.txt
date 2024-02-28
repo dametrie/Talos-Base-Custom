@@ -13,3 +13,5 @@ C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.exe
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.pdb
 C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.Forms.AllyPage.resources
+C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.Forms.EnemyPage.resources
+C:\Users\Gaming\Dropbox\Games\Dark Ages\Source Code\Talos\Talos\obj\Debug\Talos.Forms.User_Controls.NearbyEnemy.resources

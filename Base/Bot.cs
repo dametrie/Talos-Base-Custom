@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Talos.Forms;
 using Talos.Forms.UI;
 using Talos.Objects;
 using Talos.Structs;
@@ -12,7 +13,7 @@ namespace Talos.Base
 {
     internal class Bot : BotBase
     {
-        private static object _lockObject { get; set; } = new object();
+        private static object _lock { get; set; } = new object();
         private int _dropCounter;
 
         internal Client _client;
@@ -30,7 +31,11 @@ namespace Talos.Base
         internal DateTime _lastGrimeScentCast;
 
         internal List<Ally> _allyList = new List<Ally>();
+        internal List<Enemy> _enemyList = new List<Enemy>();
         internal HashSet<string> _allyListName = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
+        internal HashSet<ushort> _enemyListID = new HashSet<ushort>();
+        internal AllyPage AllyPage { get; set; }
+        internal EnemyPage EnemyPage { get; set; }
 
 
         internal Bot(Client client, Server server) : base(client, server) 
@@ -57,25 +62,121 @@ namespace Talos.Base
 
         internal bool IsAllyAlreadyListed(string name)
         {
-            lock (Bot._lockObject)
+            lock (Bot._lock)
             {
                 return _allyListName.Contains(name, StringComparer.CurrentCultureIgnoreCase);
             }
         }
 
+        internal bool IsEnemyAlreadyListed(ushort sprite)
+        {
+
+            lock (Bot._lock)
+            {
+                return _enemyListID.Contains(sprite);
+            }
+        }
+
         internal void UpdateAllyList(Ally ally)
         {
-            lock (Bot._lockObject)
+            lock (Bot._lock)
             {
                 this._allyList.Add(ally);
                 this._allyListName.Add(ally.Name);
             }
         }
 
-      
+        internal void UpdateEnemyList(Enemy enemy)
+        {
+            lock (Bot._lock)
+            {
+                this._enemyList.Add(enemy);
+                this._enemyListID.Add(enemy.SpriteID);
+            }
+        }
+
+        internal void RemoveAlly(string name)
+        {
+            if (Monitor.TryEnter(Bot._lock, 1000))
+            {
+                try
+                {
+                    foreach (Ally ally in this._allyList)
+                    {
+                        if (ally.Name == name)
+                        {
+                            this._allyList.Remove(ally);
+                            this._allyListName.Remove(ally.Name);
+                            break;
+                        }
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(Bot._lock);
+                }
+            }
+        }
+
+        internal List<Ally> ReturnAllyList()
+        {
+            lock (Bot._lock)
+            {
+                return new List<Ally>(_allyList);
+            }
+        }
+
+        internal List<Enemy> ReturnEnemyList()
+        {
+            lock (Bot._lock)
+            {
+                return new List<Enemy>(_enemyList);
+            }
+        }
+
+        internal void ClearEnemyLists(string name)
+        {
+            if (ushort.TryParse(name, out ushort spriteId))
+            {
+                List<Enemy> enemiesToRemove = new List<Enemy>();
+
+                foreach (Enemy enemy in _enemyList)
+                {
+                    if (enemy.SpriteID == spriteId)
+                    {
+                        enemiesToRemove.Add(enemy);
+                    }
+                }
+
+                if (enemiesToRemove.Any())
+                {
+                    if (Monitor.TryEnter(Bot._lock, 1000))
+                    {
+                        try
+                        {
+                            foreach (Enemy enemy in enemiesToRemove)
+                            {
+                                _enemyList.Remove(enemy);
+                                _enemyListID.Remove(enemy.SpriteID);
+                            }
+                        }
+                        finally
+                        {
+                            Monitor.Exit(Bot._lock);
+                        }
+                    }
+                }
+            }
+        }
+
         internal bool IsStrangerNearby()
         {
-            return false;
+            return _client.GetNearbyPlayers().Any(new Func<Player, bool>(this.ReturnNotInFriendList));
+        }
+
+        private bool ReturnNotInFriendList(Player player)
+        {
+            return !_client.ClientTab.friendList.Items.OfType<string>().Contains(player.Name, StringComparer.OrdinalIgnoreCase);
         }
 
         private void Loot()
@@ -128,12 +229,12 @@ namespace Talos.Base
 
         private bool IsGold(Objects.Object obj, Rectangle lootArea)
         {
-            return lootArea.ContainsPoint(obj.Location.Point) && obj.Sprite == 140 && DateTime.UtcNow.Subtract(obj.Creation).TotalSeconds > 2.0;
+            return lootArea.ContainsPoint(obj.Location.Point) && obj.SpriteID == 140 && DateTime.UtcNow.Subtract(obj.Creation).TotalSeconds > 2.0;
         }
 
         private bool IsLootableItem(Objects.Object obj, Rectangle lootArea)
         {
-            return lootArea.ContainsPoint(obj.Location.Point) && obj.Sprite != 140 && DateTime.UtcNow.Subtract(obj.Creation).TotalSeconds > 2.0;
+            return lootArea.ContainsPoint(obj.Location.Point) && obj.SpriteID != 140 && DateTime.UtcNow.Subtract(obj.Creation).TotalSeconds > 2.0;
         }
 
         private void HandleTrashItems()
@@ -157,6 +258,7 @@ namespace Talos.Base
                 }
             }
         }
+
 
     }
 }

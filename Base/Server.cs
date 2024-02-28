@@ -26,6 +26,8 @@ using System.Media;
 using System.Reflection;
 using Point = Talos.Structs.Point;
 using System.Threading.Tasks;
+using Talos.Helper;
+using Talos.Forms.UI;
 
 
 
@@ -53,9 +55,6 @@ namespace Talos
 
         private bool _initialized;
         #endregion
-
-        const int CREATURE_SPRITE_OFFSET = 16384;
-        const int ITEM_SPRITE_OFFSET = 32768;
 
         // Create a single instance of ActiveMessageHandler
         ActiveMessageHandler activeMessageHandler = ActiveMessageHandler.Instance;
@@ -705,10 +704,10 @@ namespace Talos
                     int id = serverPacket.ReadInt32();
                     ushort sprite = serverPacket.ReadUInt16();
 
-                    if (sprite >= ITEM_SPRITE_OFFSET) // Is not a creature
+                    if (sprite >= CONSTANTS.ITEM_SPRITE_OFFSET) // Is not a creature
                     {
                         serverPacket.Read(3);
-                        var obj = new Objects.Object(id, (ushort)(sprite - ITEM_SPRITE_OFFSET), location, true);
+                        var obj = new Objects.Object(id, (ushort)(sprite - CONSTANTS.ITEM_SPRITE_OFFSET), location, true);
                         if (!client.WorldObjects.ContainsKey(id))
                             client.WorldObjects[id] = obj;
 
@@ -721,7 +720,7 @@ namespace Talos
                     }
                     else // Is a creature
                     {
-                        sprite = (ushort)(sprite - CREATURE_SPRITE_OFFSET);
+                        sprite = (ushort)(sprite - CONSTANTS.CREATURE_SPRITE_OFFSET);
                         serverPacket.Read(4);
                         byte direction = serverPacket.ReadByte();
                         serverPacket.ReadByte();
@@ -748,6 +747,30 @@ namespace Talos
                         {
                             client.NearbyNPC[name] = creature;
                         }
+                        else if ((client.Bot.EnemyPage != null) && !client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
+                        {
+                            Enemy enemy = new Enemy(creature.SpriteID);
+                            enemy.EnemyPage = client.Bot.EnemyPage;
+                            client.Bot.UpdateEnemyList(enemy);
+                        }
+                        else if (client.ClientTab != null)
+                        {
+                            TabPage selectedTab;
+                            ClientTab tab1 = client.ClientTab;
+                            if (tab1 != null)
+                            {
+                                selectedTab = tab1.monsterTabControl.SelectedTab;
+                            }
+                            else
+                            {
+                                ClientTab local1 = tab1;
+                                selectedTab = null;
+                            }
+                            if (ReferenceEquals(selectedTab, client.ClientTab.nearbyEnemyTab) && ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainMonstersTab))
+                            {
+                                client.ClientTab.AddNearbyEnemy(creature);
+                            }
+                        }
 
 
 
@@ -762,32 +785,6 @@ namespace Talos
 
             return true;
         }
-        //else if ((client.Tasks.EnemyPage != null) && !client.Tasks.method_41(c.Sprite))
-        //{
-        //    Enemy class1 = new Enemy(c.Sprite);
-        //    class1.EnemyPage = client.Tasks.EnemyPage;
-        //    Enemy class4 = class1;
-        //    client.Tasks.method_39(class4);
-        //}
-        //else if (client.ClientTab != null)
-        //{
-        //    TabPage selectedTab;
-        //    ClientTab clientTab = client.ClientTab;
-        //    if (clientTab != null)
-        //    {
-        //        selectedTab = clientTab.monsterTabControl.SelectedTab;
-        //    }
-        //    else
-        //    {
-        //        ClientTab local1 = clientTab;
-        //        selectedTab = null;
-        //    }
-        //    if (ReferenceEquals(selectedTab, client.ClientTab.nearbyEnemyTab) && ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainMonstersTab))
-        //    {
-        //        client.ClientTab.AddNearbyEnemy(c);
-        //    }
-        //}
-
 
         private bool ServerMessage_0x08_Attributes(Client client, ServerPacket serverPacket)
         {
@@ -1084,19 +1081,19 @@ namespace Talos
 
                     if (!client.WorldObjects.Values.Any(worldObj =>
                         worldObj is Creature && client.IsCreatureNearby(worldObj as VisibleObject, 12) &&
-                        (worldObj as Creature).Sprite == creature.Sprite))
+                        (worldObj as Creature).SpriteID == creature.SpriteID))//ADAM check this
                     {
                         ClientTab clientTab = client.ClientTab;
                         if (clientTab != null && clientTab.monsterTabControl.SelectedTab == clientTab.nearbyEnemyTab &&
                             clientTab.clientTabControl.SelectedTab == clientTab.mainMonstersTab)
                         {
-                            // client.ClientTab.UpdateNearbyEnemyTable(npc.Sprite);
+                            client.ClientTab.UpdateNearbyEnemyTable(creature.SpriteID);
                         }
 
-                        //if (client.Tasks.EnemyPage != null && client.Tasks.method_41(npc.Sprite))
-                        //{
-                        //    client.Tasks.ClearEnemyLists(npc.Sprite.ToString());
-                        //}
+                        if (client.Bot.EnemyPage != null && client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
+                        {
+                            client.Bot.ClearEnemyLists(creature.SpriteID.ToString());
+                        }
                     }
                 }
             }
@@ -1727,7 +1724,7 @@ namespace Talos
             ushort headSprite = serverPacket.ReadUInt16();
             if (headSprite == 65535)
             {
-                form = (ushort)(serverPacket.ReadUInt16() - CREATURE_SPRITE_OFFSET);
+                form = (ushort)(serverPacket.ReadUInt16() - CONSTANTS.CREATURE_SPRITE_OFFSET);
                 headColor = serverPacket.ReadByte();
                 bootsColor = serverPacket.ReadByte();
                 serverPacket.Read(6);
@@ -1802,7 +1799,7 @@ namespace Talos
                 if (string.IsNullOrEmpty(p.Name))
                     p.Name = name;
             }
-            player.Sprite = form;
+            player.SpriteID = form;
             player.BodySprite = bodySprite;
             player.ArmorSprite1 = armorSprite1;
             player.ArmorSprite2 = armorSprite2;
@@ -1856,7 +1853,7 @@ namespace Talos
                     serverPacket.WriteByte((byte)direction);
                     serverPacket.WriteUInt32((uint)id);
                     serverPacket.WriteUInt16(65535);//maxvalue
-                    serverPacket.WriteUInt16((ushort)(client._monsterFormID + CREATURE_SPRITE_OFFSET));
+                    serverPacket.WriteUInt16((ushort)(client._monsterFormID + CONSTANTS.CREATURE_SPRITE_OFFSET));
                     serverPacket.WriteByte(headColor);
                     serverPacket.WriteByte(bootsColor);
                     serverPacket.Write(new byte[6]);
@@ -2008,10 +2005,10 @@ namespace Talos
             //client.ClientTab.AddFriends();
             //client.ClientTab.UpdateChatPanelMaxLength(client);
             //client.ClientTab.DisplayUsableSpellsSkills();
-            //if (client.Tasks.AllyPage != null)
-            //{
-            //    client.ClientTab.method_9();
-            //}
+            if (client.Bot.AllyPage != null)
+            {
+                client.ClientTab.RemoveAllyPage();
+            }
             //if (this.mainForm.nameAssociatedWithKey.Equals("Brandon") || (this.mainForm.nameAssociatedWithKey.Equals("Michael") || this.mainForm.nameAssociatedWithKey.Equals("Dominic")))
             //{
             //client.ClientTab.chkMappingToggle.Enabled = true;
@@ -2379,6 +2376,18 @@ namespace Talos
             }
             binaryReader.Close();
             return true;
+        }
+
+        internal Client FindClientByName(string name)
+        {
+            try
+            {
+                return _clientList.FirstOrDefault(client => client.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
+            }
+            catch
+            {
+                return null;
+            }
         }
 
     }

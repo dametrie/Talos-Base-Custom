@@ -4,7 +4,7 @@ using System.Text;
 
 using System.IO;
 
-namespace Talos.Capricorn.Drawing
+namespace Talos.Capricorn.IO
 {
 	/// <summary>
 	/// DAT File Archive Class

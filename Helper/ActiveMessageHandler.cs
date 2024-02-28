@@ -9,8 +9,9 @@ using System.Windows.Forms;
 using Talos.Base;
 using Talos.Enumerations;
 using Talos.Forms;
+using Talos.Objects;
 
-namespace Talos.Objects
+namespace Talos.Helper
 {
     internal class ActiveMessageHandler
     {

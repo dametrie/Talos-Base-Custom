@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using Talos.Capricorn.IO;
 
 namespace Talos.Capricorn.Drawing
 {
@@ -9,27 +10,27 @@ namespace Talos.Capricorn.Drawing
     /// </summary>
     public class MPFImage
     {
-        private int expectedFrames;
-        private int width;
-        private int height;
-        private MPFFrame[] frames;
-        private uint expectedDataSize;
-        private byte walkStart;
-        private byte walkLength;
-        private uint ffUnknown;
-        private bool isNewFormat;
-        private bool isFFFormat;
-        private byte idleStart;
-        private byte idleLength;
-        private byte idleSpeed;
-        private byte walkSpeed;
-        private byte attack1Start;
-        private byte attack1Length;
-        private byte attack2Start;
-        private byte attack2Length;
-        private byte attack3Start;
-        private byte attack3Length;
-        private string palette;
+        public int expectedFrames;
+        public int width;
+        public int height;
+        public MPFFrame[] frames;
+        public uint expectedDataSize;
+        public byte walkStart;
+        public byte walkLength;
+        public uint ffUnknown;
+        public bool isNewFormat;
+        public bool isFFFormat;
+        public byte idleStart;
+        public byte idleLength;
+        public byte idleSpeed;
+        public byte walkSpeed;
+        public byte attack1Start;
+        public byte attack1Length;
+        public byte attack2Start;
+        public byte attack2Length;
+        public byte attack3Start;
+        public byte attack3Length;
+        public string palette;
 
         /// <summary>
         /// Gets or sets the frame at the specified index.

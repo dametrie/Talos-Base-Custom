@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 
 using System.IO;
+using Talos.Capricorn.IO;
+using Talos.Capricorn.IO.Compression;
 
 namespace Talos.Capricorn.Drawing
 {

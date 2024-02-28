@@ -78,11 +78,17 @@
     <Compile Include="Definitions\CONSTANTS.cs" />
     <Compile Include="Definitions\Enums.cs" />
     <Compile Include="Definitions\Flags.cs" />
-    <Compile Include="Forms\AllyPage.cs">
+    <Compile Include="Forms\User Controls\AllyPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Forms\AllyPage.Designer.cs">
+    <Compile Include="Forms\User Controls\AllyPage.Designer.cs">
       <DependentUpon>AllyPage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\User Controls\EnemyPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\User Controls\EnemyPage.Designer.cs">
+      <DependentUpon>EnemyPage.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\UI\Ally.cs" />
     <Compile Include="Forms\UI\ChatPanel.cs" />
@@ -104,7 +110,15 @@
     <Compile Include="Forms\MessageDialog.Designer.cs">
       <DependentUpon>MessageDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\UI\Enemy.cs" />
     <Compile Include="Forms\UI\ResourceBar.cs" />
+    <Compile Include="Forms\User Controls\NearbyEnemy.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\User Controls\NearbyEnemy.Designer.cs">
+      <DependentUpon>NearbyEnemy.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Helper\UIHelper.cs" />
     <Compile Include="Maps\Map.cs" />
     <Compile Include="Maps\Warp.cs" />
     <Compile Include="Maps\WorldMap.cs" />
@@ -112,7 +126,7 @@
     <Compile Include="Networking\ClientPacket.cs" />
     <Compile Include="Networking\Packet.cs" />
     <Compile Include="Networking\ServerPacket.cs" />
-    <Compile Include="Objects\ActiveMessageHandler.cs" />
+    <Compile Include="Helper\ActiveMessageHandler.cs" />
     <Compile Include="Objects\Animation.cs" />
     <Compile Include="Objects\Bow.cs" />
     <Compile Include="Objects\Caster.cs" />
@@ -146,12 +160,20 @@
     <Compile Include="Structs\Rectangle.cs" />
     <Compile Include="Structs\Tile.cs" />
     <Compile Include="Utility\Utility.cs" />
-    <EmbeddedResource Include="Forms\AllyPage.resx">
+    <EmbeddedResource Include="Forms\User Controls\AllyPage.resx">
       <DependentUpon>AllyPage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ClientTab.resx" />
+    <EmbeddedResource Include="Forms\User Controls\EnemyPage.resx">
+      <DependentUpon>EnemyPage.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\MainForm.resx" />
-    <EmbeddedResource Include="Forms\MessageDialog.resx" />
+    <EmbeddedResource Include="Forms\MessageDialog.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\User Controls\NearbyEnemy.resx">
+      <DependentUpon>NearbyEnemy.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

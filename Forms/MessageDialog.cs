@@ -41,8 +41,7 @@ namespace Talos
             base.DialogResult = DialogResult.OK;
         }
 
-
-        private void cancelBtn_Click_1(object sender, EventArgs e)
+        private void cancelBtn_Click(object sender, EventArgs e)
         {
             base.DialogResult = DialogResult.Cancel;
         }

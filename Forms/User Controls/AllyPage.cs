@@ -90,5 +90,29 @@ namespace Talos.Forms
             radioButton.Enabled = _client.Spellbook[spellName] != null;
         }
 
+        private void allyRemoveBtn_Click(object sender, EventArgs e)
+        {
+            foreach (Ally ally in new List<Ally>(_client.Bot.ReturnAllyList()))
+            {
+                if (ally.AllyPage == this)
+                {
+                    _client.Bot.RemoveAlly(ally.Name);
+                }
+            }
+            if (_ally.Name == "group")
+            {
+                _client.Bot.AllyPage = null;
+            }
+            else if (_ally.Name == "alts")
+            {
+                _client.Bot.AllyPage = null;
+                if (_client.Bot.AllyPage != null)
+                {
+                    _client.ClientTab.RemoveAllyPage();
+                }
+            }
+            Parent.Dispose();
+            _client.RequestRefresh(false);
+        }
     }
 }

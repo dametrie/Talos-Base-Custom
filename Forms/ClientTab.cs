@@ -15,6 +15,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using Talos.Forms.UI;
 using Talos.Definitions;
+using Talos.Helper;
+using Talos.Forms.User_Controls;
 
 namespace Talos.Forms
 {
@@ -77,6 +79,7 @@ namespace Talos.Forms
         {
             _client = client;
             _client.ClientTab = this;
+            UIHelper.Initialize(_client);
             InitializeComponent();
 
             worldObjectListBox.DataSource = client._worldObjectBindingList;
@@ -92,60 +95,21 @@ namespace Talos.Forms
 
         private void OnlyDisplaySpellsWeHave()
         {
-            SetupComboBox(healCombox, new[] { "nuadhaich", "ard ioc", "mor ioc", "ioc", "beag ioc", "Cold Blood", "Spirit Essence" }, healCbox, healPctNum);
-            SetupComboBox(dionCombox, new[] { "mor dion", "Iron Skin", "Wings of Protection", "Draco Stance", "dion", "Stone Skin", "Glowing Stone" }, dionCbox, dionPctNum, dionWhenCombox, aoSithCbox);
-            SetupComboBox(fasCombox, new[] { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" }, fasCbox);
-            SetupComboBox(aiteCombox, new[] { "ard naomh aite", "mor naomh aite", "naomh aite", "beag naomh aite" }, aiteCbox);
+            UIHelper.SetupComboBox(healCombox, new[] { "nuadhaich", "ard ioc", "mor ioc", "ioc", "beag ioc", "Cold Blood", "Spirit Essence" }, healCbox, healPctNum);
+            UIHelper.SetupComboBox(dionCombox, new[] { "mor dion", "Iron Skin", "Wings of Protection", "Draco Stance", "dion", "Stone Skin", "Glowing Stone" }, dionCbox, dionPctNum, dionWhenCombox, aoSithCbox);
+            UIHelper.SetupComboBox(fasCombox, new[] { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" }, fasCbox);
+            UIHelper.SetupComboBox(aiteCombox, new[] { "ard naomh aite", "mor naomh aite", "naomh aite", "beag naomh aite" }, aiteCbox);
 
-            SetupCheckbox(deireasFaileasCbox, "deireas faileas");
-            SetupCheckbox(aoSuainCbox, "ao suain", "Leafhopper Chirp");
-            SetupCheckbox(aoCurseCbox, "ao beag cradh", "ao cradh", "ao mor cradh", "ao ard cradh");
-            SetupCheckbox(aoPoisonCbox, "ao puinsein");
-            SetupCheckbox(bubbleBlockCbox, "Bubble Block", "Bubble Shield");
-            SetupCheckbox(spamBubbleCbox, "Bubble Block", "Bubble Shield");
-            SetupCheckbox(fungusExtractCbox, "Fungus Beetle Extract");
-            SetupCheckbox(mantidScentCbox, "Mantid Scent", "Potent Mantid Scent");
-        }
-        private void SetupComboBox(ComboBox comboBox, string[] spells, Control control1, Control control2 = null, Control control3 = null, Control control4 = null)
-        {
-            comboBox.Items.Clear();
-            foreach (var spell in spells)
-            {
-                if (_client.Spellbook[spell] != null)
-                {
-                    comboBox.Items.Add(spell);
-                }
-            }
-
-            if (comboBox.Items.Count > 0)
-                comboBox.SelectedIndex = 0;
-            else
-            {
-                control1.Enabled = false;
-                comboBox.Enabled = false;
-                comboBox.Text = String.Empty;
-                if (control2 is not null)
-                {
-                    control2.Enabled = false;
-                    if (control2 is NumericUpDown numericUpDown)
-                        numericUpDown.Value = 0;
-                }
-                if(control3 is not null)
-                {
-                    control3.Enabled = false;
-                    if (control3 is TextBox textBox)
-                        textBox.Text = String.Empty;
-                }
-                if(control4 is not null)
-                    control4.Enabled = false;
-            }
+            UIHelper.SetupCheckbox(deireasFaileasCbox, "deireas faileas");
+            UIHelper.SetupCheckbox(aoSuainCbox, "ao suain", "Leafhopper Chirp");
+            UIHelper.SetupCheckbox(aoCurseCbox, "ao beag cradh", "ao cradh", "ao mor cradh", "ao ard cradh");
+            UIHelper.SetupCheckbox(aoPoisonCbox, "ao puinsein");
+            UIHelper.SetupCheckbox(bubbleBlockCbox, "Bubble Block", "Bubble Shield");
+            UIHelper.SetupCheckbox(spamBubbleCbox, "Bubble Block", "Bubble Shield");
+            UIHelper.SetupCheckbox(fungusExtractCbox, "Fungus Beetle Extract");
+            UIHelper.SetupCheckbox(mantidScentCbox, "Mantid Scent", "Potent Mantid Scent");
         }
 
-        private void SetupCheckbox(CheckBox checkBox, params string[] spellOrItemNames)
-        {
-            bool enabled = spellOrItemNames.Any(name => _client.Spellbook[name] != null || _client.HasItem(name));
-            checkBox.Enabled = enabled;
-        }
 
         internal void SetClassSpecificSpells()
         {
@@ -445,30 +409,7 @@ namespace Talos.Forms
         {
             _client.UnifiedGuildChat = unifiedGuildChatCbox.Checked;
         }
-        private void addMonsterText_Enter(object sender, EventArgs e)
-        {
 
-        }
-
-        private void addMonsterText_Leave(object sender, EventArgs e)
-        {
-
-        }
-
-        private void addWarpBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void removeWarpBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void chkMappingToggle_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
 
         private void effectBtn_Click(object sender, EventArgs e)
         {
@@ -481,270 +422,7 @@ namespace Talos.Forms
             _client.Enqueue(serverPacket);
         }
 
-        private void spellBarIdsBtn_Click(object sender, EventArgs e)
-        {
 
-        }
-
-        private void mapNodeIdsBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void classDetectorBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void pursuitIdsBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void fullscreenToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void largeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toggleHideToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void smallToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void walkToMenu_MouseEnter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void waypointsMenu_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void waypointsMenu_MouseEnter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void deleteStrip_MouseEnter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void saveStrip_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void loadStrip_MouseEnter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void clearStrip_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void startStrip_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numComboImgSelect_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnAddSkillCombo_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnResetAllStatus_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void faceNum_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void removeRenameBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void addRenameBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnCheckLoginTime_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnConLogin_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnFood_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void TailorBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void ascendAllBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void ascendBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void prayerAssistTbox_KeyPress(object sender, KeyPressEventArgs e)
-        {
-
-        }
-
-        private void togglePrayingBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnItemRemove_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnItemAdd_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnLoadItemList_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnItemFinder_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void voteForAllBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void voteText_KeyPress(object sender, KeyPressEventArgs e)
-        {
-
-        }
-
-        private void toggleVotingBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void fishingCombox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toggleFishingBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void setNearestBankBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void returnFarmBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void setCustomBankBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toggleFarmBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void finishedWhiteBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void teacherText_KeyPress(object sender, KeyPressEventArgs e)
-        {
-
-        }
-
-        private void killedCrabBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void killedBatBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toggleHubaeBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void laborNameText_KeyPress(object sender, KeyPressEventArgs e)
-        {
-
-        }
-
-        private void laborBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void polishBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void assistText_KeyPress(object sender, KeyPressEventArgs e)
-        {
-
-        }
-
-        private void toggleAscensionBtn_Click(object sender, EventArgs e)
-        {
-
-        }
 
 
         internal void LogPackets(ClientPacket clientPacket)
@@ -1012,7 +690,7 @@ namespace Talos.Forms
 
             if (worldObject is VisibleObject visibleObject)
             {
-                lastClickedSpriteLbl.Text = "Sprite: " + visibleObject.Sprite;
+                lastClickedSpriteLbl.Text = "Sprite: " + visibleObject.SpriteID;
                 lastClickedSpriteLbl.Refresh();
             }
                 
@@ -1114,7 +792,17 @@ namespace Talos.Forms
 
         private void addAislingBtn_Click(object sender, EventArgs e)
         {
-            string text = addAislingText.Text;
+            string name = addAislingText.Text;
+            if (ParseAllyTextBox(name))
+            {
+                AddAllyPage(name);
+                addAislingText.Clear();
+                if (MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+                {
+                    aislingTabControl.SelectTab(aislingTabControl.TabPages.IndexOfKey(name));
+                    clientTabControl.SelectTab(1);
+                }
+            }
         }
 
         private bool ParseAllyTextBox(string name)
@@ -1142,7 +830,7 @@ namespace Talos.Forms
             return true;
         }
 
-        internal void AddAlly(string name, Image image = null)
+        internal void AddAllyPage(string name, Image image = null)
         {
             if (_client.Bot.IsAllyAlreadyListed(name))
             {
@@ -1164,6 +852,85 @@ namespace Talos.Forms
             //RefreshNearbyAllyTable();
             _client.Bot.UpdateAllyList(ally);
 
+        }
+
+        internal void AddEnemyPage(ushort sprite)
+        {
+            if (!_client.Bot.IsEnemyAlreadyListed(sprite))
+            {
+                Enemy enemy = new Enemy(sprite);
+                enemy.EnemyPage = new EnemyPage(enemy, _client);
+                TabPage tabPage = new TabPage(sprite.ToString())
+                {
+                    Name = sprite.ToString()
+                };
+                tabPage.Controls.Add(enemy.EnemyPage);
+                monsterTabControl.TabPages.Add(tabPage);
+                UpdateNearbyEnemyTable(sprite);
+                RefreshNearbyEnemyTable();
+                _client.Bot.UpdateEnemyList(enemy);
+            }
+        }
+
+        internal void AddNearbyEnemy(Creature npc)
+        {
+            if (base.InvokeRequired)
+            {
+                Invoke((Action)delegate
+                {
+                    AddNearbyEnemy(npc);
+                });
+            }
+            else if (_client.Bot.EnemyPage == null && !_client.Bot._enemyListID.Contains(npc.SpriteID) && !nearbyEnemyTable.Controls.ContainsKey(npc.SpriteID.ToString()))
+            {
+                NearbyEnemy control = new NearbyEnemy(npc, _client)
+                {
+                    Name = npc.SpriteID.ToString()
+                };
+                nearbyEnemyTable.Controls.Add(control, -1, -1);
+            }
+        }
+        internal void UpdateNearbyEnemyTable(ushort sprite)
+        {
+            // Exit early if the EnemyPage is not null or the control does not exist.
+            if (_client.Bot.EnemyPage != null || !nearbyEnemyTable.Controls.ContainsKey(sprite.ToString()))
+            {
+                return;
+            }
+
+            // Define the timeout duration and the interval for checks.
+            TimeSpan timeout = TimeSpan.FromMilliseconds(250);
+            TimeSpan checkInterval = TimeSpan.FromMilliseconds(25);
+
+            DateTime startTime = DateTime.UtcNow;
+
+            // Try to get the NearbyEnemy control.
+            if (nearbyEnemyTable.Controls[sprite.ToString()] is NearbyEnemy nearbyEnemy)
+            {
+                // Loop until the timeout is reached or the control is loaded.
+                while (DateTime.UtcNow - startTime < timeout)
+                {
+                    if (nearbyEnemy._isLoaded)
+                    {
+                        // If loaded, dispose the control and exit.
+                        nearbyEnemy.Dispose();
+                        return;
+                    }
+
+                    // Sleep for the check interval before checking again.
+                    Thread.Sleep(checkInterval);
+                }
+            }
+        }
+
+        private void RefreshNearbyEnemyTable()
+        {
+            List<NearbyEnemy> list = nearbyEnemyTable.Controls.OfType<NearbyEnemy>().ToList();
+            nearbyEnemyTable.Controls.Clear();
+            foreach (NearbyEnemy item in list)
+            {
+                nearbyEnemyTable.Controls.Add(item, -1, -1);
+            }
         }
 
         internal void UpdateGroupList()
@@ -1395,6 +1162,484 @@ namespace Talos.Forms
                 }
             }
         }
+
+        internal void RemoveAllyPage()
+        {
+            foreach (string name in _client.AllyListHashSet)
+            {
+                if (_client.Bot.AllyPage == null || _client._server.FindClientByName(name) == null)
+                {
+                    if (_client.Bot.IsAllyAlreadyListed(name))
+                    {
+                        if (aislingTabControl.TabPages.ContainsKey(name))
+                        {
+                            aislingTabControl.TabPages[name].Dispose();
+                        }
+                        _client.Bot.RemoveAlly(name);
+                    }
+                    Ally ally = new Ally(name)
+                    {
+                        AllyPage = _client.Bot.AllyPage
+                    };
+                    _client.Bot.UpdateAllyList(ally);
+                }
+            }
+        }
+
+        private void addGroupBtn_Click(object sender, EventArgs e)
+        {
+            if (_client.Bot.AllyPage != null)
+            {
+                MessageDialog.Show(_client._server._mainForm, "You are already targeting the group.");
+                return;
+            } 
+
+            _client.Bot.AllyPage = new AllyPage(new Ally("group"), _client);
+            _client.Bot.AllyPage.allyMDCRbtn.Visible = true;
+            _client.Bot.AllyPage.allyMDCSpamRbtn.Visible = true;
+            _client.Bot.AllyPage.allyMICSpamRbtn.Visible = true;
+            _client.Bot.AllyPage.allyNormalRbtn.Visible = true;
+            TabPage tabPage = new TabPage("group");
+            tabPage.Controls.Add(_client.Bot.AllyPage);
+            aislingTabControl.TabPages.Add(tabPage);
+            foreach (string name in _client.AllyListHashSet)
+            {
+                if (_client.Bot.AllyPage == null || _client._server.FindClientByName(name) == null)
+                {
+                    if (_client.Bot.IsAllyAlreadyListed(name))
+                    {
+                        aislingTabControl.TabPages[name]?.Dispose();
+                        _client.Bot.RemoveAlly(name);
+                    }
+                    Ally ally = new Ally(name)
+                    {
+                        AllyPage = _client.Bot.AllyPage
+                    };
+                    _client.Bot.UpdateAllyList(ally);
+                }
+            }
+            if (MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            {
+                aislingTabControl.SelectTab(tabPage);
+                clientTabControl.SelectTab(1);
+            }
+        }
+
+        private void addAltsBtn_Click(object sender, EventArgs e)
+        {
+            if (_client.Bot.AllyPage != null)
+            {
+                MessageDialog.Show(_client._server._mainForm, "You already targeting alts.");
+                return;
+            }
+            _client.Bot.AllyPage = new AllyPage(new Ally("alts"), _client);
+            TabPage tabPage = new TabPage("alts");
+            tabPage.Controls.Add(_client.Bot.AllyPage);
+            aislingTabControl.TabPages.Add(tabPage);
+            foreach (Client client in _client._server._clientList.Where((Client c) => c._identifier != _client._identifier))
+            {
+                if (_client.Bot.IsAllyAlreadyListed(client.Name))
+                {
+                    aislingTabControl.TabPages[client.Name]?.Dispose();
+                    _client.Bot.RemoveAlly(client.Name);
+
+                }
+                Ally ally = new Ally(client.Name)
+                {
+                    AllyPage = _client.Bot.AllyPage
+                };
+                _client.Bot.UpdateAllyList(ally);
+            }
+            if (MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            {
+                aislingTabControl.SelectTab(tabPage);
+                clientTabControl.SelectTab(1);
+            }
+        }
+
+        private void addAllMonstersBtn_Click(object sender, EventArgs e)
+        {
+            if (_client.Bot.EnemyPage != null)
+            {
+                MessageDialog.Show(_client._server._mainForm, "Enemy already in list");
+                return;
+            }
+            EnemyPage enemyPage = new EnemyPage(new Enemy("all monsters"), _client);
+            enemyPage.enemyPicture.Visible = false;
+            enemyPage.priorityGroup.Visible = true;
+            enemyPage.mpndDioned.Visible = true;
+            enemyPage.ignoreGroup.Visible = true;
+            TabPage tabPage = new TabPage("all monsters");
+            tabPage.Controls.Add(enemyPage);
+            ClearNearbyEnemies();
+            monsterTabControl.TabPages.Remove(nearbyEnemyTab);
+            while (monsterTabControl.TabPages.Count > 0)
+            {
+                monsterTabControl.TabPages[0]?.Dispose();
+            }
+            foreach (Enemy enemy in _client.Bot.ReturnEnemyList())
+            {
+                _client.Bot.ClearEnemyLists(enemy.ToString());
+            }
+            monsterTabControl.TabPages.Add(tabPage);
+            foreach (Creature npc in _client.GetNearbyValidCreatures())
+            {
+                if (!_client.Bot.IsEnemyAlreadyListed(npc.SpriteID))
+                {
+                    Enemy enemy = new Enemy(npc.SpriteID)
+                    {
+                        EnemyPage = enemyPage
+                    };
+                    _client.Bot.UpdateEnemyList(enemy);
+                }
+            }
+            if ( MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            {
+                clientTabControl.SelectTab(2);
+                monsterTabControl.SelectTab(tabPage);
+            }
+            _client.Bot.EnemyPage = enemyPage;
+        }
+
+        internal void ClearNearbyEnemies()
+        {
+            if (_client.Bot.EnemyPage != null)
+            {
+                return;
+            }
+            DateTime utcNow = DateTime.UtcNow;
+            while (nearbyEnemyTable.Controls.Count > 0 && !(DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds >= 50.0))
+            {
+                if ((nearbyEnemyTable.Controls[0] as NearbyEnemy)._isLoaded)
+                {
+                    nearbyEnemyTable.Controls[0].Dispose();
+                }
+            }
+            nearbyEnemyTable.Controls.Clear();
+        }
+
+        private void addMonsterBtn_Click(object sender, EventArgs e)
+        {
+            if ((ushort.TryParse(addMonsterText.Text, out ushort result)) || validateMonsterInput(result))
+            {
+                AddEnemyPage(result);
+                addMonsterText.Clear();
+                if (MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+                {
+                    monsterTabControl.SelectTab(monsterTabControl.TabPages.IndexOfKey(result.ToString()));
+                    clientTabControl.SelectTab(2);
+                }
+            }
+        }
+
+        private bool validateMonsterInput(ushort sprite)
+        {
+            if (sprite >= 1 && sprite <= 1000)
+            {
+                if (!_client.Bot.IsEnemyAlreadyListed(sprite) && _client.Bot.EnemyPage == null)
+                {
+                    return true;
+                }
+                MessageDialog.Show(_client._server._mainForm, "Enemy already in list");
+                addMonsterText.Clear();
+                return false;
+            }
+            MessageDialog.Show(_client._server._mainForm, "Your sprite must be a number between 1-1000");
+            addMonsterText.Clear();
+            return false;
+        }
+
+        private void addMonsterText_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void addMonsterText_Leave(object sender, EventArgs e)
+        {
+
+        }
+
+        private void addWarpBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void removeWarpBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void chkMappingToggle_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void spellBarIdsBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void mapNodeIdsBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void classDetectorBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pursuitIdsBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void fullscreenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void largeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toggleHideToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void smallToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void walkToMenu_MouseEnter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void waypointsMenu_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void waypointsMenu_MouseEnter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void deleteStrip_MouseEnter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void saveStrip_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void loadStrip_MouseEnter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void clearStrip_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void startStrip_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void numComboImgSelect_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnAddSkillCombo_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnResetAllStatus_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void faceNum_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void removeRenameBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void addRenameBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnCheckLoginTime_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnConLogin_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnFood_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void TailorBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ascendAllBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ascendBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void prayerAssistTbox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+        }
+
+        private void togglePrayingBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnItemRemove_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnItemAdd_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnLoadItemList_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnItemFinder_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void voteForAllBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void voteText_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+        }
+
+        private void toggleVotingBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void fishingCombox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toggleFishingBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void setNearestBankBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void returnFarmBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void setCustomBankBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toggleFarmBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void finishedWhiteBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void teacherText_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+        }
+
+        private void killedCrabBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void killedBatBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toggleHubaeBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void laborNameText_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+        }
+
+        private void laborBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void polishBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void assistText_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+        }
+
+        private void toggleAscensionBtn_Click(object sender, EventArgs e)
+        {
+
+        }
+
+       
     }
 }
 

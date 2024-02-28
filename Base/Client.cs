@@ -94,6 +94,7 @@ namespace Talos.Base
         internal ushort _monsterFormID = 1;
         internal int _spellCounter;
         private int _customSpellLineCounter;
+        internal int _identifier;
         internal int _stuckCounter;
         internal byte _comboScrollCounter;
         internal Spell _currentSpell;
@@ -232,6 +233,7 @@ namespace Talos.Base
 
         internal Client(Server server, Socket socket)
         {
+            _identifier = Utility.Random(int.MaxValue);
             _server = server;
             _crypto = new Crypto(0, "UrkcnItnI");
             _clientSocket = socket;
@@ -687,7 +689,7 @@ namespace Talos.Base
                     }
                     else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
                     {
-                        Creature newCreature = new Creature(originalCreature.ID, originalCreature.Name, originalCreature.Sprite, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
+                        Creature newCreature = new Creature(originalCreature.ID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
                         newCreature.CurseDuration = Spell.GetSpellDuration(curseName);
                         newCreature.LastCursed = DateTime.UtcNow;
                         newCreature.Curse = curseName;
@@ -721,7 +723,7 @@ namespace Talos.Base
                     }
                     else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
                     {
-                        Creature newCreature = new Creature(originalCreature.ID, originalCreature.Name, originalCreature.Sprite, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
+                        Creature newCreature = new Creature(originalCreature.ID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
                         newCreature.FasDuration = fasDuration;
                         newCreature.LastFassed = DateTime.UtcNow;
                         targetClient.WorldObjects[creatureID] = newCreature;
@@ -1483,7 +1485,7 @@ namespace Talos.Base
         internal void DisplayAisling(Player player)
         {
             _ = player.Location;
-            ushort spriteID = player.Sprite;
+            ushort spriteID = player.SpriteID;
             if (player == this.Player && InMonsterForm)
             {
                 spriteID = _monsterFormID;
@@ -2078,7 +2080,7 @@ namespace Talos.Base
                             Console.WriteLine("Found nearby creature blocking the path.");
                             return true;
                         }
-                        return !HasEffect(EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.Sprite) && GetCreatureCoverage(npc).Contains(loc);
+                        return !HasEffect(EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.SpriteID) && GetCreatureCoverage(npc).Contains(loc);
                     }))
                     {
                         Console.WriteLine("Found nearby creature blocking the path, recalculating path...");
@@ -2200,9 +2202,9 @@ namespace Talos.Base
                 {
                     if ((creature.Type == CreatureType.Normal || creature.Type == CreatureType.WalkThrough)
                         && IsCreatureNearby(creature, distance)
-                        && creature.Sprite > 0 && creature.Sprite <= 1000
-                        && !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.Sprite)
-                        && hashSet.Contains(creature.Sprite))
+                        && creature.SpriteID > 0 && creature.SpriteID <= 1000
+                        && !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID)
+                        && hashSet.Contains(creature.SpriteID))
                     {
                         creatureList.Add(creature);
                     }
@@ -2693,6 +2695,71 @@ namespace Talos.Base
                 }
             }
         }
+
+        internal List<Creature> GetNearbyValidCreatures(int distance = 12)
+        {
+            List<Creature> creatureList = new List<Creature>();
+            if (!Monitor.TryEnter(Server.Lock, 1000))
+            {
+                return creatureList;
+            }
+
+            try
+            {
+                var validCreatures = GetWorldObjects().OfType<Creature>().Where(creature => IsValidCreature(creature, distance));
+                creatureList.AddRange(validCreatures);
+
+                if (creatureList.Count == 0) return creatureList;
+
+                var whiteList = GetWhiteLists();
+                creatureList = creatureList.Where(creature => IsCreatureAllowed(creature, whiteList)).ToList();
+
+                return creatureList;
+            }
+            finally
+            {
+                Monitor.Exit(Server.Lock);
+            }
+        }
+
+        private bool IsValidCreature(Creature creature, int distance)
+        {
+            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 && IsCreatureNearby(creature, distance);
+        }
+
+        private HashSet<ushort> GetWhiteLists()
+        {
+            var whiteList = new HashSet<ushort>();
+            if (CONSTANTS.WHITELIST_BY_MAP_ID.TryGetValue((ushort)_map.MapID, out var whiteListByMapID))
+            {
+                whiteList.UnionWith(whiteListByMapID);
+            }
+
+            var whiteListByMapName = CONSTANTS.WHITELIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
+            if (whiteListByMapName != null)
+            {
+                whiteList.UnionWith(whiteListByMapName);
+            }
+
+            return whiteList;
+        }
+
+        private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)
+        {
+            if (creature.Type == CreatureType.WalkThrough || CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID) || CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID))
+            {
+                return false;
+            }
+
+            var blackListByMapName = CONSTANTS.BLACKLIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
+            if (blackListByMapName != null && blackListByMapName.Contains(creature.SpriteID))
+            {
+                return false;
+            }
+
+            return whiteList.Contains(creature.SpriteID);
+        }
+
 
 
         #endregion

@@ -4,6 +4,7 @@ using System.Text;
 
 using System.Drawing;
 using System.IO;
+using Talos.Capricorn.IO;
 
 namespace Talos.Capricorn.Drawing
 {

@@ -6,7 +6,7 @@ using System.IO;
 
 /* THANKS TO ERU FOR THE HPF COMPRESSION ALGORITHM! */
 
-namespace Talos.Capricorn.Drawing
+namespace Talos.Capricorn.IO.Compression
 {
     /// <summary>
     /// HPF Compression Algorithm Class

@@ -4,12 +4,12 @@ namespace Talos.Objects
 {
     internal abstract class VisibleObject : WorldObject
     {
-        internal ushort Sprite { get; set; }
+        internal ushort SpriteID { get; set; }
         internal Location Location { get; set; }
         internal VisibleObject(int id, string name, ushort sprite, Location location)
             : base(id, name)
         {
-            Sprite = sprite;
+            SpriteID = sprite;
             Location = location;
         }
 

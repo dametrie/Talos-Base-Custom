@@ -196,6 +196,8 @@ namespace Talos.Definitions
             "Holy Gaea"
         };
 
+        public const int CREATURE_SPRITE_OFFSET = 16384;
+        public const int ITEM_SPRITE_OFFSET = 32768;
 
 
 
