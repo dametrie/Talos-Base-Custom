@@ -848,8 +848,8 @@ namespace Talos.Forms
             ally.AllyPage.allypictureCharacter.Image = image;
 
             aislingTabControl.TabPages.Add(tabPage);
-            //UpdateNearbyAllyTable(name);
-            //RefreshNearbyAllyTable();
+            UpdateNearbyAllyTable(name);
+            RefreshNearbyAllyTable();
             _client.Bot.UpdateAllyList(ally);
 
         }
@@ -890,6 +890,26 @@ namespace Talos.Forms
                 nearbyEnemyTable.Controls.Add(control, -1, -1);
             }
         }
+
+        internal void AddNearbyAlly(Player player)
+        {
+            if (base.InvokeRequired)
+            {
+                Invoke((Action)delegate
+                {
+                    AddNearbyAlly(player);
+                });
+            }
+            else if (!_client.Bot._allyListName.Contains(player.Name) && !nearbyAllyTable.Controls.ContainsKey(player.Name))
+            {
+                NearbyAlly control = new NearbyAlly(player, _client)
+                {
+                    Name = player.Name
+                };
+                nearbyAllyTable.Controls.Add(control, -1, -1);
+            }
+        }
+
         internal void UpdateNearbyEnemyTable(ushort sprite)
         {
             // Exit early if the EnemyPage is not null or the control does not exist.
@@ -940,19 +960,19 @@ namespace Talos.Forms
             groupList.DataSource = _client._groupBindingList;
         }
 
-        //internal void UpdateNearbyAllyTable(string name)
-        //{
-        //    if (!nearbyAllyTable.Controls.ContainsKey(name))
-        //    {
-        //        return;
-        //    }
+        internal void UpdateNearbyAllyTable(string name)
+        {
+            if (!nearbyAllyTable.Controls.ContainsKey(name))
+            {
+                return;
+            }
 
-        //    Control allyControl = nearbyAllyTable.Controls[name];
+            Control allyControl = nearbyAllyTable.Controls[name];
 
-        //    WaitForCondition(allyControl, control => ((NearbyAlly)control).bool_0);
+            WaitForCondition(allyControl, control => ((NearbyAlly)control).isLoaded);
 
-        //    allyControl.Dispose();
-        //}
+            allyControl.Dispose();
+        }
 
         //internal void UpdateNearbyEnemyTable(ushort sprite)
         //{
@@ -968,15 +988,15 @@ namespace Talos.Forms
         //    enemyControl.Dispose();
         //}
 
-        //private void RefreshNearbyAllyTable()
-        //{
-        //    List<NearbyAlly> allies = nearbyAllyTable.Controls.OfType<NearbyAlly>().ToList();
-        //    nearbyAllyTable.Controls.Clear();
-        //    foreach (NearbyAlly ally in allies)
-        //    {
-        //        nearbyAllyTable.Controls.Add(ally);
-        //    }
-        //}
+        private void RefreshNearbyAllyTable()
+        {
+            List<NearbyAlly> allies = nearbyAllyTable.Controls.OfType<NearbyAlly>().ToList();
+            nearbyAllyTable.Controls.Clear();
+            foreach (NearbyAlly ally in allies)
+            {
+                nearbyAllyTable.Controls.Add(ally);
+            }
+        }
 
         private void WaitForCondition(Control control, Func<Control, bool> condition)
         {

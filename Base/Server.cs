@@ -1053,10 +1053,15 @@ namespace Talos
                         {
                             clientTab.UpdateStrangerList();
 
-                            if (clientTab.aislingTabControl.SelectedTab == clientTab.nearbyAllyTab &&
-                            clientTab.clientTabControl.SelectedTab == clientTab.mainAislingsTab)
+                            // Access aislingTabControl.SelectedTab directly without unnecessary local variable
+                            TabPage selectedTab = clientTab.aislingTabControl.SelectedTab;
+
+                            // Check conditions and invoke method without unnecessary local variables
+                            if (ReferenceEquals(selectedTab, clientTab.nearbyAllyTab) &&
+                                ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainAislingsTab))
                             {
-                                // clientTab.UpdateNearbyAllyTable(player.Name);
+                                
+                                clientTab.UpdateNearbyAllyTable(player.Name);
                             }
                         }
                         
@@ -1810,23 +1815,23 @@ namespace Talos
             player._isHidden = isHidden;
             player.NameTagStyle = nameTagStyle;
             player.GroupName = groupName;
-            if ((bodySprite == 0) || ((id == client.PlayerID) || client.InArena))
-            {
-                player.HeadSprite = headSprite;
-                player.BootsSprite = bootsSprite;
-                player.ShieldSprite = shieldSprite;
-                player.WeaponSprite = weaponSprite;
-                player.HeadColor = headColor;
-                player.AccessoryColor1 = accessoryColor;
-                player.AccessorySprite1 = accessorySprite1;
-                player.AccessoryColor2 = accessorryColor2;
-                player.AccessorySprite2 = accessorySprite2;
-                player.AccessoryColor3 = accessoryColor3;
-                player.AccessorySprite3 = accessorySprite3;
-                player.OvercoatSprite = overcoatSprite;
-                player.BodyColor = bodyColor;
-                player.FaceSprite = faceSprite;
-            }
+            //if ((bodySprite == 0) || ((id == client.PlayerID) || client.InArena))
+            //{
+            player.HeadSprite = headSprite;
+            player.BootsSprite = bootsSprite;
+            player.ShieldSprite = shieldSprite;
+            player.WeaponSprite = weaponSprite;
+            player.HeadColor = headColor;
+            player.AccessoryColor1 = accessoryColor;
+            player.AccessorySprite1 = accessorySprite1;
+            player.AccessoryColor2 = accessorryColor2;
+            player.AccessorySprite2 = accessorySprite2;
+            player.AccessoryColor3 = accessoryColor3;
+            player.AccessorySprite3 = accessorySprite3;
+            player.OvercoatSprite = overcoatSprite;
+            player.BodyColor = bodyColor;
+            player.FaceSprite = faceSprite;
+            //}
             if (string.IsNullOrEmpty(player.Name))
             {
                 //client.playersWithNoName[id] = player;
@@ -1866,6 +1871,32 @@ namespace Talos
             if (client.ClientTab != null)
             {
                 client.ClientTab.UpdateStrangerList();
+            }
+
+            if ((id != client.PlayerID) && !string.IsNullOrEmpty(name))
+            {
+                object selectedTab;
+                if (client == null)
+                {
+                    selectedTab = null;
+                }
+                else
+                {
+                    ClientTab tab1 = client.ClientTab;
+                    if (tab1 != null)
+                    {
+                        selectedTab = tab1.aislingTabControl.SelectedTab;
+                    }
+                    else
+                    {
+                        ClientTab local3 = tab1;
+                        selectedTab = null;
+                    }
+                }
+                if ((selectedTab == client.ClientTab.nearbyAllyTab) && ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainAislingsTab))
+                {
+                    client.ClientTab.AddNearbyAlly(player);
+                }
             }
 
             client.DisplayAisling(player);

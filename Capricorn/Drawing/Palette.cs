@@ -5,6 +5,7 @@ using System.Text;
 using System.Drawing;
 using System.IO;
 using Talos.Capricorn.IO;
+using Talos.Properties;
 
 namespace Talos.Capricorn.Drawing
 {
@@ -124,6 +125,48 @@ namespace Talos.Capricorn.Drawing
             // Return Palette
             return pal;
         }
+
+        public static Palette256 ApplyDye(Palette256 palette, int dye)//Adam
+        {
+            if (dye <= 0)
+                return palette;
+            StreamReader streamReader = new StreamReader(new MemoryStream(Resources.color));
+            Color[,] colorArray = new Color[Convert.ToInt32(streamReader.ReadLine()), 6];
+            while (!streamReader.EndOfStream)
+            {
+                int line = Convert.ToInt32(streamReader.ReadLine());
+                for (int index = 0; index < 6; ++index)
+                {
+                    string[] lineSplit = streamReader.ReadLine().Trim().Split(',');
+                    if (lineSplit.Length == 3)
+                    {
+                        int min = Convert.ToInt32(lineSplit[0]);
+                        int max = Convert.ToInt32(lineSplit[1]);
+                        int pal = Convert.ToInt32(lineSplit[2]);
+                        if (min > (int)byte.MaxValue)
+                            min -= (int)byte.MaxValue;
+                        if (max > (int)byte.MaxValue)
+                            max -= (int)byte.MaxValue;
+                        if (pal > (int)byte.MaxValue)
+                            pal -= (int)byte.MaxValue;
+                        colorArray[line, index] = Color.FromArgb((int)byte.MaxValue, min, max, pal);
+                    }
+                }
+            }
+            streamReader.Close();
+            Palette256 toReturn = new Palette256();
+            for (int j = 0; j < 256; j++)
+            {
+                toReturn[j] = palette[j];
+            }
+            toReturn[98] = colorArray[dye, 0];
+            toReturn[99] = colorArray[dye, 1];
+            toReturn[100] = colorArray[dye, 2];
+            toReturn[101] = colorArray[dye, 3];
+            toReturn[102] = colorArray[dye, 4];
+            toReturn[103] = colorArray[dye, 5];
+            return toReturn;
+        }
     }
 
     /// <summary>
@@ -225,7 +268,38 @@ namespace Talos.Capricorn.Drawing
 
                 return palettes[paletteIndex];
             }
-        }	
+        }
+
+        public Palette256 GetPalette(string image)
+        {
+            int paletteIndex = 0;
+            int index = Convert.ToInt32(image.Substring(2, 3));
+            if (image.StartsWith("w"))
+            {
+                foreach (PaletteTableEntry paletteTableEntry in overrides)
+                {
+                    if (index >= paletteTableEntry.Min && index <= paletteTableEntry.Max)
+                    {
+                        paletteIndex = paletteTableEntry.Palette;
+                    }
+                }
+            }
+            else if (image.StartsWith("m"))
+            {
+                foreach (PaletteTableEntry entry in entries)
+                {
+                    if (index >= entry.Min && index <= entry.Max)
+                    {
+                        paletteIndex = entry.Palette;
+                    }
+                }
+            }
+            if (paletteIndex < 0 || paletteIndex > palettes.Count)
+            {
+                paletteIndex = 0;
+            }
+            return palettes[paletteIndex];
+        }
 
         /// <summary>
         /// Internal function that loads a table of palette entries from a data stream.
@@ -281,7 +355,7 @@ namespace Talos.Capricorn.Drawing
             foreach (DATFileEntry file in archive.Files)
             {
                 // Check for Palette
-                if (file.Name.ToUpper().EndsWith(".PAL") && file.Name.ToUpper().StartsWith(pattern.ToUpper()))
+                if (file.Name.Length == 11 && file.Name.ToUpper().EndsWith(".PAL") && file.Name.ToUpper().StartsWith(pattern.ToUpper()))
                 {
                     // Get Index
                     int index = Convert.ToInt32(
@@ -357,7 +431,7 @@ namespace Talos.Capricorn.Drawing
                         #region Read Lines and Parse Values
                         while (!reader.EndOfStream)
                         {
-                            string line = reader.ReadLine();
+                            string line = reader.ReadLine().TrimEnd();
                             string[] lineSplit = line.Split(' ');
 
                             if (lineSplit.Length == 3)
@@ -366,11 +440,19 @@ namespace Talos.Capricorn.Drawing
                                 int max = Convert.ToInt32(lineSplit[1]);
                                 int pal = Convert.ToInt32(lineSplit[2]);
 
-                                int index = 0;
-                                if (int.TryParse(tableName, out index))
-                                    overrides.Add(new PaletteTableEntry(min, max, pal));
-                                else
-                                    entries.Add(new PaletteTableEntry(min, max, pal));
+                                switch (pal)
+                                {
+                                    default:
+                                        entries.Add(new PaletteTableEntry(min, max, pal));
+                                        overrides.Add(new PaletteTableEntry(min, max, pal));
+                                        break;
+                                    case -1:
+                                        entries.Add(new PaletteTableEntry(min, min, max));
+                                        break;
+                                    case -2:
+                                        overrides.Add(new PaletteTableEntry(min, min, max));
+                                        break;
+                                }
                             }
                             else if (lineSplit.Length == 2)
                             {
@@ -378,11 +460,8 @@ namespace Talos.Capricorn.Drawing
                                 int max = min;
                                 int pal = Convert.ToInt32(lineSplit[1]);
 
-                                int index = 0;
-                                if (int.TryParse(tableName, out index))
-                                    overrides.Add(new PaletteTableEntry(min, max, pal));
-                                else
-                                    entries.Add(new PaletteTableEntry(min, max, pal));
+                                overrides.Add(new PaletteTableEntry(min, max, pal));
+                                entries.Add(new PaletteTableEntry(min, max, pal));
                             }
 
                         } reader.Close();

@@ -112,6 +112,12 @@
     </Compile>
     <Compile Include="Forms\UI\Enemy.cs" />
     <Compile Include="Forms\UI\ResourceBar.cs" />
+    <Compile Include="Forms\User Controls\NearbyAlly.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\User Controls\NearbyAlly.Designer.cs">
+      <DependentUpon>NearbyAlly.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\User Controls\NearbyEnemy.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -170,6 +176,9 @@
     <EmbeddedResource Include="Forms\MainForm.resx" />
     <EmbeddedResource Include="Forms\MessageDialog.resx">
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\User Controls\NearbyAlly.resx">
+      <DependentUpon>NearbyAlly.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\User Controls\NearbyEnemy.resx">
       <DependentUpon>NearbyEnemy.cs</DependentUpon>

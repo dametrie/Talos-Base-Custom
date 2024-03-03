@@ -113,6 +113,9 @@ namespace Talos
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.Text = "Talos";
+            
+            
+            
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

@@ -11,6 +11,7 @@ using Talos.Properties;
 using MapsCacheEditor;
 using Talos.Base;
 using Talos.Definitions;
+using Talos.Capricorn.IO;
 
 namespace Talos
 {
@@ -21,13 +22,42 @@ namespace Talos
         internal int ThreadID { get; set; }
         private Dictionary<Client, TabPage> _clients = new Dictionary<Client, TabPage>();
         internal Dictionary<string, DateTime> _consecutiveLogin = new Dictionary<string, DateTime>();
+        internal static Dictionary<string, DATArchive> khanFiles = new Dictionary<string, DATArchive>();
         private IntPtr _hWnd;
         public MainForm()
         {
             InitializeComponent();
+            LoadKhans();
             ThreadID = Thread.CurrentThread.ManagedThreadId;
 
             CheckForIllegalCrossThreadCalls = false;
+        }
+
+        private void LoadKhans()
+        {
+            if (khanFiles.Count == 0)
+            {
+                try
+                {
+                    string text = Settings.Default.DarkAgesPath.Replace("Darkages.exe", "");
+                    //string text = "C:\\Program Files (x86)\\KRU\\Dark Ages";
+                    if (!Directory.Exists(text))
+                    {
+                        throw new Exception();
+                    }
+                    string[] files = Directory.GetFiles(text, "khan*", SearchOption.TopDirectoryOnly);
+                    foreach (string fileName in files)
+                    {
+                        string key = fileName.Replace(text, "");
+                        khanFiles.Add(key, DATArchive.FromFile(fileName));
+                    }
+                }
+                catch
+                {
+                    MessageDialog.Show(this, "Failed to load .dats, please check Dark Ages path.");
+                    return;
+                }
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
