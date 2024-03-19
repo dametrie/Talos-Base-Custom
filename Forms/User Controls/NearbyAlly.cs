@@ -50,7 +50,17 @@ namespace Talos.Forms.User_Controls
         internal Palette256 accessory3Dye;
         internal Palette256 accessory3Dye2;
         private Bitmap overcoatBitmap = new Bitmap(1, 1);
+        private Bitmap overcoatBitmap2 = new Bitmap(1, 1);
+        private Bitmap accessoryBitmap = new Bitmap(1, 1);
+        private Bitmap accessoryBitmap2 = new Bitmap(1, 1);
+        private Bitmap accessory2Bitmap = new Bitmap(1, 1);
+        private Bitmap accessory2Bitmap2 = new Bitmap(1, 1);
+        private Bitmap accessory3Bitmap = new Bitmap(1, 1);
+        private Bitmap accessory3Bitmap2 = new Bitmap(1, 1);
         private Bitmap bodyBitmap = new Bitmap(1, 1);
+        private Bitmap headBitmap = new Bitmap(1, 1);
+        private Bitmap headBitmap2 = new Bitmap(1, 1);
+        private Bitmap headBitmap3 = new Bitmap(1, 1);
         internal bool isLoaded;
 
         internal NearbyAlly(Player player, Client client)
@@ -107,7 +117,11 @@ namespace Talos.Forms.User_Controls
             palc.LoadTables("palc", MainForm.khanFiles["khanpal.dat"]);
             palc.LoadPalettes("palc", MainForm.khanFiles["khanpal.dat"]);
             DisplayBody(Player);
+            DisplayHead(Player);
             DisplayOvercoat(Player);
+            DisplayAccessory1(Player);
+            DisplayAccessory2(Player);
+            DisplayAccessory3(Player);
             DrawPlayer();
 
         }
@@ -116,24 +130,31 @@ namespace Talos.Forms.User_Controls
         {
             Bitmap image = new Bitmap(100, 85, PixelFormat.Format32bppArgb);
             Graphics graphics = Graphics.FromImage(image);
-            //graphics.DrawImage(accessoryBitmap2, -5, 0);
-            //graphics.DrawImage(accessory2Bitmap2, -5, 0);
-            //graphics.DrawImage(accessory3Bitmap2, -5, 0);
+
+
+
+            graphics.DrawImage(accessoryBitmap, 45, 15);
+            graphics.DrawImage(accessoryBitmap2, 45, 15);
+
+            graphics.DrawImage(accessory2Bitmap, 45, 15);
+            graphics.DrawImage(accessory2Bitmap2, 45, 15);
+
+            graphics.DrawImage(accessory3Bitmap, 22, 0);
+            graphics.DrawImage(accessory3Bitmap2, 22, 0);
+
             graphics.DrawImage(bodyBitmap, 45, 15);
-            //graphics.DrawImage(dyeBitmap, 22, 0);
-            //graphics.DrawImage(faceBitmap, 22, 0);
-            //graphics.DrawImage(headBitmap, 22, 0);
-            //graphics.DrawImage(headBitmap2, 22, 0);
-            //graphics.DrawImage(headBitmap3, 22, 0);
+            //graphics.DrawImage(dyeBitmap, 45, 15);
+            //graphics.DrawImage(faceBitmap, 45, 15);
+            graphics.DrawImage(headBitmap, 45, 15);
+            graphics.DrawImage(headBitmap2, 45, 15);
+            graphics.DrawImage(headBitmap3, 45, 15);
             //graphics.DrawImage(bootBitmap, 22, 0);
-            graphics.DrawImage(overcoatBitmap, 44, 28);
-            //graphics.DrawImage(overcoatBitmap2, 22, 0);
-            //graphics.DrawImage(weaponBitmap, -5, 0);
-            //graphics.DrawImage(weaponBitmap2, -5, 0);
-            //graphics.DrawImage(shieldBitmap, 22, 0);
-            //graphics.DrawImage(accessoryBitmap, -5, 0);
-            //graphics.DrawImage(accessory2Bitmap, -5, 0);
-            //graphics.DrawImage(accessory3Bitmap, -5, 0);
+            //graphics.DrawImage(overcoatBitmap, 44, 28);
+            //graphics.DrawImage(overcoatBitmap2, 44, 28);
+            //graphics.DrawImage(weaponBitmap, 45, 15);
+            //graphics.DrawImage(weaponBitmap2, 45, 15);
+            //graphics.DrawImage(shieldBitmap, 45, 15);
+
             pictureCharacter.Image = image;
         }
 
@@ -171,6 +192,83 @@ namespace Talos.Forms.User_Controls
             }
 
             return null;
+        }
+
+        private Bitmap ProcessSprite(DATArchive archive, string prefix, int spriteIndex, int color, bool isOvercoat)
+        {
+            string spriteName = $"{prefix}{spriteIndex:D3}01.epf";
+            EPFImage epfImage = EPFImage.FromArchive(spriteName, archive);
+            Bitmap bitmap = null;
+
+            if (epfImage != null)
+            {
+                Palette256 dye = Palette256.ApplyDye(GetPalette(prefix, spriteIndex, isOvercoat), color);
+                bitmap = DAGraphics.RenderImage(epfImage[5], dye);
+            }
+
+            return bitmap ?? new Bitmap(1, 1);
+        }
+
+        internal void DisplayAccessory1(Player player)
+        {
+            string genderPrefix = Gender == "male" ? "m" : "w";
+            string[] accessoryPrefixes = new[] { $"{genderPrefix}c", $"{genderPrefix}g" };
+            Bitmap[] accessoryBitmaps = new Bitmap[2];
+
+            for (int i = 0; i < accessoryPrefixes.Length; i++)
+            {
+                DATArchive archive = stringParser(i == 0 ? "99" : "103", Gender == "male");
+
+                if (archive != null)
+                {
+                    accessoryBitmaps[i] = ProcessSprite(archive, accessoryPrefixes[i], player.AccessorySprite1, player.AccessoryColor1, false);
+                }
+            }
+
+            accessoryBitmap = accessoryBitmaps[0];
+            accessoryBitmap2 = accessoryBitmaps[1];
+        }
+
+        internal void DisplayAccessory2(Player player)
+        {
+            string genderPrefix = Gender == "male" ? "m" : "w";
+            string[] accessory2Prefixes = { $"{genderPrefix}c", $"{genderPrefix}g" }; 
+            Bitmap[] accessory2Bitmaps = new Bitmap[2]; 
+
+            for (int i = 0; i < accessory2Prefixes.Length; i++)
+            {
+                DATArchive archive = stringParser(i == 0 ? "99" : "103", Gender == "male");
+
+                if (archive != null)
+                {
+                    accessory2Bitmaps[i] = ProcessSprite(archive, accessory2Prefixes[i], player.AccessorySprite2, player.AccessoryColor2, false);
+                }
+            }
+
+            // Assign the processed bitmaps to the respective class variables for the second set of accessories
+            accessory2Bitmap = accessory2Bitmaps[0];
+            accessory2Bitmap2 = accessory2Bitmaps[1];
+        }
+
+        internal void DisplayAccessory3(Player player)
+        {
+            string genderPrefix = Gender == "male" ? "m" : "w";
+            string[] accessory3Prefixes = { $"{genderPrefix}c", $"{genderPrefix}g" };
+            Bitmap[] accessory3Bitmaps = new Bitmap[2];
+
+            for (int i = 0; i < accessory3Prefixes.Length; i++)
+            {
+                DATArchive archive = stringParser(i == 0 ? "99" : "103", Gender == "male");
+
+                if (archive != null)
+                {
+                    accessory3Bitmaps[i] = ProcessSprite(archive, accessory3Prefixes[i], player.AccessorySprite3, player.AccessoryColor3, false);
+                }
+            }
+
+            // Assign the processed bitmaps to the respective class variables for the second set of accessories
+            accessory3Bitmap = accessory3Bitmaps[0];
+            accessory3Bitmap2 = accessory3Bitmaps[1];
         }
 
         internal void DisplayBody(Player player)
@@ -212,22 +310,36 @@ namespace Talos.Forms.User_Controls
             // Parse the archive code and gender to get the DATArchive object.
             DATArchive archive = stringParser(archiveCode, Gender == "male");
 
-            // Process upper body or inner sprite and corresponding armor sprite.
-            ProcessSprite(archive, spriteTypePrefix, spriteIndex, color, isOvercoat);
-            ProcessSprite(archive, armorPrefix, spriteIndex, color, false); // Armor does not use overcoat color, so isOvercoat is always false.
+            overcoatBitmap = ProcessSprite(archive, spriteTypePrefix, spriteIndex, color, isOvercoat);
+            overcoatBitmap2 = ProcessSprite(archive, armorPrefix, spriteIndex, color, false);
         }
 
-        private void ProcessSprite(DATArchive archive, string prefix, int spriteIndex, int color, bool isOvercoat)
+        internal void DisplayHead(Player player)
         {
-            string spriteName = $"{prefix}{spriteIndex:D3}01.epf";
-            EPFImage epfImage = EPFImage.FromArchive(spriteName, archive);
-            if (epfImage != null)
+            string genderPrefix = Gender == "male" ? "m" : "w";
+            // Define the prefixes for the different head parts
+            string[] headPartsPrefixes = new[] { $"{genderPrefix}h", $"{genderPrefix}e", $"{genderPrefix}f" };
+            // Define the corresponding archives for each head part
+            string[] headPartsArchives = new[] { "104", "101", "102" };
+
+            Bitmap[] headBitmaps = new Bitmap[headPartsPrefixes.Length]; // To store the bitmaps for hair, eyes, and face
+
+            for (int i = 0; i < headPartsPrefixes.Length; i++)
             {
-                Palette256 dye = Palette256.ApplyDye(GetPalette(prefix, spriteIndex, isOvercoat), color);
-                //Bitmap bitmap = DAGraphics.RenderImage(epfImage[5], dye);
-                overcoatBitmap = DAGraphics.RenderImage(epfImage[5], dye);
+                DATArchive archive = stringParser(headPartsArchives[i], Gender == "male");
+
+                if (archive != null)
+                {
+                    headBitmaps[i] = ProcessSprite(archive, headPartsPrefixes[i], player.HeadSprite, player.HeadColor, false);
+                }
             }
+
+            headBitmap = headBitmaps[0];
+            headBitmap2 = headBitmaps[1];
+            headBitmap3 = headBitmaps[2];
         }
+
+
 
         private Palette256 GetPalette(string prefix, int spriteIndex, bool isOvercoat)
         {
