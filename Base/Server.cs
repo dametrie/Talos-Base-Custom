@@ -1489,6 +1489,27 @@ namespace Talos
                             }
                         }
                         client.Dialog = new Dialog(dialogType, objType, objID, unknown, sprite1, color1, unknown2, sprite2, color2, pursuitID, dialogID, prevButton, nextButton, unknown3, objName, npcDialog, options, topCaption, inputLength, bottomCaption, client);
+                        Console.WriteLine("Dialog Type: " + dialogType);
+                        Console.WriteLine("Object Type: " + objType);
+                        Console.WriteLine("Object ID: " + objID);
+                        Console.WriteLine("Unknown: " + unknown);
+                        Console.WriteLine("Sprite 1: " + sprite1);
+                        Console.WriteLine("Color 1: " + color1);
+                        Console.WriteLine("Unknown 2: " + unknown2);
+                        Console.WriteLine("Sprite 2: " + sprite2);
+                        Console.WriteLine("Color 2: " + color2);
+                        Console.WriteLine("Pursuit ID: " + pursuitID);
+                        Console.WriteLine("Dialog ID: " + dialogID);
+                        Console.WriteLine("Prev Button: " + prevButton);
+                        Console.WriteLine("Next Button: " + nextButton);
+                        Console.WriteLine("Unknown 3: " + unknown3);
+                        Console.WriteLine("Object Name: " + objName);
+                        Console.WriteLine("NPC Dialog: " + npcDialog);
+                        Console.WriteLine("Options: " + options);
+                        Console.WriteLine("Top Caption: " + topCaption);
+                        Console.WriteLine("Input Length: " + inputLength);
+                        Console.WriteLine("Bottom Caption: " + bottomCaption);
+
                         if ((npcDialog == "Do you wish to go back to Chaos 1?") || (npcDialog == "You are about to enter a hostile area. Do you wish to proceed?"))
                         {
                             client.Dialog.DialogNext(1);

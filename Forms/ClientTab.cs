@@ -591,9 +591,17 @@ namespace Talos.Forms
             packetHexText.Clear();
         }
 
-        private void timer_0_Tick(object sender, EventArgs e)
-        {
 
+        private void bonusCooldownTimer_Tick(object sender, EventArgs e)
+        {
+            // Calculate the total elapsed time since the last bonus was applied
+            TimeSpan elapsedTimeSinceLastBonus = DateTime.Now - _client.Bot.lastBonusAppliedTime;
+
+            // Accumulate the total elapsed time with any previously stored elapsed time
+            TimeSpan totalElapsedTime = elapsedTimeSinceLastBonus + _client.Bot.bonusElapsedTime;
+
+            // Update the label to show the total elapsed time in a readable format
+            doublesLbl.Text = $"Time Elapsed: {totalElapsedTime.Hours}h {totalElapsedTime.Minutes}m {totalElapsedTime.Seconds}s";
         }
 
         internal void UpdateNpcInfo(string npcDialog, ushort dialogID, ushort pursuitID)
@@ -1040,44 +1048,38 @@ namespace Talos.Forms
 
         private void startStrip_Click_1(object sender, EventArgs e)
         {
-            _isBotRunning = !_isBotRunning; // Toggle the running state
-
-            if (_isBotRunning)
+            if (startStrip.Text == "Start")
             {
-                StartBot();
+                startStrip.Text = "Stop";
+                if (_client.BotBase != _client.Bot)
+                {
+                    _client.BotBase = _client.Bot;
+                    _client.BotBase.Client = _client;
+                    _client.BotBase.Server = _client._server;
+                    _client.Int32_1 = 0;
+                }
+                _client.BotBase.Start();
+                if (!_client.ClientTab.safeScreenCbox.Checked)
+                {
+                    _client.ServerMessage(1, "Bot Started");
+                }
             }
-            else
+            else if (startStrip.Text == "Stop")
             {
-                StopBot();
+                startStrip.Text = "Start";
+                _client.BotBase.Stop();
+                if (!_client.ClientTab.safeScreenCbox.Checked)
+                {
+                    _client.ServerMessage(1, "Bot Stopped");
+                }
+                _client._isWalking = false;
+                _client._isCasting = false;
+                _client.Bot.bool_11 = false;
+                _client.Bot.bool_12 = false;
+                _client.bool_44 = false;
             }
         }
 
-        private void StartBot()
-        {
-            startStrip.Text = "Stop";
-
-            // Initialize BotBase only if it's different from the current Bot
-            if (_client.BotBase != _client.Bot)
-            {
-                _client.BotBase = _client.Bot;
-                _client.BotBase.Client = _client;
-                _client.BotBase.Server = _client._server;
-            }
-
-            _client.BotBase.Start();
-            _client.ServerMessage(1, "Bot Started");
-        }
-
-        private void StopBot()
-        {
-            startStrip.Text = "Start";
-            _client.BotBase.Stop();
-
-            _client._isWalking = false;
-            _client._isCasting = false;
-
-            _client.ServerMessage(1, "Bot Stopped");
-        }
 
         private void lastSeenBtn_Click(object sender, EventArgs e)
         {
@@ -1659,7 +1661,104 @@ namespace Talos.Forms
 
         }
 
-       
+        private void useDoubleBtn_Click(object sender, EventArgs e)
+        {
+            // Mapping of combobox text to the item names
+            var itemMappings = new Dictionary<string, string>
+            {
+                { "Kruna 50%", "50 Percent EXP/AP Bonus" },
+                { "Xmas 50%", "XMas Bonus Exp-Ap" },
+                { "Star 100%", "Double Bonus Exp-Ap" },
+                { "Vday 100%", "VDay Bonus Exp-Ap" }
+            };
+
+            // Check for special case where additional logic is needed
+            if (doublesCombox.Text == "Xmas 100%")
+            {
+                var itemText = _client.HasItem("Christmas Double Exp-Ap") ? "Christmas Double Exp-Ap" : "XMas Double Exp-Ap";
+                UseItem(itemText);
+            }
+            else if (itemMappings.TryGetValue(doublesCombox.Text, out var itemText))
+            {
+                UseItem(itemText);
+            }
+
+            UpdateBonusTimer();
+        }
+
+        private void UseItem(string itemText)
+        {
+            if (!_client.UseItem(itemText))
+            {
+                _client.ServerMessage(0, $"You do not own any {itemText}.");
+                autoDoubleCbox.Checked = false;
+            }
+        }
+
+        private void UpdateBonusTimer()
+        {
+            _client.Bot.lastBonusAppliedTime = DateTime.Now;
+            _client.Bot.bonusElapsedTime = _client.Bot.bonusElapsedTime;
+
+            if (!bonusCooldownTimer.Enabled)
+            {
+                bonusCooldownTimer.Enabled = true;
+                bonusCooldownTimer.Start();
+            }
+        }
+
+        internal void StopBot()
+        {
+            if (startStrip.Text == "Stop")
+            {
+                _client.BotBase.Stop();
+            }
+        }
+
+        private void useGemBtn_Click(object sender, EventArgs e)
+        {
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                UseExpGems();
+            });
+        }
+
+        private void UseExpGems()
+        {
+            StopBot();
+            _client.UseItem("Experience Gem");
+            while (_client.Dialog == null)
+            {
+                Thread.Sleep(25);
+            }
+            byte objectType = _client.Dialog.ObjectType;
+            int objectID = _client.Dialog.ObjectID;
+            ushort pursuitID = _client.Dialog.PursuitID;
+            ushort dialogID = _client.Dialog.DialogID;
+            byte hpOrMP = (byte)((expGemsCombox.Text == "Ascend HP") ? 1 : 2);
+            _client.Dialog.DialogNext();
+            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
+            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1), hpOrMP);
+            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
+            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
+            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
+            Thread.Sleep(1000);
+            while (_client.Dialog == null)
+            {
+                Thread.Sleep(25);
+            }
+            objectType = _client.Dialog.ObjectType;
+            objectID = _client.Dialog.ObjectID;
+            pursuitID = _client.Dialog.PursuitID;
+            dialogID = _client.Dialog.DialogID;
+            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
+            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1), 2);
+            _client.ReplyDialog(objectType, objectID, pursuitID, dialogID);
+            if (startStrip.Text == "Stop")
+            {
+                _client.BotBase.Start();
+            }
+        }
     }
 }
 

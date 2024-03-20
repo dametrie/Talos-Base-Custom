@@ -155,7 +155,7 @@ namespace Talos.Base
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
         private bool shouldRefresh;
-
+        internal bool bool_44;
 
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }
@@ -230,6 +230,7 @@ namespace Talos.Base
         internal bool HasLetter => Stats.Mail.HasFlag(Mail.HasLetter);
         internal bool HasParcel => Stats.Mail.HasFlag(Mail.HasParcel);
 
+        public int Int32_1 { get; internal set; }
 
         internal Client(Server server, Socket socket)
         {
@@ -2372,7 +2373,7 @@ namespace Talos.Base
             Enqueue(clientPacket);
         }
 
-        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, byte byte_10)
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, byte optionToClick)
         {
             ClientPacket clientPacket = new ClientPacket(58);
             clientPacket.WriteByte(objType);
@@ -2380,11 +2381,11 @@ namespace Talos.Base
             clientPacket.WriteUInt16(pursuitId);
             clientPacket.WriteUInt16(dialogId);
             clientPacket.WriteByte(1);
-            clientPacket.WriteByte(byte_10);
+            clientPacket.WriteByte(optionToClick);
             Enqueue(clientPacket);
         }
 
-        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, string string_8)
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, string response)
         {
             ClientPacket clientPacket = new ClientPacket(58);
             clientPacket.WriteByte(objType);
@@ -2392,7 +2393,7 @@ namespace Talos.Base
             clientPacket.WriteUInt16(pursuitId);
             clientPacket.WriteUInt16(dialogId);
             clientPacket.WriteByte(2);
-            clientPacket.WriteString8(string_8);
+            clientPacket.WriteString8(response);
             Enqueue(clientPacket);
         }
 

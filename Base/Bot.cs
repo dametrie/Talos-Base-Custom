@@ -34,6 +34,11 @@ namespace Talos.Base
         internal List<Enemy> _enemyList = new List<Enemy>();
         internal HashSet<string> _allyListName = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
         internal HashSet<ushort> _enemyListID = new HashSet<ushort>();
+        internal DateTime lastBonusAppliedTime = DateTime.MinValue;
+        internal TimeSpan bonusElapsedTime = TimeSpan.Zero;
+        internal bool bool_11;
+        internal bool bool_12;
+
         internal AllyPage AllyPage { get; set; }
         internal EnemyPage EnemyPage { get; set; }
 
