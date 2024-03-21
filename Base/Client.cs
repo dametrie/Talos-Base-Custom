@@ -223,6 +223,9 @@ namespace Talos.Base
             }
         }
 
+        internal uint Experience => Stats.Experience;
+        internal uint AbilityExperience => Stats.AbilityExperience;
+        internal uint Gold => Stats.Gold;
         internal byte Ability => Stats.Ability;
         internal byte Level => Stats.Level;
         internal uint ToNextLevel => Stats.ToNextLevel;

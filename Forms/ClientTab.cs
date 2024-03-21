@@ -17,6 +17,7 @@ using Talos.Forms.UI;
 using Talos.Definitions;
 using Talos.Helper;
 using Talos.Forms.User_Controls;
+using System.Diagnostics;
 
 namespace Talos.Forms
 {
@@ -33,6 +34,12 @@ namespace Talos.Forms
         private short testY;
 
         internal ulong _sessionExperience;
+        internal uint _sessionAbility;
+        internal uint _sessionGold;
+
+        private Stopwatch _sessionExperienceStopWatch = new Stopwatch();
+        private Stopwatch _sessionAbilityStopWatch = new Stopwatch();
+        private Stopwatch _sessionGoldStopWatch = new Stopwatch();
 
         private List<string> _chatPanelList = new List<string>
         {
@@ -71,7 +78,8 @@ namespace Talos.Forms
 			"Magus Gaea",
 			"Holy Gaea"
 		};
-
+        private uint _abilityExp;
+        private uint _gold;
         private readonly object _lock = new object();
 
 
@@ -1757,6 +1765,63 @@ namespace Talos.Forms
             if (startStrip.Text == "Stop")
             {
                 _client.BotBase.Start();
+            }
+        }
+
+        private void calcResetBtn_Click(object sender, EventArgs e)
+        {
+            expSessionLbl.Text = "Session";
+            expHourLbl.Text = "EXP/hr";
+            _sessionExperience = 0uL;
+            _sessionAbility = 0u;
+            _sessionGold = 0u;
+            _sessionExperienceStopWatch.Reset();
+            _sessionAbilityStopWatch.Reset();
+            _sessionGoldStopWatch.Reset();
+        }
+
+        internal void DisplaySessionStats()
+        {
+            expBoxedLbl.ForeColor = ((_client.Experience > 4250000000u) ? Color.Red : Color.Black);
+            expBoxedLbl.Text = "Boxed: " + Math.Truncate((double)_client.Experience).ToString("N0");
+            expSessionLbl.Text = "Session: " + Math.Truncate((double)_sessionExperience).ToString("N0");
+            if (_sessionExperienceStopWatch.IsRunning)
+            {
+                expHourLbl.Text = "EXP/hr: " + Math.Truncate((double)_sessionExperience / _sessionExperienceStopWatch.Elapsed.TotalHours).ToString("N0");
+            }
+            else if (_sessionExperience > 0L)
+            {
+                _sessionExperienceStopWatch.Start();
+            }
+            if (_client.AbilityExperience < _abilityExp)
+            {
+                _abilityExp = _client.AbilityExperience;
+                _sessionAbility = 0u;
+                _sessionAbilityStopWatch.Reset();
+            }
+            else if (_sessionAbility == 0)
+            {
+                _sessionAbility = _client.AbilityExperience;
+                _sessionAbilityStopWatch.Start();
+            }
+            else if (_sessionAbilityStopWatch.IsRunning)
+            {
+                apHourLbl.Text = "AP/hr: " + Math.Truncate((double)(_client.AbilityExperience - _sessionAbility) / _sessionAbilityStopWatch.Elapsed.TotalHours).ToString("N0");
+            }
+            if (_client.Gold < _gold)
+            {
+                _gold = _client.Gold;
+                _sessionGold = 0u;
+                _sessionGoldStopWatch.Reset();
+            }
+            else if (_sessionGold == 0)
+            {
+                _sessionGold = _client.Gold;
+                _sessionGoldStopWatch.Start();
+            }
+            else if (_sessionGoldStopWatch.IsRunning)
+            {
+                goldHourLbl.Text = "Gold/hr: " + Math.Truncate((double)(_client.Gold - _sessionGold) / _sessionGoldStopWatch.Elapsed.TotalHours).ToString("N0");
             }
         }
     }

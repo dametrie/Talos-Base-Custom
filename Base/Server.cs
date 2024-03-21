@@ -866,7 +866,7 @@ namespace Talos
                 }
                 if (client.ClientTab != null)
                 {
-                    //client.ClientTab.DisplaySessionStats();
+                    client.ClientTab.DisplaySessionStats();
                     client.ClientTab.DisplayHPMP();
                     //Console.WriteLine("Health: " + stats.CurrentHP);
                     //Console.WriteLine("Mana: " + stats.CurrentMP);
