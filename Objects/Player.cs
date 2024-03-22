@@ -7,6 +7,7 @@ namespace Talos.Objects
     internal sealed class Player : Creature
     {
         internal bool _isHidden;
+        internal bool _isSkulled;
         internal ushort HeadSprite { get; set; }
         internal ushort ArmorSprite1 { get; set; }
         internal ushort ArmorSprite2 { get; set; }

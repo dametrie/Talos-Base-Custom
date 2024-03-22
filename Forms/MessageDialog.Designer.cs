@@ -67,15 +67,27 @@
             // 
             // MessageDialog
             // 
+            this.AcceptButton = this.okBtn;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoSize = true;
+            this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(284, 86);
             this.Controls.Add(this.messageLbl);
             this.Controls.Add(this.cancelBtn);
             this.Controls.Add(this.okBtn);
+            this.DoubleBuffered = true;
+            this.ForeColor = System.Drawing.Color.Black;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = global::Talos.Properties.Resources.Talos;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "MessageDialog";
-            this.Text = "Message";
+            this.ShowInTaskbar = false;
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "Talos";
+            this.TopMost = true;
             this.ResumeLayout(false);
 
         }

@@ -603,10 +603,10 @@ namespace Talos.Forms
         private void bonusCooldownTimer_Tick(object sender, EventArgs e)
         {
             // Calculate the total elapsed time since the last bonus was applied
-            TimeSpan elapsedTimeSinceLastBonus = DateTime.Now - _client.Bot.lastBonusAppliedTime;
+            TimeSpan elapsedTimeSinceLastBonus = DateTime.Now - _client.Bot._lastBonusAppliedTime;
 
             // Accumulate the total elapsed time with any previously stored elapsed time
-            TimeSpan totalElapsedTime = elapsedTimeSinceLastBonus + _client.Bot.bonusElapsedTime;
+            TimeSpan totalElapsedTime = elapsedTimeSinceLastBonus + _client.Bot._bonusElapsedTime;
 
             // Update the label to show the total elapsed time in a readable format
             doublesLbl.Text = $"Time Elapsed: {totalElapsedTime.Hours}h {totalElapsedTime.Minutes}m {totalElapsedTime.Seconds}s";
@@ -1705,8 +1705,8 @@ namespace Talos.Forms
 
         private void UpdateBonusTimer()
         {
-            _client.Bot.lastBonusAppliedTime = DateTime.Now;
-            _client.Bot.bonusElapsedTime = _client.Bot.bonusElapsedTime;
+            _client.Bot._lastBonusAppliedTime = DateTime.Now;
+            _client.Bot._bonusElapsedTime = _client.Bot._bonusElapsedTime;
 
             if (!bonusCooldownTimer.Enabled)
             {
@@ -1734,7 +1734,12 @@ namespace Talos.Forms
         private void UseExpGems()
         {
             StopBot();
-            _client.UseItem("Experience Gem");
+            
+            if (!_client.UseItem("Experience Gem"))
+            {
+                _client.ServerMessage(1, "You do not have any experience gems.");
+                return;
+            }
             while (_client.Dialog == null)
             {
                 Thread.Sleep(25);
@@ -1743,10 +1748,10 @@ namespace Talos.Forms
             int objectID = _client.Dialog.ObjectID;
             ushort pursuitID = _client.Dialog.PursuitID;
             ushort dialogID = _client.Dialog.DialogID;
-            byte hpOrMP = (byte)((expGemsCombox.Text == "Ascend HP") ? 1 : 2);
+            byte choice = (byte)((expGemsCombox.Text == "Ascend HP") ? 1 : 2);
             _client.Dialog.DialogNext();
             _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
-            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1), hpOrMP);
+            _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1), choice);
             _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
             _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
             _client.ReplyDialog(objectType, objectID, pursuitID, (ushort)(dialogID + 1));
@@ -1822,6 +1827,27 @@ namespace Talos.Forms
             else if (_sessionGoldStopWatch.IsRunning)
             {
                 goldHourLbl.Text = "Gold/hr: " + Math.Truncate((double)(_client.Gold - _sessionGold) / _sessionGoldStopWatch.Elapsed.TotalHours).ToString("N0");
+            }
+        }
+
+        private void safeScreenCbox_CheckedChanged(object sender, EventArgs e)
+        {
+            if ((sender as CheckBox).Checked)
+            {
+                _client._safeScreen = true;
+                noBlindCbox.Checked = false;
+                seeHiddenCbox.Checked = false;
+                mapZoomCbox.Checked = false;
+                ghostHackCbox.Checked = false;
+                mapFlagsEnableCbox.Checked = false;
+                viewDMUCbox.Checked = false;
+                toggleDmuCbox.Checked = false;
+                //_client._server._mainForm.dressupDictionary.Clear();
+                _client.RequestRefresh(false);
+            }
+            else
+            {
+                _client._safeScreen = false;
             }
         }
     }

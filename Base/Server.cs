@@ -287,18 +287,18 @@ namespace Talos
         private bool ClientMessage_0x06_ClientWalk(Client client, ClientPacket clientPacket)
         {
             Direction facing = (Direction)clientPacket.ReadByte();
-            Console.WriteLine("CLIENT Direction facing = " + facing);
+            //Console.WriteLine("CLIENT Direction facing = " + facing);
             clientPacket.ReadByte();
             byte stepCount = client.StepCount;
             client.StepCount = stepCount++;
             clientPacket.Data[1] = stepCount;
             client._clientLocation = client._clientLocation.TranslateLocationByDirection(facing);
-            Console.WriteLine("CLIENT Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
+            //Console.WriteLine("CLIENT Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
             client.LastStep = DateTime.Now;
-            Console.WriteLine("CLIENT Last step = " + client.LastStep);
+            //Console.WriteLine("CLIENT Last step = " + client.LastStep);
             client._isCasting = false;
             client.LastMoved = DateTime.Now;
-            Console.WriteLine("CLIENT Last moved = " + client.LastMoved);
+            //Console.WriteLine("CLIENT Last moved = " + client.LastMoved);
             return true;
         }
 
@@ -981,10 +981,10 @@ namespace Talos
             client._clientDirection = direction;
             client.LastMoved = DateTime.Now;
 
-            Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
-            Console.WriteLine("SERVER Last moved = " + client.LastMoved);
-            Console.WriteLine("SERVER Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
-            Console.WriteLine("SERVER Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
+            //Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
+            //Console.WriteLine("SERVER Last moved = " + client.LastMoved);
+            //Console.WriteLine("SERVER Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
+            //Console.WriteLine("SERVER Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
 
             return true;
         }
@@ -1252,8 +1252,8 @@ namespace Talos
             client._map = map;
             client._clientLocation.MapID = mapID;
             client._serverLocation.MapID = mapID;
-            Console.WriteLine("Client Location Map ID: " + map.MapID);
-            Console.WriteLine("Server Location Map ID: " + map.MapID);
+            //Console.WriteLine("Client Location Map ID: " + map.MapID);
+            //Console.WriteLine("Server Location Map ID: " + map.MapID);
             _maps[mapID].Tiles = client._map.Tiles;
 
             client._mapChangePending = false;
@@ -1271,13 +1271,13 @@ namespace Talos
             //client.Pathfinding = new Pathfinding(client);   
 
 
-            Console.WriteLine("Map ID: " + map.MapID);
-            Console.WriteLine("Map Name: " + map.Name);
-            Console.WriteLine("Map Checksum: " + map.Checksum);
-            Console.WriteLine("Map SizeX: " + map.Width);
-            Console.WriteLine("Map SizeY: " + map.Height);
-            Console.WriteLine("Map Flags: " + map.Flags);
-            Console.WriteLine("Map tiles: " + client._map.Tiles);
+            //Console.WriteLine("Map ID: " + map.MapID);
+            //Console.WriteLine("Map Name: " + map.Name);
+            //Console.WriteLine("Map Checksum: " + map.Checksum);
+            //Console.WriteLine("Map SizeX: " + map.Width);
+            //Console.WriteLine("Map SizeY: " + map.Height);
+            //Console.WriteLine("Map Flags: " + map.Flags);
+            //Console.WriteLine("Map tiles: " + client._map.Tiles);
 
             ServerPacket sp = new ServerPacket(21);
             sp.WriteInt16(mapID);
@@ -1578,7 +1578,7 @@ namespace Talos
                                 client.ReplyDialog(objType, objID, pursuitID, 0x31);
                                 client.ReplyDialog(objType, objID, pursuitID, 0x6d, 2);
                                 client.ReplyDialog(objType, objID, pursuitID, 0x2a);
-                                Thread.Sleep(0x3e8);
+                                Thread.Sleep(1000);
                                 client.Dialog = null;
                                 return false;
                             }

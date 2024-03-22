@@ -36,6 +36,7 @@ namespace Talos.Enumerations
     {
         None = 0,
         Mesmerize = 2,
+        WormSkull = 2,
         Dall = 3,
         Blind = 3,
         BeagCradh = 5,
@@ -80,6 +81,7 @@ namespace Talos.Enumerations
         DarkSeal = 133,
         Demise = 133,
         Purify = 143,
+        Silenced = 143,
         Regeneration = 146,
         CounterAttack = 150,
         IncreasedRegeneration = 180,

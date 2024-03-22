@@ -128,14 +128,13 @@ namespace Talos.Helper
                 { new Regex(@"^Another curse afflicts thee\. \[(.*)\]$"), HandleCurseMessage },
                 { new Regex(@"^\w+ attacks you with PreventAffliction spell\.$"), HandlePreventAfflictionMessage },
                 { new Regex("PreventAffliction end."), HandlePreventAfflictionMessage },
+                { new Regex("botcheck (?:attacks|casts)", RegexOptions.IgnoreCase), HandleBotChecks },
+                { new Regex("error (?:attacks|casts)", RegexOptions.IgnoreCase), HandleBotChecks },
             };
 
         }
 
-        private void HandleGroupRegExMessage(Client client, string message)
-        {
-            client.ClientTab.UpdateGroupList();
-        }
+
 
 
 
@@ -189,13 +188,13 @@ namespace Talos.Helper
                 case "Demise":
                     if (creature != null)
                     {
-                        Console.WriteLine("Setting curse inside MessageHandler");
+                        //Console.WriteLine("Setting curse inside MessageHandler");
                         creature.Curse = spellName;
-                        Console.WriteLine("Curse set to " + creature.Curse);
+                        //Console.WriteLine("Curse set to " + creature.Curse);
                         creature.CurseDuration = Spell.GetSpellDuration(spellName);
-                        Console.WriteLine("Curse duration set to " + creature.CurseDuration);
+                        //Console.WriteLine("Curse duration set to " + creature.CurseDuration);
                         creature.LastCursed = DateTime.UtcNow;
-                        Console.WriteLine("Last cursed set to " + creature.LastCursed);
+                        //Console.WriteLine("Last cursed set to " + creature.LastCursed);
                         if (creature.ID != client.Player.ID)
                             client.UpdateCurseTargets(client, creature.ID, spellName);
                     }
@@ -700,6 +699,12 @@ namespace Talos.Helper
         {
             return;
         }
+        private void HandleBotChecks(Client client, Match match)
+        {
+            client.Bot._botChecks = DateTime.UtcNow;
+            SystemSounds.Beep.Play();
+        }
+
 
         private void HandlePreventAfflictionMessage(Client client, Match match)
         {

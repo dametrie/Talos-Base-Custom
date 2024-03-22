@@ -75,6 +75,7 @@ namespace Talos.Base
         internal string _currentSkill = "";
         internal string _currentItem = "";
         internal string _offenseElement = "";
+        internal string _action = "Current Action: ";
         internal bool _safeScreen;
         internal bool _atDoor;
         internal bool _isCasting;
@@ -90,6 +91,9 @@ namespace Talos.Base
         internal bool _inventoryFull;
         internal bool _shouldEquipBow;
         internal bool _trainingGroundsMember;
+        private bool shouldRefresh;
+        internal bool bool_44;
+
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
         internal int _spellCounter;
@@ -154,8 +158,7 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
-        private bool shouldRefresh;
-        internal bool bool_44;
+ 
 
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }
@@ -233,6 +236,8 @@ namespace Talos.Base
         internal bool HasLetter => Stats.Mail.HasFlag(Mail.HasLetter);
         internal bool HasParcel => Stats.Mail.HasFlag(Mail.HasParcel);
 
+        internal bool IsSkulled => Player?._isSkulled == true && (EffectsBarHashSet.Contains((ushort)EffectsBar.Skull) || EffectsBarHashSet.Contains((ushort)EffectsBar.WormSkull));
+
         public int Int32_1 { get; internal set; }
 
         internal Client(Server server, Socket socket)
@@ -263,6 +268,7 @@ namespace Talos.Base
         }
 
         internal bool HasEffect(EffectsBar effectID) => EffectsBarHashSet.Contains((ushort)effectID);
+        internal void ClearEffect(EffectsBar effectID) => EffectsBarHashSet.Remove((ushort)effectID);
         internal bool GetMapFlags(MapFlags flagID) => _mapFlags.HasFlag(flagID);
         internal void SetMapFlags(MapFlags flagID) => _mapFlags |= flagID;
         internal void SetTemuairClass(TemuairClass temClass) => _temuairClass |= temClass;
@@ -390,6 +396,117 @@ namespace Talos.Base
             return worldObjects;
         }
 
+        internal bool IsLocationSurrounded(Location location)
+        {
+            // Early return if the player is too close to the location.
+            if (Player.Location.DistanceFrom(location) <= 1)
+            {
+                return false;
+            }
+
+            // Gather all relevant creatures' locations within the same map to avoid repeated enumeration.
+            var creatureLocations = GetWorldObjects()
+                .OfType<Creature>()
+                .Where(creature => (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && !creature.Location.Equals(location))
+                .Select(creature => creature.Location)
+                .ToHashSet(); // Using HashSet for O(1) lookups.
+
+            // Get obstacle locations within the same map once to avoid repeated calls.
+            var obstacleLocations = GetObstacleLocations(location).Where(obstacle => obstacle.MapID == location.MapID).ToHashSet(); // Using HashSet for O(1) lookups.
+
+            // Define adjacent locations based on cardinal directions.
+            var adjacentLocations = new[]
+            {
+                location.TranslateLocationByDirection(Direction.North),
+                location.TranslateLocationByDirection(Direction.West),
+                location.TranslateLocationByDirection(Direction.South),
+                location.TranslateLocationByDirection(Direction.East)
+            };
+
+            // Check each adjacent location for being surrounded conditions.
+            foreach (var loc in adjacentLocations)
+            {
+                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || this._map.IsLocationWall(loc);
+
+                // If any adjacent location is not occupied or within bounds, the location is not surrounded.
+                if (!isOccupiedOrBound)
+                {
+                    return false;
+                }
+            }
+
+            // All adjacent locations are occupied or within bounds, so the location is surrounded.
+            return true;
+        }
+
+        internal List<Location> GetObstacleLocations(Location location)
+        {
+            List<Location> obstacles = new List<Location>();
+
+            if (_server._maps.TryGetValue(location.MapID, out Map map))
+            {
+                // Process Exits as obstacles
+                foreach (var exit in map.Exits)
+                {
+                    var exitLocation = new Location(location.MapID, exit.Key.X, exit.Key.Y);
+                    if (!Location.Equals(exitLocation, location))
+                    {
+                        obstacles.Add(exitLocation);
+                    }
+                }
+
+                // Process WorldMaps as obstacles
+                foreach (var worldMap in map.WorldMaps)
+                {
+                    var worldMapLocation = new Location(location.MapID, worldMap.Key.X, worldMap.Key.Y);
+                    if (!Location.Equals(worldMapLocation, location))
+                    {
+                        obstacles.Add(worldMapLocation);
+                    }
+                }
+            }
+
+            return obstacles;
+        }
+
+        internal void UseExperienceGem(byte choice)
+        {
+            Bot.bool_11 = true;
+            if (!UseItem("Experience Gem"))
+            {
+                ServerMessage(1, "You do not have any experience gems.");
+                ClientTab.autoGemCbox.Checked = false;
+                return;
+            }
+            while (Dialog == null)
+            {
+                Thread.Sleep(25);
+            }
+            byte type = Dialog.ObjectType;
+            int objID = Dialog.ObjectID;
+            ushort pursuitID = Dialog.PursuitID;
+            ushort dialogID = Dialog.DialogID;
+            Dialog.DialogNext();
+            ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1));
+            ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1), choice);
+            ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1));
+            ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1));
+            ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1));
+            Thread.Sleep(1000);
+            while (Dialog == null)
+            {
+                Thread.Sleep(25);
+            }
+            type = Dialog.ObjectType;
+            objID = Dialog.ObjectID;
+            pursuitID = Dialog.PursuitID;
+            dialogID = Dialog.DialogID;
+            ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1));
+            ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1), 2);
+            ReplyDialog(type, objID, pursuitID, dialogID);
+            Bot._lastUsedGem = DateTime.UtcNow;
+            Bot.bool_11 = false;
+        }
 
         private bool IsValidSpell(Client client, string spellName, Creature creature)
         {
@@ -665,7 +782,7 @@ namespace Talos.Base
                     {
                         break;
                     }
-                    Thread.Sleep(5);
+                    //Thread.Sleep(5);
                     continue;
                 }
                 return true;
@@ -793,9 +910,9 @@ namespace Talos.Base
                         {
                             ClientTab.Invoke((Action)delegate
                             {
-                                //ClientTab.currentAction.Text = action + "Swapping to " + Bow.Name;//Adam
+                                ClientTab.currentAction.Text = _action + "Swapping to " + bestBow.Name;
                             });
-                            Thread.Sleep(5);
+                            //Thread.Sleep(5);
                             continue;
                         }
                         return false;
@@ -842,9 +959,9 @@ namespace Talos.Base
                         {
                             ClientTab.Invoke((Action)delegate
                             {
-                                //ClientTab.currentAction.Text = action + "Swapping to " + staff.Name;//Adam
+                                ClientTab.currentAction.Text = _action + "Swapping to " + staff.Name;//Adam
                             });
-                            Thread.Sleep(5);
+                            //Thread.Sleep(5);
                             continue;
                         }
                         return false;
@@ -1270,7 +1387,7 @@ namespace Talos.Base
                 {
                     ClientTab.Invoke((Action)delegate
                     {
-                        //ClientTab.currentAction.Text = action + "Casting " + spellName;//ADAM
+                        ClientTab.currentAction.Text = _action + "Casting " + spellName;//ADAM
                     });
                 }
 
@@ -1367,7 +1484,7 @@ namespace Talos.Base
                 Console.WriteLine($"Casting: {spell.Name}");
                 Enqueue(clientPacket);
                 _spellCounter++;
-                //Tasks.dateTime_5 = DateTime.UtcNow;ADAM
+                Bot._lastCast = DateTime.UtcNow;
                 spell.LastUsed = DateTime.UtcNow;
                 _isCasting = false;
                 _currentSpell = (keepSpellAfterUse ? spell : null);
@@ -2702,6 +2819,7 @@ namespace Talos.Base
 
         internal List<Creature> GetNearbyValidCreatures(int distance = 12)
         {
+            var whiteList = new HashSet<ushort>();
             List<Creature> creatureList = new List<Creature>();
             if (!Monitor.TryEnter(Server.Lock, 1000))
             {
@@ -2715,8 +2833,12 @@ namespace Talos.Base
 
                 if (creatureList.Count == 0) return creatureList;
 
-                var whiteList = GetWhiteLists();
-                creatureList = creatureList.Where(creature => IsCreatureAllowed(creature, whiteList)).ToList();
+                if (CONSTANTS.WHITELIST_BY_MAP_ID.ContainsKey((ushort)_map.MapID) ||
+                    CONSTANTS.WHITELIST_BY_MAP_NAME.Any(kv => _map.Name.StartsWith(kv.Key)))
+                {
+                    whiteList = GetWhiteLists();
+                    creatureList = creatureList.Where(creature => IsCreatureAllowed(creature, whiteList)).ToList();
+                }
 
                 return creatureList;
             }
@@ -2726,10 +2848,6 @@ namespace Talos.Base
             }
         }
 
-        private bool IsValidCreature(Creature creature, int distance)
-        {
-            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 && IsCreatureNearby(creature, distance);
-        }
 
         private HashSet<ushort> GetWhiteLists()
         {
@@ -2746,6 +2864,11 @@ namespace Talos.Base
             }
 
             return whiteList;
+        }
+
+        private bool IsValidCreature(Creature creature, int distance)
+        {
+            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 && IsCreatureNearby(creature, distance);
         }
 
         private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)

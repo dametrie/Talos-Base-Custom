@@ -19,8 +19,8 @@ namespace Talos.Forms
 {
     internal partial class EnemyPage : UserControl
     {
-        private Client Client { get; set; }
-        private Enemy Enemy { get; set; }
+        internal Client Client { get; set; }
+        internal Enemy Enemy { get; set; }
 
         internal EnemyPage(Enemy enemy, Client client)
         {
