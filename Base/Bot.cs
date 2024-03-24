@@ -87,11 +87,11 @@ namespace Talos.Base
             {
                 try
                 {
-                    Console.WriteLine("BotLoop running");
+                    //Console.WriteLine("BotLoop running");
 
                     if (Client.InArena)
                     {
-                        Console.WriteLine("Sleeping for 1 second");
+                        //Console.WriteLine("Sleeping for 1 second");
                         Thread.Sleep(1000);
                         return;
                     }
@@ -102,15 +102,15 @@ namespace Talos.Base
 
                     _shouldBotStop = IsRangerNearBy();
 
-                    Console.WriteLine("Checking for stop conditions");
+                    //Console.WriteLine("Checking for stop conditions");
                     if (CheckForStopConditions())
                     {
-                        Console.WriteLine("Sleeping for 100ms");
+                        //Console.WriteLine("Sleeping for 100ms");
                         Thread.Sleep(100);
                         return;
                     }
 
-                    Console.WriteLine("Processing players");
+                    //Console.WriteLine("Processing players");
                     ProcessPlayers();
 
                     if (Client.Health <= 1U && Client.IsSkulled)
@@ -127,16 +127,16 @@ namespace Talos.Base
                         continue;
                     }
 
-                    Console.WriteLine("Checking and handling spells");
+                    //Console.WriteLine("Checking and handling spells");
                     CheckAndHandleSpells();
 
-                    Console.WriteLine("Checking for autoRed conditions");
+                    //Console.WriteLine("Checking for autoRed conditions");
                     if (autoRedConditionsMet())
                     {
                         HandleAutoRed();
                     }
 
-                    Console.WriteLine("Checking for strangers");
+                    //Console.WriteLine("Checking for strangers");
                     if (IsStrangerNearby())
                     {
                         FilterStrangerPlayers();
@@ -335,7 +335,6 @@ namespace Talos.Base
             //ManageSpellCastingDelay();
 
 
-/*          Console.WriteLine("Managing spell casting delay"); //Adam rework this
             Client currentClient = base.Client;
             byte? castLinesCountNullable;
 
@@ -356,7 +355,7 @@ namespace Talos.Base
             {
                 Console.WriteLine("Sleeping for 10ms");
                 Thread.Sleep(330);
-            }*/
+            }
         }
 
         private bool CastOffensiveSpells()
@@ -617,45 +616,62 @@ namespace Talos.Base
 
         private bool CastCurseIfApplicable(EnemyPage enemyPage, List<Creature> creatures)
         {
-            // Filter creatures that are not cursed
-            var eligibleCreatures = creatures.Where(Bot.Delegates.NotCursed);
-
-            // Select the nearest eligible creature if specified, otherwise select any eligible creature
-            Creature targetCreature = enemyPage.NearestFirstCbx.Checked
-                ? eligibleCreatures.OrderBy(new Func<Creature, int>(DistanceFromServerLocation)).FirstOrDefault()
-                : eligibleCreatures.FirstOrDefault();
-
-            // If a target is found and casting curses is enabled, cast the curse spell
-            if (targetCreature != null && enemyPage.spellsCurseCbox.Checked)
+            lock (Bot._lock)
             {
-                Client.UseSpell(enemyPage.spellsCurseCombox.Text, targetCreature, this._autoStaffSwitch, false);
-                this.bool_13 = true; // Indicate that an action was taken
-                return true;
+                Console.WriteLine($"[CastCurseIfApplicable] Total creatures: {creatures.Count}");
+
+                // Filter creatures that are not cursed
+                var eligibleCreatures = creatures.Where(Bot.Delegates.NotCursed);
+
+                Console.WriteLine($"[CastCurseIfApplicable] Eligible creatures (not cursed): {eligibleCreatures.Count()}");
+
+                // Select the nearest eligible creature if specified, otherwise select any eligible creature
+                Creature targetCreature = enemyPage.NearestFirstCbx.Checked
+                    ? eligibleCreatures.OrderBy(new Func<Creature, int>(DistanceFromServerLocation)).FirstOrDefault()
+                    : eligibleCreatures.FirstOrDefault();
+
+                // If a target is found and casting curses is enabled, cast the curse spell
+                if (targetCreature != null && enemyPage.spellsCurseCbox.Checked)
+                {
+                    Console.WriteLine($"[CastCurseIfApplicable] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastCursed: {targetCreature.LastCursed}, IsCursed: {targetCreature.IsCursed}");
+                    Client.UseSpell(enemyPage.spellsCurseCombox.Text, targetCreature, this._autoStaffSwitch, false);
+                    this.bool_13 = true; // Indicate that an action was taken
+                    return true;
+                }
+
+                return false; // No action was taken
+
             }
-
-            return false; // No action was taken
         }
-
 
         private bool CastFasIfApplicable(EnemyPage enemyPage, List<Creature> creatures)
         {
-            // Filter creatures that are not 'fassed'
-            var eligibleCreatures = creatures.Where(Bot.Delegates.NotFassed);
-
-            // Select the nearest eligible creature if specified, otherwise select any eligible creature
-            Creature targetCreature = enemyPage.NearestFirstCbx.Checked
-                ? eligibleCreatures.OrderBy(new Func<Creature, int>(DistanceFromServerLocation)).FirstOrDefault()
-                : eligibleCreatures.FirstOrDefault();
-
-            // If a target is found and casting the 'fas' spell is enabled, cast the spell
-            if (targetCreature != null && enemyPage.spellsFasCbox.Checked)
+            lock (Bot._lock)
             {
-                Client.UseSpell(enemyPage.spellsFasCombox.Text, targetCreature, this._autoStaffSwitch, false);
-                this.bool_13 = true; // Indicate that an action was taken
-                return true;
-            }
+                Console.WriteLine($"[CastFasIfApplicable] Total creatures: {creatures.Count}");
 
-            return false; // No action was taken
+                // Filter creatures that are not 'fassed'
+                var eligibleCreatures = creatures.Where(Bot.Delegates.NotFassed);
+
+                Console.WriteLine($"[CastFasIfApplicable] Eligible creatures (not fassed): {eligibleCreatures.Count()}");
+
+                // Select the nearest eligible creature if specified, otherwise select any eligible creature
+                Creature targetCreature = enemyPage.NearestFirstCbx.Checked
+                    ? eligibleCreatures.OrderBy(new Func<Creature, int>(DistanceFromServerLocation)).FirstOrDefault()
+                    : eligibleCreatures.FirstOrDefault();
+
+                // If a target is found and casting the 'fas' spell is enabled, cast the spell
+                if (targetCreature != null && enemyPage.spellsFasCbox.Checked)
+                {
+                    Console.WriteLine($"[CastFasIfApplicable] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastFassed: {targetCreature.LastFassed}, IsFassed: {targetCreature.IsFassed}");
+                    Client.UseSpell(enemyPage.spellsFasCombox.Text, targetCreature, this._autoStaffSwitch, false);
+                    this.bool_13 = true; // Indicate that an action was taken
+                    return true;
+                }
+
+                return false; // No action was taken
+            }
+          
         }
 
         private bool ExecutePramhStrategy(EnemyPage enemyPage, List<Creature> creatures)

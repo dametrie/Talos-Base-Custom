@@ -508,6 +508,7 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
+            this.deformCbox = new System.Windows.Forms.CheckBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -3117,6 +3118,7 @@ namespace Talos.Forms
             this.toolsTab.Controls.Add(this.groupBox9);
             this.toolsTab.Controls.Add(this.groupBox6);
             this.toolsTab.Controls.Add(this.customLinesGroup);
+            this.toolsTab.Controls.Add(this.unifiedGuildChatCbox);
             this.toolsTab.Controls.Add(this.dmuGroup);
             this.toolsTab.Controls.Add(this.renamedStaffsGrp);
             this.toolsTab.Controls.Add(this.stuffGrp);
@@ -3138,7 +3140,7 @@ namespace Talos.Forms
             this.groupBox9.Controls.Add(this.btnAddSkillCombo);
             this.groupBox9.Location = new System.Drawing.Point(461, 112);
             this.groupBox9.Name = "groupBox9";
-            this.groupBox9.Size = new System.Drawing.Size(223, 187);
+            this.groupBox9.Size = new System.Drawing.Size(166, 187);
             this.groupBox9.TabIndex = 134;
             this.groupBox9.TabStop = false;
             this.groupBox9.Text = "Add Combo to Skills";
@@ -3729,13 +3731,13 @@ namespace Talos.Forms
             // 
             // stuffGrp
             // 
+            this.stuffGrp.Controls.Add(this.deformCbox);
             this.stuffGrp.Controls.Add(this.safeScreenCbox);
             this.stuffGrp.Controls.Add(this.formNum);
             this.stuffGrp.Controls.Add(this.formCbox);
-            this.stuffGrp.Controls.Add(this.unifiedGuildChatCbox);
             this.stuffGrp.Location = new System.Drawing.Point(462, 6);
             this.stuffGrp.Name = "stuffGrp";
-            this.stuffGrp.Size = new System.Drawing.Size(222, 100);
+            this.stuffGrp.Size = new System.Drawing.Size(165, 100);
             this.stuffGrp.TabIndex = 5;
             this.stuffGrp.TabStop = false;
             this.stuffGrp.Text = "Stuff";
@@ -3755,7 +3757,7 @@ namespace Talos.Forms
             // formNum
             // 
             this.formNum.ForeColor = System.Drawing.Color.Black;
-            this.formNum.Location = new System.Drawing.Point(108, 43);
+            this.formNum.Location = new System.Drawing.Point(108, 18);
             this.formNum.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -3776,7 +3778,7 @@ namespace Talos.Forms
             // 
             this.formCbox.AutoSize = true;
             this.formCbox.ForeColor = System.Drawing.Color.Black;
-            this.formCbox.Location = new System.Drawing.Point(8, 45);
+            this.formCbox.Location = new System.Drawing.Point(8, 20);
             this.formCbox.Name = "formCbox";
             this.formCbox.Size = new System.Drawing.Size(101, 19);
             this.formCbox.TabIndex = 7;
@@ -3788,7 +3790,7 @@ namespace Talos.Forms
             // 
             this.unifiedGuildChatCbox.AutoSize = true;
             this.unifiedGuildChatCbox.ForeColor = System.Drawing.Color.Black;
-            this.unifiedGuildChatCbox.Location = new System.Drawing.Point(8, 20);
+            this.unifiedGuildChatCbox.Location = new System.Drawing.Point(633, 28);
             this.unifiedGuildChatCbox.Name = "unifiedGuildChatCbox";
             this.unifiedGuildChatCbox.Size = new System.Drawing.Size(123, 19);
             this.unifiedGuildChatCbox.TabIndex = 1;
@@ -6309,6 +6311,17 @@ namespace Talos.Forms
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // deformCbox
+            // 
+            this.deformCbox.AutoSize = true;
+            this.deformCbox.Location = new System.Drawing.Point(8, 47);
+            this.deformCbox.Name = "deformCbox";
+            this.deformCbox.Size = new System.Drawing.Size(151, 19);
+            this.deformCbox.TabIndex = 10;
+            this.deformCbox.Text = "Deform nearby stranger";
+            this.deformCbox.UseVisualStyleBackColor = true;
+            this.deformCbox.CheckedChanged += new System.EventHandler(this.deformCbox_CheckedChanged);
+            // 
             // ClientTab
             // 
             this.AllowDrop = true;
@@ -6385,6 +6398,7 @@ namespace Talos.Forms
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.toolsTab.ResumeLayout(false);
+            this.toolsTab.PerformLayout();
             this.groupBox9.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numComboImgSelect)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picComboSkill)).EndInit();
@@ -6969,5 +6983,6 @@ namespace Talos.Forms
         private Button button1;
         private System.Windows.Forms.Timer bonusCooldownTimer;
         internal Label currentAction;
+        private CheckBox deformCbox;
     }
 }

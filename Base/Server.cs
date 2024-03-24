@@ -2262,8 +2262,15 @@ namespace Talos
 
         internal void RemoveFirstCreatureToSpell(Client client)
         {
-            if (client._creatureToSpellList != null && client._creatureToSpellList.Count > 0)
-                client._creatureToSpellList.RemoveAt(0);
+            lock (Lock)
+            {
+                if (client._creatureToSpellList != null && client._creatureToSpellList.Count > 0)
+                {
+                    Console.WriteLine($"[RemoveFirstCreatureToSpell] Creature ID: {client._creatureToSpellList[0].Creature.ID}, Spellname: {client._creatureToSpellList[0].Spell.Name}");
+                    client._creatureToSpellList.RemoveAt(0);
+                }
+            }
+
         }
         internal void SetDugon(Client client, string dugonLevel)
         {

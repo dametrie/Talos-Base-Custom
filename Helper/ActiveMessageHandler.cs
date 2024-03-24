@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Media;
 using System.Text;
@@ -18,6 +19,7 @@ namespace Talos.Helper
         private static readonly ActiveMessageHandler instance = new ActiveMessageHandler();
         private Dictionary<string, Action<Client, string>> stringMessageHandlers;
         private Dictionary<Regex, Action<Client, Match>> regexMessageHandlers;
+        private static readonly object _lock = new object();
 
         // Private constructor to prevent external instantiation
         private ActiveMessageHandler()
@@ -162,103 +164,118 @@ namespace Talos.Helper
         }
         private static void HandleSpellCastMessage(Client client, Match match)
         {
-            Creature creature = client._creatureToSpellList.Count > 0 ? client._creatureToSpellList[0].Creature : null;
-            string spellName = match.Groups[1].Value;
-
-            //adam add spells - pramh, ards?
-            //You cast Master Karura Form
-            switch (spellName)
+            lock (_lock)
             {
-                case "beag naomh aite":
-                case "naomh aite":
-                case "mor naomh aite":
-                case "ard naomh aite":
-                    if (creature != null)
-                    {
-                        creature.AiteDuration = Spell.GetSpellDuration(spellName);
-                        creature.LastAited = DateTime.UtcNow;
-                    }
-                    break;
-                case "beag cradh":
-                case "cradh":
-                case "mor cradh":
-                case "ard cradh":
-                case "Dark Seal":
-                case "Darker Seal":
-                case "Demise":
-                    if (creature != null)
-                    {
-                        //Console.WriteLine("Setting curse inside MessageHandler");
-                        creature.Curse = spellName;
-                        //Console.WriteLine("Curse set to " + creature.Curse);
-                        creature.CurseDuration = Spell.GetSpellDuration(spellName);
-                        //Console.WriteLine("Curse duration set to " + creature.CurseDuration);
-                        creature.LastCursed = DateTime.UtcNow;
-                        //Console.WriteLine("Last cursed set to " + creature.LastCursed);
-                        if (creature.ID != client.Player.ID)
-                            client.UpdateCurseTargets(client, creature.ID, spellName);
-                    }
-                    break;
-                case "beag fas nadur":
-                case "fas nadur":
-                case "mor fas nadur":
-                case "ard fas nadur":
-                    if (creature != null)
-                    {
-                        creature.FasDuration = Spell.GetSpellDuration(spellName);
-                        creature.LastFassed = DateTime.UtcNow;
-                        if (creature.ID != client.Player.ID)
-                            client.UpdateFasTargets(client, creature.ID, creature.FasDuration);
-                    }
-                    break;
-                case "dion":
-                case "Draco Stance":
-                case "Stone Skin":
-                case "mor dion":
-                case "Iron Skin":
-                case "Wings of Protection":
-                case "dionLR":
-                    client.Player.Dion = spellName;
-                    client.Player.LastDioned = DateTime.UtcNow;
-                    client.Player.DionDuration = Spell.GetSpellDuration(spellName);
-                    break;
-                case "fas spiorad":
-                    client.Bot._needFasSpiorad = false;
-                    client.Bot._manaLessThanEightyPct = false;
-                    break;
-                case "mor strioch pian gar":
-                    client.Bot._needFasSpiorad = true;
-                    break;
-                case "io dia armachd comlhaLR":
-                    break;
-                case "io ao dallLR":
-                case "io ao dall comlhaLR":
-                    //update ao dall spell animation?
-                    //remove dall from players and clients?
-                    break;
-                case "Light SealLR":
-                    client.Bot._lastGrimeScentCast = DateTime.UtcNow;
-                    break;
-                case "Gem Polishing":
-                    client._currentSpell = client.Spellbook["Gem Polishing"];
-                    break;
-                case "armachd":
-                    client._server.RemoveFirstCreatureToSpell(client);
-                    break;
-                case "Mesmerize":
-                    client._server.RemoveFirstCreatureToSpell(client);
-                    break;
-                case "suain":
-                    client._server.RemoveFirstCreatureToSpell(client);
-                    break;
-                case "Master Karurua Form"://Adam add others
-                    client.EffectsBarHashSet.Add((ushort)EffectsBar.BirdForm);//need to figure out how to clear it because there is no orange message when it drops
-                    break;
-                default:
-                    if (client._creatureToSpellList.Count <= 0)
-                        client._currentSpell = null;
-                    break;
+                Creature creature = client._creatureToSpellList.Count > 0 ? client._creatureToSpellList[0].Creature : null;
+                if (creature != null)
+                {
+                    Console.WriteLine($"[HandleSpellCastMessage] Creature ID: {creature?.ID}. _creatureToSpellList[0] Creature ID: {client._creatureToSpellList[0].Creature.ID}");
+                }
+
+                string spellName = match.Groups[1].Value;
+
+                //adam add spells - pramh, ards?
+                //You cast Master Karura Form
+                switch (spellName)
+                {
+                    case "beag naomh aite":
+                    case "naomh aite":
+                    case "mor naomh aite":
+                    case "ard naomh aite":
+                        if (creature != null)
+                        {
+                            creature.AiteDuration = Spell.GetSpellDuration(spellName);
+                            creature.LastAited = DateTime.UtcNow;
+                        }
+                        break;
+                    case "beag cradh":
+                    case "cradh":
+                    case "mor cradh":
+                    case "ard cradh":
+                    case "Dark Seal":
+                    case "Darker Seal":
+                    case "Demise":
+                        if (creature != null)
+                        {
+
+                            creature.Curse = spellName;
+                            creature.CurseDuration = Spell.GetSpellDuration(spellName);
+                            creature.LastCursed = DateTime.UtcNow;
+                            if (creature.ID != client.Player.ID)
+                                client.UpdateCurseTargets(client, creature.ID, spellName);
+                            //Console.WriteLine($"Creature ID: {creature.ID} - Creature Name: {creature.Name}" +
+                            //$" - Creature Curse: {creature.Curse} - Creature Curse Duration: {creature.CurseDuration}" +
+                            //$" - Creature Total Seconds since Last Cursed: {DateTime.UtcNow.Subtract(creature.LastCursed).TotalSeconds}");
+                            Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastCursed updated to {creature?.LastCursed}");
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
+                        break;
+                    case "beag fas nadur":
+                    case "fas nadur":
+                    case "mor fas nadur":
+                    case "ard fas nadur":
+                        if (creature != null)
+                        {
+                            creature.FasDuration = Spell.GetSpellDuration(spellName);
+                            creature.LastFassed = DateTime.UtcNow;
+                            if (creature.ID != client.Player.ID)
+                                client.UpdateFasTargets(client, creature.ID, creature.FasDuration);
+                            Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastFassed updated to {creature?.LastFassed}");
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
+                        break;
+                    case "dion":
+                    case "Draco Stance":
+                    case "Stone Skin":
+                    case "mor dion":
+                    case "Iron Skin":
+                    case "Wings of Protection":
+                    case "dionLR":
+                        client.Player.Dion = spellName;
+                        client.Player.LastDioned = DateTime.UtcNow;
+                        client.Player.DionDuration = Spell.GetSpellDuration(spellName);
+                        break;
+                    case "fas spiorad":
+                        client.Bot._needFasSpiorad = false;
+                        client.Bot._manaLessThanEightyPct = false;
+                        break;
+                    case "mor strioch pian gar":
+                        client.Bot._needFasSpiorad = true;
+                        break;
+                    case "io dia armachd comlhaLR":
+                        break;
+                    case "io ao dallLR":
+                    case "io ao dall comlhaLR":
+                        //update ao dall spell animation?
+                        //remove dall from players and clients?
+                        break;
+                    case "Light SealLR":
+                        client.Bot._lastGrimeScentCast = DateTime.UtcNow;
+                        break;
+                    case "Gem Polishing":
+                        client._currentSpell = client.Spellbook["Gem Polishing"];
+                        break;
+                    case "armachd":
+                        client._server.RemoveFirstCreatureToSpell(client);
+                        break;
+                    case "Mesmerize":
+                        client._server.RemoveFirstCreatureToSpell(client);
+                        break;
+                    case "suain":
+                        client._server.RemoveFirstCreatureToSpell(client);
+                        break;
+                    case "Master Karurua Form"://Adam add others
+                        client.EffectsBarHashSet.Add((ushort)EffectsBar.BirdForm);//need to figure out how to clear it because there is no orange message when it drops
+                        break;
+                    default:
+                        Console.WriteLine($"[HandleSpellCastMessage] default case encountered");
+                        Console.WriteLine($"[HandleSpellCastMessage] _creatureToSpellList.Count {client._creatureToSpellList.Count}");
+                        if (client._creatureToSpellList.Count <= 0)
+                            client._currentSpell = null;
+                        break;
+                }
             }
+           
         }
 
         private void HandleBowMessage(Client client, Match match)
@@ -428,8 +445,23 @@ namespace Talos.Helper
 
         private void HandleAlreadyCastMessage(Client client, string message)
         {
+            
             if (client._creatureToSpellList.Count > 0)
+            {
+                if (client._currentSpell!= null && client._currentSpell.Name.Contains("fas"))
+                {
+                    client._creatureToSpellList[0].Creature.LastFassed = DateTime.UtcNow;
+                    client._creatureToSpellList[0].Creature.FasDuration = Spell.GetSpellDuration(client._currentSpell.Name);
+                    if (client._creatureToSpellList[0].Creature.ID != client.Player.ID)
+                        client.UpdateFasTargets(client, client._creatureToSpellList[0].Creature.ID, client._creatureToSpellList[0].Creature.FasDuration);
+                    client._currentSpell = null;
+                }
+
+                Console.WriteLine($"[HandleAlreadyCastMessage] Already cast message received on {client._creatureToSpellList[0].Creature.ID}");
+                Console.WriteLine($"[HandleAlreadyCastMessage] _creatureToSpellList.Count before removal: {client._creatureToSpellList.Count}");
                 client._server.RemoveFirstCreatureToSpell(client);
+            }
+
         }
 
         private void HandleSuainMessage(Client client, string message)
@@ -715,15 +747,21 @@ namespace Talos.Helper
         }
         private void HandleCurseMessage(Client client, Match match)
         {
-            if ((client._creatureToSpellList.Count > 0) && (client._creatureToSpellList[0].Creature != null))
+            if (client._currentSpell != null)
             {
-                client._creatureToSpellList[0].Creature.LastCursed = DateTime.UtcNow;
-                client._creatureToSpellList[0].Creature.CurseDuration = 30.0;
-                client._creatureToSpellList[0].Creature.Curse = match.Groups[1].Value;
-                client.UpdateCurseTargets(client, client._creatureToSpellList[0].Creature.ID, match.Groups[1].Value);
-                client._server.RemoveFirstCreatureToSpell(client);
+                if ((client._creatureToSpellList.Count > 0) && (client._creatureToSpellList[0].Creature != null))
+                {
+                    Console.WriteLine($"[HandleCurseMessage] Received 'another curse afflicts thee' message for {match.Groups[1].Value} on Creature ID: {client._creatureToSpellList[0].Creature?.ID}. Updating LastCursed.");
+
+                    client._creatureToSpellList[0].Creature.LastCursed = DateTime.UtcNow;
+                    client._creatureToSpellList[0].Creature.CurseDuration = 30.0;
+                    client._creatureToSpellList[0].Creature.Curse = match.Groups[1].Value;
+                    if (client._creatureToSpellList[0].Creature.ID != client.Player.ID)
+                        client.UpdateCurseTargets(client, client._creatureToSpellList[0].Creature.ID, match.Groups[1].Value);
+                    client._server.RemoveFirstCreatureToSpell(client);
+                }
+                client._currentSpell = null;
             }
-            client._currentSpell = null;
         }
 
         private void HandleArmachdMessage(Client client, string message)

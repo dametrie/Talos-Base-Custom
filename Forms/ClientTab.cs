@@ -697,6 +697,17 @@ namespace Talos.Forms
             }
         }
 
+        private void deformCbox_CheckedChanged(object sender, EventArgs e)
+        {
+
+            if (deformCbox.Checked)
+                _client._deformNearStrangers = true;
+            else
+                _client._deformNearStrangers = false;
+
+            _client.DisplayAisling(_client.Player);
+        }
+
         internal void DisplayObject(WorldObject worldObject)
         {
             if (InvokeRequired) { BeginInvoke(new Action(() => { DisplayObject(worldObject); })); return; }
@@ -1850,6 +1861,8 @@ namespace Talos.Forms
                 _client._safeScreen = false;
             }
         }
+
+
     }
 }
 

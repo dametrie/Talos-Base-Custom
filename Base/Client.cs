@@ -96,6 +96,7 @@ namespace Talos.Base
 
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
+        internal bool _deformNearStrangers = false;
         internal int _spellCounter;
         private int _customSpellLineCounter;
         internal int _identifier;
@@ -527,17 +528,18 @@ namespace Talos.Base
                 //    return false;
                 //}
 
-                // Reject spell based on conflicts
-                if (ShouldRejectSpellDueToConflict(spellName, creature, client))
+                // Check if the creature already has the given spell
+                if (DoesCreatureHaveSpellAlready(spellName, creature, client))
                 {
+
                     return false;
                 }
             }
-
+            Console.WriteLine($"[IsValidSpell] Spell {spellName} on Creature ID: {creature?.ID} is valid.");
             return true;
         }
 
-        private bool ReadyToSpell(string spell)
+        internal bool ReadyToSpell(string spell)
         {
             try
             {
@@ -558,8 +560,7 @@ namespace Talos.Base
                     case 2476745328: // fas nadur
                     case 1149628551: // mor fas nadur
                     case 107956092: // ard fas nadur
-                        if (!CreatureTarget.IsFassed)
-                            return true;
+                        if (!CreatureTarget.IsFassed) return true;
                         return false;
 
                     case 195270534: // Wake Scroll
@@ -720,12 +721,20 @@ namespace Talos.Base
                     return true;
             }
         }
-        private bool ShouldRejectSpellDueToConflict(string spellName, Creature creature, Client client)
+        private bool DoesCreatureHaveSpellAlready(string spellName, Creature creature, Client client)
         {
+            // Guard clause for null creature
+            if (creature == null)
+            {
+                return false; // Assuming you want to return false if there's no creature to check against
+            }
+
+            Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Current State: {creature.IsCursed}");
+
             switch (spellName)
             {
                 case "suain":
-                    return creature != null && !creature.IsSuained;
+                    return creature.IsSuained;
                 case "beag cradh":
                 case "cradh":
                 case "mor cradh":
@@ -733,7 +742,7 @@ namespace Talos.Base
                 case "Dark Seal":
                 case "Darker Seal":
                 case "Demise":
-                    return creature != null && creature.IsCursed;
+                    return creature.IsCursed;
                 case "Frost Arrow 1":
                 case "Frost Arrow 2":
                 case "Frost Arrow 3":
@@ -744,29 +753,25 @@ namespace Talos.Base
                 case "Frost Arrow 8":
                 case "Frost Arrow 9":
                 case "Frost Arrow 10":
-                    return creature != null && creature.IsFrozen;
+                    return creature.IsFrozen;
                 case "beag pramh":
                 case "pramh":
                 case "Mesmerize":
-                    return creature != null && creature.IsAsleep;
+                    return creature.IsAsleep;
                 case "fas spiorad":
                     return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;
                 case "beag fas nadur":
                 case "fas nadur":
                 case "mor fas nadur":
                 case "ard fas nadur":
-                    //return client != null && client.EffectsBarHashSet.Contains((ushort)EffectsBar.FasNadur);
-                    //Adam check line above. Doesnt make sense to check if player has fas.. need to check if creature
-                    return creature != null && creature.IsFassed;
-                case "Leafhopper Chirp":
-                    return false; // Always allowed
+                    return creature.IsFassed;
                 case "ao suain":
-                    return creature != null && creature.IsSuained;
+                    return creature.IsSuained;
                 case "beag naomh aite":
                 case "naomh aite":
                 case "mor naomh aite":
                 case "ard naomh aite":
-                    return creature != null && creature.IsAited;
+                    return creature.IsAited;
                 default:
                     return false;
             }
@@ -1327,7 +1332,7 @@ namespace Talos.Base
                 }
                 ClientTab.Invoke((Action)delegate
                 {
-                    //ClientTab.currentAction.Text = action + "Using " + itemName;//ADAM
+                    ClientTab.currentAction.Text = _action + "Using " + itemName;
                 });
                 ReadyToSpell(itemName);
                 Enqueue(clientPacket);
@@ -1370,6 +1375,7 @@ namespace Talos.Base
 
                 if (spell == null || !CanUseSpell(spell, creature) || !IsValidSpell(this, spell.Name, creature) || ((spellName == "Hide" || spellName == "White Bat Form") && _server._stopCasting))
                 {
+                    Console.WriteLine($"[UseSpell] Aborted casting {spellName} on Creature ID: {creature?.ID}. Reason: Validation failed.");
                     _isCasting = false;
                     return false;
                 }
@@ -1383,6 +1389,40 @@ namespace Talos.Base
                     }
                 }
 
+                this.CreatureTarget = (creature ?? Player);
+                if (ReadyToSpell(spell.Name))
+                {
+                    var existingEntry = _creatureToSpellList.FirstOrDefault(cts => cts.Creature.ID == CreatureTarget.ID && cts.Spell.Name == spell.Name);
+
+                    if (existingEntry != null)
+                    {
+                        if (existingEntry.CooldownEndTime > DateTime.UtcNow)
+                        {
+                            Console.WriteLine($"[Debug] Skipped adding {CreatureTarget.ID} to _creatureToSpellList due to cooldown.");
+                        }
+                        else
+                        {
+                            // Update cooldown end time for re-casting
+                            existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(3); // Assuming a 30-second cooldown
+                            Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _creatureToSpellList.");
+                        }
+                    }
+                    else
+                    {
+                        var newEntry = new CreatureToSpell(spell, CreatureTarget)
+                        {
+                            CooldownEndTime = DateTime.UtcNow.AddSeconds(3)
+                        };
+                        _creatureToSpellList.Add(newEntry);
+                        Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+
+
                 if (_currentSpell != spell)
                 {
                     ClientTab.Invoke((Action)delegate
@@ -1390,7 +1430,6 @@ namespace Talos.Base
                         ClientTab.currentAction.Text = _action + "Casting " + spellName;//ADAM
                     });
                 }
-
                 ClientPacket clientPacket = new ClientPacket(15);
                 clientPacket.WriteByte(spell.Slot);
 
@@ -1476,12 +1515,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                this.CreatureTarget = (creature ?? Player);
-                if (ReadyToSpell(spell.Name))
-                {
-                    _creatureToSpellList.Add(new CreatureToSpell(spell, CreatureTarget));
-                }
-                Console.WriteLine($"Casting: {spell.Name}");
+                Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {creature?.ID}, Name: {creature?.Name}");
                 Enqueue(clientPacket);
                 _spellCounter++;
                 Bot._lastCast = DateTime.UtcNow;
@@ -1607,7 +1641,7 @@ namespace Talos.Base
         {
             _ = player.Location;
             ushort spriteID = player.SpriteID;
-            if (player == this.Player && InMonsterForm)
+            if (player == this.Player && InMonsterForm && !_deformNearStrangers)//Adam deform near starngers not working
             {
                 spriteID = _monsterFormID;
             }
