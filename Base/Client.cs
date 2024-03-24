@@ -616,9 +616,18 @@ namespace Talos.Base
 
                     case 3219892635: // beag pramh
                     case 2647647615: // pramh
-                        if (!CreatureTarget.IsAsleep)
-                           CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 3, 500));
-                        return true;
+                        if (CreatureTarget.IsAsleep)
+                        {
+                            Console.WriteLine("ReadyToSpell: Creature is already asleep, returning false");
+                            return false;
+                        }
+                        else 
+                        { 
+                            Console.WriteLine("ReadyToSpell: Creature is not asleep, can cast Pramh returning true");
+                            return true;
+                        }
+
+                    //   CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 3, 500));
 
                     case 2756163491: // Fungus Beetle Extract
                         foreach (Player player in GetNearbyAllies())

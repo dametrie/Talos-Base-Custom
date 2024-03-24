@@ -22,10 +22,12 @@ namespace Talos.Objects
         internal DateTime LastDioned { get; set; }
         internal DateTime LastSuained { get; set; }
         internal DateTime LastArmachd { get; set; }
+        internal DateTime LastPramhed { get; set; }
         internal double CurseDuration { get; set; }
         internal double FasDuration { get; set; }
         internal double AiteDuration { get; set; }
         internal double DionDuration { get; set; }
+        internal double PramhDuration { get; set; } 
         internal Dictionary<ushort, DateTime> SpellAnimationHistory { get; set; }
         internal Dictionary<ushort, DateTime> SourceAnimationHistory { get; set; }
         internal CreatureType Type { get; set; }
@@ -49,6 +51,7 @@ namespace Talos.Objects
         internal bool IsCursed => DateTime.UtcNow.Subtract(LastCursed).TotalSeconds < CurseDuration;
         internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;
         internal bool IsAited => DateTime.UtcNow.Subtract(LastAited).TotalSeconds < AiteDuration;
+        internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
 
         internal bool HasArmachd
         {
@@ -88,21 +91,7 @@ namespace Talos.Objects
                 return false;
             }
         }
-        internal bool IsAsleep //Adam check this because it's not wokring correctly
-        {
-            get
-            {
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Mesmerize) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Mesmerize]).TotalSeconds >= 1.5))
-                    return true;
 
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Pramh) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Pramh]).TotalSeconds >= 3.5))
-                {
-                    return true;
-                }
-
-                return false;
-            }
-        }
         internal bool IsPoisoned
         {
             get

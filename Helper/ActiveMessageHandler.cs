@@ -258,9 +258,6 @@ namespace Talos.Helper
                     case "armachd":
                         client._server.RemoveFirstCreatureToSpell(client);
                         break;
-                    case "Mesmerize":
-                        client._server.RemoveFirstCreatureToSpell(client);
-                        break;
                     case "suain":
                         client._server.RemoveFirstCreatureToSpell(client);
                         break;
@@ -269,10 +266,13 @@ namespace Talos.Helper
                         break;
                     case "beag pramh":
                     case "pramh":
+                    case "Mesmerize":
                         if (creature != null)
                         {
                             creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
-                            Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}");
+                            creature.LastPramhed = DateTime.UtcNow;
+                            creature.PramhDuration = Spell.GetSpellDuration(spellName);
+                            Console.WriteLine($"[UpdateSpellAnimationHistory] 'Sleep' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Sleep Duration: {creature.PramhDuration}");
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
@@ -457,6 +457,9 @@ namespace Talos.Helper
 
             if (client._creatureToSpellList.Count > 0)
             {
+                Console.WriteLine($"[HandleAlreadyCastMessage] Already cast message received on {client._creatureToSpellList[0].Creature.ID}");
+                Console.WriteLine($"[HandleAlreadyCastMessage] _creatureToSpellList.Count before removal: {client._creatureToSpellList.Count}");
+
                 if (client._currentSpell != null && client._currentSpell.Name.Contains("fas"))
                 {
                     client._creatureToSpellList[0].Creature.LastFassed = DateTime.UtcNow;
@@ -472,8 +475,7 @@ namespace Talos.Helper
                     client._currentSpell = null;
                 }
 
-                Console.WriteLine($"[HandleAlreadyCastMessage] Already cast message received on {client._creatureToSpellList[0].Creature.ID}");
-                Console.WriteLine($"[HandleAlreadyCastMessage] _creatureToSpellList.Count before removal: {client._creatureToSpellList.Count}");
+              
                 client._server.RemoveFirstCreatureToSpell(client);
             }
 
