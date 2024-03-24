@@ -159,7 +159,7 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
- 
+        internal bool isStatusUpdated;
 
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }
@@ -626,8 +626,6 @@ namespace Talos.Base
                             Console.WriteLine("ReadyToSpell: Creature is not asleep, can cast Pramh returning true");
                             return true;
                         }
-
-                    //   CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 3, 500));
 
                     case 2756163491: // Fungus Beetle Extract
                         foreach (Player player in GetNearbyAllies())

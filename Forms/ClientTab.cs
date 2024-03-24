@@ -33,6 +33,8 @@ namespace Talos.Forms
         private short textX;
         private short testY;
 
+        private uint _abilityExp;
+        private uint _gold;
         internal ulong _sessionExperience;
         internal uint _sessionAbility;
         internal uint _sessionGold;
@@ -40,6 +42,9 @@ namespace Talos.Forms
         private Stopwatch _sessionExperienceStopWatch = new Stopwatch();
         private Stopwatch _sessionAbilityStopWatch = new Stopwatch();
         private Stopwatch _sessionGoldStopWatch = new Stopwatch();
+
+        internal DateTime _inventoryUpdateTime;
+        internal DateTime _lastStatusUpdate;
 
         private List<string> _chatPanelList = new List<string>
         {
@@ -78,8 +83,8 @@ namespace Talos.Forms
 			"Magus Gaea",
 			"Holy Gaea"
 		};
-        private uint _abilityExp;
-        private uint _gold;
+
+
         private readonly object _lock = new object();
 
 
@@ -1864,7 +1869,15 @@ namespace Talos.Forms
             }
         }
 
+        internal void UpdateInventoryAndWaypoints()
+        {
+            //Adam
+        }
 
+        internal void UpdateClientStatus()
+        {
+            //Adam
+        }
     }
 }
 

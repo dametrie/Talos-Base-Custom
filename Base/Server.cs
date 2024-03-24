@@ -1,33 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text.RegularExpressions;
 using System.Threading;
+using System.Windows.Forms;
+using Talos.AStar;
+using Talos.Base;
 using Talos.Cryptography;
 using Talos.Cryptography.Abstractions.Definitions;
+using Talos.Definitions;
 using Talos.Enumerations;
 using Talos.Forms;
+using Talos.Forms.UI;
+using Talos.Helper;
 using Talos.Maps;
 using Talos.Networking;
 using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
-using Talos.AStar;
-using Talos.Definitions;
-using System.Linq;
-using System.Windows.Forms;
-using System.Text.RegularExpressions;
-using System.Runtime.CompilerServices;
-using Talos.Base;
-using System.Diagnostics;
-using System.Drawing;
-using System.Media;
-using System.Reflection;
 using Point = Talos.Structs.Point;
-using System.Threading.Tasks;
-using Talos.Helper;
-using Talos.Forms.UI;
 
 
 
@@ -80,6 +76,7 @@ namespace Talos
             _serverMessage = new ServerMessageHandler[256];
             _remoteEndPoint = new IPEndPoint(IPAddress.Parse("52.88.55.94"), 2610);
             _clientList = new List<Client>();
+            _serverThread = new Thread(new ThreadStart(AutomaticActions));
             MessageHandlers();
             Initialize(2610);
             LoadMapCache();
@@ -101,7 +98,7 @@ namespace Talos
                 _clientSocket.Bind(new IPEndPoint(IPAddress.Loopback, port));
                 _clientSocket.Listen(10);
                 _clientSocket.BeginAccept(new AsyncCallback(EndAccept), null);
-                //_serverThread.Start();
+                _serverThread.Start();
             }
         }
 
@@ -1938,7 +1935,55 @@ namespace Talos
 
         private bool ServerMessage_0x36_WorldList(Client client, ServerPacket serverPacket)
         {
-            return true;
+            HashSet<string> worldList = new HashSet<string>();
+            serverPacket.ReadInt16();
+            short num = serverPacket.ReadInt16();
+            for (short i = 0; i < num; i = (short)(i + 1))
+            {
+                serverPacket.ReadByte();
+                serverPacket.ReadByte();
+                serverPacket.ReadByte();
+                string str = serverPacket.ReadString8();
+                serverPacket.ReadBoolean();
+                string name = serverPacket.ReadString8();
+                if (!client.ClientTab.safeScreenCbox.Checked && CONSTANTS.KNOWN_RANGERS.Contains(name, StringComparer.InvariantCultureIgnoreCase))
+                {
+                    int position = serverPacket.Position;
+                    serverPacket.Position -= (5 + str.Length) + name.Length;
+                    serverPacket.WriteByte(2);
+                    serverPacket.Position = position;
+                }
+                worldList.Add(name);
+            }
+            if (!client.ClientTab.rangerLogCbox.Checked)
+            {
+                return true;
+            }
+            foreach (string name in CONSTANTS.KNOWN_RANGERS)
+            {
+                if (worldList.Contains(name, StringComparer.InvariantCultureIgnoreCase))
+                {
+                    string path = AppDomain.CurrentDomain.BaseDirectory + @"\rangerLog.txt";
+                    string[] textArray1 = new string[] { "Logged at ", DateTime.UtcNow.ToLocalTime().ToString(), " due to ", name, " appearing on WorldList." };
+                    File.WriteAllText(path, string.Concat(textArray1));
+                    Process.Start(path);
+                    foreach (Client c in this._clientList)
+                    {
+                        ClientTab tab = c.ClientTab;
+                        if (tab == null)
+                        {
+                            ClientTab local1 = tab;
+                            continue;
+                        }
+                        if (tab.rangerLogCbox.Checked)
+                        {
+                            c.DisconnectWait(false);
+                        }
+                    }
+                    client.DisconnectWait(false);
+                }
+            }
+            return false;
         }
 
         private bool ServerMessage_0x37_AddEquipment(Client client, ServerPacket packet)
@@ -2270,8 +2315,9 @@ namespace Talos
                     client._creatureToSpellList.RemoveAt(0);
                 }
             }
-
         }
+
+
         internal void SetDugon(Client client, string dugonLevel)
         {
             Dictionary<string, Dugon> dugonMappings = new Dictionary<string, Dugon>
@@ -2448,6 +2494,62 @@ namespace Talos
                 return null;
             }
         }
+
+        private void AutomaticActions()
+        {
+            while (_initialized)
+            {
+                foreach (Client client in _clientList)
+                {
+                    try
+                    {
+                        if (client == null || client.ClientTab == null || client.ClientTab.startStrip == null)
+                            continue;
+
+                        string text = client.ClientTab.startStrip.Text;
+
+                        if (text == "Stop" && client.ClientTab.rangerLogCbox.Checked)
+                        {
+                            lock (client.Lock)
+                            {
+                                //request world list
+                                client.Enqueue(new Packet[] { new ClientPacket(0x18) });
+                            }
+                        }
+
+                        if (Settings.Default.enableKom && !string.IsNullOrEmpty(client.Name) && client._map != null &&
+                            client._map.MapID == 10055 && !client.Bot.IsStrangerNearby() &&
+                            client._serverLocation.DistanceFrom(new Location(10055, 39, 40)) <= 18 &&
+                            client.GetItemQuantity("Komadium") < 52)
+                        {
+                            int currentKoms = client.GetItemQuantity("Komadium");
+                            while (currentKoms < 52)
+                            {
+                                client.DisplayChant("I buy Komadium");
+                                currentKoms++;
+                            }
+                        }
+
+                        if (DateTime.UtcNow.Subtract(client.ClientTab._inventoryUpdateTime).TotalSeconds > 60.0)
+                        {
+                            client.ClientTab.UpdateInventoryAndWaypoints();
+                            client.ClientTab._inventoryUpdateTime = DateTime.UtcNow;
+                        }
+
+                        if (DateTime.UtcNow.Subtract(client.ClientTab._lastStatusUpdate).TotalSeconds > 3.0 && !client.isStatusUpdated)
+                        {
+                            client.ClientTab.UpdateClientStatus();
+                        }
+                    }
+                    catch
+                    {
+                        // Exception handling
+                    }
+                }
+                Thread.Sleep(5000); // Sleep for 5 seconds
+            }
+        }
+
 
     }
 }

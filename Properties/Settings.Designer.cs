@@ -82,5 +82,17 @@ namespace Talos.Properties {
                 this["paranoiaMode"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool enableKom {
+            get {
+                return ((bool)(this["enableKom"]));
+            }
+            set {
+                this["enableKom"] = value;
+            }
+        }
     }
 }
