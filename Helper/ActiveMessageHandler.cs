@@ -267,6 +267,15 @@ namespace Talos.Helper
                     case "Master Karurua Form"://Adam add others
                         client.EffectsBarHashSet.Add((ushort)EffectsBar.BirdForm);//need to figure out how to clear it because there is no orange message when it drops
                         break;
+                    case "beag pramh":
+                    case "pramh":
+                        if (creature != null)
+                        {
+                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
+                            Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}");
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
+                        break;
                     default:
                         Console.WriteLine($"[HandleSpellCastMessage] default case encountered");
                         Console.WriteLine($"[HandleSpellCastMessage] _creatureToSpellList.Count {client._creatureToSpellList.Count}");
@@ -445,15 +454,21 @@ namespace Talos.Helper
 
         private void HandleAlreadyCastMessage(Client client, string message)
         {
-            
+
             if (client._creatureToSpellList.Count > 0)
             {
-                if (client._currentSpell!= null && client._currentSpell.Name.Contains("fas"))
+                if (client._currentSpell != null && client._currentSpell.Name.Contains("fas"))
                 {
                     client._creatureToSpellList[0].Creature.LastFassed = DateTime.UtcNow;
                     client._creatureToSpellList[0].Creature.FasDuration = Spell.GetSpellDuration(client._currentSpell.Name);
                     if (client._creatureToSpellList[0].Creature.ID != client.Player.ID)
                         client.UpdateFasTargets(client, client._creatureToSpellList[0].Creature.ID, client._creatureToSpellList[0].Creature.FasDuration);
+                    client._currentSpell = null;
+                }
+                if (client._currentSpell != null && client._currentSpell.Name.Contains("pramh"))
+                {
+                    client._creatureToSpellList[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
+                    Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client._currentSpell = null;
                 }
 
@@ -754,7 +769,7 @@ namespace Talos.Helper
                     Console.WriteLine($"[HandleCurseMessage] Received 'another curse afflicts thee' message for {match.Groups[1].Value} on Creature ID: {client._creatureToSpellList[0].Creature?.ID}. Updating LastCursed.");
 
                     client._creatureToSpellList[0].Creature.LastCursed = DateTime.UtcNow;
-                    client._creatureToSpellList[0].Creature.CurseDuration = 30.0;
+                    client._creatureToSpellList[0].Creature.CurseDuration = Spell.GetSpellDuration(match.Groups[1].Value);
                     client._creatureToSpellList[0].Creature.Curse = match.Groups[1].Value;
                     if (client._creatureToSpellList[0].Creature.ID != client.Player.ID)
                         client.UpdateCurseTargets(client, client._creatureToSpellList[0].Creature.ID, match.Groups[1].Value);

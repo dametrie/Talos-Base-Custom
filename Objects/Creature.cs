@@ -95,12 +95,7 @@ namespace Talos.Objects
                 if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Mesmerize) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Mesmerize]).TotalSeconds >= 1.5))
                     return true;
 
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Pramh))
-                {
-                    Console.WriteLine("Pramh Time");
-                    Console.WriteLine(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Pramh]).TotalSeconds);
-                }
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Pramh) && (DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Pramh]).TotalSeconds < 2.0))
+                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Pramh) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Pramh]).TotalSeconds >= 3.5))
                 {
                     return true;
                 }

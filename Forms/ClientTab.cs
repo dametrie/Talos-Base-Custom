@@ -713,14 +713,16 @@ namespace Talos.Forms
             if (InvokeRequired) { BeginInvoke(new Action(() => { DisplayObject(worldObject); })); return; }
 
             lastClickedIDLbl.Text = "ID: " + worldObject.ID;
-            lastClickedNameLbl.Text = (worldObject.Name ?? "");
+            lastClickedNameLbl.Text = (worldObject.Name ?? " ");
 
-            if (worldObject is VisibleObject visibleObject)
+
+            if (worldObject is VisibleObject)
             {
-                lastClickedSpriteLbl.Text = "Sprite: " + visibleObject.SpriteID;
-                lastClickedSpriteLbl.Refresh();
+                lastClickedSpriteLbl.Text = "Sprite: " + (worldObject as VisibleObject).SpriteID;
+
             }
-                
+
+              
 
         }
 

@@ -531,7 +531,6 @@ namespace Talos.Base
                 // Check if the creature already has the given spell
                 if (DoesCreatureHaveSpellAlready(spellName, creature, client))
                 {
-
                     return false;
                 }
             }
@@ -618,7 +617,7 @@ namespace Talos.Base
                     case 3219892635: // beag pramh
                     case 2647647615: // pramh
                         if (!CreatureTarget.IsAsleep)
-                            CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 3, 500));
+                           CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 3, 500));
                         return true;
 
                     case 2756163491: // Fungus Beetle Extract
@@ -726,10 +725,10 @@ namespace Talos.Base
             // Guard clause for null creature
             if (creature == null)
             {
-                return false; // Assuming you want to return false if there's no creature to check against
+                return false;
             }
 
-            Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Current State: {creature.IsCursed}");
+           
 
             switch (spellName)
             {
@@ -742,6 +741,7 @@ namespace Talos.Base
                 case "Dark Seal":
                 case "Darker Seal":
                 case "Demise":
+                    Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Cursed: {creature.IsCursed}");
                     return creature.IsCursed;
                 case "Frost Arrow 1":
                 case "Frost Arrow 2":
@@ -757,6 +757,7 @@ namespace Talos.Base
                 case "beag pramh":
                 case "pramh":
                 case "Mesmerize":
+                    Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Asleep: {creature.IsAsleep}");
                     return creature.IsAsleep;
                 case "fas spiorad":
                     return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;
@@ -764,6 +765,7 @@ namespace Talos.Base
                 case "fas nadur":
                 case "mor fas nadur":
                 case "ard fas nadur":
+                    Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Fassed: {creature.IsFassed}");
                     return creature.IsFassed;
                 case "ao suain":
                     return creature.IsSuained;
@@ -1414,6 +1416,7 @@ namespace Talos.Base
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(3)
                         };
                         _creatureToSpellList.Add(newEntry);
+                        Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {creature?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
                         Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
                     }
                 }
@@ -1516,6 +1519,7 @@ namespace Talos.Base
                     }
                 }
                 Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {creature?.ID}, Name: {creature?.Name}");
+
                 Enqueue(clientPacket);
                 _spellCounter++;
                 Bot._lastCast = DateTime.UtcNow;
@@ -2359,6 +2363,7 @@ namespace Talos.Base
                         && IsCreatureNearby(creature, distance)
                         && creature.SpriteID > 0 && creature.SpriteID <= 1000
                         && !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID)
+                        && !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID)
                         && hashSet.Contains(creature.SpriteID))
                     {
                         creatureList.Add(creature);
@@ -2902,7 +2907,9 @@ namespace Talos.Base
 
         private bool IsValidCreature(Creature creature, int distance)
         {
-            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 && IsCreatureNearby(creature, distance);
+            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 && 
+                !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) && 
+                !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance);
         }
 
         private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)

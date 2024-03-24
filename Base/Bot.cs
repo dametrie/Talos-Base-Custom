@@ -559,61 +559,65 @@ namespace Talos.Base
 
         private bool DecideAndExecuteEngagementStrategy(EnemyPage enemyPage, List<Creature> creatureList)
         {
-            // Prioritize execution based on user selection in the EnemyPage
-            bool pramhFirst = enemyPage.pramhFirstRbtn.Checked;
-            bool spellFirst = enemyPage.spellFirstRbtn.Checked;
-
-            // Execute strategies based on the prioritization
-            return (pramhFirst && (ExecutePramhStrategy(enemyPage, creatureList) || ExecuteDebuffStrategy(enemyPage, creatureList))) ||
-                   (spellFirst && (ExecuteDebuffStrategy(enemyPage, creatureList) || ExecutePramhStrategy(enemyPage, creatureList)));
+            if (enemyPage.pramhFirstRbtn.Checked)
+            {
+                if (this.ExecutePramhStrategy(enemyPage, creatureList))
+                {
+                    return true;
+                }
+                if (this.ExecuteDebuffStrategy(enemyPage, creatureList))
+                {
+                    return true;
+                }
+            }
+            else if (enemyPage.spellFirstRbtn.Checked)
+            {
+                if (this.ExecuteDebuffStrategy(enemyPage, creatureList))
+                {
+                    return true;
+                }
+                if (this.ExecutePramhStrategy(enemyPage, creatureList))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private bool ExecuteDebuffStrategy(EnemyPage enemyPage, List<Creature> creatureList)
         {
-            // Filter out creatures that are either not fassed or not cursed
             List<Creature> eligibleCreatures = creatureList.Where(Bot.Delegates.NotFassedOrNotCursed).ToList();
-
-            // Proceed only if there are eligible creatures and either fas or curse is checked
-            if (!eligibleCreatures.Any() || !(enemyPage.spellsFasCbox.Checked || enemyPage.spellsCurseCbox.Checked))
+            if (eligibleCreatures != null && eligibleCreatures.Any() && (enemyPage.spellsFasCbox.Checked || enemyPage.spellsCurseCbox.Checked))
             {
-                return false;
+                if (enemyPage.fasFirstRbtn.Checked)
+                {
+                    if (this.CastFasIfApplicable(enemyPage, eligibleCreatures))
+                    {
+                        this.bool_13 = true;
+                        return true;
+                    }
+                    if (this.CastCurseIfApplicable(enemyPage, eligibleCreatures))
+                    {
+                        this.bool_13 = true;
+                        return true;
+                    }
+                }
+                else if (enemyPage.curseFirstRbtn.Checked)
+                {
+                    if (this.CastCurseIfApplicable(enemyPage, eligibleCreatures))
+                    {
+                        this.bool_13 = true;
+                        return true;
+                    }
+                    if (this.CastFasIfApplicable(enemyPage, eligibleCreatures))
+                    {
+                        this.bool_13 = true;
+                        return true;
+                    }
+                }
             }
-
-            // Determine the order of debuff casting based on user selection and attempt to cast
-            bool fasFirst = enemyPage.fasFirstRbtn.Checked;
-            bool curseFirst = enemyPage.curseFirstRbtn.Checked;
-
-            // Attempt to cast Fas if applicable and set bool_13 to true if successful
-            if (fasFirst && CastFasIfApplicable(enemyPage, eligibleCreatures))
-            {
-                this.bool_13 = true;
-                return true;
-            }
-
-            // Attempt to cast Curse if applicable and set bool_13 to true if successful
-            if (curseFirst && CastCurseIfApplicable(enemyPage, eligibleCreatures))
-            {
-                this.bool_13 = true;
-                return true;
-            }
-
-            // If Fas wasn't the first choice or wasn't successful, attempt to cast Curse
-            if (!fasFirst && CastCurseIfApplicable(enemyPage, eligibleCreatures))
-            {
-                this.bool_13 = true;
-                return true;
-            }
-
-            // If Curse wasn't the first choice or wasn't successful, attempt to cast Fas
-            if (!curseFirst && CastFasIfApplicable(enemyPage, eligibleCreatures))
-            {
-                this.bool_13 = true;
-                return true;
-            }
-
-            return false; // Return false if no spells were successfully cast
+            return false;
         }
-
         private bool CastCurseIfApplicable(EnemyPage enemyPage, List<Creature> creatures)
         {
             lock (Bot._lock)
@@ -676,20 +680,30 @@ namespace Talos.Base
 
         private bool ExecutePramhStrategy(EnemyPage enemyPage, List<Creature> creatures)
         {
-            var selectedCreatures = SelectCreaturesForPramh(enemyPage, creatures);
-
-            if (!selectedCreatures.Any() || !enemyPage.spellsControlCbox.Checked)
+            List<Creature> creatureList = this.FilterCreaturesByControlStatus(enemyPage, creatures);
+            if (CONSTANTS.GREEN_BOROS.Contains(enemyPage.Enemy.SpriteID))
             {
-                return false;
+                List<Creature> greenBorosInRange = Client.GetCreaturesInRange(8, CONSTANTS.GREEN_BOROS.ToArray());
+                foreach (Creature creature in greenBorosInRange.ToList<Creature>())
+                {
+                    foreach (Location location in Client.GetObstacleLocations(new Location(Client._map.MapID, 0, 0)))
+                    {
+                        if (creature.Location.DistanceFrom(location) <= 3)
+                        {
+                            greenBorosInRange.Remove(creature);
+                        }
+                    }
+                }
+                creatureList.AddRange(greenBorosInRange);
             }
-
-            Creature targetCreature = selectedCreatures.First();
-            if (!targetCreature.IsAsleep)
+            Creature targetCreature = creatureList.FirstOrDefault<Creature>();
+            Console.WriteLine($"[ExecutePramhStrategy] Attempting to cast 'pramh' on creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, IsAsleep: {targetCreature.IsAsleep}");
+            if (targetCreature != null && creatureList.Any() && enemyPage.spellsControlCbox.Checked && !targetCreature.IsAsleep)
             {
-                Client.UseSpell(enemyPage.spellsControlCombox.Text, targetCreature, this._autoStaffSwitch, false);
+                Console.WriteLine($"[ExecutePramhStrategy] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastPramhd: {DateTime.UtcNow}");
+                Client.UseSpell(enemyPage.spellsControlCombox.Text, creatureList.FirstOrDefault<Creature>(), this._autoStaffSwitch, false);
                 return true;
             }
-
             return false;
         }
 

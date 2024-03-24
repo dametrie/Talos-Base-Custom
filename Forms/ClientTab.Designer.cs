@@ -89,9 +89,6 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
-            this.manaBar = new Talos.Forms.UI.ResourceBar();
-            this.healthBar = new Talos.Forms.UI.ResourceBar();
-            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -244,6 +241,7 @@ namespace Talos.Forms
             this.btnResetAllStatus = new System.Windows.Forms.Button();
             this.customLinesGroup = new System.Windows.Forms.GroupBox();
             this.customLinesBox = new System.Windows.Forms.TextBox();
+            this.unifiedGuildChatCbox = new System.Windows.Forms.CheckBox();
             this.dmuGroup = new System.Windows.Forms.GroupBox();
             this.viewDMUCbox = new System.Windows.Forms.CheckBox();
             this.toggleShareCbox = new System.Windows.Forms.CheckBox();
@@ -286,10 +284,10 @@ namespace Talos.Forms
             this.renameText = new System.Windows.Forms.TextBox();
             this.renameCombox = new System.Windows.Forms.ComboBox();
             this.stuffGrp = new System.Windows.Forms.GroupBox();
+            this.deformCbox = new System.Windows.Forms.CheckBox();
             this.safeScreenCbox = new System.Windows.Forms.CheckBox();
             this.formNum = new System.Windows.Forms.NumericUpDown();
             this.formCbox = new System.Windows.Forms.CheckBox();
-            this.unifiedGuildChatCbox = new System.Windows.Forms.CheckBox();
             this.mapFlagsGroup = new System.Windows.Forms.GroupBox();
             this.darknessCbox = new System.Windows.Forms.CheckBox();
             this.mapSnowCbox = new System.Windows.Forms.CheckBox();
@@ -508,7 +506,9 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
-            this.deformCbox = new System.Windows.Forms.CheckBox();
+            this.manaBar = new Talos.Forms.UI.ResourceBar();
+            this.healthBar = new Talos.Forms.UI.ResourceBar();
+            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -689,9 +689,11 @@ namespace Talos.Forms
             // 
             // lastClickedSpriteLbl
             // 
-            this.lastClickedSpriteLbl.Location = new System.Drawing.Point(133, 133);
+            this.lastClickedSpriteLbl.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lastClickedSpriteLbl.AutoSize = true;
+            this.lastClickedSpriteLbl.Location = new System.Drawing.Point(113, 133);
             this.lastClickedSpriteLbl.Name = "lastClickedSpriteLbl";
-            this.lastClickedSpriteLbl.Size = new System.Drawing.Size(44, 23);
+            this.lastClickedSpriteLbl.Size = new System.Drawing.Size(40, 15);
             this.lastClickedSpriteLbl.TabIndex = 10;
             this.lastClickedSpriteLbl.Text = "Sprite:";
             // 
@@ -1278,41 +1280,6 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // manaBar
-            // 
-            this.manaBar.BackColor = System.Drawing.Color.White;
-            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.manaBar.Location = new System.Drawing.Point(65, 282);
-            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.manaBar.Name = "manaBar";
-            this.manaBar.Size = new System.Drawing.Size(50, 196);
-            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.manaBar.TabIndex = 15;
-            // 
-            // healthBar
-            // 
-            this.healthBar.BackColor = System.Drawing.Color.White;
-            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
-            this.healthBar.Location = new System.Drawing.Point(6, 282);
-            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.healthBar.Name = "healthBar";
-            this.healthBar.Size = new System.Drawing.Size(50, 196);
-            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.healthBar.TabIndex = 14;
-            // 
-            // chatPanel
-            // 
-            this.chatPanel.AutoDetectUrls = true;
-            this.chatPanel.BackColor = System.Drawing.Color.White;
-            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel.Name = "chatPanel";
-            this.chatPanel.ReadOnly = true;
-            this.chatPanel.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel.TabIndex = 0;
-            this.chatPanel.Text = "";
             // 
             // mainAislingsTab
             // 
@@ -3252,6 +3219,18 @@ namespace Talos.Forms
             this.customLinesBox.Size = new System.Drawing.Size(191, 154);
             this.customLinesBox.TabIndex = 193;
             // 
+            // unifiedGuildChatCbox
+            // 
+            this.unifiedGuildChatCbox.AutoSize = true;
+            this.unifiedGuildChatCbox.ForeColor = System.Drawing.Color.Black;
+            this.unifiedGuildChatCbox.Location = new System.Drawing.Point(633, 28);
+            this.unifiedGuildChatCbox.Name = "unifiedGuildChatCbox";
+            this.unifiedGuildChatCbox.Size = new System.Drawing.Size(123, 19);
+            this.unifiedGuildChatCbox.TabIndex = 1;
+            this.unifiedGuildChatCbox.Text = "Unified Guild Chat";
+            this.unifiedGuildChatCbox.UseVisualStyleBackColor = true;
+            this.unifiedGuildChatCbox.CheckedChanged += new System.EventHandler(this.unifiedGuildChatCbox_CheckedChanged);
+            // 
             // dmuGroup
             // 
             this.dmuGroup.Controls.Add(this.viewDMUCbox);
@@ -3742,6 +3721,17 @@ namespace Talos.Forms
             this.stuffGrp.TabStop = false;
             this.stuffGrp.Text = "Stuff";
             // 
+            // deformCbox
+            // 
+            this.deformCbox.AutoSize = true;
+            this.deformCbox.Location = new System.Drawing.Point(8, 47);
+            this.deformCbox.Name = "deformCbox";
+            this.deformCbox.Size = new System.Drawing.Size(151, 19);
+            this.deformCbox.TabIndex = 10;
+            this.deformCbox.Text = "Deform nearby stranger";
+            this.deformCbox.UseVisualStyleBackColor = true;
+            this.deformCbox.CheckedChanged += new System.EventHandler(this.deformCbox_CheckedChanged);
+            // 
             // safeScreenCbox
             // 
             this.safeScreenCbox.AutoSize = true;
@@ -3785,18 +3775,6 @@ namespace Talos.Forms
             this.formCbox.Text = "Monster Form";
             this.formCbox.UseVisualStyleBackColor = true;
             this.formCbox.CheckedChanged += new System.EventHandler(this.formCbox_CheckedChanged);
-            // 
-            // unifiedGuildChatCbox
-            // 
-            this.unifiedGuildChatCbox.AutoSize = true;
-            this.unifiedGuildChatCbox.ForeColor = System.Drawing.Color.Black;
-            this.unifiedGuildChatCbox.Location = new System.Drawing.Point(633, 28);
-            this.unifiedGuildChatCbox.Name = "unifiedGuildChatCbox";
-            this.unifiedGuildChatCbox.Size = new System.Drawing.Size(123, 19);
-            this.unifiedGuildChatCbox.TabIndex = 1;
-            this.unifiedGuildChatCbox.Text = "Unified Guild Chat";
-            this.unifiedGuildChatCbox.UseVisualStyleBackColor = true;
-            this.unifiedGuildChatCbox.CheckedChanged += new System.EventHandler(this.unifiedGuildChatCbox_CheckedChanged);
             // 
             // mapFlagsGroup
             // 
@@ -6311,16 +6289,40 @@ namespace Talos.Forms
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // deformCbox
+            // manaBar
             // 
-            this.deformCbox.AutoSize = true;
-            this.deformCbox.Location = new System.Drawing.Point(8, 47);
-            this.deformCbox.Name = "deformCbox";
-            this.deformCbox.Size = new System.Drawing.Size(151, 19);
-            this.deformCbox.TabIndex = 10;
-            this.deformCbox.Text = "Deform nearby stranger";
-            this.deformCbox.UseVisualStyleBackColor = true;
-            this.deformCbox.CheckedChanged += new System.EventHandler(this.deformCbox_CheckedChanged);
+            this.manaBar.BackColor = System.Drawing.Color.White;
+            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.manaBar.Location = new System.Drawing.Point(65, 282);
+            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.manaBar.Name = "manaBar";
+            this.manaBar.Size = new System.Drawing.Size(50, 196);
+            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.manaBar.TabIndex = 15;
+            // 
+            // healthBar
+            // 
+            this.healthBar.BackColor = System.Drawing.Color.White;
+            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
+            this.healthBar.Location = new System.Drawing.Point(6, 282);
+            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.healthBar.Name = "healthBar";
+            this.healthBar.Size = new System.Drawing.Size(50, 196);
+            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.healthBar.TabIndex = 14;
+            // 
+            // chatPanel
+            // 
+            this.chatPanel.AutoDetectUrls = true;
+            this.chatPanel.BackColor = System.Drawing.Color.White;
+            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel.Name = "chatPanel";
+            this.chatPanel.ReadOnly = true;
+            this.chatPanel.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel.TabIndex = 0;
+            this.chatPanel.Text = "";
             // 
             // ClientTab
             // 
@@ -6339,6 +6341,7 @@ namespace Talos.Forms
             this.Size = new System.Drawing.Size(850, 568);
             this.clientTabControl.ResumeLayout(false);
             this.mainCoverTab.ResumeLayout(false);
+            this.mainCoverTab.PerformLayout();
             this.coverMapInfoGrp.ResumeLayout(false);
             this.friendsGroup.ResumeLayout(false);
             this.strangerGroup.ResumeLayout(false);
