@@ -47,9 +47,12 @@ namespace Talos.Forms
                 { "Mermaid", "Mermaid" },
                 { "Star Arrow", "Star Arrow" },
                 { "Barrage", "Barrage" },
+                { "ard pian na dion", "A/M/PND" },
+                { "mor pian na dion", "A/M/PND" },
                 { "pian na dion", "A/M/PND" },
                 { "deo searg", "A/DS" },
-                { "Deception of Life", "DOL" },
+                { "ard deo searg", "A/DS" },
+                { "Deception of Life", "Deception of Life" },
                 { "Dragon Blast", "Dragon Blast" },
                 { "Frost Arrow", "Frost Arrow" },
                 { "lamh", "lamh" }
@@ -62,15 +65,17 @@ namespace Talos.Forms
                 { "Volley", "Volley" },
                 { "Unholy Explosion", "Unholy Explosion" },
                 { "deo searg gar", "M/DSG" },
+                { "mor searg gar", "M/DSG" },
                 { "Shock Arrow", "Shock Arrow" }
             };
 
             UIHelper.SetupComboBox(spellsCurseCombox, new[] { "Demise", "Darker Seal", "Dark Seal", "ard cradh", "mor cradh", "cradh", "beag cradh" }, spellsCurseCbox);
             UIHelper.SetupComboBox(spellsFasCombox, new[] { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" }, spellsFasCbox);
             UIHelper.SetupComboBox(spellsControlCombox, new[] { "Mesmerize", "pramh", "beag pramh", "suain" }, spellsControlCbox);
-            UIHelper.SetupComboBox(attackComboxOne, new[] { "Hail of Feathers", "Keeter", "Groo", "Torch", "Mermaid", "Star Arrow", "Barrage", "pian na dion", "pian na dion", "deo searg", "Deception of Life", "Dragon Blast", "Frost Arrow", "lamh" }, attackCboxOne, null, null, null, partialMatch: true, abbreviations: singleTarget);
+            UIHelper.SetupComboBox(attackComboxOne, new[] { "Hail of Feathers", "Keeter", "Groo", "Torch", "Mermaid", "Star Arrow", "Barrage", "ard pian na dion", "mor pian na dion", "pian na dion", "deo searg", "Deception of Life", "Dragon Blast", "Frost Arrow", "lamh" }, attackCboxOne, null, null, null, partialMatch: true, abbreviations: singleTarget);
             UIHelper.SetupComboBox(attackComboxTwo, new[] { "mor strioch pian gar", "Cursed Tune", "Supernova Shot", "Volley", "Unholy Explosion", "deo searg gar", "Shock Arrow"}, attackCboxTwo, null, null, null, partialMatch: true, abbreviations: multiTarget);
-            UIHelper.SetupCheckbox(mpndSilenced, "pian na dion");
+            UIHelper.SetupCheckbox(mpndSilenced, "ard pian na dion", "mor pian na dion", "pian na dion");
+            UIHelper.SetupCheckbox(mpndDioned, "ard pian na dion", "mor pian na dion", "pian na dion");
             UIHelper.SetupCheckbox(mspgSilenced, "mor strioch pian gar");
             UIHelper.SetupCheckbox(mspgPct, "mor strioch pian gar");
 
@@ -164,6 +169,64 @@ namespace Talos.Forms
             Client.RequestRefresh(false);
         }
 
+        private void priorityAddBtn_Click(object sender, EventArgs e)
+        {
+            if (ushort.TryParse(priorityTbox.Text, out ushort result) && result >= 1 && result <= 1000)
+            {
+                if (priorityLbox.Items.Contains(result.ToString()))
+                {
+                    MessageDialog.Show(Client._server._mainForm, "\tEnemy already in list\t");
+                    priorityTbox.Clear();
+                }
+                else
+                {
+                    priorityLbox.Items.Add(result.ToString());
+                    priorityTbox.Clear();
+                }
+            }
+            else
+            {
+                MessageDialog.Show(Client._server._mainForm, "Your sprite must be a number between 1-1000");
+                priorityTbox.Clear();
+            }
+        }
 
+        private void priorityRemoveBtn_Click(object sender, EventArgs e)
+        {
+            while (priorityLbox.SelectedItems.Count > 0)
+            {
+                priorityLbox.Items.RemoveAt(priorityLbox.SelectedIndex);
+            }
+        }
+
+        private void ignoreAddBtn_Click(object sender, EventArgs e)
+        {
+            if (ushort.TryParse(ignoreTbox.Text, out ushort result) && result >= 1 && result <= 1000)
+            {
+                if (priorityLbox.Items.Contains(result.ToString()))
+                {
+                    MessageDialog.Show(Client._server._mainForm, "\tEnemy already in list\t");
+                    ignoreTbox.Clear();
+                }
+                else
+                {
+                    ignoreLbox.Items.Add(result.ToString());
+                    ignoreTbox.Clear();
+                }
+            }
+            else
+            {
+                MessageDialog.Show(Client._server._mainForm, "Your sprite must be a number between 1-1000");
+                ignoreTbox.Clear();
+            }
+        }
+
+        private void ignoreRemoveBtn_Click(object sender, EventArgs e)
+        {
+            		while (ignoreLbox.SelectedItems.Count > 0)
+		{
+			ignoreLbox.Items.RemoveAt(ignoreLbox.SelectedIndex);
+		}
+        }
     }
 }

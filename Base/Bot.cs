@@ -255,7 +255,7 @@ namespace Talos.Base
 
         private bool autoRedConditionsMet()
         {
-            return _playersExistingOver250ms != null && Client.ClientTab.autoRedCbox.Checked;
+           return Client.ClientTab!= null && _playersExistingOver250ms != null && Client.ClientTab.autoRedCbox.Checked;
         }
 
         private void HandleAutoRed()
@@ -547,20 +547,14 @@ namespace Talos.Base
         private bool CastAttackSpell(EnemyPage enemyPage, List<Creature> creatureList)
         {
             bool result = false;
-            if (!enemyPage.targetCbox.Checked)
+
+            if (!enemyPage.targetCbox.Checked || creatureList.Count == 0)
             {
                 return false;
             }
-            if (creatureList.Count == 0)
-            {
-                return false;
-            }
+
             if (enemyPage.spellOneRbtn.Checked)
             {
-                if (creatureList.Count == 0)
-                {
-                    return false;
-                }
                 if (!creatureList.Contains(this.creature))
                 {
                     this.creature = creatureList.OrderBy(new Func<Creature, int>(this.DistanceFromClientLocation)).FirstOrDefault<Creature>();
@@ -569,7 +563,7 @@ namespace Talos.Base
                 {
                     return false;
                 }
-                    creatureList = new List<Creature>
+                creatureList = new List<Creature>
                 {
                     this.creature
                 };
@@ -603,79 +597,40 @@ namespace Talos.Base
                     {
                         string spellName = enemyPage.attackComboxTwo.Text;
                         uint fnvHash = Utility.CalculateFNV(spellName);
-                        if (fnvHash <= 1792178996U)
+
+                        switch (fnvHash)
                         {
-                            if (fnvHash != 1007116742U)
-                            {
-                                if (fnvHash != 1285349432U)
-                                {
-                                    if (fnvHash == 1792178996U)
-                                    {
-                                        if (spellName == "Volley" && Client.UseSpell("Volley", target, this._autoStaffSwitch, true))
-                                        {
-                                            return true;
-                                        }
-                                    }
-                                }
-                                else if (spellName == "Shock Arrow" && Client.UseSpell("Shock Arrow", target, this._autoStaffSwitch, false) && Client.UseSpell("Shock Arrow", target, this._autoStaffSwitch, false))
-                                {
-                                    return true;
-                                }
-                            }
-                            else if (spellName == "Supernova Shot" && Client.UseSpell("Supernova Shot", target, this._autoStaffSwitch, false))
-                            {
-                                return true;
-                            }
-                        }
-                        else if (fnvHash <= 3122026787U)
-                        {
-                            if (fnvHash != 2591503996U)
-                            {
-                                if (fnvHash == 3122026787U)
-                                {
-                                    if (spellName == "Unholy Explosion" && Client.UseSpell("Unholy Explosion", target, this._autoStaffSwitch, false))
-                                    {
-                                        return true;
-                                    }
-                                }
-                            }
-                            else if (spellName == "MSPG")
-                            {
+                            case 1007116742U: // Supernova Shot
+                                return Client.UseSpell("Supernova Shot", target, this._autoStaffSwitch, false);
+
+                            case 1285349432U: // Shock Arrow
+                                return Client.UseSpell("Shock Arrow", target, this._autoStaffSwitch, false) && 
+                                       Client.UseSpell("Shock Arrow", target, this._autoStaffSwitch, false);
+
+                            case 1792178996U: // Volley
+                                return Client.UseSpell("Volley", target, this._autoStaffSwitch, true);
+
+                            case 2591503996U: // MSPG
                                 if (enemyPage.mspgPct.Checked && Client.ManaPct < 80)
                                 {
                                     this._manaLessThanEightyPct = true;
                                     Client.UseSpell("fas spiorad", null, this._autoStaffSwitch, false);
                                     return true;
                                 }
-                                Client.UseSpell("mor strioch pian gar", Client.Player, this._autoStaffSwitch, true);
-                                return true;
-                            }
-                        }
-                        else if (fnvHash != 3210331623U)
-                        {
-                            if (fnvHash == 3848328981U)
-                            {
-                                if (spellName == "M/DSG")
-                                {
-                                    if (!Client.UseSpell("mor deo searg gar", Client.Player, this._autoStaffSwitch, false))
-                                    {
-                                        if (Client.UseSpell("deo searg gar", Client.Player, this._autoStaffSwitch, false))
-                                        {
-                                            return true;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        return true;
-                                    }
-                                }
-                            }
-                        }
-                        else if (spellName == "Cursed Tune" && this.TryCastAnyRank("Cursed Tune", target, this._autoStaffSwitch, false))
-                        {
-                            return true;
-                        }
+                                return Client.UseSpell("mor strioch pian gar", Client.Player, this._autoStaffSwitch, true);
+
+
+                            case 3122026787U: // Unholy Explosion
+                                return Client.UseSpell("Unholy Explosion", target, this._autoStaffSwitch, false);
+
+                            case 3210331623U: // Cursed Tune
+                                return this.TryCastAnyRank("Cursed Tune", target, this._autoStaffSwitch, false);
+
+                            case 3848328981U: // M/DSG
+                                return Client.UseSpell("mor deo searg gar", Client.Player, this._autoStaffSwitch, false) || 
+                                       Client.UseSpell("deo searg gar", Client.Player, this._autoStaffSwitch, false);        
                     }
+                }
                 }
                 if (enemyPage.attackCboxOne.Checked)
                 {
@@ -683,25 +638,23 @@ namespace Talos.Base
                     if (target != null)
                     {
                         string spellName = enemyPage.attackComboxOne.Text;
-                        if (spellName == "lamh")
+                        switch (spellName)
                         {
-                            if (!Client.TryUseAnySpell(new[] { "beag athar lamh", "beag srad lamh", "athar lamh", "srad lamh" }, null, _autoStaffSwitch, false))
-                            {
-                                Client.UseSpell("Howl", null, _autoStaffSwitch, false);
-                            }
-                            return true;
-                        }
-                        else if (spellName == "A/DS")
-                        {
-                            return Client.TryUseAnySpell(new[] { "ard deo searg", "deo searg" }, target, _autoStaffSwitch, false);
-                        }
-                        else if (spellName == "A/M/PND")
-                        {
-                            return Client.TryUseAnySpell(new[] { "ard pian na dion", "mor pian na dion", "pian na dion" }, target, _autoStaffSwitch, false);
-                        }
-                        else
-                        {
-                            return Client.UseSpell(spellName, target, _autoStaffSwitch, false) || TryCastAnyRank(spellName, target, _autoStaffSwitch, false);
+                            case "lamh":
+                                return Client.TryUseAnySpell(new[] { "beag athar lamh", "beag srad lamh", "athar lamh", "srad lamh", "Howl" }, null, _autoStaffSwitch, false);
+
+                            case "A/DS":
+                                return Client.TryUseAnySpell(new[] { "ard deo searg", "deo searg" }, target, _autoStaffSwitch, false);
+
+                            case "A/M/PND":
+                                return Client.TryUseAnySpell(new[] { "ard pian na dion", "mor pian na dion", "pian na dion" }, target, _autoStaffSwitch, false);
+
+                            case "Frost Arrow":
+                                //return TryCastAnyRank("Frost Arrow", target, _autoStaffSwitch, false);
+                                return Client.UseSpell("Frost Arrow 4", target, _autoStaffSwitch, false);//Adam fix. Not casting frost arrow
+
+                            default:
+                                return Client.UseSpell(spellName, target, _autoStaffSwitch, false) || TryCastAnyRank(spellName, target, _autoStaffSwitch, false);
                         }
                     }
                 }
@@ -718,10 +671,9 @@ namespace Talos.Base
             if (enemyPage.mspgPct.Checked && Client.ManaPct < 80)
             {
                 this._manaLessThanEightyPct = true;
-                Client.UseSpell("fas spiorad", null, this._autoStaffSwitch, false);
-                return true;
+                return Client.UseSpell("fas spiorad", null, this._autoStaffSwitch, false); ;
             }
-            Client.UseSpell("mor strioch pian gar", Client.Player, this._autoStaffSwitch, true);
+            Client.UseSpell("mor strioch pian gar", Client.Player, this._autoStaffSwitch, true); //Adam check this
             return true;
         }
 
@@ -781,22 +733,6 @@ namespace Talos.Base
 
             // If the method reaches this point, it means no spells were cast successfully on any of the creatures
             return false;
-        }
-
-
-        private void MoveToNextCreature(List<Creature> creatureList)
-        {
-            int currentIndex = creatureList.IndexOf(this.creature);
-            if (currentIndex != -1 && currentIndex < creatureList.Count - 1)
-            {
-                // Move to the next creature in the list
-                this.creature = creatureList[currentIndex + 1];
-            }
-            else
-            {
-                // Reset to the first creature in the list if at the end or not found
-                this.creature = creatureList.FirstOrDefault();
-            }
         }
 
         private bool CastFasOrCurse(EnemyPage enemyPage, Creature creature)
@@ -867,29 +803,42 @@ namespace Talos.Base
             {
                 if (enemyPage.fasFirstRbtn.Checked)
                 {
-                    if (this.CastFasIfApplicable(enemyPage, eligibleCreatures))
+                    if (enemyPage.spellsFasCbox.Checked)
                     {
-                        this.bool_13 = true;
-                        return true;
+                        if (this.CastFasIfApplicable(enemyPage, eligibleCreatures))
+                        {
+                            this.bool_13 = true;
+                            return true;
+                        }
                     }
-                    if (this.CastCurseIfApplicable(enemyPage, eligibleCreatures))
+                    if (enemyPage.spellsCurseCbox.Checked)
                     {
-                        this.bool_13 = true;
-                        return true;
+                        if (this.CastCurseIfApplicable(enemyPage, eligibleCreatures))
+                        {
+                            this.bool_13 = true;
+                            return true;
+                        }
                     }
                 }
                 else if (enemyPage.curseFirstRbtn.Checked)
                 {
-                    if (this.CastCurseIfApplicable(enemyPage, eligibleCreatures))
+                    if (enemyPage.spellsCurseCbox.Checked)
                     {
-                        this.bool_13 = true;
-                        return true;
+                        if (this.CastCurseIfApplicable(enemyPage, eligibleCreatures))
+                        {
+                            this.bool_13 = true;
+                            return true;
+                        }
                     }
-                    if (this.CastFasIfApplicable(enemyPage, eligibleCreatures))
+                    if (enemyPage.spellsFasCbox.Checked)
                     {
-                        this.bool_13 = true;
-                        return true;
+                        if (this.CastFasIfApplicable(enemyPage, eligibleCreatures))
+                        {
+                            this.bool_13 = true;
+                            return true;
+                        }
                     }
+
                 }
             }
             return false;
@@ -1308,16 +1257,14 @@ namespace Talos.Base
         private void AoSuain()
         {
             // Check if Ao Suain is enabled and the Suain effect is present before attempting to cast spells.
-            if (!Client.ClientTab.aoSuainCbox.Checked || 
-                !Client.HasEffect(EffectsBar.Suain))
+            if (!Client.ClientTab.aoSuainCbox.Checked || !Client.HasEffect(EffectsBar.Suain))
             {
                 return;
             }
 
             // Attempt to cast "Leafhopper Chirp" first. If it fails, attempt to cast "ao suain".
             // Only clear the Suain effect if one of the spells is successfully cast.
-            if (Client.UseSpell("Leafhopper Chirp", null, false, false) ||
-                Client.UseSpell("ao suain", Client.Player, false, true))
+            if (Client.UseSpell("Leafhopper Chirp", null, false, false) || Client.UseSpell("ao suain", Client.Player, false, true))
             {
                 Client.ClearEffect(EffectsBar.Suain);
             }
@@ -1346,7 +1293,9 @@ namespace Talos.Base
 
         private void CheckFasSpioradRequirement()
         {
-            if (Client.ClientTab.fasSpioradCbox.Checked && int.TryParse(base.Client.ClientTab.fasSpioradText.Text.Trim(), out int requiredMp) && Client.ManaPct < requiredMp)
+            int requiredMp;
+
+            if (Client.ClientTab.fasSpioradCbox.Checked && int.TryParse(Client.ClientTab.fasSpioradText.Text.Trim(), out requiredMp) && Client.ManaPct < requiredMp)
             {
                 _needFasSpiorad = true;
             }

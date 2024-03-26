@@ -157,6 +157,7 @@
             this.priorityAddBtn.TabIndex = 3;
             this.priorityAddBtn.Text = "Add";
             this.priorityAddBtn.UseVisualStyleBackColor = true;
+            this.priorityAddBtn.Click += new System.EventHandler(this.priorityAddBtn_Click);
             // 
             // priorityRemoveBtn
             // 
@@ -167,6 +168,7 @@
             this.priorityRemoveBtn.TabIndex = 2;
             this.priorityRemoveBtn.Text = "Remove Selected";
             this.priorityRemoveBtn.UseVisualStyleBackColor = true;
+            this.priorityRemoveBtn.Click += new System.EventHandler(this.priorityRemoveBtn_Click);
             // 
             // priorityTbox
             // 
@@ -356,6 +358,7 @@
             this.ignoreAddBtn.TabIndex = 9;
             this.ignoreAddBtn.Text = "Add";
             this.ignoreAddBtn.UseVisualStyleBackColor = true;
+            this.ignoreAddBtn.Click += new System.EventHandler(this.ignoreAddBtn_Click);
             // 
             // ignoreRemoveBtn
             // 
@@ -366,6 +369,7 @@
             this.ignoreRemoveBtn.TabIndex = 8;
             this.ignoreRemoveBtn.Text = "Remove Selected";
             this.ignoreRemoveBtn.UseVisualStyleBackColor = true;
+            this.ignoreRemoveBtn.Click += new System.EventHandler(this.ignoreRemoveBtn_Click);
             // 
             // ignoreTbox
             // 

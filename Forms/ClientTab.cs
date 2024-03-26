@@ -104,6 +104,19 @@ namespace Talos.Forms
 
             OnlyDisplaySpellsWeHave();
 
+            AddClientToFriends();
+            
+            
+
+        }
+
+        private void AddClientToFriends()
+        {
+            if (!_client._friendBindingList.Contains(_client.Name))
+            {
+                UpdateBindingList(_client._friendBindingList, friendList, _client.Name);
+                _client._strangerBindingList.Remove(_client.Name);
+            }
         }
 
         private void OnlyDisplaySpellsWeHave()
