@@ -547,21 +547,28 @@ namespace Talos.Base
                 uint num = Utility.CalculateFNV(spell);
                 switch (num)
                 {
-                    case 72064257: // mor dion
-                    case 249286892: // Iron Skin
-                    case 3740145550: // asgall faileas
-                    case 3777649476: // Stone Skin
-                    case 2579487986: // Wings of Protection
-                    case 2454795333: // draco stance
-                    case 1484963323: // deireas faileas
-                    case 1645955527: // dion
-                        return true;
-
                     case 420187390: // beag fas nadur
                     case 2476745328: // fas nadur
                     case 1149628551: // mor fas nadur
                     case 107956092: // ard fas nadur
                         if (!CreatureTarget.IsFassed) return true;
+                        return false;
+                    
+                    case 2848971440: // beag cradh
+                    case 1154413499: // cradh
+                    case 1281358573: // mor cradh
+                    case 2118188214: // ard cradh
+                    case 1928539694: // Dark Seal
+                    case 219207967: // Darker Seal
+                    case 928817768: // Demise
+                        if (!CreatureTarget.IsCursed) return true;
+                        return false;
+
+                    case 2112563240: // beag naomh aite
+                    case 291448073: // naomh aite
+                    case 2761324515: // mor naomh aite
+                    case 443271170: // ard naomh aite
+                        if (!CreatureTarget.IsAited) return true;
                         return false;
 
                     case 195270534: // Wake Scroll
@@ -573,25 +580,6 @@ namespace Talos.Base
                                 player.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
                             }
                         }
-                        return false;
-
-                    case 2848971440: // beag cradh
-                    case 1154413499: // cradh
-                    case 1281358573: // mor cradh
-                    case 2118188214: // ard cradh
-                    case 1928539694: // Dark Seal
-                    case 219207967: // Darker Seal
-                    case 928817768: // Demise
-                        if (!CreatureTarget.IsCursed)
-                            return true;
-                        return false;
-
-                    case 2112563240: // beag naomh aite
-                    case 291448073: // naomh aite
-                    case 2761324515: // mor naomh aite
-                    case 443271170: // ard naomh aite
-                        if (!CreatureTarget.IsAited)
-                            return true;
                         return false;
 
                     case 810175405: // ao suain
@@ -611,13 +599,9 @@ namespace Talos.Base
                             CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow.Subtract(new TimeSpan(0, 2, 25));
                         return true;
 
-                    case 2592944103: // Mesmerize
-                        if (!CreatureTarget.IsAsleep)
-                            CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Mesmerize] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 3, 500));
-                        return true;
-
                     case 3219892635: // beag pramh
                     case 2647647615: // pramh
+                    case 2592944103: // Mesmerize
                         if (CreatureTarget.IsAsleep)
                         {
                             Console.WriteLine("ReadyToSpell: Creature is already asleep, returning false");
@@ -625,7 +609,7 @@ namespace Talos.Base
                         }
                         else 
                         { 
-                            Console.WriteLine("ReadyToSpell: Creature is not asleep, can cast Pramh returning true");
+                            Console.WriteLine("ReadyToSpell: Creature is not asleep, can cast Pramh, returning true");
                             return true;
                         }
 
@@ -661,9 +645,7 @@ namespace Talos.Base
                     case 2983429004: // Frost Arrow 8
                     case 3000206623: // Frost Arrow 9
                     case 2718832517: // Frost Arrow 10
-                                     //if (!CreatureTarget.IsFrozen)
-                                     //    CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.FrostArrow] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 1));
-                                     //return true;
+                    case 2702054898: // Frost Arrow 11
                         if (CreatureTarget.IsFrozen)
                         {
                             Console.WriteLine("ReadyToSpell: Creature is already asleep, returning false");
@@ -671,9 +653,32 @@ namespace Talos.Base
                         }
                         else
                         {
-                            Console.WriteLine("ReadyToSpell: Creature is not asleep, can cast Pramh returning true");
+                            Console.WriteLine("ReadyToSpell: Creature is not asleep, can cast Frost Arrow, returning true");
                             return true;
                         }
+                    case 2292268700: // Cursed Tune 1
+                    case 2342601557: // Cursed Tune 2
+                    case 2325823938: // Cursed Tune 3
+                    case 2241935843: // Cursed Tune 4
+                    case 2225158224: // Cursed Tune 5
+                    case 2275491081: // Cursed Tune 6
+                    case 2258713462: // Cursed Tune 7
+                    case 2443267271: // Cursed Tune 8
+                    case 2426489652: // Cursed Tune 9
+                    case 3252005060: // Cursed Tune 10
+                    case 3268782679: // Cursed Tune 11
+                    case 3285560298: // Cursed Tune 12
+                        if (CreatureTarget.HasCursedTunes)
+                        {
+                            Console.WriteLine("ReadyToSpell: Creature already has CT, returning false");
+                            return false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("ReadyToSpell: Creature does not have CT, can cast CT, returning true");
+                            return true;
+                        }
+
 
                     default:
                         return true;
@@ -1384,7 +1389,8 @@ namespace Talos.Base
 
             if (Spellbook[spellName] == null)
             {
-                ServerMessage(0, $"Spell {spellName} not found in spellbook");
+                //ServerMessage(0, $"Spell {spellName} not found in spellbook");
+                //Console.WriteLine($"Spell {spellName} not found in spellbook");
                 return false;
             }
 

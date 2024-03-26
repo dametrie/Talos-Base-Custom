@@ -197,15 +197,11 @@ namespace Talos.Helper
                     case "Demise":
                         if (creature != null)
                         {
-
                             creature.Curse = spellName;
                             creature.CurseDuration = Spell.GetSpellDuration(spellName);
                             creature.LastCursed = DateTime.UtcNow;
                             if (creature.ID != client.Player.ID)
                                 client.UpdateCurseTargets(client, creature.ID, spellName);
-                            //Console.WriteLine($"Creature ID: {creature.ID} - Creature Name: {creature.Name}" +
-                            //$" - Creature Curse: {creature.Curse} - Creature Curse Duration: {creature.CurseDuration}" +
-                            //$" - Creature Total Seconds since Last Cursed: {DateTime.UtcNow.Subtract(creature.LastCursed).TotalSeconds}");
                             Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastCursed updated to {creature?.LastCursed}");
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
@@ -293,6 +289,54 @@ namespace Talos.Helper
                             creature.LastFrostArrow = DateTime.UtcNow;
                             creature.FrostArrowDuration = Spell.GetSpellDuration(spellName);
                             Console.WriteLine($"[UpdateSpellAnimationHistory] 'Frost Arrow' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Sleep Duration: {creature.FrostArrowDuration}");
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
+                        break;
+                    case "Cursed Tune 1":
+                    case "Cursed Tune 2":
+                    case "Cursed Tune 3":
+                    case "Cursed Tune 4":
+                    case "Cursed Tune 5":
+                    case "Cursed Tune 6":
+                    case "Cursed Tune 7":
+                    case "Cursed Tune 8":
+                    case "Cursed Tune 9":
+                    case "Cursed Tune 10":
+                    case "Cursed Tune 11":
+                    case "Cursed Tune 12":
+                        if (creature != null)
+                        {
+                            creature.SpellAnimationHistory[(ushort)SpellAnimation.CursedTunePoison] = DateTime.UtcNow;
+                            creature.LastCursedTune = DateTime.UtcNow;
+                            creature.CursedTuneDuration = Spell.GetSpellDuration(spellName);
+                            Console.WriteLine($"[UpdateSpellAnimationHistory] 'Cursed Tune' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, CT Duration: {creature.CursedTuneDuration}");
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
+                        break;
+                    case "Regeneration 1":
+                    case "Regeneration 2":
+                    case "Regeneration 3":
+                    case "Regeneration 4":
+                    case "Regeneration 5":
+                    case "Regeneration 6":
+                    case "Regeneration 7":
+                    case "Regeneration 8":
+                    case "Regeneration 9":
+                    case "Regeneration 10":
+                        if (creature != null)
+                        {
+                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Regeneration] = DateTime.UtcNow;
+                            creature.LastRegen = DateTime.UtcNow;
+                            creature.RegenDuration = Spell.GetSpellDuration(spellName);
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
+                        break;
+                    case "Increased Regeneration":
+                        if (creature != null)
+                        {
+                            creature.SpellAnimationHistory[(ushort)SpellAnimation.IncreasedRegeneration] = DateTime.UtcNow;
+                            creature.LastIncreasedRegen = DateTime.UtcNow;
+                            creature.IncreasedRegenDuration = Spell.GetSpellDuration(spellName);
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;

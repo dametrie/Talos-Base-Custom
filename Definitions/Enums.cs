@@ -234,9 +234,11 @@ namespace Talos.Enumerations
         IncreasedRegeneration = 170,
         CounterAttack = 184,
         Regeneration = 187,
+        CursedTune = 192,
         FrostArrow = 235,
         GreenBubblePoison = 247,
         MedeniaPoison = 295,
+        CursedTunePoison = 295,
         FrostStrike = 377,
 
     }

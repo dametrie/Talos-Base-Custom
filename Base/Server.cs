@@ -1358,7 +1358,7 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x29_Animation(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x29_Animation(Client client, ServerPacket serverPacket) //Adam do this
         {
             return true;
         }

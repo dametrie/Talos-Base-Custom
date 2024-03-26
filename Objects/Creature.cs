@@ -24,12 +24,18 @@ namespace Talos.Objects
         internal DateTime LastArmachd { get; set; }
         internal DateTime LastPramhed { get; set; }
         internal DateTime LastFrostArrow { get; set; }
+        internal DateTime LastCursedTune { get; set; }
+        internal DateTime LastRegen { get; set; }
+        internal DateTime LastIncreasedRegen { get; set; }
         internal double CurseDuration { get; set; }
         internal double FasDuration { get; set; }
         internal double AiteDuration { get; set; }
         internal double DionDuration { get; set; }
         internal double PramhDuration { get; set; } 
         internal double FrostArrowDuration { get; set; }
+        internal double CursedTuneDuration { get; set; }
+        internal double RegenDuration { get; set; }
+        internal double IncreasedRegenDuration { get; set; }
         internal Dictionary<ushort, DateTime> SpellAnimationHistory { get; set; }
         internal Dictionary<ushort, DateTime> SourceAnimationHistory { get; set; }
         internal CreatureType Type { get; set; }
@@ -55,6 +61,10 @@ namespace Talos.Objects
         internal bool IsAited => DateTime.UtcNow.Subtract(LastAited).TotalSeconds < AiteDuration;
         internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
         internal bool IsFrozen => DateTime.UtcNow.Subtract(LastFrostArrow).TotalSeconds < FrostArrowDuration;
+        internal bool HasCursedTunes => DateTime.UtcNow.Subtract(LastCursedTune).TotalSeconds < CursedTuneDuration;
+        internal bool HasRegen => DateTime.UtcNow.Subtract(LastRegen).TotalSeconds < RegenDuration;
+        internal bool HasIncreasedRegen => DateTime.UtcNow.Subtract(LastIncreasedRegen).TotalSeconds < IncreasedRegenDuration;
+
 
         internal bool HasArmachd
         {
