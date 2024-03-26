@@ -40,6 +40,17 @@ namespace Talos.Objects
         internal static Dictionary<string, double> SpellDuration = new Dictionary<string, double>
         {
             { "Cursed Tune", 3.5 },
+            { "Frost Arrow 1", 4.0 },
+            { "Frost Arrow 2", 4.0 },
+            { "Frost Arrow 3", 4.0 },
+            { "Frost Arrow 4", 4.0 },
+            { "Frost Arrow 5", 4.0 },
+            { "Frost Arrow 6", 4.0 },
+            { "Frost Arrow 7", 4.0 },
+            { "Frost Arrow 8", 4.0 },
+            { "Frost Arrow 9", 4.0 },
+            { "Frost Arrow 10", 4.0 },
+            { "Frost Arrow 11", 4.0 },
             { "dionLR", 8.0 },
             { "dion", 10.0 },
             { "Draco Stance", 10.0 },

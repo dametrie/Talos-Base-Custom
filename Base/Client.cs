@@ -661,9 +661,19 @@ namespace Talos.Base
                     case 2983429004: // Frost Arrow 8
                     case 3000206623: // Frost Arrow 9
                     case 2718832517: // Frost Arrow 10
-                        if (!CreatureTarget.IsFrozen)
-                            CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.FrostArrow] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 1));
-                        return true;
+                                     //if (!CreatureTarget.IsFrozen)
+                                     //    CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.FrostArrow] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 1));
+                                     //return true;
+                        if (CreatureTarget.IsFrozen)
+                        {
+                            Console.WriteLine("ReadyToSpell: Creature is already asleep, returning false");
+                            return false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("ReadyToSpell: Creature is not asleep, can cast Pramh returning true");
+                            return true;
+                        }
 
                     default:
                         return true;

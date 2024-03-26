@@ -276,6 +276,26 @@ namespace Talos.Helper
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+                    case "Frost Arrow 1":
+                    case "Frost Arrow 2":
+                    case "Frost Arrow 3":
+                    case "Frost Arrow 4":
+                    case "Frost Arrow 5":
+                    case "Frost Arrow 6":
+                    case "Frost Arrow 7":
+                    case "Frost Arrow 8":
+                    case "Frost Arrow 9":
+                    case "Frost Arrow 10":
+                    case "Frost Arrow 11":
+                        if (creature != null)
+                        {
+                            creature.SpellAnimationHistory[(ushort)SpellAnimation.FrostArrow] = DateTime.UtcNow;
+                            creature.LastFrostArrow = DateTime.UtcNow;
+                            creature.FrostArrowDuration = Spell.GetSpellDuration(spellName);
+                            Console.WriteLine($"[UpdateSpellAnimationHistory] 'Frost Arrow' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Sleep Duration: {creature.FrostArrowDuration}");
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
+                        break;
                     default:
                         Console.WriteLine($"[HandleSpellCastMessage] default case encountered");
                         Console.WriteLine($"[HandleSpellCastMessage] _creatureToSpellList.Count {client._creatureToSpellList.Count}");

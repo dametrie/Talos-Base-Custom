@@ -23,11 +23,13 @@ namespace Talos.Objects
         internal DateTime LastSuained { get; set; }
         internal DateTime LastArmachd { get; set; }
         internal DateTime LastPramhed { get; set; }
+        internal DateTime LastFrostArrow { get; set; }
         internal double CurseDuration { get; set; }
         internal double FasDuration { get; set; }
         internal double AiteDuration { get; set; }
         internal double DionDuration { get; set; }
         internal double PramhDuration { get; set; } 
+        internal double FrostArrowDuration { get; set; }
         internal Dictionary<ushort, DateTime> SpellAnimationHistory { get; set; }
         internal Dictionary<ushort, DateTime> SourceAnimationHistory { get; set; }
         internal CreatureType Type { get; set; }
@@ -52,6 +54,7 @@ namespace Talos.Objects
         internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;
         internal bool IsAited => DateTime.UtcNow.Subtract(LastAited).TotalSeconds < AiteDuration;
         internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
+        internal bool IsFrozen => DateTime.UtcNow.Subtract(LastFrostArrow).TotalSeconds < FrostArrowDuration;
 
         internal bool HasArmachd
         {
@@ -80,7 +83,7 @@ namespace Talos.Objects
                 return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Suain]).TotalSeconds < 2.0;
             }
         }
-        internal bool IsFrozen
+       /* internal bool IsFrozen
         {
             get
             {
@@ -90,7 +93,7 @@ namespace Talos.Objects
                     return true;
                 return false;
             }
-        }
+        }*/
 
         internal bool IsPoisoned
         {
