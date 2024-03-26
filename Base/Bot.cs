@@ -113,7 +113,7 @@ namespace Talos.Base
                     //Console.WriteLine("Processing players");
                     ProcessPlayers();
 
-                    if (Client.Health <= 1U && Client.IsSkulled)
+                    if (Client.CurrentHP <= 1U && Client.IsSkulled)
                     {
                         HandleSkullStatus();
                         return;
@@ -395,28 +395,28 @@ namespace Talos.Base
                 }
                 if (this.EnemyPage.priorityCbox.Checked)
                 {
-                    List<Creature> prioritize = new List<Creature>();
-                    List<Creature> list3 = new List<Creature>();
+                    List<Creature> priority = new List<Creature>();
+                    List<Creature> nonPriority = new List<Creature>();
                     foreach (Creature creature in this.nearbyValidCreatures)
                     {
                         if (this.EnemyPage.priorityLbox.Items.Contains(creature.SpriteID.ToString()))
                         {
-                            prioritize.Add(creature);
+                            priority.Add(creature);
                         }
                         else if (!this.EnemyPage.priorityOnlyCbox.Checked)
                         {
-                            list3.Add(creature);
+                            nonPriority.Add(creature);
                         }
                     }
                     if (this.EnemyPage.spellAllRbtn.Checked)
                     {
                         this.creature = null;
-                        if (prioritize.Count > 0 && this.DecideAndExecuteEngagementStrategy(this.EnemyPage, prioritize))
+                        if (priority.Count > 0 && this.DecideAndExecuteEngagementStrategy(this.EnemyPage, priority))
                         {
                             this.bool_13 = true;
                             return true;
                         }
-                        if (list3.Count > 0 && this.DecideAndExecuteEngagementStrategy(this.EnemyPage, list3))
+                        if (nonPriority.Count > 0 && this.DecideAndExecuteEngagementStrategy(this.EnemyPage, nonPriority))
                         {
                             this.bool_13 = true;
                             return true;
@@ -424,18 +424,19 @@ namespace Talos.Base
                     }
                     else
                     {
-                        if (prioritize.Count > 0 && this.SelectAndCastSpellOnCreature(this.EnemyPage, prioritize))
+                        if (priority.Count > 0 && this.SpellOneAtATime(this.EnemyPage, priority))
                         {
                             this.bool_13 = true;
                             return true;
                         }
-                        if (!prioritize.Contains(this.creature) && list3.Count > 0 && this.SelectAndCastSpellOnCreature(this.EnemyPage, list3))
+                        if (!priority.Contains(this.creature) && nonPriority.Count > 0 && this.SpellOneAtATime(this.EnemyPage, nonPriority))
                         {
                             this.bool_13 = true;
                             return true;
                         }
                     }
                 }
+                //Spell all at once
                 else if (this.EnemyPage.spellAllRbtn.Checked)
                 {
                     this.creature = null;
@@ -445,7 +446,8 @@ namespace Talos.Base
                         return true;
                     }
                 }
-                else if (this.nearbyValidCreatures.Count > 0 && this.SelectAndCastSpellOnCreature(this.EnemyPage, this.nearbyValidCreatures))
+                //Spell one at a time
+                else if (this.nearbyValidCreatures.Count > 0 && this.SpellOneAtATime(this.EnemyPage, this.nearbyValidCreatures))
                 {
                     this.bool_13 = true;
                     return true;
@@ -476,7 +478,7 @@ namespace Talos.Base
                                 return true;
                             }
                         }
-                        else if (this.SelectAndCastSpellOnCreature(enemy.EnemyPage, creatureList))
+                        else if (this.SpellOneAtATime(enemy.EnemyPage, creatureList))
                         {
                             this.bool_13 = true;
                             return true;
@@ -484,32 +486,28 @@ namespace Talos.Base
                     }
                 }
             }
-            if (Client._creatureToSpellList.Count > 0 && !Client._creatureToSpellList[0].Spell.Name.Contains("Frost Arrow"))
-            {
-                return false;
-            }
             if (this.EnemyPage != null)
             {
                 if (this.EnemyPage.priorityCbox.Checked)
                 {
-                    List<Creature> list5 = new List<Creature>();
-                    List<Creature> list6 = new List<Creature>();
+                    List<Creature> priority = new List<Creature>();
+                    List<Creature> nonPriority = new List<Creature>();
                     foreach (Creature creature in this.nearbyValidCreatures)
                     {
                         if (this.EnemyPage.priorityLbox.Items.Contains(creature.SpriteID.ToString()))
                         {
-                            list5.Add(creature);
+                            priority.Add(creature);
                         }
                         else if (!this.EnemyPage.priorityOnlyCbox.Checked)
                         {
-                            list6.Add(creature);
+                            nonPriority.Add(creature);
                         }
                     }
-                    if (this.CastAttackSpell(this.EnemyPage, list5))
+                    if (this.CastAttackSpell(this.EnemyPage, priority))
                     {
                         return true;
                     }
-                    if (this.CastAttackSpell(this.EnemyPage, list6))
+                    if (this.CastAttackSpell(this.EnemyPage, nonPriority))
                     {
                         return true;
                     }
@@ -546,37 +544,192 @@ namespace Talos.Base
             return false;
         }
 
-        private bool CastAttackSpell(EnemyPage enemyPage, List<Creature> list5)
+        private bool CastAttackSpell(EnemyPage enemyPage, List<Creature> creatureList)
         {
-            return true; //Adam
-        }
-
-        private bool SelectAndCastSpellOnCreature(EnemyPage enemyPage, List<Creature> nearbyValidCreatures)
-        {
-            return true; //Adam
-        }
-
-
-        private bool DecideAndExecuteEngagementStrategy(EnemyPage enemyPage, List<Creature> creatureList)
-        {
-            if (enemyPage.pramhFirstRbtn.Checked)
+            bool result = false;
+            if (!enemyPage.targetCbox.Checked)
             {
-                if (this.ExecutePramhStrategy(enemyPage, creatureList))
+                return false;
+            }
+            if (creatureList.Count == 0)
+            {
+                return false;
+            }
+            if (enemyPage.spellOneRbtn.Checked)
+            {
+                if (creatureList.Count == 0)
                 {
-                    return true;
+                    return false;
                 }
-                if (this.ExecuteDebuffStrategy(enemyPage, creatureList))
+                if (!creatureList.Contains(this.creature))
                 {
-                    return true;
+                    this.creature = creatureList.OrderBy(new Func<Creature, int>(this.DistanceFromClientLocation)).FirstOrDefault<Creature>();
+                }
+                if (this.creature == null)
+                {
+                    return false;
+                }
+                    creatureList = new List<Creature>
+                {
+                    this.creature
+                };
+            }
+            if (this.EnemyPage != null && this.EnemyPage.mpndDioned.Checked)
+            {
+                if (!enemyPage.attackCboxOne.Checked && !enemyPage.attackCboxTwo.Checked)
+                {
+                    if (!this.nearbyValidCreatures.Any(new Func<Creature, bool>(Bot.Delegates.IsDioned)))
+                    {
+                        goto IL_1A5;
+                    }
+                }
+                else if (!this.nearbyValidCreatures.All(new Func<Creature, bool>(Bot.Delegates.CanCastPND)))
+                {
+                    goto IL_1A5;
+                }
+                Creature creatureTarget = this.nearbyValidCreatures.OrderBy(new Func<Creature, int>(this.DistanceFromClientLocation)).FirstOrDefault(new Func<Creature, bool>(Bot.Delegates.CanCastPND));
+                if (creatureTarget != null)
+                {
+                    return Client.TryUseAnySpell(new[] { "ard pian na dion", "mor pian na dion", "pian na dion" }, creatureTarget, _autoStaffSwitch, false);
                 }
             }
-            else if (enemyPage.spellFirstRbtn.Checked)
+        IL_1A5:
+            if (!this._isSilenced)
             {
-                if (this.ExecuteDebuffStrategy(enemyPage, creatureList))
+                if (enemyPage.attackCboxTwo.Checked)
                 {
-                    return true;
+                    Creature target = this.SelectAttackTarget(enemyPage, creatureList, enemyPage.attackComboxTwo.Text);
+                    if (target != null)
+                    {
+                        string spellName = enemyPage.attackComboxTwo.Text;
+                        uint fnvHash = Utility.CalculateFNV(spellName);
+                        if (fnvHash <= 1792178996U)
+                        {
+                            if (fnvHash != 1007116742U)
+                            {
+                                if (fnvHash != 1285349432U)
+                                {
+                                    if (fnvHash == 1792178996U)
+                                    {
+                                        if (spellName == "Volley" && Client.UseSpell("Volley", target, this._autoStaffSwitch, true))
+                                        {
+                                            return true;
+                                        }
+                                    }
+                                }
+                                else if (spellName == "Shock Arrow" && Client.UseSpell("Shock Arrow", target, this._autoStaffSwitch, false) && Client.UseSpell("Shock Arrow", target, this._autoStaffSwitch, false))
+                                {
+                                    return true;
+                                }
+                            }
+                            else if (spellName == "Supernova Shot" && Client.UseSpell("Supernova Shot", target, this._autoStaffSwitch, false))
+                            {
+                                return true;
+                            }
+                        }
+                        else if (fnvHash <= 3122026787U)
+                        {
+                            if (fnvHash != 2591503996U)
+                            {
+                                if (fnvHash == 3122026787U)
+                                {
+                                    if (spellName == "Unholy Explosion" && Client.UseSpell("Unholy Explosion", target, this._autoStaffSwitch, false))
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                            else if (spellName == "MSPG")
+                            {
+                                if (enemyPage.mspgPct.Checked && Client.ManaPct < 80)
+                                {
+                                    this._manaLessThanEightyPct = true;
+                                    Client.UseSpell("fas spiorad", null, this._autoStaffSwitch, false);
+                                    return true;
+                                }
+                                Client.UseSpell("mor strioch pian gar", Client.Player, this._autoStaffSwitch, true);
+                                return true;
+                            }
+                        }
+                        else if (fnvHash != 3210331623U)
+                        {
+                            if (fnvHash == 3848328981U)
+                            {
+                                if (spellName == "M/DSG")
+                                {
+                                    if (!Client.UseSpell("mor deo searg gar", Client.Player, this._autoStaffSwitch, false))
+                                    {
+                                        if (Client.UseSpell("deo searg gar", Client.Player, this._autoStaffSwitch, false))
+                                        {
+                                            return true;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                        else if (spellName == "Cursed Tune" && this.TryCastAnyRank("Cursed Tune", target, this._autoStaffSwitch, false))
+                        {
+                            return true;
+                        }
+                    }
                 }
-                if (this.ExecutePramhStrategy(enemyPage, creatureList))
+                if (enemyPage.attackCboxOne.Checked)
+                {
+                    Creature target = this.SelectAttackTarget(enemyPage, creatureList, enemyPage.attackComboxOne.Text);
+                    if (target != null)
+                    {
+                        string spellName = enemyPage.attackComboxOne.Text;
+                        if (spellName == "lamh")
+                        {
+                            if (!Client.TryUseAnySpell(new[] { "beag athar lamh", "beag srad lamh", "athar lamh", "srad lamh" }, null, _autoStaffSwitch, false))
+                            {
+                                Client.UseSpell("Howl", null, _autoStaffSwitch, false);
+                            }
+                            return true;
+                        }
+                        else if (spellName == "A/DS")
+                        {
+                            return Client.TryUseAnySpell(new[] { "ard deo searg", "deo searg" }, target, _autoStaffSwitch, false);
+                        }
+                        else if (spellName == "A/M/PND")
+                        {
+                            return Client.TryUseAnySpell(new[] { "ard pian na dion", "mor pian na dion", "pian na dion" }, target, _autoStaffSwitch, false);
+                        }
+                        else
+                        {
+                            return Client.UseSpell(spellName, target, _autoStaffSwitch, false) || TryCastAnyRank(spellName, target, _autoStaffSwitch, false);
+                        }
+                    }
+                }
+            }
+            if (this._isSilenced && enemyPage.mpndSilenced.Checked)
+            {
+                Creature mpndTarget = this.SelectAttackTarget(enemyPage, creatureList, "A/M/PND");
+                return Client.TryUseAnySpell(new[] { "ard pian na dion", "mor pian na dion", "pian na dion" }, mpndTarget, _autoStaffSwitch, false);
+            }
+            if (!this._isSilenced || !enemyPage.mspgSilenced.Checked || this.SelectAttackTarget(enemyPage, creatureList, "MSPG") == null)
+            {
+                return result;
+            }
+            if (enemyPage.mspgPct.Checked && Client.ManaPct < 80)
+            {
+                this._manaLessThanEightyPct = true;
+                Client.UseSpell("fas spiorad", null, this._autoStaffSwitch, false);
+                return true;
+            }
+            Client.UseSpell("mor strioch pian gar", Client.Player, this._autoStaffSwitch, true);
+            return true;
+        }
+
+        private bool TryCastAnyRank(string spellNAme, Creature creatureTarget = null, bool autoStaffSwitch = true, bool keepSpellAfterUse = true)
+        {
+            for (int i = 20; i > 0; i--)
+            {
+                if (Client.UseSpell(spellNAme + " " + i.ToString(), creatureTarget, autoStaffSwitch, keepSpellAfterUse))
                 {
                     return true;
                 }
@@ -584,9 +737,132 @@ namespace Talos.Base
             return false;
         }
 
+
+        private bool SpellOneAtATime(EnemyPage enemyPage, List<Creature> creatureList)
+        {
+            foreach (var creature in creatureList.OrderBy(c => this.DistanceFromClientLocation(c)))
+            {
+
+                if (!creatureList.Contains(this.creature))
+                {
+                    this.creature = creatureList.OrderBy(new Func<Creature, int>(this.DistanceFromClientLocation)).FirstOrDefault<Creature>();
+                }
+                if (creature == null)
+                {
+                    continue; 
+                }
+                this.creature = creature;
+
+                if (enemyPage.pramhFirstRbtn.Checked && enemyPage.spellsControlCbox.Checked && !creature.IsAsleep)
+                {
+                    Client.UseSpell(enemyPage.spellsControlCombox.Text, creature, this._autoStaffSwitch, false);
+                    return true;
+                }
+                if (enemyPage.spellFirstRbtn.Checked && ((enemyPage.spellsFasCbox.Checked && !creature.IsFassed) || (enemyPage.spellsCurseCbox.Checked && !creature.IsCursed)))
+                {
+                    if (this.CastFasOrCurse(enemyPage, creature))
+                    {
+                        return true;
+                    }
+                }
+                else if (enemyPage.pramhFirstRbtn.Checked && (!enemyPage.spellsControlCbox.Checked || creature.IsAsleep) && ((enemyPage.spellsFasCbox.Checked && !creature.IsFassed) || (enemyPage.spellsCurseCbox.Checked && !creature.IsCursed)))
+                {
+                    if (this.CastFasOrCurse(enemyPage, creature))
+                    {
+                        return true;
+                    }
+                }
+                else if (enemyPage.spellFirstRbtn.Checked && (!enemyPage.spellsFasCbox.Checked || creature.IsFassed) && (!enemyPage.spellsCurseCbox.Checked || creature.IsCursed) && enemyPage.spellsControlCbox.Checked && !creature.IsAsleep)
+                {
+                    Client.UseSpell(enemyPage.spellsControlCombox.Text, creature, this._autoStaffSwitch, false);
+                    return true;
+                }
+            }
+
+            // If the method reaches this point, it means no spells were cast successfully on any of the creatures
+            return false;
+        }
+
+
+        private void MoveToNextCreature(List<Creature> creatureList)
+        {
+            int currentIndex = creatureList.IndexOf(this.creature);
+            if (currentIndex != -1 && currentIndex < creatureList.Count - 1)
+            {
+                // Move to the next creature in the list
+                this.creature = creatureList[currentIndex + 1];
+            }
+            else
+            {
+                // Reset to the first creature in the list if at the end or not found
+                this.creature = creatureList.FirstOrDefault();
+            }
+        }
+
+        private bool CastFasOrCurse(EnemyPage enemyPage, Creature creature)
+        {
+            if (enemyPage.fasFirstRbtn.Checked && enemyPage.spellsFasCbox.Checked && !creature.IsFassed)
+            {
+                this.bool_13 = true;
+                Client.UseSpell(enemyPage.spellsFasCombox.Text, creature, this._autoStaffSwitch, false);
+                return true;
+            }
+            if (enemyPage.curseFirstRbtn.Checked && enemyPage.spellsCurseCbox.Checked && !creature.IsCursed)
+            {
+                this.bool_13 = true;
+                Client.UseSpell(enemyPage.spellsCurseCombox.Text, creature, this._autoStaffSwitch, false);
+                return true;
+            }
+            if ((!enemyPage.fasFirstRbtn.Checked || !enemyPage.spellsFasCbox.Checked || creature.IsFassed) && enemyPage.spellsCurseCbox.Checked && !creature.IsCursed)
+            {
+                this.bool_13 = true;
+                Client.UseSpell(enemyPage.spellsCurseCombox.Text, creature, this._autoStaffSwitch, false);
+                return true;
+            }
+            if ((!enemyPage.curseFirstRbtn.Checked || !enemyPage.spellsCurseCbox.Checked || creature.IsCursed) && enemyPage.spellsFasCbox.Checked && !creature.IsFassed)
+            {
+                this.bool_13 = true;
+                Client.UseSpell(enemyPage.spellsFasCombox.Text, creature, this._autoStaffSwitch, false);
+                return true;
+            }
+            return false;
+        }
+
+
+        private bool DecideAndExecuteEngagementStrategy(EnemyPage enemyPage, List<Creature> creatureList)
+        {
+            if (enemyPage.pramhFirstRbtn.Checked)
+            {
+                if (enemyPage.spellsControlCbox.Checked)
+                    if (this.ExecutePramhStrategy(enemyPage, creatureList))
+                    {
+                        return true;
+                    }
+                if (enemyPage.spellsFasCbox.Checked || enemyPage.spellsCurseCbox.Checked)
+                    if (this.ExecuteDebuffStrategy(enemyPage, creatureList))
+                    {
+                        return true;
+                    }
+            }
+            else if (enemyPage.spellFirstRbtn.Checked)
+            {
+                if (enemyPage.spellsFasCbox.Checked || enemyPage.spellsCurseCbox.Checked)
+                    if (this.ExecuteDebuffStrategy(enemyPage, creatureList))
+                    {
+                        return true;
+                    }
+                if (enemyPage.spellsControlCbox.Checked)
+                    if (this.ExecutePramhStrategy(enemyPage, creatureList))
+                    {
+                        return true;
+                    }
+            }
+            return false;
+        }
+
         private bool ExecuteDebuffStrategy(EnemyPage enemyPage, List<Creature> creatureList)
         {
-            List<Creature> eligibleCreatures = creatureList.Where(Bot.Delegates.NotFassedOrNotCursed).ToList();
+            List<Creature> eligibleCreatures = creatureList.Where(Bot.Delegates.IsNotFassedOrNotCursed).ToList();
             if (eligibleCreatures != null && eligibleCreatures.Any() && (enemyPage.spellsFasCbox.Checked || enemyPage.spellsCurseCbox.Checked))
             {
                 if (enemyPage.fasFirstRbtn.Checked)
@@ -625,7 +901,7 @@ namespace Talos.Base
                 Console.WriteLine($"[CastCurseIfApplicable] Total creatures: {creatures.Count}");
 
                 // Filter creatures that are not cursed
-                var eligibleCreatures = creatures.Where(Bot.Delegates.NotCursed);
+                var eligibleCreatures = creatures.Where(Bot.Delegates.IsNotCursed);
 
                 Console.WriteLine($"[CastCurseIfApplicable] Eligible creatures (not cursed): {eligibleCreatures.Count()}");
 
@@ -655,7 +931,7 @@ namespace Talos.Base
                 Console.WriteLine($"[CastFasIfApplicable] Total creatures: {creatures.Count}");
 
                 // Filter creatures that are not 'fassed'
-                var eligibleCreatures = creatures.Where(Bot.Delegates.NotFassed);
+                var eligibleCreatures = creatures.Where(Bot.Delegates.IsNotFassed);
 
                 Console.WriteLine($"[CastFasIfApplicable] Eligible creatures (not fassed): {eligibleCreatures.Count()}");
 
@@ -676,6 +952,247 @@ namespace Talos.Base
                 return false; // No action was taken
             }
           
+        }
+
+        private Creature SelectAttackTarget(EnemyPage enemyPage, List<Creature> creatureList, string spellName = "")
+        {
+            List<Creature> attackList = new List<Creature>();
+
+            bool flag = enemyPage.attackCboxTwo.Checked && enemyPage.targetCbox.Checked && 
+                        (enemyPage.attackComboxTwo.Text == "MSPG" || enemyPage.attackComboxTwo.Text == "M/DSG");
+
+            if (enemyPage.targetCursedCbox.Checked && enemyPage.targetFassedCbox.Checked)
+            {
+                using (List<Creature>.Enumerator enumerator = creatureList.GetEnumerator())
+                {
+                    while (enumerator.MoveNext())
+                    {
+                        Creature creature = enumerator.Current;
+                        if (creature.IsCursed && creature.IsFassed)
+                        {
+                            attackList.Add(creature);
+                        }
+                        else if (flag && creature.Location.DistanceFrom(Client._serverLocation) <= GetFurthestClient())
+                        {
+                            attackList.Clear();
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (enemyPage.targetCursedCbox.Checked && !enemyPage.targetFassedCbox.Checked)
+            {
+                using (List<Creature>.Enumerator enumerator = creatureList.GetEnumerator())
+                {
+                    while (enumerator.MoveNext())
+                    {
+                        Creature creature = enumerator.Current;
+                        if (creature.IsCursed)
+                        {
+                            attackList.Add(creature);
+                        }
+                        else if (flag && creature.Location.DistanceFrom(Client._serverLocation) <= GetFurthestClient())
+                        {
+                            attackList.Clear();
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (enemyPage.targetFassedCbox.Checked && !enemyPage.targetCursedCbox.Checked)
+            {
+                using (List<Creature>.Enumerator enumerator = creatureList.GetEnumerator())
+                {
+                    while (enumerator.MoveNext())
+                    {
+                        Creature creature = enumerator.Current;
+                        if (creature.IsFassed)
+                        {
+                            attackList.Add(creature);
+                        }
+                        else if (flag && creature.Location.DistanceFrom(Client._serverLocation) <= GetFurthestClient())
+                        {
+                            attackList.Clear();
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (!enemyPage.targetCursedCbox.Checked && !enemyPage.targetFassedCbox.Checked)
+            {
+                attackList = creatureList;
+            }
+
+            if (attackList.Count == 0)
+            {
+                return null;
+            }
+            if (!(spellName == "Frost Arrow"))
+            {
+                if (!(spellName == "Cursed Tune"))
+                {
+                    if (!(spellName == "lamh") && !(spellName == "Shock Arrow") && !(spellName == "Volley"))
+                    {
+                        if (spellName != "A/M/PND")
+                        {
+                            attackList = attackList.Where(new Func<Creature, bool>(Bot.Delegates.IsNotDioned)).ToList<Creature>();
+                        }
+                        if (enemyPage.expectedHitsNum.Value > 0m)
+                        {
+                            attackList = attackList.Where(creature => CalculateHitCounter(creature, enemyPage)).ToList<Creature>();
+                        }
+                    }
+                }
+                else
+                {
+                    attackList = attackList.Where(new Func<Creature, bool>(Bot.Delegates.IsNotPoisoned)).ToList<Creature>();
+                }
+            }
+            else
+            {
+                attackList = attackList.Where(new Func<Creature, bool>(Bot.Delegates.IsNotFrozen)).ToList<Creature>();
+            }
+            if (attackList.Count == 0)
+            {
+                return null;
+            }
+            if (creature != null && attackList.Contains(creature))
+            {
+                return creature;
+            }
+            if (!(enemyPage.targetCombox.Text == "Nearest") && (!_isSilenced || !enemyPage.mpndSilenced.Checked))
+            {
+                if (!enemyPage.targetCombox.Text.Contains("Cluster") || flag)
+                {
+                    return null;
+                }
+                int maxDistance = (enemyPage.targetCombox.Text == "Cluster 29") ? 3 : ((enemyPage.targetCombox.Text == "Cluster 13") ? 2 : 1);
+                Dictionary<Creature, int> dictionary = new Dictionary<Creature, int>();
+                List<Creature> list2 = Client.GetListOfValidCreatures(12).Concat(_playersExistingOver250ms).ToList<Creature>();
+                List<Creature> list3 = Client.GetNearbyValidCreatures(12);
+                List<Creature> list4 = list3.Where(creature => CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID)).ToList();
+                if (!list2.Contains(Client.Player))                {
+                    list2.Add(Client.Player);
+                }
+                foreach (Creature c in list2)
+                {
+                    int num2 = 0;
+                    foreach (Creature creature in attackList)
+                    {
+                        if (c.Location.DistanceFrom(creature.Location) <= maxDistance || (maxDistance > 1 && IsDiagonallyAdjacent(c.Location.Point, creature.Location.Point, maxDistance)))
+                        {
+                            num2++;
+                        }
+                    }
+                    bool flag2 = false;
+                    using (List<Creature>.Enumerator enumerator2 = list4.GetEnumerator())
+                    {
+                        while (enumerator2.MoveNext())
+                        {
+                            Creature creature = enumerator2.Current;
+                            if (c == creature)
+                            {
+                                flag2 = true;
+                                break;
+                            }
+                            foreach (Location loc in Client.GetAdjacentPoints(creature))
+                            {
+                                if (c.Location.DistanceFrom(loc) <= maxDistance || this.IsDiagonallyAdjacent(c.Location.Point, loc.Point, maxDistance))
+                                {
+                                    flag2 = true;
+                                    break;
+                                }
+                            }
+                        }
+                        goto IL_5EA;
+                    }
+                IL_5DA:
+                    dictionary.Add(c, num2);
+                    continue;
+                IL_5EA:
+                    if (!flag2)
+                    {
+                        goto IL_5DA;
+                    }
+                }
+                foreach (Creature creature in dictionary.Keys.ToList<Creature>())
+                {
+                    if ((creature.Type == CreatureType.Aisling || (creature.Type == CreatureType.WalkThrough && !list3.Contains(creature)) || creature.IsDioned) && dictionary[creature] <= 1)
+                    {
+                        dictionary.Remove(creature);
+                    }
+                }
+                if (dictionary.Count <= 0)
+                {
+                    return null;
+                }
+                return dictionary.OrderByDescending(new Func<KeyValuePair<Creature, int>, int>(Bot.Delegates.KVPMatch)).ThenBy(new Func<KeyValuePair<Creature, int>, DateTime>(Bot.Delegates.KVPCreation)).First<KeyValuePair<Creature, int>>().Key;
+            }
+            else
+            {
+                if (attackList.Count <= 0)
+                {
+                    return null;
+                }
+                return attackList.OrderBy(creature => DistanceFromServerLocation(creature)).FirstOrDefault();
+
+            }
+        }
+
+
+        private bool IsDiagonallyAdjacent(Point location, Point otherLocation, int maxDistance)
+        {
+            int adjustedDistance = maxDistance - 1;
+            int deltaX = Math.Abs(location.X - otherLocation.X);
+            int deltaY = Math.Abs(location.Y - otherLocation.Y);
+
+            return deltaX == adjustedDistance && deltaY == adjustedDistance;
+        }
+
+        internal bool CalculateHitCounter(Creature creature, EnemyPage enemyPage)
+        {
+            if (creature.Health == 0 && creature.SpellAnimationHistory.Count != 0 && creature._animation != 33 && DateTime.UtcNow.Subtract(creature._lastUpdate).TotalSeconds <= 1.5)
+            {
+                return creature._hitCounter < enemyPage.expectedHitsNum.Value;
+            }
+            if (creature.Health != 0 && creature._hitCounter > enemyPage.expectedHitsNum.Value)
+            {
+                creature._hitCounter = (int)enemyPage.expectedHitsNum.Value - 1;
+            }
+            return true;
+        }
+
+        private int GetFurthestClient()
+        {
+            int result;
+            try
+            {
+                List<Client> nearbyClients = Client.GetNearbyPlayers()
+                    .Select(player => Server.FindClientByName(player?.Name))
+                    .Where(client => client != null)
+                    .ToList();
+
+                if (nearbyClients.Any())
+                {
+                    Client furthestClient = nearbyClients
+                        .OrderByDescending(client => this.CalculateDistanceFromBaseClient(client))
+                        .First();
+
+                    result = 11 - furthestClient._serverLocation.DistanceFrom(Client._serverLocation);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exception if needed
+                Console.WriteLine($"Error in GetFurthestClient: {ex.Message}");
+            }
+
+            return 11; // Default value if no nearby clients or an exception occurs
+        }
+
+        private int CalculateDistanceFromBaseClient(Client client)
+        {
+            return client._serverLocation.DistanceFrom(base.Client._serverLocation);
         }
 
         private bool ExecutePramhStrategy(EnemyPage enemyPage, List<Creature> creatures)
@@ -744,15 +1261,55 @@ namespace Talos.Base
         {
             return creature.Location.DistanceFrom(Client._serverLocation);
         }
+        private int DistanceFromClientLocation(Creature creature)
+        {
+            return creature.Location.DistanceFrom(Client._clientLocation);
+        }
+
+
+
         private bool CastDefensiveSpells()
         {
+            if (_needFasSpiorad)
+            {
+                uint currentMP = Client.CurrentMP;
+                DateTime startTime = DateTime.UtcNow;
+
+                while (_needFasSpiorad)
+                {
+                    int fasSpioradThreshold;
+
+                    bool isFasSpioradChecked = Client.ClientTab.fasSpioradCbox.Checked;
+                    bool isThresholdParsed = int.TryParse(Client.ClientTab.fasSpioradText.Text.Trim(), out fasSpioradThreshold);
+                    bool isBelowThreshold = Client.CurrentMP <= fasSpioradThreshold;
+
+                    if (isFasSpioradChecked && isThresholdParsed && isBelowThreshold)
+                    {
+                        Client.UseSpell("fas spiorad", null, this._autoStaffSwitch, false);
+                    }
+
+                    bool hasManaReachedHalf  = Client.CurrentMP >= Client.Stats.MaximumMP / 2U;
+                    bool hasManaIncreasedByFivePercent  = Client.CurrentMP - currentMP >= Client.Stats.MaximumMP / 20U;
+                    bool isDurationExceeded = DateTime.UtcNow.Subtract(startTime).TotalSeconds > 20.0;
+
+                    if (hasManaReachedHalf  || hasManaIncreasedByFivePercent  || isDurationExceeded)
+                    {
+                        _needFasSpiorad = false;
+                    }
+
+                    Thread.Sleep(10);
+                }
+            }
+
             return true;
         }
+
 
         private void AoSuain()
         {
             // Check if Ao Suain is enabled and the Suain effect is present before attempting to cast spells.
-            if (!Client.ClientTab.aoSuainCbox.Checked || !Client.HasEffect(EffectsBar.Suain))
+            if (!Client.ClientTab.aoSuainCbox.Checked || 
+                !Client.HasEffect(EffectsBar.Suain))
             {
                 return;
             }
@@ -789,7 +1346,7 @@ namespace Talos.Base
 
         private void CheckFasSpioradRequirement()
         {
-            if (Client.ClientTab.fasSpioradCbox.Checked && int.TryParse(base.Client.ClientTab.fasSpioradText.Text.Trim(), out int requiredMp) && Client.Mana < requiredMp)
+            if (Client.ClientTab.fasSpioradCbox.Checked && int.TryParse(base.Client.ClientTab.fasSpioradText.Text.Trim(), out int requiredMp) && Client.ManaPct < requiredMp)
             {
                 _needFasSpiorad = true;
             }
@@ -1042,7 +1599,7 @@ namespace Talos.Base
 
             internal bool IsAllyLowOnMP(Client client)
             {
-                return client != null && !string.IsNullOrEmpty(client.Name) && !client.Name.Contains("[") && this.bot._client.AllyListHashSet.Any(name => name.ToUpper() == client.Name.ToUpper()) && (ulong)client.Mana < (ulong)((long)this.mpThreshold);
+                return client != null && !string.IsNullOrEmpty(client.Name) && !client.Name.Contains("[") && this.bot._client.AllyListHashSet.Any(name => name.ToUpper() == client.Name.ToUpper()) && (ulong)client.ManaPct < (ulong)((long)this.mpThreshold);
             }
 
 
@@ -1101,6 +1658,7 @@ namespace Talos.Base
 
         private sealed class Delegates
         {
+
             static internal bool HasPlayerExistedForOver250ms(Player player)
             {
                 return DateTime.UtcNow.Subtract(player.Creation).TotalMilliseconds > 250.0;
@@ -1145,24 +1703,24 @@ namespace Talos.Base
                 return creature;
             }
 
-            static internal bool NotFassedOrNotCursed(Creature creature)
+            static internal bool IsNotFassedOrNotCursed(Creature creature)
             {
                 return !creature.IsFassed || !creature.IsCursed;
             }
 
-            static internal bool NotFassed(Creature creature)
+            static internal bool IsNotFassed(Creature creature)
             {
                 return !creature.IsFassed;
             }
 
 
-            static internal bool IsFassed(Creature class140_0)
+            static internal bool IsFassed(Creature creature)
             {
-                return class140_0.IsFassed;
+                return creature.IsFassed;
             }
 
 
-            static internal bool NotCursed(Creature creature)
+            static internal bool IsNotCursed(Creature creature)
             {
                 return !creature.IsCursed;
             }
@@ -1173,13 +1731,8 @@ namespace Talos.Base
                 return creature.IsCursed;
             }
 
-            static internal bool CanPND(Creature creature)
-            {
-                return creature._canPND;
-            }
 
-
-            static internal bool HasDion(Creature creature)
+            static internal bool IsDioned(Creature creature)
             {
                 return creature.IsDioned;
             }
@@ -1191,19 +1744,19 @@ namespace Talos.Base
             }
 
 
-            static internal bool IsFrozen(Creature creature)
+            static internal bool IsNotFrozen(Creature creature)
             {
                 return !creature.IsFrozen;
             }
 
 
-            static internal bool IsPoisoned(Creature creature)
+            static internal bool IsNotPoisoned(Creature creature)
             {
                 return !creature.IsPoisoned;
             }
 
 
-            static internal bool NotDioned(Creature creature)
+            static internal bool IsNotDioned(Creature creature)
             {
                 return !creature.IsDioned;
             }
@@ -1213,8 +1766,6 @@ namespace Talos.Base
             {
                 return player.IsAsleep;
             }
-
-
 
             static internal int KVPMatch(KeyValuePair<Creature, int> kvp)
             {

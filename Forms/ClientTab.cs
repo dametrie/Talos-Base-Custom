@@ -294,8 +294,8 @@ namespace Talos.Forms
 
             hpLbl.Text = _client.Stats.CurrentHP.ToString();
             mpLbl.Text = _client.Stats.CurrentMP.ToString();
-            healthBar.Value = _client.Health;
-            manaBar.Value = _client.Mana;
+            healthBar.Value = (int)_client.HealthPct;
+            manaBar.Value = (int)_client.ManaPct;
 
         }
 

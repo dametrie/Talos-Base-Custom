@@ -204,29 +204,31 @@ namespace Talos.Base
         internal Creature CreatureTarget { get; set; }
         internal Nation Nation { get; set; }
 
-        internal int Health
+        internal uint HealthPct
         {
             get
             {
                 if (Stats.CurrentHP * 100 / Stats.MaximumHP <= 100)
                 {
-                    return (int)(Stats.CurrentHP * 100 / Stats.MaximumHP);
+                    return (Stats.CurrentHP * 100 / Stats.MaximumHP);
                 }
                 return 100;
             }
         }
-        internal int Mana
+        internal uint ManaPct
         {
             get
             {
                 if (Stats.CurrentMP * 100 / Stats.MaximumMP <= 100)
                 {
-                    return (int)(Stats.CurrentMP * 100 / Stats.MaximumMP);
+                    return (Stats.CurrentMP * 100 / Stats.MaximumMP);
                 }
                 return 100;
             }
         }
 
+        internal uint CurrentHP { get { return Stats.CurrentHP; } set { Stats.CurrentHP = value; } }
+        internal uint CurrentMP { get { return Stats.CurrentMP; } set { Stats.CurrentMP = value; } }
         internal uint Experience => Stats.Experience;
         internal uint AbilityExperience => Stats.AbilityExperience;
         internal uint Gold => Stats.Gold;
@@ -664,12 +666,12 @@ namespace Talos.Base
                         return true;
 
                     default:
-                        return false;
+                        return true;
                 }
             }
             catch
             {
-                return false;
+                return true;
             }
         }
         private bool ShouldRejectSpellDueToSuain(Client client, string spellName)
@@ -1412,7 +1414,7 @@ namespace Talos.Base
                         else
                         {
                             // Update cooldown end time for re-casting
-                            existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(3); // Assuming a 30-second cooldown
+                            existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(1);
                             Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _creatureToSpellList.");
                         }
                     }
@@ -1420,7 +1422,7 @@ namespace Talos.Base
                     {
                         var newEntry = new CreatureToSpell(spell, CreatureTarget)
                         {
-                            CooldownEndTime = DateTime.UtcNow.AddSeconds(3)
+                            CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
                         _creatureToSpellList.Add(newEntry);
                         Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {creature?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
@@ -1540,7 +1542,24 @@ namespace Talos.Base
                 return !keepSpellAfterUse || ClearSpell();
             }
         }
-        
+
+        internal bool TryUseAnySpell(string[] spellNames, Creature target, bool autoStaffSwitch, bool keepSpellAfterUse)
+        {
+            foreach (string spellName in spellNames)
+            {
+                // Check if the spell exists in the Spellbook
+                if (Spellbook[spellName] != null)
+                {
+                    // If the spell exists, attempt to use it
+                    if (UseSpell(spellName, target, autoStaffSwitch, keepSpellAfterUse))
+                    {
+                        return true;
+                    }
+                    break;
+                }
+            }
+            return false;
+        }
 
         internal void RequestProfile()
         {
@@ -2919,6 +2938,43 @@ namespace Talos.Base
                 !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance);
         }
 
+        internal List<Creature> GetListOfValidCreatures(int distance = 12)
+        {
+            List<Creature> list = new List<Creature>();
+            if (Monitor.TryEnter(Server.Lock, 1000))
+            {
+                try
+                {
+                    foreach (Creature creature in GetWorldObjects().OfType<Creature>())
+                    {
+                        if (creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
+                            !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
+                            !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance));
+                        {
+                            list.Add(creature);
+                        }
+                    }
+                    return list;
+                }
+                finally
+                {
+                    Monitor.Exit(Server.Lock);
+                }
+            }
+            return list;
+        }
+
+
+        internal List<Location> GetAdjacentPoints(Creature creature)
+        {
+            return new List<Location>
+            {
+                new Location(creature.Location.MapID, (short)(creature.Location.X - 1), creature.Location.Y),
+                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y + 1)),
+                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y - 1)),
+                new Location(creature.Location.MapID, (short)(creature.Location.X + 1), creature.Location.Y)
+            };
+        }
         private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)
         {
             if (creature.Type == CreatureType.WalkThrough || CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID) || CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID))

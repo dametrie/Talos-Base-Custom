@@ -506,8 +506,8 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
-            this.manaBar = new Talos.Forms.UI.ResourceBar();
-            this.healthBar = new Talos.Forms.UI.ResourceBar();
+            this.manaBar = new Talos.Forms.UI.ResourceBar("manaBar");//Adam these sometimes get reset, put "manaBar" inside to show texture
+            this.healthBar = new Talos.Forms.UI.ResourceBar("healBar");
             this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();

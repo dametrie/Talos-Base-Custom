@@ -132,7 +132,6 @@ namespace Talos.Definitions
 
         public static readonly IReadOnlyCollection<string> KNOWN_RANGERS = new string[]
         {
-            "eist",
             "justyce",
             "justice",
             "gargoyle",
