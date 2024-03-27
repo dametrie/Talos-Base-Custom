@@ -143,12 +143,15 @@ namespace Talos.Base
 
         internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
         internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
+        internal Dictionary<int, Player> PlayersWithNoName { get; private set; } = new Dictionary<int, Player>();
         internal Dictionary<string, Player> NearbyPlayers { get; private set; } = new Dictionary<string, Player>();
         internal Dictionary<string, Player> NearbyGhosts { get; private set; } = new Dictionary<string, Player>();
         internal Dictionary<string, Creature> NearbyNPC { get; private set; } = new Dictionary<string, Creature>();
         internal Dictionary<string, int> ObjectID { get; private set; } = new Dictionary<string, int>();
         internal Dictionary<string, byte> AvailableSpellsAndCastLines { get; set; } = new Dictionary<string, byte>();
         internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
+        internal Dictionary <int, Location> Locations { get; set; } = new Dictionary<int, Location>();
+
 
         internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
@@ -162,7 +165,7 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
-
+        internal string _itemToReEquip;
 
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }
@@ -749,13 +752,10 @@ namespace Talos.Base
         }
         private bool DoesCreatureHaveSpellAlready(string spellName, Creature creature, Client client)
         {
-            // Guard clause for null creature
             if (creature == null)
             {
                 return false;
             }
-
-           
 
             switch (spellName)
             {
@@ -1312,6 +1312,40 @@ namespace Talos.Base
             return array[_customSpellLineCounter];
         }
 
+        internal bool TryUseAnySpell(string[] spellNames, Creature target, bool autoStaffSwitch, bool keepSpellAfterUse)
+        {
+            foreach (string spellName in spellNames)
+            {
+                // Check if the spell exists in the Spellbook
+                if (Spellbook[spellName] != null)
+                {
+                    // If the spell exists, attempt to use it
+                    if (UseSpell(spellName, target, autoStaffSwitch, keepSpellAfterUse))
+                    {
+                        return true;
+                    }
+                    break;
+                }
+            }
+            return false;
+        }
+
+        internal void SleepFighting()
+        {
+            Thread.Sleep(3000);
+            Dialog?.DialogNext(2);
+        }
+
+        internal void ReEquipItem(string itemName)
+        {
+            while (!Inventory.HasItem(itemName))
+            {
+                Thread.Sleep(100);
+            }
+            UseItem(itemName);
+        }
+
+
         #region Packet methods
 
         internal void Pickup(byte inventorySlot, Location location)
@@ -1337,6 +1371,13 @@ namespace Talos.Base
             Enqueue(clientPacket);
         }
 
+        internal void Whisper(string targetName, string message)
+        {
+            ClientPacket clientPacket = new ClientPacket(25);
+            clientPacket.WriteString8(targetName);
+            clientPacket.WriteString8(message);
+            Enqueue(clientPacket);
+        }
         internal bool UseItem(string itemName)
         {
             Item item = Inventory.FirstOrDefault((Item item2) => item2.Name.Equals(itemName, StringComparison.CurrentCultureIgnoreCase));
@@ -1562,24 +1603,6 @@ namespace Talos.Base
             }
         }
 
-        internal bool TryUseAnySpell(string[] spellNames, Creature target, bool autoStaffSwitch, bool keepSpellAfterUse)
-        {
-            foreach (string spellName in spellNames)
-            {
-                // Check if the spell exists in the Spellbook
-                if (Spellbook[spellName] != null)
-                {
-                    // If the spell exists, attempt to use it
-                    if (UseSpell(spellName, target, autoStaffSwitch, keepSpellAfterUse))
-                    {
-                        return true;
-                    }
-                    break;
-                }
-            }
-            return false;
-        }
-
         internal void RequestProfile()
         {
             Enqueue(new ClientPacket(45));
@@ -1599,6 +1622,7 @@ namespace Talos.Base
             clientPacket.WriteString8(playerName);
             Enqueue(clientPacket);
         }
+
         internal bool UseSkill(string skillName)
         {
             Skill skill = Skillbook[skillName];
@@ -2635,12 +2659,13 @@ namespace Talos.Base
                     {
                         Packet packet = _sendQueue.Dequeue();
                         ClientPacket? clientPacket = packet as ClientPacket;
+                        ClientPacket? clientPacketToLog = clientPacket?.Copy();
                         Socket socket;
                         if (clientPacket != null)
                         {
                             //Console.WriteLine(clientPacket.ToString());
-                            if (ClientTab != null && !ClientTab.IsDisposed)
-                                ClientTab.LogPackets(clientPacket);
+                            if (clientPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
+                                ClientTab.LogPackets(clientPacketToLog);
                             if (clientPacket.IsDialog)
                             {
                                 clientPacket.EncryptDialog();
@@ -2659,9 +2684,10 @@ namespace Talos.Base
                         else
                         {
                             ServerPacket? serverPacket = packet as ServerPacket;
+                            ServerPacket? serverPacketToLog = serverPacket?.Copy();
                             //Console.WriteLine(serverPacket.ToString());
-                            if (ClientTab != null && !ClientTab.IsDisposed)
-                                ClientTab.LogPackets(serverPacket);
+                            if (serverPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
+                                ClientTab.LogPackets(serverPacketToLog);
                             if (serverPacket.ShouldEncrypt)
                             {
                                 serverPacket.Sequence = _clientOrdinal++;

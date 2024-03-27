@@ -494,7 +494,7 @@ namespace Talos.Forms
                 return;
             }
             StringBuilder stringBuilder = new StringBuilder();
-            Packet packet = (Packet)packetList.SelectedItem;
+            Packet packet = packetList.SelectedItem as Packet;
             packetHexText.Text = packet.GetHexString();
             string text = packet.GetAsciiString();
             for (int i = 0; i < text.Length; i++)

