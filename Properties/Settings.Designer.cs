@@ -94,5 +94,17 @@ namespace Talos.Properties {
                 this["enableKom"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool disableSprites {
+            get {
+                return ((bool)(this["disableSprites"]));
+            }
+            set {
+                this["disableSprites"] = value;
+            }
+        }
     }
 }

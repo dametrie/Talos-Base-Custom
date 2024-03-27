@@ -1440,12 +1440,12 @@ namespace Talos.Base
 
         internal bool IsStrangerNearby()
         {
-            return _client.GetNearbyPlayers().Any(new Func<Player, bool>(this.ReturnNotInFriendList));
+            return _client.GetNearbyPlayers().Any(player => IsNotInFriendList(player));
         }
 
-        private bool ReturnNotInFriendList(Player player)
+        private bool IsNotInFriendList(Player player)
         {
-            return !_client.ClientTab.friendList.Items.OfType<string>().Contains(player.Name, StringComparer.OrdinalIgnoreCase);
+            return !_client.ClientTab.friendList.Items.OfType<string>().Any(friend => string.Equals(friend, player.Name, StringComparison.OrdinalIgnoreCase));
         }
 
         private void Loot()

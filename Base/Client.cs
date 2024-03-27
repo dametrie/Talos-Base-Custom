@@ -94,6 +94,8 @@ namespace Talos.Base
         internal bool _trainingGroundsMember;
         private bool shouldRefresh;
         internal bool bool_44;
+        internal bool isStatusUpdated;
+        internal bool _recentlyCrashered;
 
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
@@ -160,7 +162,7 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
-        internal bool isStatusUpdated;
+
 
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }

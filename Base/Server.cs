@@ -1372,8 +1372,8 @@ namespace Talos
                 if (targetID != 0)
                 {
                     sourceID = serverPacket.ReadInt32();
-                    sourceAnimation = serverPacket.ReadUInt16();
                     targetAnimation = serverPacket.ReadUInt16();
+                    sourceAnimation = serverPacket.ReadUInt16();
                     animationSpeed = serverPacket.ReadInt16();
 
                     client._animation = new Animation(targetID, sourceID, sourceAnimation, targetAnimation, animationSpeed);
@@ -1420,6 +1420,45 @@ namespace Talos
                                 //maybe method to global update dions?
                             }
                             break;
+                        case (ushort)SpellAnimation.WingsOfProtection:
+                            if (targetID == sourceID)
+                            {
+                                targetCreature.LastDioned = DateTime.UtcNow;
+                                targetCreature.Dion = "Wings of Protection";
+                                targetCreature.DionDuration = Spell.GetSpellDuration(targetCreature.Dion);
+                                //maybe method to global update dions?
+                            }
+                            break;
+                        case (ushort)SpellAnimation.IronSkin:
+                            if (targetID == sourceID)
+                            {
+                                targetCreature.LastDioned = DateTime.UtcNow;
+                                targetCreature.Dion = "Iron Skin";
+                                targetCreature.DionDuration = Spell.GetSpellDuration(targetCreature.Dion);
+                                //maybe method to global update dions?
+                            }
+                            break;
+                        case (ushort)SpellAnimation.MorDionComhla:
+                            if (targetID != sourceID)
+                            {
+                                targetCreature.LastDioned = DateTime.UtcNow;
+                                targetCreature.Dion = "mor dion comlha";
+                                targetCreature.DionDuration = Spell.GetSpellDuration(targetCreature.Dion);
+                                //maybe method to global update dions?
+                            }
+                            break;
+                        case (ushort)SpellAnimation.Aite:
+                            if ((sourceID != client.Player.ID) || client._creatureToSpellList.Count <= 0) //we didn't cast it or our creature to spell list is empty
+                            {
+                                targetCreature.AiteDuration = Spell.GetSpellDuration("ard naomh aite");
+                                targetCreature.LastAited = DateTime.UtcNow;
+                            }
+                            else
+                            {
+                                targetCreature.AiteDuration = Spell.GetSpellDuration(client._creatureToSpellList[0].Spell.Name);
+                                targetCreature.LastAited = DateTime.UtcNow;
+                            }
+                            break;
                         case (ushort)SpellAnimation.DeireasFaileas:
                             break;
                         case (ushort)SpellAnimation.Fas:
@@ -1441,14 +1480,155 @@ namespace Talos
                                 client.Bot._hasRescue = true;
                             }
                             break;
-                        
+                        case (ushort)SpellAnimation.AoSith:
+                            if ((sourceCreature != null) && !(sourceCreature is Player))
+                            {
+                                if (client.Bot.IsStrangerNearby())
+                                {
+                                    ThreadPool.QueueUserWorkItem(new WaitCallback(_ => ResetBuffsOnAoSith(client, targetID, true)));
+                                }
+                                else
+                                {
+                                    ResetBuffsOnAoSith(client, targetID, false);
+                                }
+                            }
+                            break;
+                        case (ushort)SpellAnimation.BeagCradh:
+                        case (ushort)SpellAnimation.BlueCloud:
+                            targetCreature.Curse = "beag cradh";
+                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
+                            targetCreature.LastCursed = DateTime.UtcNow;
+                            Console.WriteLine($"[ServerAnimationMessage] {targetCreature.Curse} cast on Creature ID: {targetCreature?.ID}. LastCursed updated to {targetCreature?.LastCursed}");
+                            //maybe method to global update curse?
+                            break;
+                        case (ushort)SpellAnimation.Cradh:
+                        case (ushort)SpellAnimation.OrangeCloud:
+                            targetCreature.Curse = "cradh";
+                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
+                            targetCreature.LastCursed = DateTime.UtcNow;
+                            Console.WriteLine($"[ServerAnimationMessage] {targetCreature.Curse} cast on Creature ID: {targetCreature?.ID}. LastCursed updated to {targetCreature?.LastCursed}");
+                            //maybe method to global update curse?
+                            break;
+                        case (ushort)SpellAnimation.MorCradh:
+                        case (ushort)SpellAnimation.BlackCloud:
+                            targetCreature.Curse = "mor cradh";
+                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
+                            Console.WriteLine($"[ServerAnimationMessage] {targetCreature.Curse} cast on Creature ID: {targetCreature?.ID}. LastCursed updated to {targetCreature?.LastCursed}");
+                            targetCreature.LastCursed = DateTime.UtcNow;
+                            //maybe method to global update curse?
+                            break;
+                        case (ushort)SpellAnimation.ArdCradh:
+                        case (ushort)SpellAnimation.RedCloud:
+                            targetCreature.Curse = "ard cradh";
+                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
+                            Console.WriteLine($"[ServerAnimationMessage] {targetCreature.Curse} cast on Creature ID: {targetCreature?.ID}. LastCursed updated to {targetCreature?.LastCursed}");
+                            targetCreature.LastCursed = DateTime.UtcNow;
+                            //maybe method to global update curse?
+                            break;
+                        case (ushort)SpellAnimation.Demise:
+                            targetCreature.Curse = "Demise";
+                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
+                            targetCreature.LastCursed = DateTime.UtcNow;
+                            //maybe method to global update curse?
+                            break;
+                        case (ushort)SpellAnimation.DarkerSeal:
+                            targetCreature.Curse = "Darker Seal";
+                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
+                            targetCreature.LastCursed = DateTime.UtcNow;
+                            //maybe method to global update curse?
+                            break;
+                        case (ushort)SpellAnimation.DarkSeal:
+                            targetCreature.Curse = "Dark Seal";
+                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
+                            targetCreature.LastCursed = DateTime.UtcNow;
+                            //maybe method to global update curse?
+                            break;
+                        case (ushort)SpellAnimation.AssassinStrike:
+                        case (ushort)SpellAnimation.Cupping:
+                            if (targetCreature is Player && !(sourceCreature is Player))
+                            {
+                                Player targetPlayer = targetCreature as Player;
+                                targetPlayer.NeedsHeal = true;
+                            }
+                            break;
+                        case (ushort)SpellAnimation.Kelb:
+                            if (sourceCreature is Player)
+                            {
+                                Player targetPlayer = sourceCreature as Player;
+                                targetPlayer.NeedsHeal = true;
+                            }
+                            break;
+                        case (ushort)SpellAnimation.Crasher:
+                            bool isSourceCreatureNull = sourceCreature == null;
+                            bool isTargetPlayer = targetCreature is Player;
+                            bool isSourceNotPlayer = !(sourceCreature is Player);
 
+                            if (isTargetPlayer)
+                            {
+                                Player targetPlayer = targetCreature as Player;
+                                targetPlayer.NeedsHeal = true;
 
+                                if (isSourceCreatureNull || isSourceNotPlayer)
+                                {
+                                    client._recentlyCrashered = isSourceCreatureNull;
+                                }
+                                else if (client._recentlyCrashered)
+                                {
+                                    client._recentlyCrashered = false;
+                                }
+                            }
+                            break;
+                        case (ushort)SpellAnimation.MadSoul:
+                            if (sourceCreature is Player)
+                            {
+                                Player targetPlayer = sourceCreature as Player;
+                                targetPlayer.NeedsHeal = true;
+                            }
+                            else if ((sourceCreature != null) && (targetCreature is Player))
+                            {
+                                Player targetPlayer = targetCreature as Player;
+                                targetPlayer.NeedsHeal = true;
+                            }
+                            break;
+                        case (ushort)SpellAnimation.FasSpiorad:
+                            if (targetCreature is Player && !CONSTANTS.KNOWN_RANGERS.Contains(targetCreature.Name, StringComparer.OrdinalIgnoreCase))
+                            {
+                                Player targetPlayer = targetCreature as Player;
+                                targetPlayer.NeedsHeal = true;
+                            }
+                            break;
+                        case (ushort)SpellAnimation.RedPotion:
+                            if (targetCreature is Player && sourceCreature is Player || CONSTANTS.GREEN_BOROS.Contains(sourceCreature.SpriteID) || CONSTANTS.RED_BOROS.Contains(sourceCreature.SpriteID))
+                            {
+                                Player targetPlayer = targetCreature as Player;
+                                if (targetPlayer.IsSkulled)
+                                {
+                                    targetPlayer.SpellAnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.MinValue;
+                                }
+                                if (targetID == client.Player.ID)
+                                {
+                                    client.Bot._skullTime = DateTime.MinValue;
+                                }                              
+                                targetPlayer.NeedsHeal = true;
+                            }
+                            break;
+                    }
 
-
+                    Player player = client.WorldObjects[targetID] as Player;
+                    if (((player != null) && !client.NearbyPlayers.ContainsKey(player.Name)) && !client.NearbyGhosts.ContainsKey(player.Name))
+                    {
+                        client.NearbyGhosts.Add(player.Name, player);
+                        if (client.GetCheats(Cheats.None | Cheats.SeeGhosts))
+                        {
+                            client.SeeGhosts(player);
+                        }
                     }
 
                 }
+            }
+            catch
+            {
+                return false;
             }
 
             return true;
@@ -2585,6 +2765,55 @@ namespace Talos
                 return null;
             }
         }
+
+        private void ResetBuffsOnAoSith(Client client, int creatureId, bool strangerNearby = false)
+        {
+            if (strangerNearby)
+            {
+                // Consider using an asynchronous delay here to avoid blocking the thread
+                Thread.Sleep(3000);
+            }
+
+            foreach (Client currentClient in _clientList)
+            {
+                WorldObject worldObject;
+                if (!currentClient.WorldObjects.TryGetValue(creatureId, out worldObject))
+                {
+                    continue;
+                }
+
+                Creature creature = worldObject as Creature;
+                if (creature != null)
+                {
+                    ClearBuffStatus(client, creature, false);
+                }
+            }
+        }
+        private void ClearBuffStatus(Client client, Creature creature, bool wait)
+        {
+            if (wait)
+            {
+                Thread.Sleep(3000);
+            }
+
+            creature.Curse = "";
+            creature.CurseDuration = 0.0;
+            creature.FasDuration = 0.0;
+            creature.AiteDuration = 0.0;
+            creature.DionDuration = 0.0;
+
+            if (creature.SpellAnimationHistory.ContainsKey(20))
+            {
+                creature.SpellAnimationHistory[20] = DateTime.MinValue;
+            }
+
+            if (ReferenceEquals(creature, client.Player))
+            {
+                client.Bot._recentlyAoSithed = true;
+            }
+        }
+
+
 
         private void AutomaticActions()
         {
