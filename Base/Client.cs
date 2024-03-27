@@ -71,6 +71,7 @@ namespace Talos.Base
         internal PreviousClass _previousClass;
         internal Dugon _dugon;
         internal Element _element;
+        internal Animation _animation;
         internal string _npcDialog;
         internal string _currentSkill = "";
         internal string _currentItem = "";

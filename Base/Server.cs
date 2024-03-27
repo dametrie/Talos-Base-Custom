@@ -1360,6 +1360,60 @@ namespace Talos
 
         private bool ServerMessage_0x29_Animation(Client client, ServerPacket serverPacket) //Adam do this
         {
+            int targetID;
+            int sourceID;
+            ushort targetAnimation;
+            ushort sourceAnimation;
+            short animationSpeed;
+
+            try
+            {
+                targetID = serverPacket.ReadInt32();
+                if (targetID != 0)
+                {
+                    sourceID = serverPacket.ReadInt32();
+                    sourceAnimation = serverPacket.ReadUInt16();
+                    targetAnimation = serverPacket.ReadUInt16();
+                    animationSpeed = serverPacket.ReadInt16();
+                    
+                    client._animation = new Animation(targetID, sourceID, sourceAnimation, targetAnimation, animationSpeed);
+
+                    if (!client.WorldObjects.ContainsKey(targetID))
+                    {
+                        //add code for disabled sprites option
+                        return true;
+                    }
+
+                    Creature creature = client.WorldObjects[targetID] as Creature;
+
+                    creature.SpellAnimationHistory[targetAnimation] = DateTime.UtcNow;
+                    creature._animation = targetAnimation;
+                    creature._lastUpdate = DateTime.UtcNow;
+
+                    if (sourceID != 0)
+                        creature.SourceAnimationHistory[targetAnimation] = DateTime.UtcNow; //adam check this
+
+                    switch (targetAnimation)
+                    {
+                        case 263: //pnd
+                        case 278: //mpnd
+                            creature._hitCounter++;
+                            creature.Health = 0;
+                            break;
+
+                        case 301: //perfect defense
+                            creature.LastDioned = DateTime.UtcNow;
+                            creature.Dion = "Perfect Defense";
+                            creature.DionDuration = Spell.GetSpellDuration(creature.Dion);
+                            //maybe method to global update dions?
+                            break;
+
+                        case 244: //dion
+                    }
+
+                }
+            }
+
             return true;
         }
 
