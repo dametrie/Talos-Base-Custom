@@ -1375,40 +1375,77 @@ namespace Talos
                     sourceAnimation = serverPacket.ReadUInt16();
                     targetAnimation = serverPacket.ReadUInt16();
                     animationSpeed = serverPacket.ReadInt16();
-                    
+
                     client._animation = new Animation(targetID, sourceID, sourceAnimation, targetAnimation, animationSpeed);
 
                     if (!client.WorldObjects.ContainsKey(targetID))
                     {
-                        //add code for disabled sprites option
+                        //add code for disabled sprites option?
                         return true;
                     }
 
-                    Creature creature = client.WorldObjects[targetID] as Creature;
+                    Creature targetCreature = client.WorldObjects[targetID] as Creature;
+                    Creature sourceCreature = client.WorldObjects.ContainsKey(sourceID) ? client.WorldObjects[sourceID] as Creature : null;
 
-                    creature.SpellAnimationHistory[targetAnimation] = DateTime.UtcNow;
-                    creature._animation = targetAnimation;
-                    creature._lastUpdate = DateTime.UtcNow;
+                    targetCreature.SpellAnimationHistory[targetAnimation] = DateTime.UtcNow;
+                    targetCreature._animation = targetAnimation;
+                    targetCreature._lastUpdate = DateTime.UtcNow;
 
                     if (sourceID != 0)
-                        creature.SourceAnimationHistory[targetAnimation] = DateTime.UtcNow; //adam check this
+                        targetCreature.SourceAnimationHistory[sourceAnimation] = DateTime.UtcNow;
 
                     switch (targetAnimation)
                     {
-                        case 263: //pnd
-                        case 278: //mpnd
-                            creature._hitCounter++;
-                            creature.Health = 0;
+                        case (ushort)SpellAnimation.PND:
+                        case (ushort)SpellAnimation.MPND:
+                            targetCreature._hitCounter++;
+                            targetCreature.Health = 0;
                             break;
 
-                        case 301: //perfect defense
-                            creature.LastDioned = DateTime.UtcNow;
-                            creature.Dion = "Perfect Defense";
-                            creature.DionDuration = Spell.GetSpellDuration(creature.Dion);
-                            //maybe method to global update dions?
+                        case (ushort)SpellAnimation.PerfectDefense:
+                            if (targetCreature is Player)
+                            {
+                                targetCreature.LastDioned = DateTime.UtcNow;
+                                targetCreature.Dion = "Perfect Defense";
+                                targetCreature.DionDuration = Spell.GetSpellDuration(targetCreature.Dion);
+                                //maybe method to global update dions?
+                            }
                             break;
+                        case (ushort)SpellAnimation.Dion:
+                            if (targetID == sourceID && targetID != client.PlayerID && !_clientList.Any(c => c.PlayerID == targetID))
+                            {
+                                targetCreature.LastDioned = DateTime.UtcNow;
+                                targetCreature.Dion = "mor dion";
+                                targetCreature.DionDuration = Spell.GetSpellDuration(targetCreature.Dion);
+                                //maybe method to global update dions?
+                            }
+                            break;
+                        case (ushort)SpellAnimation.DeireasFaileas:
+                            break;
+                        case (ushort)SpellAnimation.Fas:
+                            if ((sourceID != client.Player.ID) || (client._creatureToSpellList.Count <= 0)) //we didn't cast it or our creature to spell list is empty
+                            {
+                                targetCreature.FasDuration = Spell.GetSpellDuration("ard fas nadur");
+                                targetCreature.LastFassed = DateTime.UtcNow;
+                            }
+                            else
+                            {
+                                targetCreature.FasDuration = Spell.GetSpellDuration(client._creatureToSpellList[0].Spell.Name);
+                                targetCreature.LastFassed = DateTime.UtcNow;
+                                //maybe method to global update fas?
+                            }
+                            break;
+                        case (ushort)SpellAnimation.Rescue:
+                            if (ReferenceEquals(targetCreature, client.Player))
+                            {
+                                client.Bot._hasRescue = true;
+                            }
+                            break;
+                        
 
-                        case 244: //dion
+
+
+
                     }
 
                 }

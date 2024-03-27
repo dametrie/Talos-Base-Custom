@@ -38,6 +38,9 @@ namespace Talos.Base
         internal bool _recentlyAoSithed;
         internal bool bool_11;
         internal bool bool_12;
+        private bool bool_13;
+        private bool bool_32;
+        internal bool _hasRescue;
 
         internal byte _fowlCount;
 
@@ -67,8 +70,7 @@ namespace Talos.Base
 
 
         internal System.Windows.Forms.Label currentAction;
-        private bool bool_13;
-        private bool bool_32;
+
 
         internal AllyPage AllyPage { get; set; }
         internal EnemyPage EnemyPage { get; set; }
