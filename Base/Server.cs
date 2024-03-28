@@ -61,11 +61,6 @@ namespace Talos
         internal bool _stopWalking;
         internal bool _stopCasting;
 
-        
-
-
-
-
         public static object Lock { get; internal set; } = new object();
 
         internal Server(MainForm mainForm)
@@ -252,6 +247,8 @@ namespace Talos
 
         private bool ClientMessage_0x02_CreateCharRequest(Client client, ClientPacket clientPacket)
         {
+            string name = clientPacket.ReadString8();
+            string password = clientPacket.ReadString8();
             return true;
         }
 
@@ -273,6 +270,9 @@ namespace Talos
 
         private bool ClientMessage_0x04_CreateCharFinalize(Client client, ClientPacket clientPacket)
         {
+            byte hairStyle = clientPacket.ReadByte(); //1-17
+            Gender gender = (Gender)clientPacket.ReadByte(); //1 or 2
+            byte hairColor = clientPacket.ReadByte(); //1-13
             return true;
         }
 
@@ -301,22 +301,32 @@ namespace Talos
 
         private bool ClientMessage_0x07_Pickup(Client client, ClientPacket clientPacket)
         {
-            clientPacket.ReadByte();
-            clientPacket.ReadStruct();
+            byte inventorySlot = clientPacket.ReadByte();
+            Point groundPoint = clientPacket.ReadStruct();
+            Location location = new Location(client._clientLocation.MapID, groundPoint);
+
             return true;
         }
 
         private bool ClientMessage_0x08_ItemDrop(Client client, ClientPacket clientPacket)
         {
+            byte inventorySlot = clientPacket.ReadByte();
+            Point groundPoint = clientPacket.ReadStruct();
+            int count = clientPacket.ReadInt32();
+            Location location = new Location(client._clientLocation.MapID, groundPoint);
+
             return true;
         }
 
         private bool ClientMessage_0x0B_ExitRequest(Client client, ClientPacket clientPacket)
         {
+            bool exitRequest = clientPacket.ReadBoolean();
+
             //code below will force close the client if the exit request is sent
             //rather than waiting and having to click confirm
-            //if (clientPacket.ReadByte() == 0)
+            //if (requestExit == 0)
             //    client._connected = false;
+
             return true;
         }
 
@@ -327,26 +337,33 @@ namespace Talos
 
         private bool ClientMessage_0x0D_Ignore(Client client, ClientPacket clientPacket)
         {
+            IgnoreType type = (IgnoreType)clientPacket.ReadByte();
+            string targetName = null;
+
+            if (type != IgnoreType.Request)
+                targetName = clientPacket.ReadString8();
+
             return true;
         }
 
         private bool ClientMessage_0x0E_PublicMessage(Client client, ClientPacket clientPacket)
         {
-            string text;
-            clientPacket.ReadByte();
-            text = clientPacket.ReadString8();
 
-            if (!text.StartsWith("/"))
+            PublicMessageType type = (PublicMessageType)clientPacket.ReadByte();
+            string message = clientPacket.ReadString8();
+
+            if (!message.StartsWith("/"))
                 return true;
             //
-            //ThreadPool.QueueUserWorkItem(new WaitCallback(ParseSlashCommands));
+            //ThreadPool.QueueUserWorkItem(_ => ParseSlashCommands));
+
             return false;
         }
 
         private bool ClientMessage_0x0F_UseSpell(Client client, ClientPacket clientPacket)
         {
-            byte num = clientPacket.ReadByte();
-            Spell spell = client.Spellbook[num];
+            byte slot = clientPacket.ReadByte();
+            Spell spell = client.Spellbook[slot];
             if (spell != null)
             {
                 client._currentSpell = spell;
@@ -387,6 +404,7 @@ namespace Talos
                         break;
                 }
             }
+
             return false;
         }
 
@@ -398,6 +416,7 @@ namespace Talos
             uint id = clientPacket.ReadUInt32();
             client.Name = name;
             client._crypto = new Crypto(seed, key, name);
+
             return true;
         }
 
@@ -405,6 +424,7 @@ namespace Talos
         {
             Direction direction = (Direction)clientPacket.ReadByte();
             client._serverDirection = direction;
+
             return true;
         }
 
@@ -420,22 +440,30 @@ namespace Talos
 
         private bool ClientMessage_0x19_Whisper(Client client, ClientPacket clientPacket)
         {
+            string targetName = clientPacket.ReadString8();
+            string message = clientPacket.ReadString8();
+
             return true;
         }
 
         private bool ClientMessage_0x1B_UserOptionToggle(Client client, ClientPacket clientPacket)
         {
-            clientPacket.ReadByte();
+            UserOption option = (UserOption)clientPacket.ReadByte();
+
             return true;
         }
 
         private bool ClientMessage_0x1C_UseItem(Client client, ClientPacket clientPacket)
         {
+            byte slot = clientPacket.ReadByte();
+
             return true;
         }
 
         private bool ClientMessage_0x1D_Emote(Client client, ClientPacket clientPacket)
         {
+            byte index = clientPacket.ReadByte();
+
             return true;
         }
         private bool ClientMessage_0x23_SetNotepad(Client client, ClientPacket clientPacket)
@@ -444,21 +472,35 @@ namespace Talos
         }
         private bool ClientMessage_0x24_GoldDrop(Client client, ClientPacket clientPacket)
         {
+            uint amount = clientPacket.ReadUInt32();
+            Point groundPoint = clientPacket.ReadStruct();
+
             return true;
         }
 
         private bool ClientMessage_0x26_PasswordChange(Client client, ClientPacket clientPacket)
         {
+            string name = clientPacket.ReadString8();
+            string currentPw = clientPacket.ReadString8();
+            string newPw = clientPacket.ReadString8();
+
             return true;
         }
 
         private bool ClientMessage_0x29_ItemDroppedOnCreature(Client client, ClientPacket clientPacket)
         {
+            byte inventorySlot = clientPacket.ReadByte();
+            int targetId = clientPacket.ReadInt32();
+            byte count = clientPacket.ReadByte();
+
             return true;
         }
 
         private bool ClientMessage_0x2A_GoldDropOnCreature(Client client, ClientPacket clientPacket)
         {
+            uint amount = clientPacket.ReadUInt32();
+            int targetId = clientPacket.ReadInt32();
+
             return true;
         }
 
@@ -469,6 +511,25 @@ namespace Talos
 
         private bool ClientMessage_0x2E_GroupRequest(Client client, ClientPacket clientPacket)
         {
+            GroupRequestType type = (GroupRequestType)clientPacket.ReadByte();
+            if (type == GroupRequestType.Groupbox)
+            {
+                string leader = clientPacket.ReadString8();
+                string text = clientPacket.ReadString8();
+                clientPacket.ReadByte();
+                byte minLevel = clientPacket.ReadByte();
+                byte maxLevel = clientPacket.ReadByte();
+                byte[] maxOfEach = new byte[6];
+                maxOfEach[(byte)TemuairClass.Warrior] = clientPacket.ReadByte();
+                maxOfEach[(byte)TemuairClass.Wizard] = clientPacket.ReadByte();
+                maxOfEach[(byte)TemuairClass.Rogue] = clientPacket.ReadByte();
+                maxOfEach[(byte)TemuairClass.Priest] = clientPacket.ReadByte();
+                maxOfEach[(byte)TemuairClass.Monk] = clientPacket.ReadByte();
+
+                
+            }
+            string targetName = clientPacket.ReadString8();
+
             return true;
         }
 

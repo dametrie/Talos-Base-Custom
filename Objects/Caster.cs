@@ -7,6 +7,7 @@ using Talos.Base;
 
 namespace Talos.Objects
 {
+    internal delegate void SpellCastDelegate(Client client, uint target, string args);
     internal sealed class Caster : Spell
     {
 
@@ -28,6 +29,4 @@ namespace Talos.Objects
             SpellCastDelegate = spellCastDelegate;
         }
     }
-
-    internal delegate void SpellCastDelegate(Client client, uint target, string args);
 }

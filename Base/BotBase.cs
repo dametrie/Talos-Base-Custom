@@ -8,6 +8,7 @@ using Talos.Structs;
 
 namespace Talos.Base
 {
+    internal delegate void TaskDelegate();
     internal abstract class BotBase
     {
         internal Server Server { get; set; }
@@ -62,5 +63,4 @@ namespace Talos.Base
 
     }
 
-    internal delegate void TaskDelegate();
 }

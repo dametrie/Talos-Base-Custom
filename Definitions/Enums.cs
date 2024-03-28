@@ -20,6 +20,48 @@ namespace Talos.Enumerations
         West = 3,
         Invalid = 255
     }
+
+    internal enum Gender : byte
+    {
+        Male = 1,
+        Female = 2
+    }
+    internal enum IgnoreType : byte
+    {
+        Request = 1,
+        AddUser = 2,
+        RemoveUser = 3
+    }
+
+    internal enum PublicMessageType : byte
+    {
+        Normal = 0,
+        Shout = 1,
+        Chant = 2
+    }
+
+    internal enum UserOption
+    {
+        Request = 0,
+        Whisper = 1,
+        Group = 2,
+        Shout = 3,
+        Wisdom = 4,
+        Magic = 5,
+        Exchange = 6,
+        FastMove = 7,
+        GuildChat = 8
+    }
+
+    internal enum GroupRequestType : byte
+    {
+        Request = 1,
+        Invite = 2,
+        Join = 3,
+        Groupbox = 4,
+        RemoveGroupBox = 6
+    }
+
     internal enum Dugon
     {
         White = 0,
@@ -154,7 +196,8 @@ namespace Talos.Enumerations
         Rogue = 2,
         Wizard = 3,
         Priest = 4,
-        Monk = 5
+        Monk = 5,
+        Admin = 6
     }
 
     internal enum PreviousClass : byte
