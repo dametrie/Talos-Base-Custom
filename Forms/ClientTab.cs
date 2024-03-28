@@ -292,7 +292,6 @@ namespace Talos.Forms
         }
 
 
-
         private void SetRegenerationVisibility()
         {
             if (_client.Spellbook["Regeneration"] != null || _client.Spellbook["Increased Regeneration"] != null)
@@ -315,7 +314,6 @@ namespace Talos.Forms
                 vineText.Visible = true;
             }
         }
-
 
         
         internal void DisplayHPMP()
@@ -606,9 +604,6 @@ namespace Talos.Forms
             _client.Enqueue(serverPacket);
         }
 
-
-
-
         internal void LogPackets(ClientPacket clientPacket)
         {
             if (InvokeRequired) { BeginInvoke(new Action(() => { LogPackets(clientPacket); })); return; }
@@ -715,8 +710,6 @@ namespace Talos.Forms
                 _client.Enqueue(clientPacket);
             }
         }
-
-
 
         private void sendPacketToClientBtn_Click(object sender, EventArgs e)
         {

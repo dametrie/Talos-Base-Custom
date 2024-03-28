@@ -1479,11 +1479,15 @@ namespace Talos.Base
 
         private void ProcessLoot(List<Objects.Object> nearbyObjects, Rectangle lootArea)
         {
+            //var initialGoldAmount = Client.Gold;
+
             if (Client.ClientTab.pickupGoldCbox.Checked)
             {
                 foreach (var obj in nearbyObjects.Where(obj => IsGold(obj, lootArea)))
                 {
                     Client.Pickup(0, obj.Location);
+                    //var goldPickedUp = Client.Gold - initialGoldAmount;
+                    //Client.ClientTab._sessionGold += goldPickedUp;
                 }
             }
 
