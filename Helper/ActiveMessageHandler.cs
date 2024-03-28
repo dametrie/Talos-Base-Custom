@@ -117,7 +117,7 @@ namespace Talos.Helper
                 { new Regex(@"^([a-zA-Z]+) is (?:joining|leaving) this group.$"), HandleJoinLeaveGroupMessage },
                 { new Regex(@"^You cast (.*?)\.$"), HandleSpellCastMessage },
                 { new Regex(@"The durability of ([a-zA-Z]+) is now (\d+)%$"), HandleItemDamageMessage },
-                { new Regex("experience!"), HandleExperienceMessage },//Adam fix this
+                { new Regex(@"(\d+) experience!"), HandleExperienceMessage },//Adam fix this
                 { new Regex("AP went up"), HandleExperienceMessage }, //Adam fix this
                 { new Regex(@"^\(\( 4 Temuairan days = 12 (Terran|real-life) hours \)\)$"), HandleLaborMessage },//Adam check
                 { new Regex(@"You do not have time for these 4 Temuairan days"), HandleLaborMessage },//Adam check

@@ -36,7 +36,7 @@ namespace Talos.Enumerations
     internal enum PublicMessageType : byte
     {
         Normal = 0,
-        Shout = 1,
+        WorldShout = 1,
         Chant = 2
     }
 
@@ -60,6 +60,68 @@ namespace Talos.Enumerations
         Join = 3,
         Groupbox = 4,
         RemoveGroupBox = 6
+    }
+
+    internal enum PanelType : byte
+    {
+        Inventory = 0,
+        SpellBook = 1,
+        SkillBook = 2,
+        Equipment = 3
+    }
+
+    internal enum EquipmentSlot : byte
+    {
+        None = 0,
+        Weapon = 1,
+        Armor = 2,
+        Shield = 3,
+        Helmet = 4,
+        Earrings = 5,
+        Necklace = 6,
+        LeftRing = 7,
+        RightRing = 8,
+        LeftGaunt = 9,
+        RightGaunt = 10,
+        Belt = 11,
+        Greaves = 12,
+        Boots = 13,
+        Accessory1 = 14,
+        Overcoat = 15,
+        OverHelm = 16,
+        Accessory2 = 17,
+        Accessory3 = 18
+    }
+
+    internal enum Stat
+    {
+        STR = 1,
+        DEX = 2,
+        INT = 4,
+        WIS = 8,
+        CON = 16
+    }
+
+    internal enum ExchangeType : byte
+    {
+        BeginTrade = 0,
+        AddNonStackable = 1,
+        AddStackable = 2,
+        AddGold = 3,
+        Cancel = 4,
+        Accept = 5
+    }
+
+    internal enum SocialStatus : byte
+    {
+        Awake = 0,
+        DoNotDisturb = 1,
+        DayDreaming = 2,
+        NeedGroup = 3,
+        Grouped = 4,
+        LoneHunter = 5,
+        GroupHunting = 6,
+        NeedHelp = 7
     }
 
     internal enum Dugon

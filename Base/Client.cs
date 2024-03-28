@@ -93,9 +93,15 @@ namespace Talos.Base
         internal bool _shouldEquipBow;
         internal bool _trainingGroundsMember;
         private bool shouldRefresh;
+        internal bool bool_17;
+        internal bool bool_18;
         internal bool bool_44;
+        internal bool bool_45;
         internal bool isStatusUpdated;
         internal bool _recentlyCrashered;
+        internal bool unmaxedBashingSkillsLoaded = false;
+        internal bool unmaxedSpellsLoaded = false;
+        internal bool unmaxedSkillsLoaded = false;
 
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
@@ -139,6 +145,90 @@ namespace Talos.Base
         "Shock Arrow",
         "Volley",
         "Barrage"
+        };
+
+        internal List<string> _dojoBlackList1 = new List<string>
+        {
+            "Hairstyle",
+            "Throw Smoke Bomb",
+            "Unlock",
+            "Mind Hymn",
+            "Two-handed Attack",
+            "swimming",
+            "Lumberjack",
+            "Appraise",
+            "Wise Touch",
+            "Look",
+            "Wield Staff",
+            "Nis",
+            "Learning Spell",
+            "Zombie Defender",
+            "Fiery Defender",
+            "Disenchanter",
+            "Gem Polishing",
+            "Set Volley"
+        };
+
+        internal List<string> _dojoBlackList2 = new List<string>
+        {
+            "Hairstyle",
+            "Throw Smoke Bomb",
+            "Unlock",
+            "Mind Hymn",
+            "Two-handed Attack",
+            "swimming",
+            "Lumberjack",
+            "Appraise",
+            "Wise Touch",
+            "Look",
+            "Wield Staff",
+            "Nis",
+            "Learning Spell",
+            "Zombie Defender",
+            "Fiery Defender",
+            "Disenchanter",
+            "Gem Polishing",
+            "Set Volley",
+            "Unlock",
+            "Mend Soori",
+            "Mend Weapon",
+            "Mend Garment",
+            "Study Creature",
+            "Tailoring",
+            "Throw Surigum",
+            "Evaluate Item",
+            "Sense",
+            "Peek",
+            "Double Punch",
+            "Martial Awareness",
+            "Wise Touch",
+            "Lucky Hand",
+            "Triple Kick",
+            "Eco Sense",
+            "Animal Feast",
+            "Auto Hemloch",
+            "ao beag suain",
+            "Assail",
+            "Assault",
+            "Melee Lore",
+            "Clobber",
+            "Long Strike",
+            "Combat Senses",
+            "Wallop",
+            "Crasher",
+            "Execute",
+            "Thrash",
+            "Mad Soul",
+            "Sacrifice",
+            "Throw",
+            "Rescue",
+            "Mend Staff",
+            "Frost Strike",
+            "Arrow Shot",
+            "Archery",
+            "Midnight Slash",
+            "TransferBlood",
+            "Charge"
         };
 
         internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
@@ -1344,6 +1434,187 @@ namespace Talos.Base
             }
             UseItem(itemName);
         }
+
+        internal List<Creature> GetNearbyValidCreatures(int distance = 12)
+        {
+            var whiteList = new HashSet<ushort>();
+            List<Creature> creatureList = new List<Creature>();
+            if (!Monitor.TryEnter(Server.Lock, 1000))
+            {
+                return creatureList;
+            }
+
+            try
+            {
+                var validCreatures = GetWorldObjects().OfType<Creature>().Where(creature => IsValidCreature(creature, distance));
+                creatureList.AddRange(validCreatures);
+
+                if (creatureList.Count == 0) return creatureList;
+
+                if (CONSTANTS.WHITELIST_BY_MAP_ID.ContainsKey((ushort)_map.MapID) ||
+                    CONSTANTS.WHITELIST_BY_MAP_NAME.Any(kv => _map.Name.StartsWith(kv.Key)))
+                {
+                    whiteList = GetWhiteLists();
+                    creatureList = creatureList.Where(creature => IsCreatureAllowed(creature, whiteList)).ToList();
+                }
+
+                return creatureList;
+            }
+            finally
+            {
+                Monitor.Exit(Server.Lock);
+            }
+        }
+
+
+        private HashSet<ushort> GetWhiteLists()
+        {
+            var whiteList = new HashSet<ushort>();
+            if (CONSTANTS.WHITELIST_BY_MAP_ID.TryGetValue((ushort)_map.MapID, out var whiteListByMapID))
+            {
+                whiteList.UnionWith(whiteListByMapID);
+            }
+
+            var whiteListByMapName = CONSTANTS.WHITELIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
+            if (whiteListByMapName != null)
+            {
+                whiteList.UnionWith(whiteListByMapName);
+            }
+
+            return whiteList;
+        }
+
+        private bool IsValidCreature(Creature creature, int distance)
+        {
+            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
+                !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
+                !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance);
+        }
+
+        internal List<Creature> GetListOfValidCreatures(int distance = 12)
+        {
+            List<Creature> list = new List<Creature>();
+            if (Monitor.TryEnter(Server.Lock, 1000))
+            {
+                try
+                {
+                    foreach (Creature creature in GetWorldObjects().OfType<Creature>())
+                    {
+                        if (creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
+                            !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
+                            !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance)) ;
+                        {
+                            list.Add(creature);
+                        }
+                    }
+                    return list;
+                }
+                finally
+                {
+                    Monitor.Exit(Server.Lock);
+                }
+            }
+            return list;
+        }
+
+
+        internal List<Location> GetAdjacentPoints(Creature creature)
+        {
+            return new List<Location>
+            {
+                new Location(creature.Location.MapID, (short)(creature.Location.X - 1), creature.Location.Y),
+                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y + 1)),
+                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y - 1)),
+                new Location(creature.Location.MapID, (short)(creature.Location.X + 1), creature.Location.Y)
+            };
+        }
+        private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)
+        {
+            if (creature.Type == CreatureType.WalkThrough || CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID) || CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID))
+            {
+                return false;
+            }
+
+            var blackListByMapName = CONSTANTS.BLACKLIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
+            if (blackListByMapName != null && blackListByMapName.Contains(creature.SpriteID))
+            {
+                return false;
+            }
+
+            return whiteList.Contains(creature.SpriteID);
+        }
+
+
+        internal void ResetExchangeVars()
+        {
+            bool_45 = true;
+            Thread.Sleep(1500);
+            bool_44 = false;
+            bool_45 = false;
+        }
+
+        internal void LoadUnmaxedSkills()
+        {
+            short num = 15;
+            short num2 = 20;
+            foreach (KeyValuePair<string, Skill> entry in Skillbook)
+            {
+                Skill skill = entry.Value;
+                if (skill != null && !_dojoBlackList1.Contains(skill.Name) && !skill.Name.Contains("Lore") && !skill.Name.Contains("Inner Beast") && !skill.Name.Contains("Item") && !skill.Name.Contains("Archery") && !skill.Name.Contains("Thrust Attack") && skill.CurrentLevel < skill.MaxLevel)
+                {
+                    ClientTab.RenderUnmaxedSkills(skill.Name, skill.Sprite, new System.Drawing.Point(num, num2));
+                    num = (short)(num + 40);
+                    if (num >= 480)
+                    {
+                        num = 15;
+                        num2 = (short)(num2 + 40);
+                    }
+                }
+            }
+            unmaxedSkillsLoaded = true;
+        }
+
+        internal void LoadUnmaxedBashingSkills()
+        {
+            short num = 15;
+            short num2 = 20;
+            foreach (KeyValuePair<string, Skill> entry in Skillbook)
+            {
+                Skill skill = entry.Value;
+                if (skill != null && !_dojoBlackList2.Contains(skill.Name) && !skill.Name.Contains("Lore") && !skill.Name.Contains("Inner Beast") && !skill.Name.Contains("Item") && !skill.Name.Contains("Archery") && !skill.Name.Contains("Thrust Attack") && !skill.Name.Contains("Arrow Shot") && skill != null)
+                {
+                    ClientTab.RenderUnmaxedBashingSkills(skill.Name, skill.Sprite, new System.Drawing.Point(num, num2));
+                    num = (short)(num + 40);
+                    if (num >= 650)
+                    {
+                        num = 15;
+                        num2 = (short)(num2 + 40);
+                    }
+                }
+            }
+            unmaxedBashingSkillsLoaded = true;
+        }
+
+        internal void LoadUnmaxedSpells()
+        {
+            short num = 15;
+            short num2 = 20;
+            foreach (Spell spell in Spellbook.Where((Spell sp) => sp != null))
+            {
+                if (!_dojoBlackList1.Contains(spell.Name) && !spell.Name.Contains("Lore") && !spell.Name.Contains("Inner Beast") && !spell.Name.Contains("Item") && !spell.Name.Contains("Archery") && !spell.Name.Contains("Thrust Attack") && spell.CurrentLevel < spell.MaximumLevel)
+                {
+                    ClientTab.RenderUnmaxedSpells(spell.Name, spell.Sprite, new System.Drawing.Point(num, num2));
+                    num = (short)(num + 40);
+                    if (num >= 480)
+                    {
+                        num = 15;
+                        num2 = (short)(num2 + 40);
+                    }
+                }
+            }
+            unmaxedSpellsLoaded = true;
+        }
+
 
 
         #region Packet methods
@@ -2625,6 +2896,15 @@ namespace Talos.Base
             Enqueue(clientPacket);
         }
 
+        internal void Cooldown(bool isSkill, byte slot, uint ticks)
+        {
+            ServerPacket serverPacket = new ServerPacket(63);
+            serverPacket.WriteBoolean(isSkill);
+            serverPacket.WriteByte(slot);
+            serverPacket.WriteUInt32(ticks);
+            Enqueue(serverPacket);
+        }
+
 
         #endregion
 
@@ -2926,116 +3206,6 @@ namespace Talos.Base
                 }
             }
         }
-
-        internal List<Creature> GetNearbyValidCreatures(int distance = 12)
-        {
-            var whiteList = new HashSet<ushort>();
-            List<Creature> creatureList = new List<Creature>();
-            if (!Monitor.TryEnter(Server.Lock, 1000))
-            {
-                return creatureList;
-            }
-
-            try
-            {
-                var validCreatures = GetWorldObjects().OfType<Creature>().Where(creature => IsValidCreature(creature, distance));
-                creatureList.AddRange(validCreatures);
-
-                if (creatureList.Count == 0) return creatureList;
-
-                if (CONSTANTS.WHITELIST_BY_MAP_ID.ContainsKey((ushort)_map.MapID) ||
-                    CONSTANTS.WHITELIST_BY_MAP_NAME.Any(kv => _map.Name.StartsWith(kv.Key)))
-                {
-                    whiteList = GetWhiteLists();
-                    creatureList = creatureList.Where(creature => IsCreatureAllowed(creature, whiteList)).ToList();
-                }
-
-                return creatureList;
-            }
-            finally
-            {
-                Monitor.Exit(Server.Lock);
-            }
-        }
-
-
-        private HashSet<ushort> GetWhiteLists()
-        {
-            var whiteList = new HashSet<ushort>();
-            if (CONSTANTS.WHITELIST_BY_MAP_ID.TryGetValue((ushort)_map.MapID, out var whiteListByMapID))
-            {
-                whiteList.UnionWith(whiteListByMapID);
-            }
-
-            var whiteListByMapName = CONSTANTS.WHITELIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
-            if (whiteListByMapName != null)
-            {
-                whiteList.UnionWith(whiteListByMapName);
-            }
-
-            return whiteList;
-        }
-
-        private bool IsValidCreature(Creature creature, int distance)
-        {
-            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 && 
-                !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) && 
-                !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance);
-        }
-
-        internal List<Creature> GetListOfValidCreatures(int distance = 12)
-        {
-            List<Creature> list = new List<Creature>();
-            if (Monitor.TryEnter(Server.Lock, 1000))
-            {
-                try
-                {
-                    foreach (Creature creature in GetWorldObjects().OfType<Creature>())
-                    {
-                        if (creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
-                            !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
-                            !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance));
-                        {
-                            list.Add(creature);
-                        }
-                    }
-                    return list;
-                }
-                finally
-                {
-                    Monitor.Exit(Server.Lock);
-                }
-            }
-            return list;
-        }
-
-
-        internal List<Location> GetAdjacentPoints(Creature creature)
-        {
-            return new List<Location>
-            {
-                new Location(creature.Location.MapID, (short)(creature.Location.X - 1), creature.Location.Y),
-                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y + 1)),
-                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y - 1)),
-                new Location(creature.Location.MapID, (short)(creature.Location.X + 1), creature.Location.Y)
-            };
-        }
-        private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)
-        {
-            if (creature.Type == CreatureType.WalkThrough || CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID) || CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID))
-            {
-                return false;
-            }
-
-            var blackListByMapName = CONSTANTS.BLACKLIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
-            if (blackListByMapName != null && blackListByMapName.Contains(creature.SpriteID))
-            {
-                return false;
-            }
-
-            return whiteList.Contains(creature.SpriteID);
-        }
-
 
 
         #endregion

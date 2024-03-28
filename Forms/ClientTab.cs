@@ -18,6 +18,10 @@ using Talos.Definitions;
 using Talos.Helper;
 using Talos.Forms.User_Controls;
 using System.Diagnostics;
+using Talos.Maps;
+using Talos.Capricorn.Drawing;
+using Talos.Capricorn.IO;
+using Talos.Properties;
 
 namespace Talos.Forms
 {
@@ -54,6 +58,10 @@ namespace Talos.Forms
             "",
             ""
         };
+        internal List<string> _unmaxedBashingSkills = new List<string>();
+        internal List<string> _unmaxedSkills = new List<string>();
+        internal List<string> _unmaxedSpells = new List<string>();
+
         internal BindingList<string> trashToDrop = new BindingList<string>
 		{
 			"fior sal",
@@ -87,6 +95,11 @@ namespace Talos.Forms
 
         private readonly object _lock = new object();
 
+        internal DATArchive setoaArchive;
+        internal EPFImage skillImageArchive;
+        internal EPFImage spellImageArchive;
+        internal Palette256 palette256;
+
 
         internal ClientTab(Client client)
         {
@@ -99,8 +112,12 @@ namespace Talos.Forms
             creatureHashListBox.DataSource = client._creatureBindingList;
             strangerList.DataSource = client._strangerBindingList;
             friendList.DataSource = client._friendBindingList;
-
             trashList.DataSource = trashToDrop;
+
+            setoaArchive = DATArchive.FromFile(Settings.Default.DarkAgesPath.Replace("Darkages.exe", "setoa.dat"));
+            spellImageArchive = EPFImage.FromArchive("spell001.epf", setoaArchive);
+            skillImageArchive = EPFImage.FromArchive("skill001.epf", setoaArchive);
+            palette256 = Palette256.FromArchive("gui06.pal", setoaArchive);
 
             OnlyDisplaySpellsWeHave();
 
@@ -324,6 +341,147 @@ namespace Talos.Forms
 
             packetList.Items.Add(p);
         }
+
+        internal void RefreshUnmaxedSpells(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+            string name = button.Name;
+            if (button.BackColor == System.Drawing.Color.DodgerBlue)
+            {
+                button.BackColor = System.Drawing.Color.White;
+                _unmaxedSpells.Remove(name);
+            }
+            else
+            {
+                button.BackColor = System.Drawing.Color.DodgerBlue;
+                _unmaxedSpells.Add(name);
+            }
+        }
+
+        internal void RefreshUnmaxedSkills(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+            string name = button.Name;
+            if (button.BackColor == System.Drawing.Color.DodgerBlue)
+            {
+                button.BackColor = System.Drawing.Color.White;
+                _unmaxedSkills.Remove(name);
+            }
+            else
+            {
+                button.BackColor = System.Drawing.Color.DodgerBlue;
+                _unmaxedSkills.Add(name);
+            }
+        }
+        internal void RefreshUnmaxedBashingSkills(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+            string name = button.Name;
+            if (button.BackColor == System.Drawing.Color.DodgerBlue)
+            {
+                button.BackColor = System.Drawing.Color.White;
+                _unmaxedBashingSkills.Remove(name);
+            }
+            else
+            {
+                button.BackColor = System.Drawing.Color.DodgerBlue;
+                _unmaxedBashingSkills.Add(name);
+            }
+        }
+        internal void RenderUnmaxedSkills(string name, ushort index, System.Drawing.Point point)
+        {
+            Bitmap image = DAGraphics.RenderImage(skillImageArchive[index], palette256);
+            Button button = new Button();
+            TextBox textBox = new TextBox
+            {
+                Visible = false,
+                Text = name,
+                Name = name + "whatever"
+            };
+            textBox.Width = (int)((double)TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
+            textBox.Location = new System.Drawing.Point(point.X + 25, point.Y + 25);
+            button.Location = new System.Drawing.Point(point.X, point.Y);
+            button.FlatStyle = FlatStyle.Flat;
+            button.Size = new Size(40, 40);
+            button.Image = image;
+            button.BackColor = System.Drawing.Color.White;
+            button.Name = name;
+            button.Padding = Padding.Empty;
+            button.Margin = Padding.Empty;
+            button.MouseEnter += ShowAndBringToFrontTextBox;
+            button.MouseLeave += HideTextBox;
+            button.Click += RefreshUnmaxedSkills;
+            unmaxedSkillsGroup.Controls.Add(button);
+            unmaxedSkillsGroup.Controls.Add(textBox);
+        }
+        internal void RenderUnmaxedBashingSkills(string name, ushort index, System.Drawing.Point point)
+        {
+            Bitmap image = DAGraphics.RenderImage(skillImageArchive[index], palette256);
+            Button button = new Button();
+            TextBox textBox = new TextBox
+            {
+                Visible = false,
+                Text = name,
+                Name = name + "whatever"
+            };
+            textBox.Width = (int)((double)TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
+            textBox.Location = new System.Drawing.Point(point.X + 25, point.Y + 25);
+            button.Location = new System.Drawing.Point(point.X, point.Y);
+            button.FlatStyle = FlatStyle.Flat;
+            button.Size = new Size(40, 40);
+            button.Image = image;
+            button.BackColor = System.Drawing.Color.White;
+            button.Name = name;
+            button.Padding = Padding.Empty;
+            button.Margin = Padding.Empty;
+            button.MouseEnter += ShowAndBringToFrontTextBox;
+            button.MouseLeave += HideTextBox;
+            button.Click += RefreshUnmaxedBashingSkills;
+            bashingSkillsToUseGrp.Controls.Add(button);
+            bashingSkillsToUseGrp.Controls.Add(textBox);
+        }
+
+        internal void RenderUnmaxedSpells(string name, ushort index, System.Drawing.Point point)
+        {
+            Bitmap image = DAGraphics.RenderImage(spellImageArchive[index], palette256);
+            Button button = new Button();
+            TextBox textBox = new TextBox
+            {
+                Visible = false,
+                Text = name
+            };
+            textBox.Width = (int)((double)TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
+            textBox.Name = name + "whatever";
+            textBox.Location = new System.Drawing.Point(point.X + 25, point.Y + 25);
+            button.Location = new System.Drawing.Point(point.X, point.Y);
+            button.FlatStyle = FlatStyle.Flat;
+            button.Size = new Size(40, 40);
+            button.Image = image;
+            button.Name = name;
+            button.Padding = Padding.Empty;
+            button.Margin = Padding.Empty;
+            button.MouseEnter += ShowAndBringToFrontTextBox;
+            button.MouseLeave += HideTextBox;
+            button.Click += RefreshUnmaxedSpells;
+            unmaxedSpellsGroup.Controls.Add(button);
+            unmaxedSpellsGroup.Controls.Add(textBox);
+        }
+
+        private void HideTextBox(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+            TextBox textBox = button.Parent.Controls.OfType<TextBox>().FirstOrDefault(tb => tb.Name == button.Name + "whatever");
+            textBox?.Hide();
+        }
+
+        private void ShowAndBringToFrontTextBox(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+            TextBox textBox = button.Parent.Controls.OfType<TextBox>().FirstOrDefault(tb => tb.Name == button.Name + "whatever");
+            textBox?.Show();
+            textBox?.BringToFront();
+        }
+
 
         internal void UpdateBindingList(BindingList<string> bindingList, ListBox listBox, string name)
         {
@@ -726,9 +884,9 @@ namespace Talos.Forms
             _client.DisplayAisling(_client.Player);
         }
 
-        internal void DisplayObject(WorldObject worldObject)
+        internal void DisplayObjectIDs(WorldObject worldObject)
         {
-            if (InvokeRequired) { BeginInvoke(new Action(() => { DisplayObject(worldObject); })); return; }
+            if (InvokeRequired) { BeginInvoke(new Action(() => { DisplayObjectIDs(worldObject); })); return; }
 
             lastClickedIDLbl.Text = "ID: " + worldObject.ID;
             lastClickedNameLbl.Text = (worldObject.Name ?? " ");
@@ -739,10 +897,13 @@ namespace Talos.Forms
                 lastClickedSpriteLbl.Text = "Sprite: " + (worldObject as VisibleObject).SpriteID;
 
             }
-
-              
-
         }
+
+        internal void DisplayMapInfoOnCover(Map map)
+        {
+            mapInfoInfoLbl.Text = "Pt:" + _client._serverLocation.Point.ToString() + "  Size: " + map.Width + "x" + map.Height + "  ID: " + map.MapID;
+        }
+
 
         internal void checkMonsterForm(bool isChecked, ushort monsterID)
         {
@@ -750,8 +911,48 @@ namespace Talos.Forms
 
             formCbox.Checked = isChecked;
             formNum.Value = monsterID;
+        }
+        internal void ClearNearbyEnemies()
+        {
+            DateTime startTime = DateTime.UtcNow;
+            List<Control> controlsToDispose = new List<Control>();
 
+            for (int i = 0; i < nearbyEnemyTable.Controls.Count; i++)
+            {
+                NearbyEnemy enemy = nearbyEnemyTable.Controls[i] as NearbyEnemy;
+                if (enemy != null && enemy._isLoaded)
+                {
+                    controlsToDispose.Add(nearbyEnemyTable.Controls[i]);
+                }
+            }
 
+            foreach (Control control in controlsToDispose)
+            {
+                control.Dispose();
+            }
+
+            nearbyEnemyTable.Controls.Clear();
+        }
+
+        internal void ClearNearbyAllies()
+        {
+            DateTime startTime = DateTime.UtcNow;
+            List<NearbyAlly> alliesToDispose = new List<NearbyAlly>();
+
+            foreach (NearbyAlly ally in nearbyAllyTable.Controls)
+            {
+                if (ally.isLoaded)
+                {
+                    alliesToDispose.Add(ally);
+                }
+            }
+
+            foreach (NearbyAlly ally in alliesToDispose)
+            {
+                ally.Dispose();
+            }
+
+            nearbyAllyTable.Controls.Clear();
         }
 
         private void button13_Click(object sender, EventArgs e)
@@ -831,6 +1032,33 @@ namespace Talos.Forms
 
         private void dojoRefreshBtn_Click(object sender, EventArgs e)
         {
+            _client.ClientTab.StopBot();
+
+            _client._staffList.Clear();
+            _client.LoadStavesAndBows();
+            _unmaxedSkills.Clear();
+            _unmaxedSpells.Clear();
+
+            setoaArchive = DATArchive.FromFile(Settings.Default.DarkAgesPath.Replace("Darkages.exe", "setoa.dat"));
+            spellImageArchive = EPFImage.FromArchive("spell001.epf", setoaArchive);
+            skillImageArchive = EPFImage.FromArchive("skill001.epf", setoaArchive);
+            palette256 = Palette256.FromArchive("gui06.pal", setoaArchive);
+
+            while (unmaxedSkillsGroup.Controls.Count > 0)
+            {
+                unmaxedSkillsGroup.Controls[0].Dispose();
+            }
+            while (unmaxedSpellsGroup.Controls.Count > 0)
+            {
+                unmaxedSpellsGroup.Controls[0].Dispose();
+            }
+            _client.LoadUnmaxedSkills();
+            _client.LoadUnmaxedSpells();
+
+            if (_client.ClientTab.startStrip.Text == "Stop")
+            {
+                _client.BotBase.Start();
+            }
             OnlyDisplaySpellsWeHave();
             SetClassSpecificSpells();
             //LoadUnMaxedSkills();
@@ -1362,7 +1590,7 @@ namespace Talos.Forms
             _client.Bot.EnemyPage = enemyPage;
         }
 
-        internal void ClearNearbyEnemies()
+/*        internal void ClearNearbyEnemies()
         {
             if (_client.Bot.EnemyPage != null)
             {
@@ -1378,7 +1606,7 @@ namespace Talos.Forms
             }
             nearbyEnemyTable.Controls.Clear();
         }
-
+*/
         private void addMonsterBtn_Click(object sender, EventArgs e)
         {
             if ((ushort.TryParse(addMonsterText.Text, out ushort result)) || validateMonsterInput(result))
@@ -1842,7 +2070,7 @@ namespace Talos.Forms
             }
             else if (_sessionAbilityStopWatch.IsRunning)
             {
-                apHourLbl.Text = "AP/hr: " + Math.Truncate((double)(_client.AbilityExperience - _sessionAbility) / _sessionAbilityStopWatch.Elapsed.TotalHours).ToString("N0");
+                 apHourLbl.Text = "AP/hr: " + Math.Truncate((double)(_client.AbilityExperience - _sessionAbility) / _sessionAbilityStopWatch.Elapsed.TotalHours).ToString("N0");
             }
             if (_client.Gold < _gold)
             {
