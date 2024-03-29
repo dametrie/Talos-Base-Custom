@@ -6,23 +6,23 @@ namespace Talos.Maps
 {
     internal class Warp : MapObject
     {
-        internal override short SourceX => this.SourceX;
-        internal override short SourceY => this.SourceY;
-        internal override short SourceMapID => this.SourceMapID;
+        internal override short SourceX => SourceX;
+        internal override short SourceY => SourceY;
+        internal override short SourceMapID => SourceMapID;
         internal byte TargetX { get; }
         internal byte TargetY { get; }
         internal short TargetMapID { get; }
-        internal Location SourceLocation => new Location(this.SourceMapID, this.SourceX, this.SourceY);
-        internal Location TargetLocation => new Location(this.TargetMapID, this.TargetX, this.TargetY);
+        internal Location SourceLocation => new Location(SourceMapID, SourceX, SourceY);
+        internal Location TargetLocation => new Location(TargetMapID, TargetX, TargetY);
 
         internal Warp(byte sourceX, byte sourceY, byte targetX, byte targetYbyte, short sourceMapID, short targetMapID)
         {
-            this.SourceX = sourceX;
-            this.SourceY = sourceY;
-            this.TargetX = targetX;
-            this.TargetY = targetYbyte;
-            this.SourceMapID = sourceMapID;
-            this.TargetMapID = targetMapID;
+            SourceX = sourceX;
+            SourceY = sourceY;
+            TargetX = targetX;
+            TargetY = targetYbyte;
+            SourceMapID = sourceMapID;
+            TargetMapID = targetMapID;
         }
     }
 }

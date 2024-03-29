@@ -23,20 +23,39 @@ namespace Talos.Objects
         {
             get
             {
+                Console.WriteLine($"[DEBUG] Checking CanUse for spell {Name}. Cooldown: {Cooldown}, Ticks: {Ticks}");
+
                 if (!(Cooldown == DateTime.MinValue) && Ticks != 0.0)
                 {
-                    double num = Ticks - (double)(int)CastLines + 0.5;
-                    TimeSpan nowFromLastUsed = DateTime.UtcNow.Subtract(LastUsed);
-                    TimeSpan nowFromCooldown = DateTime.UtcNow.Subtract(Cooldown);
-                    if (nowFromLastUsed.TotalSeconds > 1.5)
+                    //double num = Ticks - (double)(int)CastLines + 0.5;
+                    double num = Ticks;
+                    TimeSpan timeSinceLastUsed = DateTime.UtcNow.Subtract(LastUsed);
+                    TimeSpan timeSinceCooldownStarted = DateTime.UtcNow.Subtract(Cooldown);
+
+                    Console.WriteLine($"[DEBUG] num: {num}");
+                    Console.WriteLine($"[DEBUG] Time since Last Used: {timeSinceLastUsed.TotalSeconds} seconds");
+                    Console.WriteLine($"[DEBUG] Time since Cooldown Started: {timeSinceCooldownStarted.TotalSeconds} seconds");
+
+                    if (timeSinceLastUsed.TotalSeconds > 1.5)
                     {
-                        return nowFromCooldown.TotalSeconds > num;
-                    }
-                    return false;
+                        if (timeSinceCooldownStarted.TotalSeconds > num)
+                        {
+                            Console.WriteLine("[DEBUG] Spell can be used. Cooldown period has passed.");
+                            return true;
+                        }
+                        else
+                        {
+                            Console.WriteLine("[DEBUG] Spell cannot be used yet. Still within cooldown period.");
+                            return false;
+                        }
+                    }   
                 }
+                Console.WriteLine("[DEBUG] Spell can be used. No cooldown or ticks.");
                 return true;
+
             }
         }
+
         internal static Dictionary<string, double> SpellDuration = new Dictionary<string, double>
         {
             { "Frost Arrow 1", 4.0 },

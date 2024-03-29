@@ -40,7 +40,7 @@ namespace Talos
 
         internal static string WriteMapFiles(System.Environment.SpecialFolder folder, string path, params object[] obj)
         {
-            string text = string.Join("\\", System.Environment.GetFolderPath(folder) + "\\Talos", string.Format(path, obj));
+            string text = string.Join("\\", Environment.GetFolderPath(folder) + "\\Talos", string.Format(path, obj));
             Directory.CreateDirectory(Path.GetDirectoryName(text));
             return text;
         }

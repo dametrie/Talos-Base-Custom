@@ -214,7 +214,7 @@ namespace Talos.Capricorn.Drawing
                     // Cache the Tile if Not Cached Already
                     if (!cachedFloor.ContainsKey(floor))
                     {
-                        Bitmap floorTile = DAGraphics.RenderTile(tiles[floor], tileTable[floor + 2]);
+                        Bitmap floorTile = RenderTile(tiles[floor], tileTable[floor + 2]);
                         cachedFloor.Add(floor, floorTile);
                     }
 
@@ -251,7 +251,7 @@ namespace Talos.Capricorn.Drawing
                     if (!cachedWalls.ContainsKey(leftWall))
                     {
                         HPFImage hpf = HPFImage.FromArchive("stc" + leftWall.ToString().PadLeft(5, '0') + ".hpf", true, wallSource);
-                        Bitmap wall = DAGraphics.RenderImage(hpf, wallTable[leftWall + 1]);
+                        Bitmap wall = RenderImage(hpf, wallTable[leftWall + 1]);
                         cachedWalls.Add(leftWall, wall);
                     }
 
@@ -274,7 +274,7 @@ namespace Talos.Capricorn.Drawing
                     if (!cachedWalls.ContainsKey(rightWall))
                     {
                         HPFImage hpf = HPFImage.FromArchive("stc" + rightWall.ToString().PadLeft(5, '0') + ".hpf", true, wallSource);
-                        Bitmap wall = DAGraphics.RenderImage(hpf, wallTable[rightWall + 1]);
+                        Bitmap wall = RenderImage(hpf, wallTable[rightWall + 1]);
                         cachedWalls.Add(rightWall, wall);
                     }
 

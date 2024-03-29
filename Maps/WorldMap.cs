@@ -23,8 +23,8 @@ namespace Talos.Maps
         {
             MemoryStream output = new MemoryStream();
             BinaryWriter binaryWriter1 = new BinaryWriter((Stream)output);
-            binaryWriter1.Write((byte)this.Nodes.Count);
-            foreach (WorldMapNode node in this.Nodes)
+            binaryWriter1.Write((byte)Nodes.Count);
+            foreach (WorldMapNode node in Nodes)
             {
                 BinaryWriter binaryWriter2 = binaryWriter1;
                 Point position = node.Position;

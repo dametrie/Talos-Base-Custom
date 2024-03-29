@@ -78,7 +78,7 @@ namespace Talos.PInvoke
         {
             if (_disposed)
                 throw new ObjectDisposedException("ProcessMemoryStream");
-            if (this._pocessHandle == IntPtr.Zero)
+            if (_pocessHandle == IntPtr.Zero)
                 throw new InvalidOperationException("Process is not open.");
             IntPtr intPtr = Marshal.AllocHGlobal(count);
             if (intPtr == IntPtr.Zero)

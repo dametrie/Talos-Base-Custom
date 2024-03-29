@@ -18,7 +18,7 @@ namespace Talos.Forms
         private Ally _ally;
         public AllyPage(Ally ally, Client client)
         {
-            base.Name = ally.Name;
+            Name = ally.Name;
             _ally = ally;
             _client = client;
             InitializeComponent();

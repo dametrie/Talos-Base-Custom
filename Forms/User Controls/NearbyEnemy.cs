@@ -47,7 +47,7 @@ namespace Talos.Forms.User_Controls
                     var spriteImage = LoadSpriteFromArchive(spriteFileName, archive);
                     ConfigureEnemyPicture(spriteImage);
                     nearbyEnemySpriteLbl.Text = $"Sprite: {NPC.SpriteID}";
-                    base.Name = NPC.SpriteID.ToString();
+                    Name = NPC.SpriteID.ToString();
                 }
             }
             catch (Exception ex)
@@ -93,15 +93,15 @@ namespace Talos.Forms.User_Controls
 
         private void NearbyEnemy_Load(object sender, EventArgs e)
         {
-            this._isLoaded = true;
+            _isLoaded = true;
         }
 
         private void nearbyEnemyAddBtn_Click(object sender, MouseEventArgs e)
         {
             ushort spriteID;
-            if ((e.Button == MouseButtons.Left) && ushort.TryParse(base.Name, out spriteID))
+            if ((e.Button == MouseButtons.Left) && ushort.TryParse(Name, out spriteID))
             {
-                this.Client.ClientTab.AddEnemyPage(spriteID);
+                Client.ClientTab.AddEnemyPage(spriteID);
             }
         }
     }

@@ -50,9 +50,9 @@ namespace Talos.Objects
                 _dion = value;                    
             }
         }
-        internal byte Health
+        internal byte HealthPercent
         {
-            get => (byte)((_health > 100) ? 100: _health);
+            get => (byte)((_health > 100) ? 100 : _health);
             set => _health = value;
         }
         internal bool IsDioned => DateTime.UtcNow.Subtract(LastDioned).TotalSeconds < DionDuration;
@@ -128,7 +128,7 @@ namespace Talos.Objects
             Direction = direction;
             SpellAnimationHistory = new Dictionary<ushort, DateTime>();
             SourceAnimationHistory = new Dictionary<ushort, DateTime>();
-            Health = 100;
+            HealthPercent = 100;
             Type = (CreatureType)type;
             LastWalked = DateTime.UtcNow;
             LastCursed = DateTime.MinValue;

@@ -85,7 +85,7 @@ namespace Talos.Forms
 
         private void LoadEnemySprite(Enemy enemy)
         {
-            base.Name = enemy.SpriteID.ToString();
+            Name = enemy.SpriteID.ToString();
             string spriteFileName = $"MNS{enemy.SpriteID:D3}.MPF";
             string archivePath = Settings.Default.DarkAgesPath.Replace("Darkages.exe", "hades.dat");
 

@@ -256,6 +256,9 @@ namespace Talos.Base
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
         internal string _itemToReEquip;
+        internal DateTime _lastHidden;
+        internal bool bool_41 = true;
+        internal bool _distnationReached;
 
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }
@@ -323,6 +326,8 @@ namespace Talos.Base
             }
         }
 
+        internal uint MaximumHP { get { return Stats.MaximumHP; } set { Stats.MaximumHP = value; } }
+        internal uint MaximumMP { get { return Stats.MaximumMP; } set { Stats.MaximumMP = value; } }
         internal uint CurrentHP { get { return Stats.CurrentHP; } set { Stats.CurrentHP = value; } }
         internal uint CurrentMP { get { return Stats.CurrentMP; } set { Stats.CurrentMP = value; } }
         internal uint Experience => Stats.Experience;
@@ -382,6 +387,41 @@ namespace Talos.Base
         internal bool HasItem(string itemName) => Inventory.HasItem(itemName);
         internal bool HasSkill(string skillName) => Skillbook[skillName] != null;
         internal bool HasSpell(string spellName) => Spellbook[spellName] != null;
+        internal int CalculateHealAmount(string spellName)
+        {
+            int num = (Stats.CurrentWis >= 99) ? Stats.CurrentWis : 99;
+            uint fnvHash = Utility.CalculateFNV(spellName);
+
+            switch (fnvHash)
+            {
+                case 301833330: //Spirit Essence
+                    return 2000000;
+
+                case 2360874113: //beag ioc
+                    return 1056 - (255 - num) * 6;
+
+                case 2431366422: //ioc
+                case 1586538930: //ioc comlha
+                    return 8800 - (255 - num) * 50;
+
+                case 2358017708: //mor ioc comlha:
+                case 1812078524: //mor ioc
+                    return 26400 - (255 - num) * 150;
+
+                case 1544215329: //ard ioc comlha
+                case 4118165127: //ard ioc
+                    return 52800 - (255 - num) * 300;
+
+                case 3783935686: //nuadhaich
+                    return 88000 - (255 - num) * 500;
+
+                case 4167026527: //Cold Blood
+                    return 500 * Ability;
+
+                default:
+                    return 0;
+            }
+        }
         internal int GetItemQuantity(string itemName)
         {
             int quantity = 0;
@@ -525,7 +565,7 @@ namespace Talos.Base
             // Check each adjacent location for being surrounded conditions.
             foreach (var loc in adjacentLocations)
             {
-                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || this._map.IsLocationWall(loc);
+                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || _map.IsLocationWall(loc);
 
                 // If any adjacent location is not occupied or within bounds, the location is not surrounded.
                 if (!isOccupiedOrBound)
@@ -632,7 +672,7 @@ namespace Talos.Base
                     return false;
                 }
             }
-            Console.WriteLine($"[IsValidSpell] Spell {spellName} on Creature ID: {creature?.ID} is valid.");
+            //Console.WriteLine($"[IsValidSpell] Spell {spellName} on Creature ID: {creature?.ID} is valid.");
             return true;
         }
 
@@ -1545,7 +1585,7 @@ namespace Talos.Base
         }
 
 
-        internal void ResetExchangeVars()
+        internal void ResetExchangeVars() //Adam
         {
             bool_45 = true;
             Thread.Sleep(1500);
@@ -1712,6 +1752,8 @@ namespace Talos.Base
             Spell spell = Spellbook[spellName];
             byte castLines = spell.CastLines;
 
+            Console.WriteLine($"[UseSpell] Attempting to cast {spellName}, Lastused: {spell.LastUsed}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}");
+
             lock (Lock)
             {
 
@@ -1731,7 +1773,7 @@ namespace Talos.Base
                     }
                 }
 
-                this.CreatureTarget = (creature ?? Player);
+                CreatureTarget = (creature ?? Player);
                 if (ReadyToSpell(spell.Name))
                 {
                     var existingEntry = _creatureToSpellList.FirstOrDefault(cts => cts.Creature.ID == CreatureTarget.ID && cts.Spell.Name == spell.Name);
@@ -1740,13 +1782,13 @@ namespace Talos.Base
                     {
                         if (existingEntry.CooldownEndTime > DateTime.UtcNow)
                         {
-                            Console.WriteLine($"[Debug] Skipped adding {CreatureTarget.ID} to _creatureToSpellList due to cooldown.");
+                            //Console.WriteLine($"[Debug] Skipped adding {CreatureTarget.ID} to _creatureToSpellList due to cooldown.");
                         }
                         else
                         {
                             // Update cooldown end time for re-casting
                             existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(1);
-                            Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _creatureToSpellList.");
+                            //Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _creatureToSpellList.");
                         }
                     }
                     else
@@ -1756,8 +1798,8 @@ namespace Talos.Base
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
                         _creatureToSpellList.Add(newEntry);
-                        Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {creature?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
-                        Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
+                        //Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {creature?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
+                        //Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
                     }
                 }
                 else
@@ -1985,7 +2027,7 @@ namespace Talos.Base
         {
             _ = player.Location;
             ushort spriteID = player.SpriteID;
-            if (player == this.Player && InMonsterForm && !_deformNearStrangers)//Adam deform near starngers not working
+            if (player == Player && InMonsterForm && !_deformNearStrangers)//Adam deform near starngers not working
             {
                 spriteID = _monsterFormID;
             }
@@ -2499,7 +2541,7 @@ namespace Talos.Base
                 }
                 _isCasting = false;
             }
-            if ((!_map.IsLocationWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any((Creature creature) => creature != Player && creature.Type != CreatureType.WalkThrough && Point.Equals(creature.Location, _clientLocation)))) || (!shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
+            if ((!_map.IsLocationWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any((Creature creature) => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
                 if (followDistance != 0 && _clientLocation.DistanceFrom(destination) <= followDistance)
                 {
@@ -2507,7 +2549,7 @@ namespace Talos.Base
                     Thread.Sleep(25);
                     return false;
                 }
-                if (Point.Equals(_clientLocation, destination))
+                if (Equals(_clientLocation, destination))
                 {
                     Console.WriteLine("Already at the destination.");
                     if (shouldRefresh || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)

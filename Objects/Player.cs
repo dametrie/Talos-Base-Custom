@@ -38,9 +38,9 @@ namespace Talos.Objects
         {
             get
             {
-                if (!base.SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Skull))
+                if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Skull))
                     return false;
-                return DateTime.UtcNow.Subtract(base.SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds < 2.0;
+                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds < 2.0;
             }
         }
 

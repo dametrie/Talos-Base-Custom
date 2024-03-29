@@ -86,46 +86,46 @@ namespace Talos.Objects
 
         internal void DialogPrevious()
         {
-            if (DateTime.UtcNow.Subtract(this._lastReply).TotalSeconds >= 1.0)
+            if (DateTime.UtcNow.Subtract(_lastReply).TotalSeconds >= 1.0)
             {
-                this._client.ReplyDialog(this.ObjectType, this.ObjectID, this.PursuitID, (ushort)(this.DialogID - 1));
-                this._lastReply = DateTime.UtcNow;
+                _client.ReplyDialog(ObjectType, ObjectID, PursuitID, (ushort)(DialogID - 1));
+                _lastReply = DateTime.UtcNow;
             }
         }
 
         internal void DialogNext()
         {
-            if (DateTime.UtcNow.Subtract(this._lastReply).TotalSeconds >= 1.0)
+            if (DateTime.UtcNow.Subtract(_lastReply).TotalSeconds >= 1.0)
             {
-                this._client.ReplyDialog(this.ObjectType, this.ObjectID, this.PursuitID, (ushort)(this.DialogID + 1));
-                this._lastReply = DateTime.UtcNow;
+                _client.ReplyDialog(ObjectType, ObjectID, PursuitID, (ushort)(DialogID + 1));
+                _lastReply = DateTime.UtcNow;
             }
         }
 
         internal void DialogNext(byte num)
         {
-            if (DateTime.UtcNow.Subtract(this._lastReply).TotalSeconds >= 1.0)
+            if (DateTime.UtcNow.Subtract(_lastReply).TotalSeconds >= 1.0)
             {
-                this._client.ReplyDialog(this.ObjectType, this.ObjectID, this.PursuitID, (ushort)(this.DialogID + 1), num);
-                this._lastReply = DateTime.UtcNow;
+                _client.ReplyDialog(ObjectType, ObjectID, PursuitID, (ushort)(DialogID + 1), num);
+                _lastReply = DateTime.UtcNow;
             }
         }
 
         internal void DialogNext(string response)
         {
-            if (DateTime.UtcNow.Subtract(this._lastReply).TotalSeconds >= 1.0)
+            if (DateTime.UtcNow.Subtract(_lastReply).TotalSeconds >= 1.0)
             {
-                this._client.ReplyDialog(this.ObjectType, this.ObjectID, this.PursuitID, (ushort)(this.DialogID + 1), response);
-                this._lastReply = DateTime.UtcNow;
+                _client.ReplyDialog(ObjectType, ObjectID, PursuitID, (ushort)(DialogID + 1), response);
+                _lastReply = DateTime.UtcNow;
             }
         }
 
         internal void Reply()
         {
-            if (DateTime.UtcNow.Subtract(this._lastReply).TotalSeconds >= 1.0)
+            if (DateTime.UtcNow.Subtract(_lastReply).TotalSeconds >= 1.0)
             {
-                this._client.ReplyDialog(this.ObjectType, this.ObjectID, this.PursuitID, this.DialogID);
-                this._lastReply = DateTime.UtcNow;
+                _client.ReplyDialog(ObjectType, ObjectID, PursuitID, DialogID);
+                _lastReply = DateTime.UtcNow;
             }
         }
 

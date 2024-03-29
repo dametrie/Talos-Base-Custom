@@ -112,7 +112,7 @@ namespace Talos.Capricorn.IO
 		/// <returns></returns>
 		public bool Contains(string name)
 		{
-			foreach (DATFileEntry file in this.files)
+			foreach (DATFileEntry file in files)
 			{
 				if (file.Name == name)
 					return true;
@@ -128,7 +128,7 @@ namespace Talos.Capricorn.IO
 		/// <returns></returns>
 		public bool Contains(string name, bool ignoreCase)
 		{
-			foreach (DATFileEntry file in this.files)
+			foreach (DATFileEntry file in files)
 			{
 				if (ignoreCase)
 				{
@@ -151,9 +151,9 @@ namespace Talos.Capricorn.IO
 		/// <returns></returns>
 		public int IndexOf(string name)
 		{
-			for (int i = 0; i < this.files.Length; i++)
+			for (int i = 0; i < files.Length; i++)
 			{
-				if (this.files[i].Name == name)
+				if (files[i].Name == name)
 					return i;
 			}
 
@@ -169,16 +169,16 @@ namespace Talos.Capricorn.IO
 		/// <returns></returns>
 		public int IndexOf(string name, bool ignoreCase)
 		{
-			for (int i = 0; i < this.files.Length; i++)
+			for (int i = 0; i < files.Length; i++)
 			{
 				if (ignoreCase)
 				{
-					if (this.files[i].Name.ToUpper() == name.ToUpper())
+					if (files[i].Name.ToUpper() == name.ToUpper())
 						return i;
 				}
 				else
 				{
-					if (this.files[i].Name == name)
+					if (files[i].Name == name)
 						return i;
 				}
 			}
@@ -195,11 +195,11 @@ namespace Talos.Capricorn.IO
 		public byte[] ExtractFile(string name)
 		{
 			// Check if File Exists
-			if(!this.Contains(name))
+			if(!Contains(name))
 				return null;
 
 			#region Create File Stream and Reader
-			FileStream stream = new FileStream(this.filename,
+			FileStream stream = new FileStream(filename,
 				FileMode.Open,
 				FileAccess.Read,
 				FileShare.Read);
@@ -208,13 +208,13 @@ namespace Talos.Capricorn.IO
 			#endregion
 
 			// Get Index
-			int index = this.IndexOf(name);
+			int index = IndexOf(name);
 
 			// Seek to File
-			reader.BaseStream.Seek(this.files[index].StartAddress, SeekOrigin.Begin);
+			reader.BaseStream.Seek(files[index].StartAddress, SeekOrigin.Begin);
 
 			// Read Bytes
-			byte[] fileData = reader.ReadBytes((int)this.files[index].FileSize);
+			byte[] fileData = reader.ReadBytes((int)files[index].FileSize);
 
 			// Close Stream
 			reader.Close();
@@ -232,11 +232,11 @@ namespace Talos.Capricorn.IO
 		public byte[] ExtractFile(string name, bool ignoreCase)
 		{
 			// Check if File Exists
-			if (!this.Contains(name, ignoreCase))
+			if (!Contains(name, ignoreCase))
 				return null;
 
 			#region Create File Stream and Reader
-			FileStream stream = new FileStream(this.filename,
+			FileStream stream = new FileStream(filename,
 				FileMode.Open,
 				FileAccess.Read,
 				FileShare.Read);
@@ -245,13 +245,13 @@ namespace Talos.Capricorn.IO
 			#endregion
 
 			// Get Index
-			int index = this.IndexOf(name, ignoreCase);
+			int index = IndexOf(name, ignoreCase);
 
 			// Seek to File
-			reader.BaseStream.Seek(this.files[index].StartAddress, SeekOrigin.Begin);
+			reader.BaseStream.Seek(files[index].StartAddress, SeekOrigin.Begin);
 
 			// Read Bytes
-			byte[] fileData = reader.ReadBytes((int)this.files[index].FileSize);
+			byte[] fileData = reader.ReadBytes((int)files[index].FileSize);
 
 			// Close Stream
 			reader.Close();
@@ -268,11 +268,11 @@ namespace Talos.Capricorn.IO
 		public byte[] ExtractFile(DATFileEntry entry)
 		{
 			// Check if File Exists
-			if (!this.Contains(entry.Name))
+			if (!Contains(entry.Name))
 				return null;
 
 			#region Create File Stream and Reader
-			FileStream stream = new FileStream(this.filename,
+			FileStream stream = new FileStream(filename,
 				FileMode.Open,
 				FileAccess.Read,
 				FileShare.Read);

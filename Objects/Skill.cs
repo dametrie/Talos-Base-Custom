@@ -20,18 +20,39 @@ namespace Talos.Objects
         {
             get
             {
+                Console.WriteLine($"[DEBUG] Checking CanUse for spell. Cooldown: {Cooldown}, Ticks: {Ticks}");
+
                 if (!(Cooldown == DateTime.MinValue) && Ticks != 0.0)
                 {
                     double num = Math.Max(1.0, Ticks);
                     TimeSpan nowFromLastUsed = DateTime.UtcNow.Subtract(LastUsed);
                     TimeSpan nowFromCooldown = DateTime.UtcNow.Subtract(Cooldown);
+
+                    Console.WriteLine($"[DEBUG] num: {num}");
+                    Console.WriteLine($"[DEBUG] Now from Last Used: {nowFromLastUsed.TotalSeconds} seconds");
+                    Console.WriteLine($"[DEBUG] Now from Cooldown: {nowFromCooldown.TotalSeconds} seconds");
+
                     if (!(nowFromLastUsed.TotalSeconds > 0.5))
                     {
+                        Console.WriteLine("[DEBUG] Spell cannot be used yet. Last used less than 0.5 seconds ago.");
                         return false;
                     }
-                    return nowFromCooldown.TotalSeconds > num;
+                    if (nowFromCooldown.TotalSeconds > num)
+                    {
+                        Console.WriteLine("[DEBUG] Spell can be used. Cooldown period has passed.");
+                        return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("[DEBUG] Spell cannot be used yet. Still within cooldown period.");
+                        return false;
+                    }
                 }
-                return true;
+                else
+                {
+                    Console.WriteLine("[DEBUG] Spell can be used. No cooldown or ticks.");
+                    return true;
+                }
             }
         }
         internal Skill(byte slot, string name, ushort sprite, byte currentLevel, byte maxLevel)

@@ -84,6 +84,40 @@ namespace Talos.Structs
             return !Equals(location1, location2);
         }
 
+        public static bool operator ==(Location left, Location right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Location left, Location right)
+        {
+            return !(left == right);
+        }
+
+        // Override the Object.Equals method
+        public override bool Equals(object obj)
+        {
+            if (obj is Location)
+            {
+                return Equals((Location)obj);
+            }
+            return false;
+        }
+
+        // Override the GetHashCode method to ensure the hash code is consistent with the equality logic
+        public override int GetHashCode()
+        {
+            unchecked // Overflow is fine, just wrap
+            {
+                int hash = 17;
+                // Suitable nullity checks etc, of course :)
+                hash = hash * 23 + MapID.GetHashCode();
+                hash = hash * 23 + X.GetHashCode();
+                hash = hash * 23 + Y.GetHashCode();
+                return hash;
+            }
+        }
+
         /// <summary>
         /// Prints the value of the point to a string
         /// </summary>

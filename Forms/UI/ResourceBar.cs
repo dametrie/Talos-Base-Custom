@@ -42,16 +42,16 @@ namespace Talos.Forms.UI
         protected override void OnPaint(PaintEventArgs e)
         {
             int num = 1;
-            using (Image image = new Bitmap(base.Width, base.Height))
+            using (Image image = new Bitmap(Width, Height))
             {
                 using (Graphics graphics = Graphics.FromImage(image))
                 {
-                    System.Drawing.Rectangle bounds = new System.Drawing.Rectangle(0, 0, base.Width, base.Height);
+                    System.Drawing.Rectangle bounds = new System.Drawing.Rectangle(0, 0, Width, Height);
                     if (ProgressBarRenderer.IsSupported)
                     {
                         ProgressBarRenderer.DrawVerticalBar(graphics, bounds);
                     }
-                    num = (100 - base.Value) * MaximumSize.Height / 100;
+                    num = (100 - Value) * MaximumSize.Height / 100;
                     TextureBrush textureBrush = new TextureBrush(barImage);
                     graphics.FillRectangle(textureBrush, 0, num, bounds.Width, bounds.Height);
                     e.Graphics.DrawImage(image, 0, 0);

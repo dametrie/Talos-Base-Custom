@@ -62,7 +62,7 @@ namespace Talos.Networking
             ushort num = (ushort)(Utility.Random(65277) + 256);
             byte b = (byte)(Utility.Random(155) + 100);
             byte[] key;
-            switch (this.EncryptMethod)
+            switch (EncryptMethod)
             {
                 default:
                     return;

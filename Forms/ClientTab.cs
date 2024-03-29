@@ -344,14 +344,14 @@ namespace Talos.Forms
         {
             Button button = sender as Button;
             string name = button.Name;
-            if (button.BackColor == System.Drawing.Color.DodgerBlue)
+            if (button.BackColor == Color.DodgerBlue)
             {
-                button.BackColor = System.Drawing.Color.White;
+                button.BackColor = Color.White;
                 _unmaxedSpells.Remove(name);
             }
             else
             {
-                button.BackColor = System.Drawing.Color.DodgerBlue;
+                button.BackColor = Color.DodgerBlue;
                 _unmaxedSpells.Add(name);
             }
         }
@@ -360,14 +360,14 @@ namespace Talos.Forms
         {
             Button button = sender as Button;
             string name = button.Name;
-            if (button.BackColor == System.Drawing.Color.DodgerBlue)
+            if (button.BackColor == Color.DodgerBlue)
             {
-                button.BackColor = System.Drawing.Color.White;
+                button.BackColor = Color.White;
                 _unmaxedSkills.Remove(name);
             }
             else
             {
-                button.BackColor = System.Drawing.Color.DodgerBlue;
+                button.BackColor = Color.DodgerBlue;
                 _unmaxedSkills.Add(name);
             }
         }
@@ -375,14 +375,14 @@ namespace Talos.Forms
         {
             Button button = sender as Button;
             string name = button.Name;
-            if (button.BackColor == System.Drawing.Color.DodgerBlue)
+            if (button.BackColor == Color.DodgerBlue)
             {
-                button.BackColor = System.Drawing.Color.White;
+                button.BackColor = Color.White;
                 _unmaxedBashingSkills.Remove(name);
             }
             else
             {
-                button.BackColor = System.Drawing.Color.DodgerBlue;
+                button.BackColor = Color.DodgerBlue;
                 _unmaxedBashingSkills.Add(name);
             }
         }
@@ -402,7 +402,7 @@ namespace Talos.Forms
             button.FlatStyle = FlatStyle.Flat;
             button.Size = new Size(40, 40);
             button.Image = image;
-            button.BackColor = System.Drawing.Color.White;
+            button.BackColor = Color.White;
             button.Name = name;
             button.Padding = Padding.Empty;
             button.Margin = Padding.Empty;
@@ -428,7 +428,7 @@ namespace Talos.Forms
             button.FlatStyle = FlatStyle.Flat;
             button.Size = new Size(40, 40);
             button.Image = image;
-            button.BackColor = System.Drawing.Color.White;
+            button.BackColor = Color.White;
             button.Name = name;
             button.Padding = Padding.Empty;
             button.Margin = Padding.Empty;
@@ -498,7 +498,7 @@ namespace Talos.Forms
 
         internal void AddMessageToChatPanel(System.Drawing.Color color, string message)
         {
-            if (base.InvokeRequired)
+            if (InvokeRequired)
             {
                 Invoke((Action)delegate
                 {
@@ -508,7 +508,7 @@ namespace Talos.Forms
             }
             if (chatPanel.TextLength != 0)
             {
-                message = System.Environment.NewLine + message;
+                message = Environment.NewLine + message;
             }
             MatchCollection matchCollection;
             if ((matchCollection = Regex.Matches(message, "({=[a-zA-Z])")).Count > 0)
@@ -1142,7 +1142,7 @@ namespace Talos.Forms
 
         internal void AddNearbyEnemy(Creature npc)
         {
-            if (base.InvokeRequired)
+            if (InvokeRequired)
             {
                 Invoke((Action)delegate
                 {
@@ -1161,7 +1161,7 @@ namespace Talos.Forms
 
         internal void AddNearbyAlly(Player player)
         {
-            if (base.InvokeRequired)
+            if (InvokeRequired)
             {
                 Invoke((Action)delegate
                 {

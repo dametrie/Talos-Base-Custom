@@ -23,9 +23,9 @@ namespace Talos.Objects
 
         internal Caster(byte type, string name, string prompt, SpellCastDelegate spellCastDelegate)
         {
-            base.Type = type;
-            base.Name = name;
-            base.Prompt = prompt;
+            Type = type;
+            Name = name;
+            Prompt = prompt;
             SpellCastDelegate = spellCastDelegate;
         }
     }

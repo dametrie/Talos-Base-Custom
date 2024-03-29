@@ -169,7 +169,7 @@ namespace Talos.Helper
                 Creature creature = client._creatureToSpellList.Count > 0 ? client._creatureToSpellList[0].Creature : null;
                 if (creature != null)
                 {
-                    Console.WriteLine($"[HandleSpellCastMessage] Creature ID: {creature?.ID}. _creatureToSpellList[0] Creature ID: {client._creatureToSpellList[0].Creature.ID}");
+                    //Console.WriteLine($"[HandleSpellCastMessage] Creature ID: {creature?.ID}. _creatureToSpellList[0] Creature ID: {client._creatureToSpellList[0].Creature.ID}");
                 }
 
                 string spellName = match.Groups[1].Value;
@@ -234,6 +234,7 @@ namespace Talos.Helper
                     case "fas spiorad":
                         client.Bot._needFasSpiorad = false;
                         client.Bot._manaLessThanEightyPct = false;
+                        client.Player.NeedsHeal = true;
                         break;
                     case "mor strioch pian gar":
                         client.Bot._needFasSpiorad = true;
@@ -340,9 +341,10 @@ namespace Talos.Helper
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+
                     default:
-                        Console.WriteLine($"[HandleSpellCastMessage] default case encountered");
-                        Console.WriteLine($"[HandleSpellCastMessage] _creatureToSpellList.Count {client._creatureToSpellList.Count}");
+                        //Console.WriteLine($"[HandleSpellCastMessage] default case encountered");
+                        //Console.WriteLine($"[HandleSpellCastMessage] _creatureToSpellList.Count {client._creatureToSpellList.Count}");
                         if (client._creatureToSpellList.Count <= 0)
                             client._currentSpell = null;
                         break;
@@ -521,8 +523,8 @@ namespace Talos.Helper
 
             if (client._creatureToSpellList.Count > 0)
             {
-                Console.WriteLine($"[HandleAlreadyCastMessage] Already cast message received on {client._creatureToSpellList[0].Creature.ID}");
-                Console.WriteLine($"[HandleAlreadyCastMessage] _creatureToSpellList.Count before removal: {client._creatureToSpellList.Count}");
+                //Console.WriteLine($"[HandleAlreadyCastMessage] Already cast message received on {client._creatureToSpellList[0].Creature.ID}");
+                //Console.WriteLine($"[HandleAlreadyCastMessage] _creatureToSpellList.Count before removal: {client._creatureToSpellList.Count}");
 
                 if (client._currentSpell != null && client._currentSpell.Name.Contains("fas"))
                 {
@@ -535,7 +537,7 @@ namespace Talos.Helper
                 if (client._currentSpell != null && client._currentSpell.Name.Contains("pramh"))
                 {
                     client._creatureToSpellList[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
-                    Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
+                    //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client._currentSpell = null;
                 }
 

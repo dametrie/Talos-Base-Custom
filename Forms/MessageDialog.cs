@@ -38,12 +38,12 @@ namespace Talos
 
         private void okBtn_Click(object sender, EventArgs e)
         {
-            base.DialogResult = DialogResult.OK;
+            DialogResult = DialogResult.OK;
         }
 
         private void cancelBtn_Click(object sender, EventArgs e)
         {
-            base.DialogResult = DialogResult.Cancel;
+            DialogResult = DialogResult.Cancel;
         }
     }
 }

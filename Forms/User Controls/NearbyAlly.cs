@@ -350,7 +350,7 @@ namespace Talos.Forms.User_Controls
 
         private void nearbyAllyAddBtn_Click(object sender, EventArgs e)
         {
-            Client.ClientTab.AddAllyPage(base.Name, pictureCharacter.Image);
+            Client.ClientTab.AddAllyPage(Name, pictureCharacter.Image);
         }
         private void NearbyAlly_Load(object sender, EventArgs e)
         {

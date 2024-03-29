@@ -1129,14 +1129,14 @@ namespace Talos
                 case (byte)ServerMessageType.GroupChat:
                     if (client.ClientTab != null)
                     {
-                        client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.DarkOliveGreen, message);
+                        client.ClientTab.AddMessageToChatPanel(Color.DarkOliveGreen, message);
                         client.ClientTab.UpdateChatPanel(message);
                     }
                     return true;
                 case (byte)ServerMessageType.GuildChat:
                     if (client.ClientTab != null)
                     {
-                        client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.DarkCyan, message);
+                        client.ClientTab.AddMessageToChatPanel(Color.DarkCyan, message);
                         client.ClientTab.UpdateChatPanel(message);
                     }
 
@@ -1252,11 +1252,11 @@ namespace Talos
             {
                 if (type == PublicMessageType.WorldShout)
                 {
-                    client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.DarkOrchid, message);
+                    client.ClientTab.AddMessageToChatPanel(Color.DarkOrchid, message);
                 }
                 else if (type == PublicMessageType.Normal)
                 {
-                    client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.Black, message);
+                    client.ClientTab.AddMessageToChatPanel(Color.Black, message);
                 }
             }
             return true;
@@ -1419,7 +1419,7 @@ namespace Talos
                 if ((creature is Player) || (percent == 100) || creature.IsDioned)
                     return true;
 
-                creature.Health = percent;
+                creature.HealthPercent = percent;
                 creature._hitCounter++;
                 creature.SpellAnimationHistory[(ushort)SpellAnimation.Net] = DateTime.MinValue;
                 creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
@@ -1659,7 +1659,7 @@ namespace Talos
                         case (ushort)SpellAnimation.PND:
                         case (ushort)SpellAnimation.MPND:
                             targetCreature._hitCounter++;
-                            targetCreature.Health = 0;
+                            targetCreature.HealthPercent = 0;
                             break;
 
                         case (ushort)SpellAnimation.PerfectDefense:
@@ -1855,6 +1855,7 @@ namespace Talos
                             {
                                 Player targetPlayer = targetCreature as Player;
                                 targetPlayer.NeedsHeal = true;
+                                Console.WriteLine($"************[ServerAnimationMessage] Fas Spiorad cast on Player: {targetPlayer.Name}. NeedsHeal updated to {targetPlayer.NeedsHeal}");
                             }
                             break;
                         case (ushort)SpellAnimation.RedPotion:
@@ -2510,7 +2511,7 @@ namespace Talos
                     string[] textArray1 = new string[] { "Logged at ", DateTime.UtcNow.ToLocalTime().ToString(), " due to ", name, " appearing on WorldList." };
                     File.WriteAllText(path, string.Concat(textArray1));
                     Process.Start(path);
-                    foreach (Client c in this._clientList)
+                    foreach (Client c in _clientList)
                     {
                         ClientTab tab = c.ClientTab;
                         if (tab == null)
@@ -2585,7 +2586,7 @@ namespace Talos
             {
                 foreach (string name in client.AllyListHashSet)
                 {
-                    if (((client.Bot.AllyPage == null) || (this.FindClientByName(name) == null)) && client.Bot.IsAllyAlreadyListed(name))
+                    if (((client.Bot.AllyPage == null) || (FindClientByName(name) == null)) && client.Bot.IsAllyAlreadyListed(name))
                     {
                         client.Bot.RemoveAlly(name);
                     }
@@ -2717,7 +2718,7 @@ namespace Talos
         {
             short num = serverPacket.ReadInt16();
             object[] mapID = new object[] { client._map.MapID };
-            string path = Program.WriteMapFiles(System.Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", mapID);
+            string path = Program.WriteMapFiles(Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", mapID);
             FileStream output = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
             output.Seek((long)((client._map.Width * 6) * num), SeekOrigin.Begin);
             BinaryWriter writer = new BinaryWriter(output);
@@ -2749,8 +2750,10 @@ namespace Talos
                 Spell spell = client.Spellbook[slot];
                 if (spell != null)
                 {
+                   
                     spell.Cooldown = DateTime.UtcNow;
                     spell.Ticks = ticks;
+                    Console.WriteLine($"[ServerMessage_0x3F_Cooldown] Spell: {spell.Name}, Cooldown: {DateTime.UtcNow}, Ticks: {ticks}");
                 }
             }
             else
@@ -2988,7 +2991,7 @@ namespace Talos
                     byte y2 = binaryReader.ReadByte();
                     worldMap.Nodes.Add(new WorldMapNode(new Point(x1, y1), name, mapId, new Point(x2, y2)));
                 }
-                this._worldMaps[worldMap.GetCRC32()] = worldMap;
+                _worldMaps[worldMap.GetCRC32()] = worldMap;
             }
 
             short mapCount = binaryReader.ReadInt16();
@@ -3020,10 +3023,10 @@ namespace Talos
                         byte x = binaryReader.ReadByte();
                         byte y = binaryReader.ReadByte();
                         uint key = binaryReader.ReadUInt32();
-                        if (this._worldMaps.ContainsKey(key))
-                            map.WorldMaps[new Point((short)x, (short)y)] = this._worldMaps[key];
+                        if (_worldMaps.ContainsKey(key))
+                            map.WorldMaps[new Point((short)x, (short)y)] = _worldMaps[key];
                     }
-                    this._maps.Add(sourceMapId, map);
+                    _maps.Add(sourceMapId, map);
                 }
                 catch
                 {

@@ -31,8 +31,8 @@ namespace Talos.Forms.UI
 
         public bool AutoDetectUrls
         {
-            get { return base.DetectUrls; }
-            set { base.DetectUrls = value; }
+            get { return DetectUrls; }
+            set { DetectUrls = value; }
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -51,7 +51,7 @@ namespace Talos.Forms.UI
             if (position < 0 || position > Text.Length)
                 throw new ArgumentOutOfRangeException(nameof(position));
 
-            base.SelectionStart = position;
+            SelectionStart = position;
             base.SelectedText = text;
             Select(position, text.Length);
             ScrollToCaret();
@@ -63,8 +63,8 @@ namespace Talos.Forms.UI
             if (position < 0 || position > Text.Length)
                 throw new ArgumentOutOfRangeException(nameof(position));
 
-            base.SelectionStart = position;
-            base.SelectedRtf = $"{{\\rtf1\\ansi {rtfText}\\v #{plainText}\\v0}}";
+            SelectionStart = position;
+            SelectedRtf = $"{{\\rtf1\\ansi {rtfText}\\v #{plainText}\\v0}}";
             Select(position, rtfText.Length + plainText.Length + 1);
             ScrollToCaret();
             Select(position + rtfText.Length + plainText.Length + 1, 0);
@@ -75,7 +75,7 @@ namespace Talos.Forms.UI
             if (smoothScroll)
                 SmoothScrollToEnd();
             else
-                base.SelectionStart = base.Text.Length;
+                SelectionStart = base.Text.Length;
         }
 
         public int GetScrollPosition()
@@ -85,7 +85,7 @@ namespace Talos.Forms.UI
 
         private void SmoothScrollToEnd()
         {
-            SendMessage(base.Handle, EM_SETSCROLLPOS, 0, ref emptyPoint);
+            SendMessage(Handle, EM_SETSCROLLPOS, 0, ref emptyPoint);
         }
 
         private int GetScrollBarPosition(uint sbType)
@@ -101,17 +101,17 @@ namespace Talos.Forms.UI
                 nTrackPos = 0
             };
 
-            GetScrollInfo(base.Handle, (int)sbType, ref scrollInfo);
+            GetScrollInfo(Handle, (int)sbType, ref scrollInfo);
             return (int)scrollInfo.nPos;
         }
 
         public bool IsScrollBarAtBottom()
         {
             int min, max;
-            GetScrollRange(base.Handle, SB_VERT, out min, out max);
+            GetScrollRange(Handle, SB_VERT, out min, out max);
             System.Drawing.Point pt = System.Drawing.Point.Empty;
-            SendMessage(base.Handle, EM_GETSCROLLPOS, 0, ref pt);
-            return pt.Y + base.ClientSize.Height >= max;
+            SendMessage(Handle, EM_GETSCROLLPOS, 0, ref pt);
+            return pt.Y + ClientSize.Height >= max;
         }
 
         private void GetScrollRange(IntPtr hwnd, uint fnBar, out int minPos, out int maxPos)

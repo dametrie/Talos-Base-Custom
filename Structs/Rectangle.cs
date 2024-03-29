@@ -109,9 +109,9 @@ namespace Talos.Structs
 
         internal bool ContainsCoordinates(short x, short y)
         {
-            if (x >= this.X && x < this.X + Width && y >= this.Y)
+            if (x >= X && x < X + Width && y >= Y)
             {
-                return y < this.Y + Height;
+                return y < Y + Height;
             }
             return false;
         }
