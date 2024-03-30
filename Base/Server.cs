@@ -23,6 +23,7 @@ using Talos.Networking;
 using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 using Point = Talos.Structs.Point;
 
 
@@ -1216,7 +1217,7 @@ namespace Talos
             {
                 if (!client.NearbyPlayers.ContainsKey(player.Name) && !client.NearbyGhosts.ContainsKey(player.Name))
                 {
-                    client.NearbyGhosts.Add(player.Name, player);
+                    client.NearbyGhosts.TryAdd(player.Name, player);
                     if (client.GetCheats(Cheats.None | Cheats.SeeGhosts))
                     {
                         client.SeeGhosts(player);
@@ -1285,8 +1286,8 @@ namespace Talos
                     if (worldObject is Player)
                     {
                         var player = (Player)worldObject;
-                        client.NearbyPlayers.Remove(player.Name);
-                        client.NearbyGhosts.Remove(player.Name);
+                        client.NearbyPlayers.TryRemove(player.Name, out _);
+                        client.NearbyGhosts.TryRemove(player.Name, out _);
 
 
                         ClientTab clientTab = client.ClientTab;
@@ -1313,7 +1314,7 @@ namespace Talos
                     var creature = (Creature)worldObject;
                     if (creature.Type == CreatureType.Merchant && client.NearbyNPC.ContainsKey(creature.Name))
                     {
-                        client.NearbyNPC.Remove(creature.Name);
+                        client.NearbyNPC.TryRemove(creature.Name, out _);
                     }
 
                     if (client.CreatureHashSet.Contains(creature.ID))
@@ -1391,7 +1392,7 @@ namespace Talos
                 Player player = client.WorldObjects[id] as Player;
                 if (player != null && !client.NearbyPlayers.ContainsKey(player.Name) && !client.NearbyGhosts.ContainsKey(player.Name))
                 {
-                    client.NearbyGhosts.Add(player.Name, player);
+                    client.NearbyGhosts.TryAdd(player.Name, player);
                     if (client.GetCheats(Cheats.None | Cheats.SeeGhosts))
                         client.SeeGhosts(player);
                 }
@@ -1626,6 +1627,9 @@ namespace Talos
             ushort sourceAnimation;
             short animationSpeed;
 
+            string curseTpye = "";
+            double duration;
+
             try
             {
                 targetID = serverPacket.ReadInt32();
@@ -1653,6 +1657,11 @@ namespace Talos
 
                     if (sourceID != 0)
                         targetCreature.SourceAnimationHistory[sourceAnimation] = DateTime.UtcNow;
+
+                    string curseType = "";
+                    double curseDuration = 0;
+                    DateTime lastCursed = DateTime.MinValue;
+
 
                     switch (targetAnimation)
                     {
@@ -1755,53 +1764,112 @@ namespace Talos
                             break;
                         case (ushort)SpellAnimation.BeagCradh:
                         case (ushort)SpellAnimation.BlueCloud:
-                            targetCreature.Curse = "beag cradh";
-                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
-                            targetCreature.LastCursed = DateTime.UtcNow;
-                            Console.WriteLine($"[ServerAnimationMessage] {targetCreature.Curse} cast on Creature ID: {targetCreature?.ID}. LastCursed updated to {targetCreature?.LastCursed}");
-                            //maybe method to global update curse?
+                            curseType = "beag cradh";
+                            curseDuration = Spell.GetSpellDuration(curseType);
+                            lastCursed = DateTime.UtcNow;
+
+                            // Check if the target is a player in nearby players and update
+                            if (targetCreature is Player && client.NearbyPlayers.ContainsKey(targetCreature.Name))
+                            {
+                                UpdatePlayerCurse(client.NearbyPlayers[targetCreature.Name], curseType, curseDuration, lastCursed);
+                            }
+                            else // For other creatures or when the player isn't in NearbyPlayers
+                            {
+                                UpdateCreatureCurse(targetCreature, curseType, curseDuration, lastCursed);
+                            }
                             break;
                         case (ushort)SpellAnimation.Cradh:
                         case (ushort)SpellAnimation.OrangeCloud:
-                            targetCreature.Curse = "cradh";
-                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
-                            targetCreature.LastCursed = DateTime.UtcNow;
-                            Console.WriteLine($"[ServerAnimationMessage] {targetCreature.Curse} cast on Creature ID: {targetCreature?.ID}. LastCursed updated to {targetCreature?.LastCursed}");
-                            //maybe method to global update curse?
+                            curseType = "cradh";
+                            curseDuration = Spell.GetSpellDuration(curseType);
+                            lastCursed = DateTime.UtcNow;
+
+                            // Check if the target is a player in nearby players and update
+                            if (targetCreature is Player && client.NearbyPlayers.ContainsKey(targetCreature.Name))
+                            {
+                                UpdatePlayerCurse(client.NearbyPlayers[targetCreature.Name], curseType, curseDuration, lastCursed);
+                            }
+                            else // For other creatures or when the player isn't in NearbyPlayers
+                            {
+                                UpdateCreatureCurse(targetCreature, curseType, curseDuration, lastCursed);
+                            }
                             break;
                         case (ushort)SpellAnimation.MorCradh:
                         case (ushort)SpellAnimation.BlackCloud:
-                            targetCreature.Curse = "mor cradh";
-                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
-                            Console.WriteLine($"[ServerAnimationMessage] {targetCreature.Curse} cast on Creature ID: {targetCreature?.ID}. LastCursed updated to {targetCreature?.LastCursed}");
-                            targetCreature.LastCursed = DateTime.UtcNow;
-                            //maybe method to global update curse?
+                            curseType = "mor cradh";
+                            curseDuration = Spell.GetSpellDuration(curseType);
+                            lastCursed = DateTime.UtcNow;
+
+                            // Check if the target is a player in nearby players and update
+                            if (targetCreature is Player && client.NearbyPlayers.ContainsKey(targetCreature.Name))
+                            {
+                                UpdatePlayerCurse(client.NearbyPlayers[targetCreature.Name], curseType, curseDuration, lastCursed);
+                            }
+                            else // For other creatures or when the player isn't in NearbyPlayers
+                            {
+                                UpdateCreatureCurse(targetCreature, curseType, curseDuration, lastCursed);
+                            }
                             break;
                         case (ushort)SpellAnimation.ArdCradh:
                         case (ushort)SpellAnimation.RedCloud:
-                            targetCreature.Curse = "ard cradh";
-                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
-                            Console.WriteLine($"[ServerAnimationMessage] {targetCreature.Curse} cast on Creature ID: {targetCreature?.ID}. LastCursed updated to {targetCreature?.LastCursed}");
-                            targetCreature.LastCursed = DateTime.UtcNow;
-                            //maybe method to global update curse?
+                            curseType = "ard cradh";
+                            curseDuration = Spell.GetSpellDuration(curseType);
+                            lastCursed = DateTime.UtcNow;
+
+                            // Check if the target is a player in nearby players and update
+                            if (targetCreature is Player && client.NearbyPlayers.ContainsKey(targetCreature.Name))
+                            {
+                                UpdatePlayerCurse(client.NearbyPlayers[targetCreature.Name], curseType, curseDuration, lastCursed);
+                            }
+                            else // For other creatures or when the player isn't in NearbyPlayers
+                            {
+                                UpdateCreatureCurse(targetCreature, curseType, curseDuration, lastCursed);
+                            }
                             break;
                         case (ushort)SpellAnimation.Demise:
-                            targetCreature.Curse = "Demise";
-                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
-                            targetCreature.LastCursed = DateTime.UtcNow;
-                            //maybe method to global update curse?
+                            curseType = "Demise";
+                            curseDuration = Spell.GetSpellDuration(curseType);
+                            lastCursed = DateTime.UtcNow;
+
+                            // Check if the target is a player in nearby players and update
+                            if (targetCreature is Player && client.NearbyPlayers.ContainsKey(targetCreature.Name))
+                            {
+                                UpdatePlayerCurse(client.NearbyPlayers[targetCreature.Name], curseType, curseDuration, lastCursed);
+                            }
+                            else // For other creatures or when the player isn't in NearbyPlayers
+                            {
+                                UpdateCreatureCurse(targetCreature, curseType, curseDuration, lastCursed);
+                            }
                             break;
                         case (ushort)SpellAnimation.DarkerSeal:
-                            targetCreature.Curse = "Darker Seal";
-                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
-                            targetCreature.LastCursed = DateTime.UtcNow;
-                            //maybe method to global update curse?
+                            curseType = "Darker Seal";
+                            curseDuration = Spell.GetSpellDuration(curseType);
+                            lastCursed = DateTime.UtcNow;
+
+                            // Check if the target is a player in nearby players and update
+                            if (targetCreature is Player && client.NearbyPlayers.ContainsKey(targetCreature.Name))
+                            {
+                                UpdatePlayerCurse(client.NearbyPlayers[targetCreature.Name], curseType, curseDuration, lastCursed);
+                            }
+                            else // For other creatures or when the player isn't in NearbyPlayers
+                            {
+                                UpdateCreatureCurse(targetCreature, curseType, curseDuration, lastCursed);
+                            }
                             break;
                         case (ushort)SpellAnimation.DarkSeal:
-                            targetCreature.Curse = "Dark Seal";
-                            targetCreature.CurseDuration = Spell.GetSpellDuration(targetCreature.Curse);
-                            targetCreature.LastCursed = DateTime.UtcNow;
-                            //maybe method to global update curse?
+                            curseType = "Dark Seal";
+                            curseDuration = Spell.GetSpellDuration(curseType);
+                            lastCursed = DateTime.UtcNow;
+
+                            // Check if the target is a player in nearby players and update
+                            if (targetCreature is Player && client.NearbyPlayers.ContainsKey(targetCreature.Name))
+                            {
+                                UpdatePlayerCurse(client.NearbyPlayers[targetCreature.Name], curseType, curseDuration, lastCursed);
+                            }
+                            else // For other creatures or when the player isn't in NearbyPlayers
+                            {
+                                UpdateCreatureCurse(targetCreature, curseType, curseDuration, lastCursed);
+                            }
                             break;
                         case (ushort)SpellAnimation.AssassinStrike:
                         case (ushort)SpellAnimation.Cupping:
@@ -1855,11 +1923,11 @@ namespace Talos
                             {
                                 Player targetPlayer = targetCreature as Player;
                                 targetPlayer.NeedsHeal = true;
-                                Console.WriteLine($"************[ServerAnimationMessage] Fas Spiorad cast on Player: {targetPlayer.Name}. NeedsHeal updated to {targetPlayer.NeedsHeal}");
+                                //Console.WriteLine($"************[ServerAnimationMessage] Fas Spiorad cast on Player: {targetPlayer.Name}. NeedsHeal updated to {targetPlayer.NeedsHeal}");
                             }
                             break;
                         case (ushort)SpellAnimation.RedPotion:
-                            if (targetCreature is Player && sourceCreature is Player || CONSTANTS.GREEN_BOROS.Contains(sourceCreature.SpriteID) || CONSTANTS.RED_BOROS.Contains(sourceCreature.SpriteID))
+                            if (targetCreature is Player && sourceCreature != null && sourceCreature is Player || CONSTANTS.GREEN_BOROS.Contains(sourceCreature.SpriteID) || CONSTANTS.RED_BOROS.Contains(sourceCreature.SpriteID))
                             {
                                 Player targetPlayer = targetCreature as Player;
                                 if (targetPlayer.IsSkulled)
@@ -1878,7 +1946,7 @@ namespace Talos
                     Player player = client.WorldObjects[targetID] as Player;
                     if (((player != null) && !client.NearbyPlayers.ContainsKey(player.Name)) && !client.NearbyGhosts.ContainsKey(player.Name))
                     {
-                        client.NearbyGhosts.Add(player.Name, player);
+                        client.NearbyGhosts.TryAdd(player.Name, player);
                         if (client.GetCheats(Cheats.None | Cheats.SeeGhosts))
                         {
                             client.SeeGhosts(player);
@@ -2402,11 +2470,11 @@ namespace Talos
             {
                 if (client.PlayersWithNoName.ContainsKey(id))
                 {
-                    client.PlayersWithNoName.Remove(id);
+                    client.PlayersWithNoName.TryRemove(id, out _);
                 }
                 //client.Dictionary_7[player.Name] = player;
                 client.NearbyPlayers[player.Name] = player;
-                client.NearbyGhosts.Remove(player.Name);
+                client.NearbyGhosts.TryRemove(player.Name, out _);
             }
             if (id == client.PlayerID)
             {
@@ -3150,6 +3218,20 @@ namespace Talos
                 }
                 Thread.Sleep(5000); // Sleep for 5 seconds
             }
+        }
+
+        private void UpdatePlayerCurse(Player player, string curse, double duration, DateTime lastCursed)
+        {
+            player.Curse = curse;
+            player.CurseDuration = duration;
+            player.LastCursed = lastCursed;
+        }
+
+        private void UpdateCreatureCurse(Creature creature, string curse, double duration, DateTime lastCursed)
+        {
+            creature.Curse = curse;
+            creature.CurseDuration = duration;
+            creature.LastCursed = lastCursed;
         }
 
 

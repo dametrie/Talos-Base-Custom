@@ -147,7 +147,7 @@ namespace Talos.Enumerations
         EisdCreature = 7,
         BonusExperience = 8,
         Hide = 10,
-        Aite = 11,
+        NaomhAite = 11,
         CreagNeart = 13,
         KelberothStance = 13,
         Dachaidh = 14,

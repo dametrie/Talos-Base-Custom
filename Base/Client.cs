@@ -232,15 +232,17 @@ namespace Talos.Base
         };
 
         internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
-        internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
-        internal Dictionary<int, Player> PlayersWithNoName { get; private set; } = new Dictionary<int, Player>();
-        internal Dictionary<string, Player> NearbyPlayers { get; private set; } = new Dictionary<string, Player>();
-        internal Dictionary<string, Player> NearbyGhosts { get; private set; } = new Dictionary<string, Player>();
-        internal Dictionary<string, Creature> NearbyNPC { get; private set; } = new Dictionary<string, Creature>();
-        internal Dictionary<string, int> ObjectID { get; private set; } = new Dictionary<string, int>();
+
         internal Dictionary<string, byte> AvailableSpellsAndCastLines { get; set; } = new Dictionary<string, byte>();
         internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
-        internal Dictionary <int, Location> Locations { get; set; } = new Dictionary<int, Location>();
+        internal Dictionary<int, Location> Locations { get; set; } = new Dictionary<int, Location>();
+
+        internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
+        internal ConcurrentDictionary<int, Player> PlayersWithNoName { get; private set; } = new ConcurrentDictionary<int, Player>();
+        internal ConcurrentDictionary<string, Player> NearbyPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
+        internal ConcurrentDictionary<string, Player> NearbyGhosts { get; private set; } = new ConcurrentDictionary<string, Player>();
+        internal ConcurrentDictionary<string, Creature> NearbyNPC { get; private set; } = new ConcurrentDictionary<string, Creature>();
+        internal ConcurrentDictionary<string, int> ObjectID { get; private set; } = new ConcurrentDictionary<string, int>();
 
 
         internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
@@ -460,7 +462,24 @@ namespace Talos.Base
             return false;
         }
 
-        internal List<Player> GetNearbyPlayers()
+        internal Player GetNearbyPlayer(string allyName)
+        {
+            if (Monitor.TryEnter(Server.Lock, 300))
+            {
+                try
+                {
+                    return (!NearbyPlayers.ContainsKey(allyName)) ? null : NearbyPlayers[allyName];
+                }
+                finally
+                {
+                    Monitor.Exit(Server.Lock);
+                }
+            }
+            return null;
+        }
+
+
+        internal List<Player> GetNearbyPlayerList()
         {
             if (!Monitor.TryEnter(Server.Lock, 1000))
             {
@@ -882,58 +901,70 @@ namespace Talos.Base
         }
         private bool DoesCreatureHaveSpellAlready(string spellName, Creature creature, Client client)
         {
-            if (creature == null)
+            lock (Lock)
             {
-                return false;
-            }
-
-            switch (spellName)
-            {
-                case "suain":
-                    return creature.IsSuained;
-                case "beag cradh":
-                case "cradh":
-                case "mor cradh":
-                case "ard cradh":
-                case "Dark Seal":
-                case "Darker Seal":
-                case "Demise":
-                    Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Cursed: {creature.IsCursed}");
-                    return creature.IsCursed;
-                case "Frost Arrow 1":
-                case "Frost Arrow 2":
-                case "Frost Arrow 3":
-                case "Frost Arrow 4":
-                case "Frost Arrow 5":
-                case "Frost Arrow 6":
-                case "Frost Arrow 7":
-                case "Frost Arrow 8":
-                case "Frost Arrow 9":
-                case "Frost Arrow 10":
-                    return creature.IsFrozen;
-                case "beag pramh":
-                case "pramh":
-                case "Mesmerize":
-                    Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Asleep: {creature.IsAsleep}");
-                    return creature.IsAsleep;
-                case "fas spiorad":
-                    return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;
-                case "beag fas nadur":
-                case "fas nadur":
-                case "mor fas nadur":
-                case "ard fas nadur":
-                    Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Fassed: {creature.IsFassed}");
-                    return creature.IsFassed;
-                case "ao suain":
-                    return creature.IsSuained;
-                case "beag naomh aite":
-                case "naomh aite":
-                case "mor naomh aite":
-                case "ard naomh aite":
-                    return creature.IsAited;
-                default:
+                if (creature == null)
+                {
                     return false;
-            }
+                }
+
+                switch (spellName)
+                {
+                    case "suain":
+                        return creature.IsSuained;
+                    case "beag cradh":
+                    case "cradh":
+                    case "mor cradh":
+                    case "ard cradh":
+                    case "Dark Seal":
+                    case "Darker Seal":
+                    case "Demise":
+                        if (creature is Player && client.NearbyPlayers.ContainsKey(creature.Name))
+                        {
+                            Console.WriteLine($"[DoesPlayerHaveSpellAlready] Checking {spellName} for Creature ID: {client.NearbyPlayers[creature.Name].ID}, Creature Name: {client.NearbyPlayers[creature.Name].Name}, Hash: {client.NearbyPlayers[creature.Name].GetHashCode()} Currently Cursed: {client.NearbyPlayers[creature.Name].IsCursed}");
+                            return client.NearbyPlayers[creature.Name].IsCursed;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()} Currently Cursed: {creature.IsCursed}");
+                            return creature.IsCursed;
+                        }
+
+                    case "Frost Arrow 1":
+                    case "Frost Arrow 2":
+                    case "Frost Arrow 3":
+                    case "Frost Arrow 4":
+                    case "Frost Arrow 5":
+                    case "Frost Arrow 6":
+                    case "Frost Arrow 7":
+                    case "Frost Arrow 8":
+                    case "Frost Arrow 9":
+                    case "Frost Arrow 10":
+                        return creature.IsFrozen;
+                    case "beag pramh":
+                    case "pramh":
+                    case "Mesmerize":
+                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Asleep: {creature.IsAsleep}");
+                        return creature.IsAsleep;
+                    case "fas spiorad":
+                        return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;
+                    case "beag fas nadur":
+                    case "fas nadur":
+                    case "mor fas nadur":
+                    case "ard fas nadur":
+                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Fassed: {creature.IsFassed}");
+                        return creature.IsFassed;
+                    case "ao suain":
+                        return creature.IsSuained;
+                    case "beag naomh aite":
+                    case "naomh aite":
+                    case "mor naomh aite":
+                    case "ard naomh aite":
+                        return creature.IsAited;
+                    default:
+                        return false;
+                }
+            } 
         }
         internal bool ClearSpell()
         {
@@ -1802,10 +1833,10 @@ namespace Talos.Base
                         //Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
                     }
                 }
-                else
-                {
-                    return false;
-                }
+                //else
+                //{
+                    //return false;
+                //}
 
 
                 if (_currentSpell != spell)
@@ -1853,10 +1884,10 @@ namespace Talos.Base
                                 DisplayChant(chantArray[i]);
                             }
                             DateTime utcNow = DateTime.UtcNow;
-                            //Client client = (creature != null) ? Server.method_76(creature.Name) : this;
+                            Client client = (creature != null) ? _server.FindClientByName(creature.Name) : this;
                             while (DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds < 1000.0)
                             {
-                                if (!IsValidSpell(this, spell.Name, creature))
+                                if (!IsValidSpell(client, spell.Name, creature))
                                 {
                                     _isCasting = false;
                                     return false;

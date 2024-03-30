@@ -36,6 +36,7 @@ namespace Talos.Objects
         internal double CursedTuneDuration { get; set; }
         internal double RegenDuration { get; set; }
         internal double IncreasedRegenDuration { get; set; }
+        internal double ArmachdDuration { get; set; }
         internal Dictionary<ushort, DateTime> SpellAnimationHistory { get; set; }
         internal Dictionary<ushort, DateTime> SourceAnimationHistory { get; set; }
         internal CreatureType Type { get; set; }
@@ -64,17 +65,8 @@ namespace Talos.Objects
         internal bool HasCursedTunes => DateTime.UtcNow.Subtract(LastCursedTune).TotalSeconds < CursedTuneDuration;
         internal bool HasRegen => DateTime.UtcNow.Subtract(LastRegen).TotalSeconds < RegenDuration;
         internal bool HasIncreasedRegen => DateTime.UtcNow.Subtract(LastIncreasedRegen).TotalSeconds < IncreasedRegenDuration;
+        internal bool HasArmachd => DateTime.UtcNow.Subtract(LastArmachd).TotalSeconds < ArmachdDuration;
 
-
-        internal bool HasArmachd
-        {
-            get
-            {
-                if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Armachd))
-                    return false;
-                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Armachd]).TotalSeconds < 150.0;
-            }
-        }
         internal bool IsSuained
         {
             get 

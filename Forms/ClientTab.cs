@@ -177,7 +177,7 @@ namespace Talos.Forms
                     SetPureClassItems(monsterCallCbox, "Monster Call");
                     break;
                 case "Summoner":
-                    SetControlVisibility(dragonScaleCbox, "Dragon's Scale", true);
+                    SetControlVisibility(dragonScaleCbox, "Dragon's Scale", false);
                     SetPureClassSpells(new[] { vineyardCbox, disenchanterCbox, manaWardCbox }, new[] { "Lyliac Vineyard", "Disenchanter", "Mana Ward" });
                     SetPureClassItems(dragonsFireCbox, "Dragon's Fire");
                     SetVineyardVisibility();
@@ -994,7 +994,7 @@ namespace Talos.Forms
 
                 if (!isChargeSkillUsedRecently && !isSprintPotionUsedRecently)
                 {
-                    HashSet<string> nearbyPlayers = new HashSet<string>(_client.GetNearbyPlayers().Select(player => player.Name), StringComparer.CurrentCultureIgnoreCase);
+                    HashSet<string> nearbyPlayers = new HashSet<string>(_client.GetNearbyPlayerList().Select(player => player.Name), StringComparer.CurrentCultureIgnoreCase);
                     HashSet<string> nonStrangers = new HashSet<string>(_client.AllyListHashSet.Concat(_client._friendBindingList), StringComparer.CurrentCultureIgnoreCase);
 
                     foreach (string name in new List<string>(_client._strangerBindingList))
