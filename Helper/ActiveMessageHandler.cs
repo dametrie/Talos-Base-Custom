@@ -188,6 +188,7 @@ namespace Talos.Helper
                             creature.LastAited = DateTime.UtcNow;
                         }
                         break;
+
                     case "beag cradh":
                     case "cradh":
                     case "mor cradh":
@@ -195,46 +196,33 @@ namespace Talos.Helper
                     case "Dark Seal":
                     case "Darker Seal":
                     case "Demise":
-                        if (creature is Player && client.NearbyPlayers.ContainsKey(creature.Name))
-                        {
-                            client.NearbyPlayers[creature.Name].Curse = spellName;
-                            client.NearbyPlayers[creature.Name].CurseDuration = Spell.GetSpellDuration(spellName);
-                            client.NearbyPlayers[creature.Name].LastCursed = DateTime.UtcNow;
-                            Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {client.NearbyPlayers[creature?.Name].ID}. Creature Name: {client.NearbyPlayers[creature?.Name].Name}. Hash: {client.NearbyPlayers[creature?.Name].GetHashCode()} LastCursed updated to {client.NearbyPlayers[creature?.Name].LastCursed}");
-                            client._server.RemoveFirstCreatureToSpell(client);
-                        }
-                        else if (creature != null)
+                        if (creature != null)
                         {
                             creature.Curse = spellName;
                             creature.CurseDuration = Spell.GetSpellDuration(spellName);
                             creature.LastCursed = DateTime.UtcNow;
                             if (creature.ID != client.Player.ID)
-                                client.UpdateCurseTargets(client, creature.ID, spellName);
+                                client.UpdateCurseTargets(client, creature.ID, spellName);//Adam check
                             Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}, Creature Name: {creature?.Name}, Hash: {creature.GetHashCode()}, LastCursed updated to {creature?.LastCursed}");
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+
                     case "beag fas nadur":
                     case "fas nadur":
                     case "mor fas nadur":
                     case "ard fas nadur":
-                        if (creature is Player && client.NearbyPlayers.ContainsKey(creature.Name))
-                        {
-                            client.NearbyPlayers[creature.Name].FasDuration = Spell.GetSpellDuration(spellName);
-                            client.NearbyPlayers[creature.Name].LastFassed = DateTime.UtcNow;
-                            Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {client.NearbyPlayers[creature?.Name].ID}. Creature Name: {client.NearbyPlayers[creature?.Name].Name}. Hash: {client.NearbyPlayers[creature?.Name].GetHashCode()} LastFassed updated to {client.NearbyPlayers[creature?.Name].LastFassed}");
-                            client._server.RemoveFirstCreatureToSpell(client);
-                        }
-                        else if (creature != null)
+                        if (creature != null)
                         {
                             creature.FasDuration = Spell.GetSpellDuration(spellName);
                             creature.LastFassed = DateTime.UtcNow;
                             if (creature.ID != client.Player.ID)
-                                client.UpdateFasTargets(client, creature.ID, creature.FasDuration);
+                                client.UpdateFasTargets(client, creature.ID, creature.FasDuration);//Adam check
                             Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastFassed updated to {creature?.LastFassed}");
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+
                     case "dion":
                     case "Draco Stance":
                     case "Stone Skin":
@@ -246,27 +234,42 @@ namespace Talos.Helper
                         client.Player.LastDioned = DateTime.UtcNow;
                         client.Player.DionDuration = Spell.GetSpellDuration(spellName);
                         break;
+
                     case "fas spiorad":
                         client.Bot._needFasSpiorad = false;
                         client.Bot._manaLessThanEightyPct = false;
                         client.Player.NeedsHeal = true;
                         break;
+
                     case "mor strioch pian gar":
                         client.Bot._needFasSpiorad = true;
                         break;
+
                     case "io dia armachd comlhaLR":
+                        if (creature != null)
+                        {
+                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
+                            creature.LastArmachd = DateTime.UtcNow;
+                            creature.ArmachdDuration = Spell.GetSpellDuration(spellName);
+                            Console.WriteLine($"[UpdateSpellAnimationHistory] 'Armachd' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Sleep Duration: {creature.PramhDuration}");
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
                         break;
+
                     case "io ao dallLR":
                     case "io ao dall comlhaLR":
                         //update ao dall spell animation?
                         //remove dall from players and clients?
                         break;
+
                     case "Light SealLR":
                         client.Bot._lastGrimeScentCast = DateTime.UtcNow;
                         break;
+
                     case "Gem Polishing":
                         client._currentSpell = client.Spellbook["Gem Polishing"];
                         break;
+
                     case "armachd":
                         if (creature != null)
                         {
@@ -277,12 +280,15 @@ namespace Talos.Helper
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+
                     case "suain":
                         client._server.RemoveFirstCreatureToSpell(client);
                         break;
+
                     case "Master Karurua Form"://Adam add others
                         client.EffectsBarHashSet.Add((ushort)EffectsBar.BirdForm);//need to figure out how to clear it because there is no orange message when it drops
                         break;
+
                     case "beag pramh":
                     case "pramh":
                     case "Mesmerize":
@@ -295,6 +301,7 @@ namespace Talos.Helper
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+
                     case "Frost Arrow 1":
                     case "Frost Arrow 2":
                     case "Frost Arrow 3":
@@ -315,6 +322,7 @@ namespace Talos.Helper
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+
                     case "Cursed Tune 1":
                     case "Cursed Tune 2":
                     case "Cursed Tune 3":
@@ -336,6 +344,7 @@ namespace Talos.Helper
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+
                     case "Regeneration 1":
                     case "Regeneration 2":
                     case "Regeneration 3":
@@ -354,6 +363,7 @@ namespace Talos.Helper
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
+
                     case "Increased Regeneration":
                         if (creature != null)
                         {
@@ -714,7 +724,7 @@ namespace Talos.Helper
                 client.Player.Curse = "";
                 client.Player.CurseDuration = 0.0;
                 client.Player.LastCursed = DateTime.MinValue;
-                Console.WriteLine($"[HandleCurseEndMessage] Curse ended on {client.Player.Name}, Hash: {client.Player.GetHashCode()}. Curse: {client.Player.Curse}, CurseDuration: {client.Player.CurseDuration}");
+                Console.WriteLine($"[HandleCurseEndMessage] Curse ended Player ID: {client.Player.ID} on {client.Player.Name}, Hash: {client.Player.GetHashCode()}. Curse: {client.Player.Curse}, CurseDuration: {client.Player.CurseDuration}, Last Cursed: {client.Player.LastCursed}");
             }
 
         }

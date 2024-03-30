@@ -919,16 +919,8 @@ namespace Talos.Base
                     case "Dark Seal":
                     case "Darker Seal":
                     case "Demise":
-                        if (creature is Player && client.NearbyPlayers.ContainsKey(creature.Name))
-                        {
-                            Console.WriteLine($"[DoesPlayerHaveSpellAlready] Checking {spellName} for Creature ID: {client.NearbyPlayers[creature.Name].ID}, Creature Name: {client.NearbyPlayers[creature.Name].Name}, Hash: {client.NearbyPlayers[creature.Name].GetHashCode()} Currently Cursed: {client.NearbyPlayers[creature.Name].IsCursed}");
-                            return client.NearbyPlayers[creature.Name].IsCursed;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()} Currently Cursed: {creature.IsCursed}");
-                            return creature.IsCursed;
-                        }
+                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()} Currently Cursed: {creature.IsCursed}");
+                        return creature.IsCursed;
 
                     case "Frost Arrow 1":
                     case "Frost Arrow 2":

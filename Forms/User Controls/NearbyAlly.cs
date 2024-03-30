@@ -21,8 +21,8 @@ namespace Talos.Forms.User_Controls
     {
         private EPFImage bodyEPFImage;
 
-        private Player Player { get; set; }
-        private Client Client { get; set; }
+        private Player Player { get; }
+        private Client Client { get; }
 
         private string Gender { get; set; }
 

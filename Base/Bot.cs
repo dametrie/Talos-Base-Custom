@@ -264,7 +264,7 @@ namespace Talos.Base
             if (_playersExistingOver250ms.Any(Delegates.PlayerIsSkulled))
             {
                 _playersExistingOver250ms.RemoveAll(Delegates.PlayerIsSkulled);
-                foreach (var player in Client.GetNearbyPlayerList().Where(IsSkulledFriendOrGroupMember))
+                foreach (Player player in Client.GetNearbyPlayerList().Where(IsSkulledFriendOrGroupMember))
                 {
                     _playersNeedingRed.Add(player);
                 }
@@ -431,15 +431,18 @@ namespace Talos.Base
             BeagCradh();
             BeagCradhAllies();
 
+
+
+            AoPoison();
             return true;
         }
 
         private bool BeagCradh()
         {
             bool isBeagCradhChecked = Client.ClientTab.beagCradhCbox.Checked;
-            bool isPlayerCursed = Client.NearbyPlayers[Client.Player.Name].IsCursed;
+            bool isPlayerCursed2 = Client.Player.IsCursed;
 
-            if (isBeagCradhChecked && !isPlayerCursed)
+            if (isBeagCradhChecked && !isPlayerCursed2)
             {
                 Client.UseSpell("beag cradh", Client.Player, this._autoStaffSwitch, false);
                 return false;
@@ -495,6 +498,17 @@ namespace Talos.Base
                 Client client = _server.FindClientByName(player.Name);
                 return client != null && client.HasEffect(EffectsBar.Pramh);
             }
+            return true;
+        }
+
+        private bool AoPoison() //Adam Update to include fungus
+        {
+            if (Client.ClientTab.aoPoisonCbox.Checked && Client.HasEffect(EffectsBar.Poison) || Client.Player.IsPoisoned)
+            {
+                Client.UseSpell("ao puinsein", Client.Player, _autoStaffSwitch, false);
+                return false;
+            }
+
             return true;
         }
 
@@ -775,6 +789,11 @@ namespace Talos.Base
 
         private bool Heal()
         {
+            if (Client.HasEffect(EffectsBar.FasSpiorad))
+            {
+                return false;
+            }
+
             int loopPercentThreshold = 20;
 
             Dictionary<string, Client> playerClientMap = Server._clientList
@@ -824,21 +843,10 @@ namespace Talos.Base
                             healAtPercent = ((healAtPercent > loopPercentThreshold) ? loopPercentThreshold : healAtPercent);
                             bool shouldHeal = player.NeedsHeal || (client.CurrentHP * 100 / client.MaximumHP) <= healAtPercent;
 
-                            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Loop percent threshold: {loopPercentThreshold}");
-                            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Heal percent: {healAtPercent}");
-                            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Player {player.Name} CurrentHP: {client.CurrentHP}");
-                            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Player {player.Name} MaximumHP: {client.MaximumHP}");
-                            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Player {player.Name} healthPCt: {player.HealthPercent}%");
-                            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Player {player.Name} needs heal: {player.NeedsHeal}");
-                            Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Player {player.Name} should heal {shouldHeal}");
-
                             if (player.NeedsHeal || shouldHeal)
                             {
 
-                                Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Player {player.Name} needs heal");
-
                                 uint healAmount = (uint)Client.CalculateHealAmount(healSpell);
-                                Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Heal amount: {healAmount}");
 
                                 List<Player> list = new List<Player>();
                                 if (!(healSpell == "ard ioc comlha") && !(healSpell == "mor ioc comlha"))
@@ -857,43 +865,26 @@ namespace Talos.Base
 
                                     if (playerClientMap.TryGetValue(p.Name, out var matchedClient))
                                     {
-                                        //client.CurrentHP += ((client.CurrentHP + healAmount < client.MaximumHP) ? healAmount : (client.MaximumHP - client.CurrentHP));
-                                        //Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Healed {client.Player.Name} for {healAmount} HP");
-                                        //p.HealthPercent = (byte)client.HealthPct;
-                                        Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Setting {client.Player.Name} health to {client.HealthPct}");
-                                        //player.NeedsHeal = player.HealthPercent <= healAtPercent;
-                                        //Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Setting {client.Player.Name} needs heal {player.NeedsHeal}");
 
                                         // Calculate the new health, ensuring it does not exceed the maximum
                                         uint newHealth = Math.Min(client.CurrentHP + healAmount, client.MaximumHP);
 
                                         // Update the health and print the debug message
                                         client.CurrentHP = newHealth;
-                                        Console.WriteLine($"[CastDefensiveSpells] Healed {p.Name} for {healAmount} HP to {newHealth}");
 
                                         // Update health percentage and needs heal status
                                         p.HealthPercent = (byte)(client.CurrentHP * 100 / client.MaximumHP);
                                         p.NeedsHeal = p.HealthPercent <= healAtPercent;
-                                        Console.WriteLine($"[CastDefensiveSpells] Setting {p.Name} health to {p.HealthPercent}% and needs heal to {p.NeedsHeal}");
 
                                     }
-
                                     else
                                     {
-                                        //Player p2 = p;
-                                        //Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Player {p2.Name} health before {p2.HealthPercent}%");
-                                        //p2.HealthPercent += (byte)((p.HealthPercent + loopPercentThreshold < 100) ? loopPercentThreshold : (100 - p.HealthPercent));
-                                        //Console.WriteLine($"!!!!!!!!!!!!!!!!!!!!![CastDefensiveSpells] Player {p2.Name} health after {p2.HealthPercent}%");
-                                        //p2.NeedsHeal = p.HealthPercent <= healAtPercent;
-
                                         // Calculate the new health percentage based on loopPercentThreshold, ensuring it does not exceed 100%
                                         byte newHealthPercent = (byte)Math.Min(p.HealthPercent + 20, 100);
-                                        Console.WriteLine($"[CastDefensiveSpells] Player {p.Name} health before {p.HealthPercent}%, after {newHealthPercent}%");
 
                                         // Update health percentage and needs heal status
                                         p.HealthPercent = newHealthPercent;
                                         p.NeedsHeal = p.HealthPercent <= healAtPercent;
-                                        Console.WriteLine($"[CastDefensiveSpells] Setting {p.Name} health to {p.HealthPercent}% and needs heal to {p.NeedsHeal}");
                                     }                                    
 
                                 }
@@ -2031,7 +2022,14 @@ namespace Talos.Base
 
         private bool IsNotInFriendList(Player player)
         {
-            return !_client.ClientTab.friendList.Items.OfType<string>().Any(friend => string.Equals(friend, player.Name, StringComparison.OrdinalIgnoreCase));
+            if (_client.ClientTab != null)
+            {
+                return !_client.ClientTab.friendList.Items.OfType<string>().Any(friend => string.Equals(friend, player.Name, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                return true;//Adam
+            }
         }
 
         private void Loot()

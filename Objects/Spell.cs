@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -127,6 +128,7 @@ namespace Talos.Objects
             { "fas nadur", 450.0 },
             { "mor fas nadur", 450.0 },
             { "ard naomh aite", 600.0 },
+            { "io dia armachd comlhaLR", 1800.0},
         };
 
         internal Spell()
