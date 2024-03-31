@@ -1268,6 +1268,11 @@ namespace Talos
         {
             int id = serverPacket.ReadInt32();
 
+            if (client.CreatureHashSet.Contains(id))
+            {
+                client.CreatureHashSet.Remove(id);
+            }
+
             if (client.WorldObjects.ContainsKey(id))
             {
                 var worldObject = client.WorldObjects[id];
@@ -1282,8 +1287,13 @@ namespace Talos
                     }
 
                 }
-                else if (worldObject is Player)
+                else if (!(worldObject is Creature) || worldObject is Player)
                 {
+                    if (!(worldObject is Player))
+                    {
+                        client.WorldObjects.TryRemove(worldObject.ID, out _);
+                    }
+
                     if (worldObject is Player)
                     {
                         var player = worldObject as Player;
@@ -1301,42 +1311,46 @@ namespace Talos
                             if (ReferenceEquals(selectedTab, clientTab.nearbyAllyTab) &&
                                 ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainAislingsTab))
                             {
-                                
+
                                 clientTab.UpdateNearbyAllyTable(player.Name);
                             }
                         }
-                        
-                        
+
+
                     }
-                    client.WorldObjects.TryRemove(id, out _);
                 }
                 else //is a creature
                 {
-                    var creature = (Creature)worldObject;
+                    var creature = worldObject as Creature;
                     if (creature.Type == CreatureType.Merchant && client.NearbyNPC.ContainsKey(creature.Name))
                     {
                         client.NearbyNPC.TryRemove(creature.Name, out _);
                     }
 
-                    if (client.CreatureHashSet.Contains(creature.ID))
+                    if ((creature.HealthPercent == 0) || client._map.Name.Contains("Plamit"))
                     {
-                        client.CreatureHashSet.Remove(creature.ID);
-                    }
 
-                    if (!client.WorldObjects.Values.Any(worldObj =>
-                        worldObj is Creature && client.IsCreatureNearby(worldObj as VisibleObject, 12) &&
-                        (worldObj as Creature).SpriteID == creature.SpriteID))
-                    {
-                        ClientTab clientTab = client.ClientTab;
-                        if (clientTab != null && clientTab.monsterTabControl.SelectedTab == clientTab.nearbyEnemyTab &&
-                            clientTab.clientTabControl.SelectedTab == clientTab.mainMonstersTab)
+                        if (!client._map.Name.Contains("Plamit") || (creature.Location.DistanceFrom(client._serverLocation) >= 10))
                         {
-                            client.ClientTab.UpdateNearbyEnemyTable(creature.SpriteID);
+                            client.WorldObjects.TryRemove(creature.ID, out _);
+                            client.CreatureHashSet.Remove(creature.ID);
                         }
 
-                        if (client.Bot.EnemyPage != null && client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
+                        if (!client.WorldObjects.Values.Any(worldObj =>
+                            worldObj is Creature && client.IsCreatureNearby(worldObj as VisibleObject, 12) &&
+                            (worldObj as Creature).SpriteID == creature.SpriteID))
                         {
-                            client.Bot.ClearEnemyLists(creature.SpriteID.ToString());
+                            ClientTab clientTab = client.ClientTab;
+                            if (clientTab != null && clientTab.monsterTabControl.SelectedTab == clientTab.nearbyEnemyTab &&
+                                clientTab.clientTabControl.SelectedTab == clientTab.mainMonstersTab)
+                            {
+                                client.ClientTab.UpdateNearbyEnemyTable(creature.SpriteID);
+                            }
+
+                            if (client.Bot.EnemyPage != null && client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
+                            {
+                                client.Bot.ClearEnemyLists(creature.SpriteID.ToString());
+                            }
                         }
                     }
                 }
@@ -2491,7 +2505,7 @@ namespace Talos
 
             client.DisplayAisling(player);
 
-            return true;
+            return false;
         }
 
         /// <summary>
@@ -3183,10 +3197,15 @@ namespace Talos
         private Player GetOrCreatePlayer(Client client, int id, string name, Location location, Direction direction)
         {
             Player player = null;
-
+            string clientName = "";
+            if (client.Player != null)
+            {
+                clientName = client.Player.Name;
+            }
             // Check if the player exists in WorldObjects and is a Player
             if (client.WorldObjects.TryGetValue(id, out var worldObject) && worldObject is Player existingPlayer)
             {
+                Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player found in WorldObjects: {existingPlayer.Name}, Hash: {existingPlayer.GetHashCode()}");
                 player = existingPlayer;
             }
 
@@ -3195,6 +3214,7 @@ namespace Talos
             if (player == null)
             {
                 player = new Player(id, name, location, direction);
+                Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player not found in WorldObjects, creating new player: {player.Name}, Hash: {player.GetHashCode()}");
             }
             else
             {

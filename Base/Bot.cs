@@ -52,7 +52,7 @@ namespace Talos.Base
         internal DateTime _lastCast = DateTime.MinValue;
         internal DateTime _lastUsedGem = DateTime.MinValue;
         internal TimeSpan _bonusElapsedTime = TimeSpan.Zero;
-
+        private DateTime _lastUsedFungusBeetle = DateTime.MinValue;
 
         internal List<Ally> _allyList = new List<Ally>();
         internal List<Enemy> _enemyList = new List<Enemy>();
@@ -69,8 +69,11 @@ namespace Talos.Base
         internal System.Windows.Forms.Label currentAction;
         private Location _lastBubbleLocation;
         private string _bubbleType;
+
+
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
+        public bool RecentlyUsedFungusExtract { get; set; } = false;
         internal AllyPage AllyPage { get; set; }
         internal EnemyPage EnemyPage { get; set; }
 
@@ -360,6 +363,32 @@ namespace Talos.Base
         }
         private bool CastDefensiveSpells()
         {
+            FasSpiorad();
+            Hide();
+            BubbleBlock(); //Adam, fix this, we are spamming buble block/shield
+            Heal();
+            DispellAllyCurse();
+            Dion();
+            Aite();
+            Fas();
+            DragonScale();
+            Armachd();
+            AiteAllies();
+            FasAllies();
+            ArmachdAllies();
+            WakeScroll();
+            BeagCradh();
+            BeagCradhAllies();
+            AoPoison();
+
+
+
+
+            return true;
+        }
+
+        private void FasSpiorad()
+        {
             if (_needFasSpiorad)
             {
                 uint currentMP = Client.CurrentMP;
@@ -390,61 +419,16 @@ namespace Talos.Base
                     Thread.Sleep(10);
                 }
             }
-            if (Hide())
-            {
-                bool_13 = true;
-                return false;
-            }
-            if (Client.ClientTab.bubbleBlockCbox.Checked && Client.ClientTab.spamBubbleCbox.Checked)
-            {
-                if (Client.UseSpell("Bubble Block", null, true, true))
-                {
-                    return false;
-                }
-            }
-            else if (Client.ClientTab.bubbleBlockCbox.Checked && Client.bool_41)
-            {
-                if (Client.ClientTab.walkMapCombox.Text == "WayPoints")
-                {
-                    if (CastBubbleBlock())
-                    {
-                        return false;
-                    }
-                }
-                else if (Client.ClientTab.followCbox.Checked && Client._distnationReached && CastBubbleBlock())
-                {
-                    return false;
-                }
-            }
-            Heal();
-
-            DispellAllyCurse();
-            Dion();
-            Aite();
-            Fas();
-            DragonScale();
-            Armachd();
-            AiteAllies();
-            FasAllies();
-            ArmachdAllies();
-            WakeScroll();
-            BeagCradh();
-            BeagCradhAllies();
-
-
-
-            AoPoison();
-            return true;
         }
 
         private bool BeagCradh()
         {
             bool isBeagCradhChecked = Client.ClientTab.beagCradhCbox.Checked;
-            bool isPlayerCursed2 = Client.Player.IsCursed;
+            bool isPlayerCursed = Client.Player.IsCursed;
 
-            if (isBeagCradhChecked && !isPlayerCursed2)
+            if (isBeagCradhChecked && !isPlayerCursed)
             {
-                Client.UseSpell("beag cradh", Client.Player, this._autoStaffSwitch, false);
+                Client.UseSpell("beag cradh", Client.Player, _autoStaffSwitch, false);
                 return false;
             }
 
@@ -454,11 +438,13 @@ namespace Talos.Base
         private bool BeagCradhAllies()
         {
 
-            foreach (Ally ally in this.ReturnAllyList())
+            foreach (Ally ally in ReturnAllyList())
             {
-                if (ally.AllyPage.dbBCCbox.Checked && this.IsAlly(ally, out Player player, out Client client) && !player.IsCursed)
+                bool isBeagCradhChecked = ally.AllyPage.dbBCCbox.Checked;
+
+                if (isBeagCradhChecked && IsAlly(ally, out Player player, out Client client) && !player.IsCursed)
                 {
-                    Client.UseSpell("beag cradh", player, this._autoStaffSwitch, false);
+                    Client.UseSpell("beag cradh", player, _autoStaffSwitch, false);
                     return false;
                 }
             }
@@ -501,12 +487,53 @@ namespace Talos.Base
             return true;
         }
 
-        private bool AoPoison() //Adam Update to include fungus
+        private bool AoPoison()
         {
-            if (Client.ClientTab.aoPoisonCbox.Checked && Client.HasEffect(EffectsBar.Poison) || Client.Player.IsPoisoned)
+            bool isAoPoisonChecked = Client.ClientTab.aoPoisonCbox.Checked;
+            bool isPlayerPoisoned = Client.Player.IsPoisoned;
+            bool isFungusExtractChecked = Client.ClientTab.fungusExtractCbox.Checked;
+            bool shouldUseFungusExtract = DateTime.UtcNow.Subtract(_lastUsedFungusBeetle).TotalSeconds > 1.0;
+
+            //Ao allies
+            foreach (Ally ally in ReturnAllyList())
             {
-                Client.UseSpell("ao puinsein", Client.Player, _autoStaffSwitch, false);
-                return false;
+                bool isAoAllyChecked = ally.AllyPage.dispelPoisonCbox.Checked;
+
+                if (isAoAllyChecked && IsAlly(ally, out Player player, out Client client) &&
+                    client.HasEffect(EffectsBar.Poison) && player.IsPoisoned && shouldUseFungusExtract)
+                {
+                    if (Client._isRegistered && Client.HasItem("Fungus Beetle Extract"))
+                    {
+                        for (int j = 0; j < 6; j++)
+                        {
+                            Client.UseItem("Fungus Beetle Extract");
+                        }
+                        _lastUsedFungusBeetle = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        Client.UseSpell("ao puinsein", player, _autoStaffSwitch, false);
+                        return false;
+                    }
+                }
+            }
+
+            //Ao self
+            if (isAoPoisonChecked && Client.HasEffect(EffectsBar.Poison) && isPlayerPoisoned)
+            {
+                if (isFungusExtractChecked && Client._isRegistered)
+                {
+                    for (int j = 0; j < 6; j++)
+                    {
+                        Client.UseItem("Fungus Beetle Extract");
+                    }
+                    _lastUsedFungusBeetle = DateTime.UtcNow;
+                }
+                else
+                {
+                    Client.UseSpell("ao puinsein", Client.Player, _autoStaffSwitch, false);
+                    return false;
+                }
             }
 
             return true;
@@ -514,10 +541,14 @@ namespace Talos.Base
 
         private bool Aite()
         {
+            bool isAiteChecked = Client.ClientTab.aiteCbox.Checked;
+            bool isPlayerAited = Client.Player.IsAited;
+            double aiteDuration = Client.Player.AiteDuration;
+            string aiteSpell = Client.ClientTab.aiteCombox.Text;
 
-            if (Client.ClientTab.aiteCbox.Checked && !Client.HasEffect(EffectsBar.NaomhAite) && (!Client.Player.IsAited || Client.Player.AiteDuration != 2.0))
+            if (isAiteChecked && !Client.HasEffect(EffectsBar.NaomhAite) && (!isPlayerAited || aiteDuration != 2.0))
             {
-                Client.UseSpell(Client.ClientTab.aiteCombox.Text, Client.Player, _autoStaffSwitch, false);
+                Client.UseSpell(aiteSpell, Client.Player, _autoStaffSwitch, false);
                 return false;
             }
 
@@ -585,10 +616,14 @@ namespace Talos.Base
 
         private bool Fas()
         {
+            bool isFasChecked = Client.ClientTab.fasCbox.Checked;
+            bool isPlayerFassed = Client.Player.IsFassed;
+            double fasDuration = Client.Player.FasDuration;
+            string fasSpell = Client.ClientTab.fasCombox.Text;
 
-            if (Client.ClientTab.fasCbox.Checked && !Client.HasEffect(EffectsBar.FasNadur) && (!Client.Player.IsFassed || Client.Player.FasDuration != 2.0))
+            if (isFasChecked && !Client.HasEffect(EffectsBar.FasNadur) && (!isPlayerFassed || fasDuration != 2.0))
             {
-                Client.UseSpell(Client.ClientTab.fasCombox.Text, Client.Player, _autoStaffSwitch, false);
+                Client.UseSpell(fasSpell, Client.Player, _autoStaffSwitch, false);
                 return false;
             }
 
@@ -597,8 +632,9 @@ namespace Talos.Base
 
         private bool DragonScale()
         {
+            bool isDragonScaleChecked = Client.ClientTab.dragonScaleCbox.Checked;
 
-            if (Client.ClientTab.dragonScaleCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.Armachd))
+            if (isDragonScaleChecked && Client._isRegistered && !Client.HasEffect(EffectsBar.Armachd))
             {
                 if (!RecentlyUsedDragonScale)
                 {
@@ -620,7 +656,9 @@ namespace Talos.Base
 
         private bool Dion()
         {
-            if (!Client.ClientTab.dionCbox.Checked || Client.HasEffect(EffectsBar.Dion))
+            bool isDionChecked = Client.ClientTab.dionCbox.Checked;
+
+            if (!isDionChecked || Client.HasEffect(EffectsBar.Dion))
             {
                 return false; // Exit early if Dion is not checked or effect already exists
             }
@@ -664,8 +702,9 @@ namespace Talos.Base
 
         private bool Armachd()
         {
-
-            if (Client.ClientTab.armachdCbox.Checked && !Client.HasEffect(EffectsBar.Armachd))
+            bool isArmachdChecked = Client.ClientTab.armachdCbox.Checked;
+            
+            if (isArmachdChecked && !Client.HasEffect(EffectsBar.Armachd))
             {
                 Client.UseSpell("armachd", Client.Player, _autoStaffSwitch, false);
                 return false;
@@ -726,65 +765,58 @@ namespace Talos.Base
         {
             foreach (Ally ally in ReturnAllyList())
             {
-                // Only proceed if the ally has dispel curse checked and is currently cursed
-                if (ally.AllyPage.dispelCurseCbox.Checked && TryGetCursedAlly(ally, out Player player, out Client client))
+                bool isDispelCurseChecked = ally.AllyPage.dispelCurseCbox.Checked;
+
+                if (isDispelCurseChecked && TryGetCursedAlly(ally, out Player player, out Client client))
                 {
-                    // Define known curses
+
                     var cursesToDispel = new HashSet<string> { "cradh", "mor cradh", "ard cradh" };
 
-                    // Check if player's curse is one of the known curses to dispel
                     if (cursesToDispel.Contains(player.Curse))
                     {
-                        // Attempt to use the curse
                         Client.UseSpell("ao " + player.Curse, player, _autoStaffSwitch, true);
 
-                        // Reset curse status
                         player.CurseDuration = 0.0;
                         player.Curse = "";
                         Console.WriteLine($"[DispellAllyCurse] Curse data reset on {player.Name}, Hash: {player.GetHashCode()}. Curse: {player.Curse}, CurseDuration: {player.CurseDuration}, IsCursed: {player.IsCursed}");
                         
-                        return false; // Successfully dispelled, exit the method
+                        return false;
 
                     }
                 }
             }
-            return true; // No dispel action was taken
+            return true;
         }
         
         private bool TryGetCursedAlly(Ally ally, out Player player, out Client client)
         {
 
-            // Attempt to retrieve the player and client associated with the ally
             if (IsAlly(ally, out player, out client))
             {
-                // Return true if the player is cursed
                 Console.WriteLine($"[TryGetCursedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} is cursed: {player.IsCursed}");
                 return player.IsCursed;
             }
-            return false; // Not an ally or not cursed
+            return false;
         }
 
         internal bool IsAlly(Ally ally, out Player player, out Client client)
         {
-            // Try to get the player associated with the ally's name
             player = Client.GetNearbyPlayer(ally.Name);
-            // If the player does not exist, there's no need to proceed further
+
             if (player == null)
             {
                 client = null;
                 return false;
             }
 
-            // Find the client associated with the ally's name
             client = Server.FindClientByName(ally.Name);
 
-            // Check if the found client is different from the current client and is not null
             if (client != null && client != Client)
             {
-                return true; // The ally is valid if it's a different client and the player was found
+                return true;
             }
 
-            return false; // Not an ally if the client is the same as the base client or the client is null
+            return false;
         }
 
         private bool Heal()
@@ -796,10 +828,6 @@ namespace Talos.Base
 
             int loopPercentThreshold = 20;
 
-            Dictionary<string, Client> playerClientMap = Server._clientList
-                .GroupBy(c => c.Player.Name)
-                .ToDictionary(g => g.Key, g => g.FirstOrDefault());
-
             while (loopPercentThreshold <= 100 && !_needFasSpiorad)
             {
                 foreach (Player player in Client.GetNearbyPlayerList())
@@ -808,9 +836,7 @@ namespace Talos.Base
                     {
                         Ally ally = ReturnAllyList().FirstOrDefault(a => a.Name == player.Name);
                         AllyPage allyPage = ally?.AllyPage;
-                        //Client client = Server.FindClientByName(player.Name);
-
-                        playerClientMap.TryGetValue(player.Name, out var client);
+                        Client client = Server.FindClientByName(player.Name);
 
                         if (client == null) continue;
 
@@ -848,22 +874,23 @@ namespace Talos.Base
 
                                 uint healAmount = (uint)Client.CalculateHealAmount(healSpell);
 
-                                List<Player> list = new List<Player>();
+                                List<Player> playersHealed = new List<Player>();
+
                                 if (!(healSpell == "ard ioc comlha") && !(healSpell == "mor ioc comlha"))
                                 {
                                     if (Client.UseSpell(healSpell, player, _autoStaffSwitch, false))
                                     {
-                                        list.Add(player);
+                                        playersHealed.Add(player);
                                     }
                                 }
                                 else if (Client.UseSpell(healSpell, null, _autoStaffSwitch, false))
                                 {
-                                    list.AddRange(Client.GetNearbyAllies());
+                                    playersHealed.AddRange(Client.GetNearbyAllies());
                                 }
-                                foreach (Player p in list)
+                                foreach (Player p in playersHealed)
                                 {
 
-                                    if (playerClientMap.TryGetValue(p.Name, out var matchedClient))
+                                    if (((client != null) ? client.Player : null) == player)
                                     {
 
                                         // Calculate the new health, ensuring it does not exceed the maximum
@@ -871,7 +898,7 @@ namespace Talos.Base
 
                                         // Update the health and print the debug message
                                         client.CurrentHP = newHealth;
-
+                                        Console.WriteLine($"[Heal] {client.Name} healed for {healAmount} HP. New HP: {client.CurrentHP} / {client.MaximumHP}");
                                         // Update health percentage and needs heal status
                                         p.HealthPercent = (byte)(client.CurrentHP * 100 / client.MaximumHP);
                                         p.NeedsHeal = p.HealthPercent <= healAtPercent;
@@ -879,6 +906,7 @@ namespace Talos.Base
                                     }
                                     else
                                     {
+                                        // We don't have access to the actual health value, so we'll just update it based on a health percentage
                                         // Calculate the new health percentage based on loopPercentThreshold, ensuring it does not exceed 100%
                                         byte newHealthPercent = (byte)Math.Min(p.HealthPercent + 20, 100);
 
@@ -910,6 +938,37 @@ namespace Talos.Base
             return !Client.ClientTab.friendList.Items.OfType<string>().Contains(player.Name, StringComparer.CurrentCultureIgnoreCase) && player != Client.Player && (Equals(player.Location, Client.Player.Location) || player._isHidden);
         }
 
+        private bool BubbleBlock()
+        {
+            bool isBubbleBlockChecked = Client.ClientTab.bubbleBlockCbox.Checked;
+            bool isSpamBubbleChecked = Client.ClientTab.spamBubbleCbox.Checked;
+            bool isFollowChecked = Client.ClientTab.followCbox.Checked;
+            string walkMap = Client.ClientTab.walkMapCombox.Text;
+
+            if (isBubbleBlockChecked && isSpamBubbleChecked)
+            {
+                if (Client.UseSpell("Bubble Block", null, true, true))
+                {
+                    return false;
+                }
+            }
+            else if (isBubbleBlockChecked && Client.bool_41)
+            {
+                if (walkMap == "WayPoints")
+                {
+                    if (CastBubbleBlock())
+                    {
+                        return false;
+                    }
+                }
+                else if (isFollowChecked && Client._distnationReached && CastBubbleBlock())
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
         private bool CastBubbleBlock()
         {
             //ADAM FIX THIS IT SPAMS BUBBLE SHIELD
@@ -952,7 +1011,20 @@ namespace Talos.Base
 
         private bool Hide()
         {
-            if (Client.ClientTab.hideCbox.Checked && Client._map.CanUseSpells)
+            if (CastHide())
+            {
+                bool_13 = true;
+                return false;
+            }
+
+            return true;
+        }
+        private bool CastHide()
+        {
+            bool isHideChecked = Client.ClientTab.hideCbox.Checked;
+            bool canUseSpells = Client._map.CanUseSpells;
+
+            if (isHideChecked && canUseSpells)
             {
                 string spellName = "";
                 if (Client.HasSpell("Hide"))
@@ -977,6 +1049,7 @@ namespace Talos.Base
         private bool CastOffensiveSpells()
         {
             _nearbyValidCreatures = Client.GetNearbyValidCreatures(11);
+
             if (_nearbyValidCreatures.Count > 0)
             {
                 _nearbyValidCreatures = _nearbyValidCreatures.OrderBy(Delegates.NextRandom)
@@ -1456,6 +1529,7 @@ namespace Talos.Base
             }
             return false;
         }
+
         private bool CastCurseIfApplicable(EnemyPage enemyPage, List<Creature> creatures)
         {
             lock (_lock)
@@ -1492,7 +1566,7 @@ namespace Talos.Base
             {
                 Console.WriteLine($"[CastFasIfApplicable] Total creatures: {creatures.Count}");
 
-                // Filter creatures that are not 'fassed'
+                // Filter creatures that are not fassed
                 var eligibleCreatures = creatures.Where(Delegates.IsNotFassed);
 
                 Console.WriteLine($"[CastFasIfApplicable] Eligible creatures (not fassed): {eligibleCreatures.Count()}");
@@ -1522,6 +1596,7 @@ namespace Talos.Base
 
             bool flag = enemyPage.attackCboxTwo.Checked && enemyPage.targetCbox.Checked && 
                         (enemyPage.attackComboxTwo.Text == "MSPG" || enemyPage.attackComboxTwo.Text == "M/DSG");
+
 
             if (enemyPage.targetCursedCbox.Checked && enemyPage.targetFassedCbox.Checked)
             {
@@ -1701,7 +1776,6 @@ namespace Talos.Base
             }
         }
 
-
         private bool IsDiagonallyAdjacent(Point location, Point otherLocation, int maxDistance)
         {
             int adjustedDistance = maxDistance - 1;
@@ -1812,8 +1886,6 @@ namespace Talos.Base
             ).ToList();
         }
 
-
-
         private bool CreaturesToIgnore(Creature creature)
         {
             return EnemyPage.ignoreLbox.Items.Contains(creature.SpriteID.ToString());
@@ -1823,15 +1895,11 @@ namespace Talos.Base
         {
             return creature.Location.DistanceFrom(Client._serverLocation);
         }
+
         private int DistanceFromClientLocation(Creature creature)
         {
             return creature.Location.DistanceFrom(Client._clientLocation);
         }
-
-
-
-    
-
 
         private void AoSuain()
         {
@@ -2034,8 +2102,11 @@ namespace Talos.Base
 
         private void Loot()
         {
-            //Console.WriteLine("Loot method running");
-            if (!Client.ClientTab.pickupGoldCbox.Checked && !Client.ClientTab.pickupItemsCbox.Checked && !Client.ClientTab.dropTrashCbox.Checked)
+            bool isPickupGoldChecked = Client.ClientTab.pickupGoldCbox.Checked;
+            bool isPickupItemsChecked = Client.ClientTab.pickupItemsCbox.Checked;
+            bool isDropTrashChecked = Client.ClientTab.dropTrashCbox.Checked;
+
+            if (!isPickupGoldChecked && !isPickupItemsChecked && !isDropTrashChecked)
             {
                 return;
             }
@@ -2063,19 +2134,19 @@ namespace Talos.Base
 
         private void ProcessLoot(List<Objects.Object> nearbyObjects, Rectangle lootArea)
         {
-            //var initialGoldAmount = Client.Gold;
+            bool isPickupGoldChecked = Client.ClientTab.pickupGoldCbox.Checked;
+            bool isPickupItemsChecked = Client.ClientTab.pickupItemsCbox.Checked;
 
-            if (Client.ClientTab.pickupGoldCbox.Checked)
+            if (isPickupGoldChecked)
             {
                 foreach (var obj in nearbyObjects.Where(obj => IsGold(obj, lootArea)))
                 {
                     Client.Pickup(0, obj.Location);
-                    //var goldPickedUp = Client.Gold - initialGoldAmount;
-                    //Client.ClientTab._sessionGold += goldPickedUp;
+
                 }
             }
 
-            if (Client.ClientTab.pickupItemsCbox.Checked)
+            if (isPickupItemsChecked)
             {
                 foreach (var obj in nearbyObjects.Where(obj => IsLootableItem(obj, lootArea)))
                 {
@@ -2115,7 +2186,6 @@ namespace Talos.Base
                 }
             }
         }
-
 
         private sealed class Delegates
         {
