@@ -452,6 +452,46 @@ namespace Talos.Base
             PlayerBuffs(); //Deireas Faileas, Monk Forms, Asgall, Perfect Defense,
                            //Aegis Spehre, ao beag suain, Muscle Stim, Nerve Stim, Mist, Mana Ward
                            //Vanish Elixir, Regens, Mantid Scent
+            Comlhas();
+            return true;
+        }
+
+        private bool Comlhas()
+        {
+
+            if (AllyPage == null)
+            {
+                return true;
+            }
+
+            if (AllyPage.allyMDCRbtn.Checked)
+            {
+                var playerToDion = this._nearbyAllies.FirstOrDefault(Delegates.NotDioned);
+
+                if (playerToDion != null)
+                {
+                    Console.WriteLine($"[Comlhas] PlayerToDion: {playerToDion?.Name}, Hash: {playerToDion.GetHashCode()}, has dion: {playerToDion.IsDioned}");
+                    Client.UseSpell("mor dion comlha", null, this._autoStaffSwitch, false);
+                    return false;
+                }
+            }
+
+            if (AllyPage.allyMDCSpamRbtn.Checked)
+            {
+                if (Client.UseSpell("mor dion comlha", null, this._autoStaffSwitch, false))
+                {
+                    return false;
+                }
+            }
+            else if (AllyPage.allyMICSpamRbtn.Checked)
+            {
+                if (!Client.UseSpell("ard ioc comlha", null, this._autoStaffSwitch, false) &&
+                    !Client.UseSpell("mor ioc comlha", null, this._autoStaffSwitch, false))
+                {
+                    Client.UseSpell("ioc comlha", null, this._autoStaffSwitch, false);
+                }
+                return false;
+            }
 
             return true;
         }
