@@ -33,6 +33,7 @@ namespace Talos.Base
         internal bool _shouldBotStop = false;
         internal bool _shouldAlertItemCap;
         internal bool _recentlyAoSithed;
+
         internal bool bool_11;
         internal bool bool_12;
         private bool bool_13;
@@ -53,6 +54,7 @@ namespace Talos.Base
         internal DateTime _lastUsedGem = DateTime.MinValue;
         internal TimeSpan _bonusElapsedTime = TimeSpan.Zero;
         private DateTime _lastUsedFungusBeetle = DateTime.MinValue;
+        private DateTime _lastUsedBeetleAid = DateTime.MinValue;
 
         internal List<Ally> _allyList = new List<Ally>();
         internal List<Enemy> _enemyList = new List<Enemy>();
@@ -135,9 +137,12 @@ namespace Talos.Base
                     //CheckAndHandleSpells();
 
                     //Console.WriteLine("Checking for autoRed conditions");
-                    if (autoRedConditionsMet())
+                    if (AutoRedConditionsMet())
                     {
-                        HandleAutoRed();//ADAM
+                        if (GetSkulledPlayers().Count > 0)
+                        {
+                            RedSkulledPlayers();
+                        }   
                     }
 
                     //Console.WriteLine("Checking for strangers");
@@ -206,7 +211,9 @@ namespace Talos.Base
         }
         private void LogIfSkulled()
         {
-            if (Client.ClientTab.optionsSkullCbox.Checked && DateTime.UtcNow.Subtract(_skullTime).TotalSeconds > 6.0)
+            bool isOptionsSkullCboxChecked = Client.ClientTab.optionsSkullCbox.Checked;
+
+            if (isOptionsSkullCboxChecked && DateTime.UtcNow.Subtract(_skullTime).TotalSeconds > 6.0)
             {
                 string text = AppDomain.CurrentDomain.BaseDirectory + "\\skull.txt";
                 File.WriteAllText(text, string.Concat(new string[]
@@ -225,7 +232,8 @@ namespace Talos.Base
 
         private void LogIfSkulledAndSurrounded()
         {
-            if (Client.ClientTab.optionsSkullSurrbox.Checked && DateTime.UtcNow.Subtract(_skullTime).TotalSeconds > 4.0 && Client.IsLocationSurrounded(Client._serverLocation))
+            bool isOptionsSkullSurrboxChecked = Client.ClientTab.optionsSkullSurrbox.Checked;
+            if (isOptionsSkullSurrboxChecked && DateTime.UtcNow.Subtract(_skullTime).TotalSeconds > 4.0 && Client.IsLocationSurrounded(Client._serverLocation))
             {
                 string text2 = AppDomain.CurrentDomain.BaseDirectory + "\\skull.txt";
                 File.WriteAllText(text2, string.Concat(new string[]
@@ -257,12 +265,12 @@ namespace Talos.Base
             }
         }
 
-        private bool autoRedConditionsMet()
+        private bool AutoRedConditionsMet()
         {
-           return Client.ClientTab!= null && _playersExistingOver250ms != null && Client.ClientTab.autoRedCbox.Checked;
+           return Client.ClientTab != null && _playersExistingOver250ms != null && Client.ClientTab.autoRedCbox.Checked;
         }
 
-        private void HandleAutoRed()
+        private List<Player> GetSkulledPlayers()
         {
             if (_playersExistingOver250ms.Any(Delegates.PlayerIsSkulled))
             {
@@ -271,8 +279,67 @@ namespace Talos.Base
                 {
                     _playersNeedingRed.Add(player);
                 }
-                _playersNeedingRed = _playersNeedingRed.OrderBy(DistanceFromPlayer).ToList();
+                return _playersNeedingRed = _playersNeedingRed.OrderBy(DistanceFromPlayer).ToList();
             }
+            return new List<Player>();
+        }
+
+        private bool RedSkulledPlayers()
+        {
+            if (_playersNeedingRed.Count > 0 && Client.ClientTab.autoRedCbox.Checked)
+            {
+                Player player = _playersNeedingRed[0];
+
+                var inventory = Client.Inventory;
+                bool canUseBeetleAid = inventory.HasItem("Beetle Aid") && Client._isRegistered &&
+                                       DateTime.UtcNow.Subtract(_lastUsedBeetleAid).TotalMinutes > 2.0;
+                bool canUseOtherItems = inventory.HasItem("Komadium") || inventory.HasItem("beothaich deum");
+
+                if (canUseBeetleAid || canUseOtherItems)
+                {
+                    bool_11 = true;
+                    Direction direction = player.Location.Point.GetDirection(Client._serverLocation.Point);
+
+                    if (Client._serverLocation.DistanceFrom(player.Location) > 1)
+                    {
+                        if (Client._clientLocation.DistanceFrom(player.Location) == 1)
+                        {
+                            Client.RequestRefresh(true);
+                        }
+                        Client.TryWalkToLocation(player.Location, 1, true, true);
+                    }
+                    else if (direction != Client._clientDirection)
+                    {
+                        Client.Turn(direction);
+                    }
+                    else
+                    {
+                        if (canUseBeetleAid && Client.UseItem("Beetle Aid"))
+                        {
+                            _lastUsedBeetleAid = DateTime.UtcNow;
+                            player.SpellAnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
+                        }
+                        else if (canUseOtherItems && (Client.UseItem("Komadium") || Client.UseItem("beothaich deum")))
+                        {
+                            player.SpellAnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
+                            Thread.Sleep(1000); // Consider async/await pattern if possible
+                        }
+
+                        Client.UseSkill("Transferblood");
+
+                        return false;
+                    }
+                }
+                else if (player == null || !Client.GetNearbyPlayerList().Contains(player) || player.HealthPercent > 30 || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds > 5.0)
+                {
+                    player = null;
+                    bool_11 = false;
+
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private bool IsSkulledFriendOrGroupMember(Player player)
@@ -318,6 +385,7 @@ namespace Talos.Base
             _isSilenced = Client.HasEffect(EffectsBar.Silenced);
 
             AoSuain();
+            WakeScroll();
             AutoGem();
 
             UpdatePlayersListBasedOnStrangers();
@@ -331,9 +399,9 @@ namespace Talos.Base
                     CastOffensiveSpells();
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Consider logging or handling the exception as needed.
+                Console.WriteLine($"Exception in PerformSpellActions: {ex.Message}");
             }
 
             //ManageSpellCastingDelay();
@@ -365,26 +433,60 @@ namespace Talos.Base
         {
             FasSpiorad();
             Hide();
-            BubbleBlock(); //Adam, fix this, we are spamming buble block/shield
+            BubbleBlock(); //Adam fix this, it is trying to spam buble block/shield
             Heal();
+            DispellAllySuain();
             DispellAllyCurse();
+            AoPoison();
             Dion();
             Aite();
             Fas();
-            DragonScale();
-            Armachd();
             AiteAllies();
             FasAllies();
+
+            DragonScale();
+            Armachd();
             ArmachdAllies();
-            WakeScroll();
             BeagCradh();
             BeagCradhAllies();
-            AoPoison();
-
-
-
+            PlayerBuffs(); //Deireas Faileas, Monk Forms, Asgall, Perfect Defense,
+                           //Aegis Spehre, ao beag suain, Muscle Stim, Nerve Stim, Mist, Mana Ward
+                           //Vanish Elixir, Regens, Mantid Scent
 
             return true;
+        }
+
+        private void PlayerBuffs()
+        {
+        }
+
+        private bool DispellAllySuain()
+        {
+            foreach (Ally ally in ReturnAllyList())
+            {
+                bool isDispelSuainChecked = ally.AllyPage.dispelSuainCbox.Checked;
+
+                if (isDispelSuainChecked && TryGetSuainedAlly(ally, out Player player, out Client client))
+                {
+
+                    Client.UseSpell("ao suain" + player.Curse, player, _autoStaffSwitch, true);
+                    Console.WriteLine($"[DispellAllySuain] Player {player.Name}, Hash: {player.GetHashCode()}. IsCursed: {player.IsSuained}");
+
+                    return false;
+                     
+                }
+            }
+            return true;
+        }
+
+        private bool TryGetSuainedAlly(Ally ally, out Player player, out Client client)
+        {
+            if (IsAlly(ally, out player, out client))
+            {
+                Console.WriteLine($"[TryGetSuainedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} is cursed: {player.IsSuained}");
+                return player.IsSuained;
+            }
+            return false;
         }
 
         private void FasSpiorad()
@@ -1908,7 +2010,7 @@ namespace Talos.Base
             {
                 return;
             }
-
+            Console.WriteLine("[AoSuain] Attempting to cast 'ao suain' to clear the Suain effect.");
             // Attempt to cast "Leafhopper Chirp" first. If it fails, attempt to cast "ao suain".
             // Only clear the Suain effect if one of the spells is successfully cast.
             if (Client.UseSpell("Leafhopper Chirp", null, false, false) || Client.UseSpell("ao suain", Client.Player, false, true))

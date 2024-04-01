@@ -73,7 +73,7 @@ namespace Talos.Objects
             {
                 if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Suain))
                     return false;
-                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Suain]).TotalSeconds < 2.0;
+                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Suain]).TotalSeconds < 1.5;
             }
         }
         internal bool IsWFF
