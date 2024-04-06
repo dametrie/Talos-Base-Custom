@@ -22,6 +22,7 @@ using Talos.Maps;
 using Talos.Capricorn.Drawing;
 using Talos.Capricorn.IO;
 using Talos.Properties;
+using Talos.PInvoke;
 
 namespace Talos.Forms
 {
@@ -2100,6 +2101,98 @@ namespace Talos.Forms
             else
             {
                 _client._safeScreen = false;
+            }
+        }
+
+        private void noBlindCbox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (noBlindCbox.Checked)
+            {
+                _client.SetCheats(Cheats.NoBlind);
+            }
+            else
+            {
+                _client.SetCheats(Cheats.NoBlind);
+            }
+            _client.SetStatUpdateFlags(StatUpdateFlags.Secondary);
+        }
+
+        private void seeHiddenCbox_CheckedChanged(object sender, EventArgs e)
+        {
+
+            if (seeHiddenCbox.Checked)
+            {
+                _client.SetCheats(Cheats.SeeHidden);
+            }
+            else
+            {
+                _client.SetCheats2(Cheats.SeeHidden);
+            }
+            foreach (Player player in _client.GetNearbyPlayerList())
+            {
+                _client.DisplayAisling(player);
+            }
+
+        }
+
+        private void mapZoomCbox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (mapZoomCbox.Checked)
+            {
+                _client.SetCheats(Cheats.ZoomableMap);
+            }
+            else
+            {
+                _client.SetCheats2(Cheats.ZoomableMap);
+            }
+            _client.EnableMapZoom();
+        }
+
+        private void hideForegroundCbox_CheckedChanged(object sender, EventArgs e)
+        {
+            byte[] array = new byte[5];
+            NativeMethods.ReadMemoryFromProcess(Process.GetProcessById(_client.processId), _client.BASE_ADDRESS, array);
+            if (array[0] == _client.ADDRESS_BUFFER[0])
+            {
+                NativeMethods.WriteMemoryToProcess(Process.GetProcessById(_client.processId), _client.BASE_ADDRESS, _client.PROCESS_DATA);
+            }
+            else
+            {
+                NativeMethods.WriteMemoryToProcess(Process.GetProcessById(_client.processId), _client.BASE_ADDRESS, _client.ADDRESS_BUFFER);
+            }
+            _client.RequestRefresh();
+        }
+
+        private void ignoreCollisionCbox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (ignoreCollisionCbox.Checked)
+            {
+                _client.SetCheats(Cheats.GmMode);
+            }
+            else
+            {
+                _client.SetCheats2(Cheats.GmMode);
+            }
+            _client.SetStatUpdateFlags(StatUpdateFlags.None);
+        }
+
+        private void ghostHackCbox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (ghostHackCbox.Checked)
+            {
+                _client.SetCheats(Cheats.SeeGhosts);
+                foreach (Player value in _client.NearbyGhosts.Values)
+                {
+                    _client.SeeGhosts(value);
+                }
+            }
+            else
+            {
+                _client.SetCheats2(Cheats.SeeGhosts);
+                foreach (Player value2 in _client.NearbyGhosts.Values)
+                {
+                    _client.RemoveObject(value2.ID);
+                }
             }
         }
 

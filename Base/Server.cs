@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
@@ -21,6 +22,7 @@ using Talos.Helper;
 using Talos.Maps;
 using Talos.Networking;
 using Talos.Objects;
+using Talos.PInvoke;
 using Talos.Properties;
 using Talos.Structs;
 using static System.Windows.Forms.LinkLabel;
@@ -62,6 +64,7 @@ namespace Talos
         private bool _isMapping;
         internal bool _stopWalking;
         internal bool _stopCasting;
+        private bool disableSound = false;
 
         public static object Lock { get; internal set; } = new object();
 
@@ -1096,6 +1099,18 @@ namespace Talos
                     {
                         client.ClientTab.AddMessageToChatPanel(Color.Magenta, message);
                         client.ClientTab.UpdateChatPanel(message);
+                    }
+                    if (Settings.Default.whisperFlash)
+                    {
+                        if (!NativeMethods.IsWindowVisible(Process.GetProcessById(client.processId).MainWindowHandle))
+                        {
+                            NativeMethods.ShowWindow(client.hWnd, 1);
+                        }
+                        client.FlashWindowEx(Process.GetProcessById(client.processId).MainWindowHandle);
+                    }
+                    if (Settings.Default.whisperSound && !this.disableSound)
+                    {
+                        new SoundPlayer(Resources.whispernotif).PlaySync();
                     }
                     return true;
                 case (byte)ServerMessageType.OrangeBar1:
@@ -2401,12 +2416,10 @@ namespace Talos
                     client.WorldObjects.TryRemove(playerToRemove.ID, out _);
                 }
             }
-
+            Console.WriteLine($"************************************DisplayAisling: Player Name: {player.Name}, Player ID: {player.ID}, Player hash: {player.GetHashCode()}");
             if (!client.WorldObjects.ContainsKey(id))
             {
-                client.WorldObjects.TryAdd(id, player);
-                if (string.IsNullOrEmpty(name))
-                    client.ClickObject(id);
+                client.WorldObjects.AddOrUpdate(id, player, (key, oldValue) => player);                    
             }
  
 
@@ -2447,6 +2460,9 @@ namespace Talos
             else
             {
                 client.PlayersWithNoName.AddOrUpdate(id, player, (key, oldValue) => player);
+                client.ClickObject(id);
+                SendKeys.SendWait("{ESC}");
+                Console.WriteLine($"************************************DisplayAisling: Player Name is empty: {player.Name}, Player ID: {player.ID}, Player hash: {player.GetHashCode()}");
             }
 
 
@@ -2505,7 +2521,7 @@ namespace Talos
 
             client.DisplayAisling(player);
 
-            return false;
+            return false; //return false because we are manually sendind the packet in client.DisplayAisling
         }
 
         /// <summary>
@@ -2514,10 +2530,156 @@ namespace Talos
         /// <param name="client"></param>
         /// <param name="serverPacket"></param>
         /// <returns></returns>
-        private bool ServerMessage_0x34_Profile(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x34_Profile(Client client, ServerPacket packet)
         {
+            int id = packet.ReadInt32();
+            var equipmentData = ReadEquipmentData(packet);
+
+            byte optionsByte = packet.ReadByte();
+            string name = packet.ReadString8();
+
+            var profileData = (Flag: false, MarkIcon: new byte[0], MarkColor: new byte[0], MarkKey: new string[0], MarkText: new string[0]);
+
+            try
+            {
+                profileData = ReadProfileData(packet);
+                if (ShouldResendPacket(profileData))
+                {
+                    ResendPacket(client, id, equipmentData, optionsByte, name, profileData);
+                }
+            }
+            catch
+            {
+                return true;
+            }
+
+            bool isValidProfile = IsProfileValid(client, id, name);
+
+
+            UpdatePlayerInformation(client, id, name);
+
+
+            //return isValidProfile && !profileData.Flag;
+            return !profileData.Flag;
+        }
+
+        private bool UpdatePlayerInformation(Client client, int id, string name)
+        {
+            if (client.WorldObjects.ContainsKey(id) && client.WorldObjects[id] is Player p)
+            {
+  
+                if (string.IsNullOrEmpty(p.Name))
+                {
+                    p.Name = name;
+                    client.WorldObjects[id] = p;
+
+                    if (!client.DeadPlayers.ContainsKey(name))
+                    {
+                        client.DeadPlayers.TryAdd(name, p);
+                    }
+
+                    if (!client.NearbyPlayers.ContainsKey(name))
+                    {
+                        client.NearbyPlayers.TryAdd(name, p);
+                    }
+
+                    if (client.PlayersWithNoName.ContainsKey(p.ID))
+                    {
+                        client.PlayersWithNoName.TryRemove(p.ID, out _);
+                    }
+
+                }
+
+                if (client.IsCreatureNearby(p, 12))
+                {
+                    client.ClientTab.UpdateStrangerList();
+                    client.DisplayAisling(p);
+                }
+            }
+
             return true;
         }
+
+        private (ushort[] EquipmentSprite, byte[] EquipmentColor) ReadEquipmentData(ServerPacket packet)
+        {
+            ushort[] equipmentSprite = new ushort[18];
+            byte[] equipmentColor = new byte[18];
+
+            for (int i = 0; i < 18; i++)
+            {
+                equipmentSprite[i] = packet.ReadUInt16();
+                equipmentColor[i] = packet.ReadByte();
+            }
+
+            return (equipmentSprite, equipmentColor);
+        }
+
+        private (bool Flag, byte[] MarkIcon, byte[] MarkColor, string[] MarkKey, string[] MarkText) ReadProfileData(ServerPacket packet)
+        {
+            bool flag = false;
+            byte nation = packet.ReadByte();
+            string titles = packet.ReadString8();
+            bool grouped = packet.ReadBoolean();
+            string guildTitle = packet.ReadString8();
+            string medenianClass = packet.ReadString8();
+            string guildName = packet.ReadString8();
+            byte legendLength = packet.ReadByte();
+
+            byte[] markIcon = new byte[legendLength];
+            byte[] markColor = new byte[legendLength];
+            string[] markKey = new string[legendLength];
+            string[] markText = new string[legendLength];
+
+            for (int i = 0; i < legendLength; i++)
+            {
+                markIcon[i] = packet.ReadByte();
+                markColor[i] = packet.ReadByte();
+                markKey[i] = packet.ReadString8();
+                markText[i] = packet.ReadString8();
+
+                if (markText[i].Length > 70 || markKey[i].Length > 70)
+                {
+                    flag = true;
+                }
+            }
+
+            return (flag, markIcon, markColor, markKey, markText);
+        }
+
+        private void ResendPacket(Client client, int id, (ushort[] EquipmentSprite, byte[] EquipmentColor) equipmentData, byte optionsByte, string name, (bool Flag, byte[] MarkIcon, byte[] MarkColor, string[] MarkKey, string[] MarkText) profileData)
+        {
+            ServerPacket packet = new ServerPacket(52);
+            packet.WriteInt32(id);
+
+            for (int i = 0; i < equipmentData.EquipmentSprite.Length; i++)
+            {
+                packet.WriteUInt16(equipmentData.EquipmentSprite[i]);
+                packet.WriteByte(equipmentData.EquipmentColor[i]);
+            }
+
+            // Write optionsByte, name, and other non-equipment profile data...
+
+            for (int i = 0; i < profileData.MarkIcon.Length; i++)
+            {
+                packet.WriteByte(profileData.MarkIcon[i]);
+                packet.WriteByte(profileData.MarkColor[i]);
+                packet.WriteString8(profileData.MarkKey[i].Substring(0, Math.Min(70, profileData.MarkKey[i].Length)));
+                packet.WriteString8(profileData.MarkText[i].Substring(0, Math.Min(70, profileData.MarkText[i].Length)));
+            }
+
+            client.Enqueue(new Packet[] { packet });
+        }
+
+        private bool IsProfileValid(Client client, int id, string name)
+        {
+            return !client.WorldObjects.ContainsKey(id) || (client.DeadPlayers.ContainsKey(name) && client.DeadPlayers[name].ID == id);
+        }
+
+        private bool ShouldResendPacket((bool Flag, byte[] MarkIcon, byte[] MarkColor, string[] MarkKey, string[] MarkText) profileData)
+        {
+            return profileData.Flag;
+        }
+
 
         private bool ServerMessage_0x36_WorldList(Client client, ServerPacket serverPacket)
         {
@@ -2656,25 +2818,25 @@ namespace Talos
             string guildName = serverPacket.ReadString8();
             byte legendLength = serverPacket.ReadByte();
 
-            for (int i = 0; i < legendLength; i++)
+            for (int legendMark = 0; legendMark < legendLength; legendMark++)
             {
-                serverPacket.ReadByte();
-                serverPacket.ReadByte();
-                string legendText = serverPacket.ReadString8();
+                byte legendMarkIcon = serverPacket.ReadByte();
+                byte legendMarkColor = serverPacket.ReadByte();
+                string legendMarkKey = serverPacket.ReadString8();
                 //Console.WriteLine(legendText);
-                if ((legendText != null) && legendText.StartsWith("C"))
+                if ((legendMarkKey != null) && legendMarkKey.StartsWith("C"))
                 {
-                    SetPreviousClass(client, legendText);
+                    SetPreviousClass(client, legendMarkKey);
                 }
-                if ((legendText != null) && legendText.StartsWith("Dgn-"))
+                if ((legendMarkKey != null) && legendMarkKey.StartsWith("Dgn-"))
                 {
-                    SetDugon(client, legendText);
+                    SetDugon(client, legendMarkKey);
                 }
-                if ((legendText != null) && legendText.Equals("_Unr"))
+                if ((legendMarkKey != null) && legendMarkKey.Equals("_Unr"))
                 {
                     client._isRegistered = false;
                 }
-                serverPacket.ReadString8();
+                string legendMarkText = serverPacket.ReadString8();
             }
             client.Nation = (Nation)((byte)nation);
             client.AllyListHashSet.Clear();
@@ -2936,6 +3098,7 @@ namespace Talos
                 : defaultDugon;
 
             client.SetDugon(dugon);
+
         }
         internal void SetTemuairClass(Client client, int temClass)
         {

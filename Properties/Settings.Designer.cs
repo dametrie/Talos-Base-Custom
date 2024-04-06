@@ -106,5 +106,29 @@ namespace Talos.Properties {
                 this["disableSprites"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool whisperFlash {
+            get {
+                return ((bool)(this["whisperFlash"]));
+            }
+            set {
+                this["whisperFlash"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool whisperSound {
+            get {
+                return ((bool)(this["whisperSound"]));
+            }
+            set {
+                this["whisperSound"] = value;
+            }
+        }
     }
 }

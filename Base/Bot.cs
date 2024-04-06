@@ -458,7 +458,6 @@ namespace Talos.Base
 
         private bool Comlhas()
         {
-
             if (AllyPage == null)
             {
                 return true;

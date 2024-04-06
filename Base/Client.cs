@@ -23,12 +23,33 @@ using System.ComponentModel;
 using Talos.Base;
 using System.Collections.Concurrent;
 using Object = Talos.Objects.Object;
+using Talos.PInvoke;
 
 
 namespace Talos.Base
 {
     internal class Client
     {
+        #region Process Memory
+        internal int processId;
+        internal IntPtr hWnd;
+
+        internal byte[] PROCESS_DATA;
+
+        internal int BASE_ADDRESS = 6281332;
+
+        internal byte[] ADDRESS_BUFFER = new byte[5]
+        {
+        232,
+        47,
+        88,
+        2,
+        0
+        };
+
+        private bool IsOSCompatible => Environment.OSVersion.Version.Major >= 5;
+        #endregion
+
         #region Networking Vars
         internal Server _server;
         internal Crypto _crypto;
@@ -243,6 +264,7 @@ namespace Talos.Base
         internal ConcurrentDictionary<string, Player> NearbyGhosts { get; private set; } = new ConcurrentDictionary<string, Player>();
         internal ConcurrentDictionary<string, Creature> NearbyNPC { get; private set; } = new ConcurrentDictionary<string, Creature>();
         internal ConcurrentDictionary<string, int> ObjectID { get; private set; } = new ConcurrentDictionary<string, int>();
+        internal ConcurrentDictionary<string, Player> DeadPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
 
 
         internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
@@ -346,6 +368,7 @@ namespace Talos.Base
 
         public int Int32_1 { get; internal set; }
 
+
         internal Client(Server server, Socket socket)
         {
             _identifier = Utility.Random(int.MaxValue);
@@ -383,7 +406,7 @@ namespace Talos.Base
         internal void SetDugon(Dugon color) => _dugon |= color;
         internal bool GetCheats(Cheats value) => _cheats.HasFlag(value);
         internal void SetCheats(Cheats value) => _cheats |= value;
-        internal void setCheats2(Cheats value) => _cheats &= (Cheats)(byte)(~(uint)value);
+        internal void SetCheats2(Cheats value) => _cheats &= (Cheats)(byte)(~(uint)value);
 
         internal void SetStatUpdateFlags(StatUpdateFlags flags) => Attributes(flags, Stats);
         internal bool HasItem(string itemName) => Inventory.HasItem(itemName);
@@ -2023,6 +2046,22 @@ namespace Talos.Base
             Enqueue(clientPacket);
         }
 
+        internal void EnableMapZoom()
+        {
+            ServerPacket serverPacket = new ServerPacket(5);
+            serverPacket.WriteUInt32(PlayerID);
+            serverPacket.WriteUInt16(0);
+            serverPacket.WriteByte((byte)(GetCheats(Cheats.ZoomableMap) ? 2 : Path));
+            serverPacket.WriteUInt16(0);
+            Enqueue(serverPacket);
+        }
+
+        internal void RemoveObject(int objId)
+        {
+            ServerPacket serverPacket = new ServerPacket(14);
+            serverPacket.WriteUInt32((uint)objId);
+            Enqueue(serverPacket);
+        }
         internal void ServerDialog(byte dialogType, byte objectType, int objectID, byte unknown1, ushort sprite1, byte color1, byte unknown2, ushort sprite2, byte color2,
             ushort pursuitID, ushort dialogID, bool previousButton, bool nextButton, byte unknown3, string objectName, string message)
         {
@@ -2107,6 +2146,10 @@ namespace Talos.Base
                     serverPacket.WriteString8(string.Empty);
                 else
                     serverPacket.WriteString8(player.Name);
+            }
+            else
+            {
+                serverPacket.WriteString8(player.Name);
             }
             serverPacket.WriteString8(player.GroupName);
             Enqueue(serverPacket);
@@ -3126,11 +3169,67 @@ namespace Talos.Base
             catch
             {
             }
+
+            try
+            {
+                NativeMethods.SetForegroundWindow((int)hWnd);
+                NativeMethods.ShowWindow(hWnd, 1u);
+                FlashWindowEx(Process.GetProcessById(processId).MainWindowHandle);
+            }
+            catch
+            {
+            }
+
             //no longer connected
             _server._clientList.Remove(this);
             Thread.Sleep(100);
             _server._mainForm.RemoveClient(this);
 
+        }
+
+        internal bool FlashWindowEx(IntPtr hWnd)
+        {
+            if (IsOSCompatible)
+            {
+                Interop.FLASHWINFO flashwinfo = NativeMethods.fInfo(hWnd, 15u, uint.MaxValue, 0u);
+                return NativeMethods.FlashWindowEx(ref flashwinfo);
+            }
+            return false;
+        }
+
+        internal void CheckNetStat()
+        {
+            try
+            {
+                string string_0 = "";
+                if (int.TryParse(_clientSocket.RemoteEndPoint.ToString().Replace("127.0.0.1:", ""), out int result))
+                {
+                    Process process = new Process();
+                    process.StartInfo.FileName = "cmd.exe";
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.Arguments = "/c netstat -a -n -o";
+                    process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                    {
+                        string_0 += e.Data;
+                    };
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.WaitForExit();
+                    if (int.TryParse(Regex.Match(string_0, "TCP\\s+127.0.0.1:" + result + "\\s+127.0.0.1:2610\\s+ESTABLISHED\\s+([0-9]+)").Groups[1].Value, out int result2))
+                    {
+                        processId = result2;
+                    }
+                    hWnd = Process.GetProcessById(processId).MainWindowHandle;
+                    NativeMethods.SetWindowText(Process.GetProcessById(result2).MainWindowHandle, Name);
+                    process.Dispose();
+                }
+            }
+            catch
+            {
+                DisconnectWait();
+            }
         }
 
         /// <summary>

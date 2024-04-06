@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Talos.Structs;
 using Talos.Definitions;
+using System.Diagnostics;
 
 namespace Talos.PInvoke
 {
@@ -33,6 +34,9 @@ namespace Talos.PInvoke
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int dwSize, out int lpNumberOfBytesRead);
 
+        [DllImport("kernel32.dll", EntryPoint = "ReadProcessMemory")]
+        internal static extern bool ReadProcessMemory_1(IntPtr hProcess, int int_0, [Out] byte[] byte_0, int int_1, byte byte_1);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern int ResumeThread(IntPtr hThread);
 
@@ -49,8 +53,16 @@ namespace Talos.PInvoke
         internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int nSize, out int lpNumberOfBytesWritten);
 
         [DllImport("kernel32.dll", EntryPoint = "WriteProcessMemory")]
+        internal static extern bool WriteProcessMemory_1(IntPtr hProcess, int addressOffset, byte[] lpBuffer, int nSize, byte flag);
+   
+        [DllImport("kernel32.dll", EntryPoint = "WriteProcessMemory")]
         internal static extern bool WriteProcessMemory_2(IntPtr hProcess, IntPtr lpBaseAddress, string lpBuffer, UIntPtr nSize, out IntPtr lpNumberOfBytesWritten);
 
+        internal static bool ReadMemoryFromProcess(Process process, int memoryAddress, byte[] buffer) =>
+        ReadProcessMemory_1(process.Handle, memoryAddress, buffer, buffer.Length, 0);
+
+        internal static bool WriteMemoryToProcess(Process process, int memoryAddress, byte[] data) =>
+        WriteProcessMemory_1(process.Handle, memoryAddress, data, data.Length, 0);
 
 
         #endregion

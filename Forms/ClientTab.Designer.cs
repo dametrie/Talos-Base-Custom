@@ -3874,6 +3874,7 @@ namespace Talos.Forms
             this.ghostHackCbox.TabIndex = 4;
             this.ghostHackCbox.Text = "See Ghosts";
             this.ghostHackCbox.UseVisualStyleBackColor = true;
+            this.ghostHackCbox.CheckedChanged += new System.EventHandler(this.ghostHackCbox_CheckedChanged);
             // 
             // ignoreCollisionCbox
             // 
@@ -3885,6 +3886,7 @@ namespace Talos.Forms
             this.ignoreCollisionCbox.TabIndex = 2;
             this.ignoreCollisionCbox.Text = "GM Mode";
             this.ignoreCollisionCbox.UseVisualStyleBackColor = true;
+            this.ignoreCollisionCbox.CheckedChanged += new System.EventHandler(this.ignoreCollisionCbox_CheckedChanged);
             // 
             // hideForegroundCbox
             // 
@@ -3897,6 +3899,7 @@ namespace Talos.Forms
             this.hideForegroundCbox.TabIndex = 5;
             this.hideForegroundCbox.Text = "No Foregrounds";
             this.hideForegroundCbox.UseVisualStyleBackColor = true;
+            this.hideForegroundCbox.CheckedChanged += new System.EventHandler(this.hideForegroundCbox_CheckedChanged);
             // 
             // mapZoomCbox
             // 
@@ -3908,6 +3911,7 @@ namespace Talos.Forms
             this.mapZoomCbox.TabIndex = 3;
             this.mapZoomCbox.Text = "Zoomable Map";
             this.mapZoomCbox.UseVisualStyleBackColor = true;
+            this.mapZoomCbox.CheckedChanged += new System.EventHandler(this.mapZoomCbox_CheckedChanged);
             // 
             // seeHiddenCbox
             // 
@@ -3921,6 +3925,7 @@ namespace Talos.Forms
             this.seeHiddenCbox.TabIndex = 1;
             this.seeHiddenCbox.Text = "See Hidden";
             this.seeHiddenCbox.UseVisualStyleBackColor = true;
+            this.seeHiddenCbox.CheckedChanged += new System.EventHandler(this.seeHiddenCbox_CheckedChanged);
             // 
             // noBlindCbox
             // 
@@ -3934,6 +3939,7 @@ namespace Talos.Forms
             this.noBlindCbox.TabIndex = 0;
             this.noBlindCbox.Text = "No Blind";
             this.noBlindCbox.UseVisualStyleBackColor = true;
+            this.noBlindCbox.CheckedChanged += new System.EventHandler(this.noBlindCbox_CheckedChanged);
             // 
             // mainTasksTab
             // 
@@ -6509,6 +6515,7 @@ namespace Talos.Forms
             this.PerformLayout();
 
         }
+
 
 
 
