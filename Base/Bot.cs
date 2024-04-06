@@ -92,58 +92,65 @@ namespace Talos.Base
         }
         private void Sounds()
         {
-            if (_server._disableSound)
+            while (!_shouldStop)  // Assuming _shouldStop is a volatile bool that is set to true when you want to stop all threads
             {
-                Thread.Sleep(250);
-                return;
-            }
-            if (Client.ClientTab.alertSkulledCbox.Checked && Client.IsSkulled)
-            {
-                this.soundPlayer.Stream = Resources.skull;
-                this.soundPlayer.PlaySync();
-            }
-            else if (Client.ClientTab.alertRangerCbox.Checked && this.IsRangerNearBy())
-            {
-                this.soundPlayer.Stream = Resources.ranger;
-                this.soundPlayer.PlaySync();
-            }
-            else if (Client.ClientTab.alertStrangerCbox.Checked && this.IsStrangerNearby())
-            {
-                this.soundPlayer.Stream = Resources.detection;
-                this.soundPlayer.PlaySync();
-            }
-            else if (Client.ClientTab.alertItemCapCbox.Checked && this._shouldAlertItemCap)
-            {
-                this.soundPlayer.Stream = Resources.itemCap;
-                this.soundPlayer.PlaySync();
-                this._shouldAlertItemCap = false;
-            }
-            else
-            {
-                if (Client.ClientTab.alertDuraCbox.Checked && this.itemDurabilityAlerts.Contains(true))
+                if (_server._disableSound)
                 {
-                    for (int i = 0; i < this.itemDurabilityAlerts.Length; i++)
-                    {
-                        if (this.itemDurabilityAlerts[i])
-                        {
-                            this.soundPlayer.Stream = Resources.durability;
-                            this.soundPlayer.PlaySync();
-                            this.itemDurabilityAlerts[i] = false; // Set the current alert as handled
-                            break; // Exit the loop after handling the first alert
-                        }
-                    }
-                    Thread.Sleep(2000);
+                    Thread.Sleep(250);
+                    return;
                 }
-                if (Client.ClientTab.alertEXPCbox.Checked && Client.Experience >= 4290000000U)
+                if (Client.ClientTab.alertSkulledCbox.Checked && Client.IsSkulled)
                 {
-                    this.soundPlayer.Stream = Resources.expmaxed;
+                    this.soundPlayer.Stream = Resources.skull;
                     this.soundPlayer.PlaySync();
                 }
+                else if (Client.ClientTab.alertRangerCbox.Checked && this.IsRangerNearBy())
+                {
+                    this.soundPlayer.Stream = Resources.ranger;
+                    this.soundPlayer.PlaySync();
+                }
+                else if (Client.ClientTab.alertStrangerCbox.Checked && this.IsStrangerNearby())
+                {
+                    this.soundPlayer.Stream = Resources.detection;
+                    this.soundPlayer.PlaySync();
+                }
+                else if (Client.ClientTab.alertItemCapCbox.Checked && this._shouldAlertItemCap)
+                {
+                    this.soundPlayer.Stream = Resources.itemCap;
+                    this.soundPlayer.PlaySync();
+                    this._shouldAlertItemCap = false;
+                }
+                else
+                {
+                    if (Client.ClientTab.alertDuraCbox.Checked && this.itemDurabilityAlerts.Contains(true))
+                    {
+                        for (int i = 0; i < this.itemDurabilityAlerts.Length; i++)
+                        {
+                            if (this.itemDurabilityAlerts[i])
+                            {
+                                this.soundPlayer.Stream = Resources.durability;
+                                this.soundPlayer.PlaySync();
+                                this.itemDurabilityAlerts[i] = false; // Set the current alert as handled
+                                break; // Exit the loop after handling the first alert
+                            }
+                        }
+                        Thread.Sleep(2000);
+                    }
+                    if (Client.ClientTab.alertEXPCbox.Checked && Client.Experience >= 4290000000U)
+                    {
+                        this.soundPlayer.Stream = Resources.expmaxed;
+                        this.soundPlayer.PlaySync();
+                    }
+                }
+
+                Thread.Sleep(2000);  // Delay before the next iteration to prevent high CPU usage
             }
+
+            
         }
         private void BotLoop()
         {
-            while (true)
+            while (!_shouldStop)
             {
                 try
                 {
