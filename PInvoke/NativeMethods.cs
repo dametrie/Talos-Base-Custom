@@ -73,7 +73,7 @@ namespace Talos.PInvoke
         internal static extern int SetWindowText(IntPtr hWnd, string lpString);
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        internal static extern bool PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        internal static extern bool PostMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);
 
         [DllImport("user32.dll")]
         internal static extern int MapVirtualKey(int uCode, int uMapType);
@@ -114,6 +114,9 @@ namespace Talos.PInvoke
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr FindWindow(IntPtr hWnd, string clientName);
+
         [DllImport("user32.dll")]
         internal static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, uint flags);
 
@@ -149,7 +152,6 @@ namespace Talos.PInvoke
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        #endregion
 
         internal static extern bool IsWindow(IntPtr hWnd);
 
@@ -163,6 +165,17 @@ namespace Talos.PInvoke
             flashwinfo._dwTimeout = dwTimeout;
             return flashwinfo;
         }
+
+        internal static void CloseWindowByWindowName(string clientName)
+        {
+            IntPtr intPtr = FindWindow(IntPtr.Zero, clientName);
+            if (!(intPtr == IntPtr.Zero))
+            {
+                SendMessage(intPtr, 16u, IntPtr.Zero, IntPtr.Zero);
+            }
+        }
+
+        #endregion
     }
 
 

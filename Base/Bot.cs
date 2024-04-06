@@ -2314,7 +2314,7 @@ namespace Talos.Base
                 {
                     foreach (Item item in Client.Inventory.ToList())
                     {
-                        if (Client.ClientTab.trashToDrop.Contains(item.Name, StringComparer.CurrentCultureIgnoreCase))
+                        if (Client.ClientTab._trashToDrop.Contains(item.Name, StringComparer.CurrentCultureIgnoreCase))
                         {
                             Client.Drop(item.Slot, Client._serverLocation, item.Quantity);
                         }

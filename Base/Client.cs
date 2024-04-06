@@ -405,8 +405,8 @@ namespace Talos.Base
         internal void SetPreviousClass(PreviousClass previousClass) => _previousClass |= previousClass;
         internal void SetDugon(Dugon color) => _dugon |= color;
         internal bool GetCheats(Cheats value) => _cheats.HasFlag(value);
-        internal void SetCheats(Cheats value) => _cheats |= value;
-        internal void SetCheats2(Cheats value) => _cheats &= (Cheats)(byte)(~(uint)value);
+        internal void EnableCheats(Cheats value) => _cheats |= value;
+        internal void DisableCheats(Cheats value) => _cheats &= (Cheats)(byte)(~(uint)value);
 
         internal void SetStatUpdateFlags(StatUpdateFlags flags) => Attributes(flags, Stats);
         internal bool HasItem(string itemName) => Inventory.HasItem(itemName);
@@ -3201,7 +3201,7 @@ namespace Talos.Base
         {
             try
             {
-                string string_0 = "";
+                string netStatData = "";
                 if (int.TryParse(_clientSocket.RemoteEndPoint.ToString().Replace("127.0.0.1:", ""), out int result))
                 {
                     Process process = new Process();
@@ -3212,17 +3212,17 @@ namespace Talos.Base
                     process.StartInfo.Arguments = "/c netstat -a -n -o";
                     process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
                     {
-                        string_0 += e.Data;
+                        netStatData += e.Data;
                     };
                     process.Start();
                     process.BeginOutputReadLine();
                     process.WaitForExit();
-                    if (int.TryParse(Regex.Match(string_0, "TCP\\s+127.0.0.1:" + result + "\\s+127.0.0.1:2610\\s+ESTABLISHED\\s+([0-9]+)").Groups[1].Value, out int result2))
+                    if (int.TryParse(Regex.Match(netStatData, "TCP\\s+127.0.0.1:" + result + "\\s+127.0.0.1:2610\\s+ESTABLISHED\\s+([0-9]+)").Groups[1].Value, out int procID))
                     {
-                        processId = result2;
+                        processId = procID;
                     }
                     hWnd = Process.GetProcessById(processId).MainWindowHandle;
-                    NativeMethods.SetWindowText(Process.GetProcessById(result2).MainWindowHandle, Name);
+                    NativeMethods.SetWindowText(Process.GetProcessById(procID).MainWindowHandle, Name);
                     process.Dispose();
                 }
             }

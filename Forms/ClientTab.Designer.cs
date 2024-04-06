@@ -6345,6 +6345,7 @@ namespace Talos.Forms
             this.Margin = new System.Windows.Forms.Padding(0);
             this.Name = "ClientTab";
             this.Size = new System.Drawing.Size(850, 568);
+            this.Load += new System.EventHandler(this.ClientTab_Load);
             this.clientTabControl.ResumeLayout(false);
             this.mainCoverTab.ResumeLayout(false);
             this.mainCoverTab.PerformLayout();

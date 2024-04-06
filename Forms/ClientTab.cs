@@ -63,7 +63,7 @@ namespace Talos.Forms
         internal List<string> _unmaxedSkills = new List<string>();
         internal List<string> _unmaxedSpells = new List<string>();
 
-        internal BindingList<string> trashToDrop = new BindingList<string>
+        internal BindingList<string> _trashToDrop = new BindingList<string>
 		{
 			"fior sal",
 			"fior creag",
@@ -113,7 +113,7 @@ namespace Talos.Forms
             creatureHashListBox.DataSource = client._creatureBindingList;
             strangerList.DataSource = client._strangerBindingList;
             friendList.DataSource = client._friendBindingList;
-            trashList.DataSource = trashToDrop;
+            trashList.DataSource = _trashToDrop;
 
             setoaArchive = DATArchive.FromFile(Settings.Default.DarkAgesPath.Replace("Darkages.exe", "setoa.dat"));
             spellImageArchive = EPFImage.FromArchive("spell001.epf", setoaArchive);
@@ -123,9 +123,19 @@ namespace Talos.Forms
             OnlyDisplaySpellsWeHave();
 
             AddClientToFriends();
-            
-            
+            SetupInitialClientHacks();
 
+
+        }
+
+        private void ClientTab_Load(object sender, EventArgs e)
+        {
+            if (InvokeRequired) { Invoke((Action)delegate { ClientTab_Load(sender, e); }); return; }
+            
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                _client.CheckNetStat();
+            });
         }
 
         private void AddClientToFriends()
@@ -1055,8 +1065,6 @@ namespace Talos.Forms
             }
             OnlyDisplaySpellsWeHave();
             SetClassSpecificSpells();
-            //LoadUnMaxedSkills();
-            //LoadUnMaxedSpells();  
         }
 
         private void addAislingBtn_Click(object sender, EventArgs e)
@@ -1242,20 +1250,6 @@ namespace Talos.Forms
 
             allyControl.Dispose();
         }
-
-        //internal void UpdateNearbyEnemyTable(ushort sprite)
-        //{
-        //    if (_client.Bot.EnemyPage != null || !nearbyEnemyTable.Controls.ContainsKey(sprite.ToString()))
-        //    {
-        //        return;
-        //    }
-
-        //    Control enemyControl = nearbyEnemyTable.Controls[sprite.ToString()];
-
-        //    WaitForCondition(enemyControl, control => ((NearbyEnemy)control).bool_0);
-
-        //    enemyControl.Dispose();
-        //}
 
         private void RefreshNearbyAllyTable()
         {
@@ -1584,23 +1578,6 @@ namespace Talos.Forms
             _client.Bot.EnemyPage = enemyPage;
         }
 
-/*        internal void ClearNearbyEnemies()
-        {
-            if (_client.Bot.EnemyPage != null)
-            {
-                return;
-            }
-            DateTime utcNow = DateTime.UtcNow;
-            while (nearbyEnemyTable.Controls.Count > 0 && !(DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds >= 50.0))
-            {
-                if ((nearbyEnemyTable.Controls[0] as NearbyEnemy)._isLoaded)
-                {
-                    nearbyEnemyTable.Controls[0].Dispose();
-                }
-            }
-            nearbyEnemyTable.Controls.Clear();
-        }
-*/
         private void addMonsterBtn_Click(object sender, EventArgs e)
         {
             if ((ushort.TryParse(addMonsterText.Text, out ushort result)) || validateMonsterInput(result))
@@ -2108,11 +2085,11 @@ namespace Talos.Forms
         {
             if (noBlindCbox.Checked)
             {
-                _client.SetCheats(Cheats.NoBlind);
+                _client.EnableCheats(Cheats.NoBlind);
             }
             else
             {
-                _client.SetCheats(Cheats.NoBlind);
+                _client.EnableCheats(Cheats.NoBlind);
             }
             _client.SetStatUpdateFlags(StatUpdateFlags.Secondary);
         }
@@ -2122,11 +2099,11 @@ namespace Talos.Forms
 
             if (seeHiddenCbox.Checked)
             {
-                _client.SetCheats(Cheats.SeeHidden);
+                _client.EnableCheats(Cheats.SeeHidden);
             }
             else
             {
-                _client.SetCheats2(Cheats.SeeHidden);
+                _client.DisableCheats(Cheats.SeeHidden);
             }
             foreach (Player player in _client.GetNearbyPlayerList())
             {
@@ -2139,11 +2116,11 @@ namespace Talos.Forms
         {
             if (mapZoomCbox.Checked)
             {
-                _client.SetCheats(Cheats.ZoomableMap);
+                _client.EnableCheats(Cheats.ZoomableMap);
             }
             else
             {
-                _client.SetCheats2(Cheats.ZoomableMap);
+                _client.DisableCheats(Cheats.ZoomableMap);
             }
             _client.EnableMapZoom();
         }
@@ -2167,11 +2144,11 @@ namespace Talos.Forms
         {
             if (ignoreCollisionCbox.Checked)
             {
-                _client.SetCheats(Cheats.GmMode);
+                _client.EnableCheats(Cheats.GmMode);
             }
             else
             {
-                _client.SetCheats2(Cheats.GmMode);
+                _client.DisableCheats(Cheats.GmMode);
             }
             _client.SetStatUpdateFlags(StatUpdateFlags.None);
         }
@@ -2180,7 +2157,7 @@ namespace Talos.Forms
         {
             if (ghostHackCbox.Checked)
             {
-                _client.SetCheats(Cheats.SeeGhosts);
+                _client.EnableCheats(Cheats.SeeGhosts);
                 foreach (Player value in _client.NearbyGhosts.Values)
                 {
                     _client.SeeGhosts(value);
@@ -2188,14 +2165,24 @@ namespace Talos.Forms
             }
             else
             {
-                _client.SetCheats2(Cheats.SeeGhosts);
+                _client.DisableCheats(Cheats.SeeGhosts);
                 foreach (Player value2 in _client.NearbyGhosts.Values)
                 {
                     _client.RemoveObject(value2.ID);
                 }
             }
         }
+        private void SetupInitialClientHacks()
+        {
+            _client.EnableCheats(noBlindCbox.Checked ? Cheats.NoBlind : Cheats.None);
+            _client.EnableCheats(seeHiddenCbox.Checked ? Cheats.SeeHidden : Cheats.None);
+            _client.EnableCheats(ignoreCollisionCbox.Checked ? Cheats.GmMode : Cheats.None);
+            _client.EnableCheats(ghostHackCbox.Checked ? Cheats.SeeGhosts : Cheats.None);
 
+            // Update stat flags
+            _client.SetStatUpdateFlags(StatUpdateFlags.Secondary);
+
+        }
         internal void UpdateInventoryAndWaypoints()
         {
             //Adam
