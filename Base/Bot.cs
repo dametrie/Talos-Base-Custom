@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Threading;
 using System.Threading.Tasks;
 using Talos.Definitions;
@@ -33,6 +34,7 @@ namespace Talos.Base
         internal bool _shouldBotStop = false;
         internal bool _shouldAlertItemCap;
         internal bool _recentlyAoSithed;
+        internal bool[] itemDurabilityAlerts = new bool[5];
 
         internal bool bool_11;
         internal bool bool_12;
@@ -72,6 +74,7 @@ namespace Talos.Base
         private Location _lastBubbleLocation;
         private string _bubbleType;
 
+        private SoundPlayer soundPlayer = new SoundPlayer();
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -85,8 +88,59 @@ namespace Talos.Base
             _client = client;
             _server = server;
             AddTask(new TaskDelegate(BotLoop));
+            AddTask(new TaskDelegate(Sounds));
         }
-
+        private void Sounds()
+        {
+            if (_server._disableSound)
+            {
+                Thread.Sleep(250);
+                return;
+            }
+            if (Client.ClientTab.alertSkulledCbox.Checked && Client.IsSkulled)
+            {
+                this.soundPlayer.Stream = Resources.skull;
+                this.soundPlayer.PlaySync();
+            }
+            else if (Client.ClientTab.alertRangerCbox.Checked && this.IsRangerNearBy())
+            {
+                this.soundPlayer.Stream = Resources.ranger;
+                this.soundPlayer.PlaySync();
+            }
+            else if (Client.ClientTab.alertStrangerCbox.Checked && this.IsStrangerNearby())
+            {
+                this.soundPlayer.Stream = Resources.detection;
+                this.soundPlayer.PlaySync();
+            }
+            else if (Client.ClientTab.alertItemCapCbox.Checked && this._shouldAlertItemCap)
+            {
+                this.soundPlayer.Stream = Resources.itemCap;
+                this.soundPlayer.PlaySync();
+                this._shouldAlertItemCap = false;
+            }
+            else
+            {
+                if (Client.ClientTab.alertDuraCbox.Checked && this.itemDurabilityAlerts.Contains(true))
+                {
+                    for (int i = 0; i < this.itemDurabilityAlerts.Length; i++)
+                    {
+                        if (this.itemDurabilityAlerts[i])
+                        {
+                            this.soundPlayer.Stream = Resources.durability;
+                            this.soundPlayer.PlaySync();
+                            this.itemDurabilityAlerts[i] = false; // Set the current alert as handled
+                            break; // Exit the loop after handling the first alert
+                        }
+                    }
+                    Thread.Sleep(2000);
+                }
+                if (Client.ClientTab.alertEXPCbox.Checked && Client.Experience >= 4290000000U)
+                {
+                    this.soundPlayer.Stream = Resources.expmaxed;
+                    this.soundPlayer.PlaySync();
+                }
+            }
+        }
         private void BotLoop()
         {
             while (true)

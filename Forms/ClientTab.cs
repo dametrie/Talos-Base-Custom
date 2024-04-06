@@ -121,11 +121,8 @@ namespace Talos.Forms
             palette256 = Palette256.FromArchive("gui06.pal", setoaArchive);
 
             OnlyDisplaySpellsWeHave();
-
             AddClientToFriends();
             SetupInitialClientHacks();
-
-
         }
 
         private void ClientTab_Load(object sender, EventArgs e)

@@ -257,5 +257,8 @@
   <ItemGroup>
     <None Include="Resources\MapsCacheEditor.exe" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\itemCap.wav" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

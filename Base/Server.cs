@@ -68,7 +68,7 @@ namespace Talos
         private bool _isMapping;
         internal bool _stopWalking;
         internal bool _stopCasting;
-        private bool disableSound = false;
+        internal bool _disableSound = false;
         private bool _shouldCloseProfile = false;
         private bool _canCloseProfile = false;
         public static object Lock { get; internal set; } = new object();
@@ -1112,7 +1112,7 @@ namespace Talos
                         }
                         client.FlashWindowEx(Process.GetProcessById(client.processId).MainWindowHandle);
                     }
-                    if (Settings.Default.whisperSound && !this.disableSound)
+                    if (Settings.Default.whisperSound && !this._disableSound)
                     {
                         new SoundPlayer(Resources.whispernotif).PlaySync();
                     }
