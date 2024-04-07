@@ -175,6 +175,7 @@ namespace Talos.Enumerations
         Armachd = 94,
         AegisSphere = 94,
         BeagSuain = 97,
+        DragonsFire = 98,
         WolfFangFist = 101,
         PreventAffliction = 113,
         MantidScent = 113,
@@ -199,7 +200,7 @@ namespace Talos.Enumerations
         //but would be nice to know the effect bar/spell icon #
         Halt = 251,
         Coma = 252,
-        DragonsFire = 253,
+
         PotentMantidScent = 254,
         SpellSkillBonus1 = 255
     }

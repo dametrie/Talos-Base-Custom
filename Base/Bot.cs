@@ -230,7 +230,6 @@ namespace Talos.Base
             }
 
         }
-
         internal bool IsRangerNearBy()
         {
             if (!Settings.Default.paranoiaMode)
@@ -239,19 +238,16 @@ namespace Talos.Base
             }
             return IsStrangerNearby();
         }
-
         private bool RangerListContains(Player player)
         {
             return CONSTANTS.KNOWN_RANGERS.Contains(player.Name, StringComparer.OrdinalIgnoreCase);
         }
-
         private bool CheckForStopConditions()
         {
             return (Client._inventoryFull && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
                    (Client.Bot.bool_32 && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
                    Client.bool_44 || Client.ClientTab == null || Client.Dialog != null || bool_12;
         }
-
         private void ProcessPlayers()
         {
             _nearbyAllies = Client.GetNearbyAllies();
@@ -260,7 +256,6 @@ namespace Talos.Base
             _playersExistingOver250ms = nearbyPlayers?.Where(Delegates.HasPlayerExistedForOver250ms).ToList() ?? new List<Player>();
             _playersNeedingRed.Clear();
         }
-
         private void HandleSkullStatus()
         {
             currentAction.Text = Client._action + "Nothing, you're dead";
@@ -292,7 +287,6 @@ namespace Talos.Base
                 Client.DisconnectWait(false);
             }
         }
-
         private void LogIfSkulledAndSurrounded()
         {
             bool isOptionsSkullSurrboxChecked = Client.ClientTab.optionsSkullSurrbox.Checked;
@@ -312,14 +306,12 @@ namespace Talos.Base
                 Client.DisconnectWait(false);
             }
         }
-
         private bool ShouldRequestRefresh()
         {
             return DateTime.UtcNow.Subtract(Client.LastStep).TotalSeconds > 20.0 &&
                    DateTime.UtcNow.Subtract(_lastKill).TotalSeconds > 20.0 &&
                    DateTime.UtcNow.Subtract(_lastRefresh).TotalSeconds > 30.0;
         }
-
         private void CheckAndHandleSpells()
         {
             if (Client.HasSpell("Lyliac Vineyard") && !Client.Spellbook["Lyliac Vineyard"].CanUse)
@@ -327,12 +319,10 @@ namespace Talos.Base
                 _lastVineCast = DateTime.UtcNow;
             }
         }
-
         private bool AutoRedConditionsMet()
         {
            return Client.ClientTab != null && _playersExistingOver250ms != null && Client.ClientTab.autoRedCbox.Checked;
         }
-
         private List<Player> GetSkulledPlayers()
         {
             if (_playersExistingOver250ms.Any(Delegates.PlayerIsSkulled))

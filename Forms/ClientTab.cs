@@ -533,14 +533,14 @@ namespace Talos.Forms
                 }
             }
             _ = chatPanel.Text.Length;
-            bool flag = chatPanel.IsScrollBarAtBottom();
+            bool atBottom = chatPanel.IsScrollBarAtBottom();
             SetChatPanelTextColor(color);
             if (!string.IsNullOrWhiteSpace(message))
             {
                 chatPanel.AppendText(message);
             }
             SetChatPanelTextColor(chatPanel.ForeColor);
-            if (flag)
+            if (atBottom)
             {
                 chatPanel.ScrollToCaret();
             }

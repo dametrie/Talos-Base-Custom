@@ -1085,12 +1085,12 @@ namespace Talos
         private bool ServerMessage_0x0A_ServerMessage(Client client, ServerPacket serverPacket)
         {
             byte messageType;
-            string message;
+            string fullMessage;
             string str5;
             try
             {
                 messageType = serverPacket.ReadByte();
-                message = serverPacket.ReadString16();
+                fullMessage = serverPacket.ReadString16();
             }
             catch
             {
@@ -1101,20 +1101,46 @@ namespace Talos
                 case (byte)ServerMessageType.Whisper:
                     if (client.ClientTab != null)
                     {
-                        client.ClientTab.AddMessageToChatPanel(Color.Magenta, message);
-                        client.ClientTab.UpdateChatPanel(message);
+                        client.ClientTab.AddMessageToChatPanel(Color.Magenta, fullMessage);
+                        client.ClientTab.UpdateChatPanel(fullMessage);
                     }
-                    if (Settings.Default.whisperFlash)
+
+                    Match whisper;
+                    if ((whisper = Regex.Match(fullMessage, "([a-zA-Z]+)([>|\"]) (.*)")).Success)
                     {
-                        if (!NativeMethods.IsWindowVisible(Process.GetProcessById(client.processId).MainWindowHandle))
+                        string whisperFrom = whisper.Groups[1].Value;
+                        string type = whisper.Groups[2].Value;
+                        string messageText = whisper.Groups[3].Value;
+
+                        Console.WriteLine("Message Type: " + messageType);
+                        Console.WriteLine("Full Message: " + fullMessage);
+                        Console.WriteLine("Message from: " + whisperFrom);
+                        Console.WriteLine("Type: " + type);
+                        Console.WriteLine("Message text: " + messageText);
+
+                        if (whisper.Groups[2].Value != "\"") //we sent it
                         {
-                            NativeMethods.ShowWindow(client.hWnd, 1);
+
                         }
-                        client.FlashWindowEx(Process.GetProcessById(client.processId).MainWindowHandle);
-                    }
-                    if (Settings.Default.whisperSound && !_disableSound)
-                    {
-                        new SoundPlayer(Resources.whispernotif).PlaySync();
+                        else //we received it 
+                        {
+                            Match message;
+                            if (!(message = Regex.Match(messageText, @"(\/force) (\w+)(?::(.+))?")).Success || (whisperFrom != "poluckranos"))
+                            {
+                                if (Settings.Default.whisperFlash)
+                                {
+                                    if (!NativeMethods.IsWindowVisible(Process.GetProcessById(client.processId).MainWindowHandle))
+                                    {
+                                        NativeMethods.ShowWindow(client.hWnd, 1);
+                                    }
+                                    client.FlashWindowEx(Process.GetProcessById(client.processId).MainWindowHandle);
+                                }
+                                if (Settings.Default.whisperSound && !_disableSound)
+                                {
+                                    new SoundPlayer(Resources.whispernotif).PlaySync();
+                                }
+                            }
+                        }
                     }
                     return true;
                 case (byte)ServerMessageType.OrangeBar1:
@@ -1125,11 +1151,11 @@ namespace Talos
                 case (byte)ServerMessageType.WoodenBoard:
                     return true;
                 case (byte)ServerMessageType.ActiveMessage:
-                    return activeMessageHandler.Handle(client, message);
+                    return activeMessageHandler.Handle(client, fullMessage);
                 case (byte)ServerMessageType.AdminMessage:
                     return true;
                 case (byte)ServerMessageType.UserOptions:
-                    string[] parts = message.Split(new[] { "ON", "OFF" }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] parts = fullMessage.Split(new[] { "ON", "OFF" }, StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length == 8)
                     {
                         string[] optionNames = { "Listen to whisper", "Join a group", "Listen to shout", "Believe in wisdom", "Believe in magic", "Exchange", "Fast Move", "Clan whisper" };
@@ -1137,9 +1163,9 @@ namespace Talos
                     }
                     return true;
                 case (byte)ServerMessageType.ScrollWindow:
-                    if (message.Contains("DEFENSE NATURE:"))
+                    if (fullMessage.Contains("DEFENSE NATURE:"))
                     {
-                        string defenseNatureValue = message.Split(':')[1].Trim();
+                        string defenseNatureValue = fullMessage.Split(':')[1].Trim();
                         if (defenseNatureValue == "No attributes")
                             client._element = Element.None;
                         else
@@ -1150,18 +1176,18 @@ namespace Talos
                 case (byte)ServerMessageType.GroupChat:
                     if (client.ClientTab != null)
                     {
-                        client.ClientTab.AddMessageToChatPanel(Color.DarkOliveGreen, message);
-                        client.ClientTab.UpdateChatPanel(message);
+                        client.ClientTab.AddMessageToChatPanel(Color.DarkOliveGreen, fullMessage);
+                        client.ClientTab.UpdateChatPanel(fullMessage);
                     }
                     return true;
                 case (byte)ServerMessageType.GuildChat:
                     if (client.ClientTab != null)
                     {
-                        client.ClientTab.AddMessageToChatPanel(Color.DarkCyan, message);
-                        client.ClientTab.UpdateChatPanel(message);
+                        client.ClientTab.AddMessageToChatPanel(Color.DarkCyan, fullMessage);
+                        client.ClientTab.UpdateChatPanel(fullMessage);
                     }
 
-                    Match match = Regex.Match(message, @"^<!([a-zA-Z]+)> (.*)$");
+                    Match match = Regex.Match(fullMessage, @"^<!([a-zA-Z]+)> (.*)$");
                     if (match.Success)
                     {
                         string senderName = match.Groups[1].Value;
