@@ -1313,7 +1313,7 @@ namespace Talos.Forms
                 _client.BotBase.Start();
                 if (!_client.ClientTab.safeScreenCbox.Checked)
                 {
-                    _client.ServerMessage(1, "Bot Started");
+                    _client.ServerMessage((byte)ServerMessageType.OrangeBar1, "Bot Started");
                 }
             }
             else if (startStrip.Text == "Stop")
@@ -1322,7 +1322,7 @@ namespace Talos.Forms
                 _client.BotBase.Stop();
                 if (!_client.ClientTab.safeScreenCbox.Checked)
                 {
-                    _client.ServerMessage(1, "Bot Stopped");
+                    _client.ServerMessage((byte)ServerMessageType.OrangeBar1, "Bot Stopped");
                 }
                 _client._isWalking = false;
                 _client._isCasting = false;
@@ -1335,7 +1335,7 @@ namespace Talos.Forms
 
         private void lastSeenBtn_Click(object sender, EventArgs e)
         {
-            _client.ServerMessage(0, "- Last 5 strangers sighted -");
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "- Last 5 strangers sighted -");
 
             // Take only the top 5 most recently seen strangers
             var lastSeenStrangers = _client.DictLastSeen
@@ -1345,7 +1345,7 @@ namespace Talos.Forms
             foreach (var item in lastSeenStrangers)
             {
                 string message = $"{item.Key}: {item.Value.ToLocalTime():t}";
-                _client.ServerMessage(0, message);
+                _client.ServerMessage((byte)ServerMessageType.Whisper, message);
             }
         }
 
@@ -1926,7 +1926,7 @@ namespace Talos.Forms
         {
             if (!_client.UseItem(itemText))
             {
-                _client.ServerMessage(0, $"You do not own any {itemText}.");
+                _client.ServerMessage((byte)ServerMessageType.Whisper, $"You do not own any {itemText}.");
                 autoDoubleCbox.Checked = false;
             }
         }
@@ -1965,7 +1965,7 @@ namespace Talos.Forms
             
             if (!_client.UseItem("Experience Gem"))
             {
-                _client.ServerMessage(1, "You do not have any experience gems.");
+                _client.ServerMessage((byte)ServerMessageType.OrangeBar1, "You do not have any experience gems.");
                 return;
             }
             while (_client.Dialog == null)

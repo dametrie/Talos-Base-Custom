@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -34,6 +35,20 @@ namespace Talos.Objects
             }
 
             SpellArray[spell.Slot] = spell;
+        }
+
+        internal void UpdateSpellCooldown(string spellName, DateTime cooldown, double ticks)
+        {
+            if (SpellbookDictionary.TryGetValue(spellName, out var spell))
+            {
+                spell.Cooldown = cooldown;
+                spell.Ticks = ticks;
+                Console.WriteLine($"[UpdateSpellCooldown] Spell: {spell.Name}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}");
+            }
+            else
+            {
+                Console.WriteLine($"[UpdateSpellCooldown] Spell not found: {spellName}");
+            }
         }
 
         internal void RemoveSpell(byte slot)

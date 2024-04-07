@@ -51,6 +51,20 @@ namespace Talos.Objects
             SkillArray[skill.Slot] = skill;
         }
 
+        internal void UpdateSkillCooldown(string skillName, DateTime cooldown, double ticks)
+        {
+            if (SkillbookDictionary.TryGetValue(skillName, out var skill))
+            {
+                skill.Cooldown = cooldown;
+                skill.Ticks = ticks;
+                Console.WriteLine($"[UpdateSpellCooldown] Spell: {skill.Name}, Cooldown: {skill.Cooldown}, Ticks: {skill.Ticks}");
+            }
+            else
+            {
+                Console.WriteLine($"[UpdateSpellCooldown] Spell not found: {skillName}");
+            }
+        }
+
         internal void RemoveSkill(byte slot)
         {
             if (slot >= 0 && slot < MaxSkills && SkillArray[slot] != null)

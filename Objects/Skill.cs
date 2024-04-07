@@ -16,42 +16,62 @@ namespace Talos.Objects
         internal double Ticks { get; set; }
         internal DateTime Cooldown { get; set; }
         internal DateTime LastUsed { get; set; }
+        /*        internal bool CanUse
+                {
+                    get
+                    {
+                        Console.WriteLine($"[DEBUG] Checking CanUse for spell. Cooldown: {Cooldown}, Ticks: {Ticks}");
+
+                        if (!(Cooldown == DateTime.MinValue) && Ticks != 0.0)
+                        {
+                            double num = Math.Max(1.0, Ticks);
+                            TimeSpan nowFromLastUsed = DateTime.UtcNow.Subtract(LastUsed);
+                            TimeSpan nowFromCooldown = DateTime.UtcNow.Subtract(Cooldown);
+
+                            Console.WriteLine($"[DEBUG] num: {num}");
+                            Console.WriteLine($"[DEBUG] Now from Last Used: {nowFromLastUsed.TotalSeconds} seconds");
+                            Console.WriteLine($"[DEBUG] Now from Cooldown: {nowFromCooldown.TotalSeconds} seconds");
+
+                            if (!(nowFromLastUsed.TotalSeconds > 0.5))
+                            {
+                                Console.WriteLine("[DEBUG] Spell cannot be used yet. Last used less than 0.5 seconds ago.");
+                                return false;
+                            }
+                            if (nowFromCooldown.TotalSeconds > num)
+                            {
+                                Console.WriteLine("[DEBUG] Spell can be used. Cooldown period has passed.");
+                                return true;
+                            }
+                            else
+                            {
+                                Console.WriteLine("[DEBUG] Spell cannot be used yet. Still within cooldown period.");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("[DEBUG] Spell can be used. No cooldown or ticks.");
+                            return true;
+                        }
+                    }
+                }*/
+
         internal bool CanUse
         {
             get
             {
-                Console.WriteLine($"[DEBUG] Checking CanUse for spell. Cooldown: {Cooldown}, Ticks: {Ticks}");
+                Console.WriteLine($"[DEBUG] Checking CanUse for skill {Name}. Cooldown until: {Cooldown.AddSeconds(Ticks)}, Current Time: {DateTime.UtcNow}");
 
-                if (!(Cooldown == DateTime.MinValue) && Ticks != 0.0)
+                // Check if the cooldown has expired
+                if (DateTime.UtcNow >= Cooldown.AddSeconds(Ticks))
                 {
-                    double num = Math.Max(1.0, Ticks);
-                    TimeSpan nowFromLastUsed = DateTime.UtcNow.Subtract(LastUsed);
-                    TimeSpan nowFromCooldown = DateTime.UtcNow.Subtract(Cooldown);
-
-                    Console.WriteLine($"[DEBUG] num: {num}");
-                    Console.WriteLine($"[DEBUG] Now from Last Used: {nowFromLastUsed.TotalSeconds} seconds");
-                    Console.WriteLine($"[DEBUG] Now from Cooldown: {nowFromCooldown.TotalSeconds} seconds");
-
-                    if (!(nowFromLastUsed.TotalSeconds > 0.5))
-                    {
-                        Console.WriteLine("[DEBUG] Spell cannot be used yet. Last used less than 0.5 seconds ago.");
-                        return false;
-                    }
-                    if (nowFromCooldown.TotalSeconds > num)
-                    {
-                        Console.WriteLine("[DEBUG] Spell can be used. Cooldown period has passed.");
-                        return true;
-                    }
-                    else
-                    {
-                        Console.WriteLine("[DEBUG] Spell cannot be used yet. Still within cooldown period.");
-                        return false;
-                    }
+                    Console.WriteLine("[DEBUG] skill can be used. Cooldown period has passed.");
+                    return true;
                 }
                 else
                 {
-                    Console.WriteLine("[DEBUG] Spell can be used. No cooldown or ticks.");
-                    return true;
+                    Console.WriteLine("[DEBUG] skill cannot be used yet. Still within cooldown period.");
+                    return false;
                 }
             }
         }

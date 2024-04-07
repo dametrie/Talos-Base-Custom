@@ -1798,7 +1798,7 @@ namespace Talos.Base
             Spell spell = Spellbook[spellName];
             byte castLines = spell.CastLines;
 
-            Console.WriteLine($"[UseSpell] Attempting to cast {spellName}, Lastused: {spell.LastUsed}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}");
+            Console.WriteLine($"[UseSpell] Attempting to cast {spell.Name}, LastUsed: {spell.LastUsed}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}, Hash: {spell.GetHashCode()}");
 
             lock (Lock)
             {

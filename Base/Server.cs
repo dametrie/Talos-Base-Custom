@@ -1052,11 +1052,11 @@ namespace Talos
                     }
                     if (stats.Mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client._safeScreen))
                     {
-                        client.ServerMessage(0, "{=qYou have received a parcel.");
+                        client.ServerMessage((byte)ServerMessageType.Whisper, "{=qYou have received a parcel.");
                     }
                     if ((stats.Mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client._safeScreen)
                     {
-                        client.ServerMessage(0, "{=qYou've got mail.");
+                        client.ServerMessage((byte)ServerMessageType.Whisper, "{=qYou've got mail.");
                     }
                 }
                 catch
@@ -1086,7 +1086,6 @@ namespace Talos
         {
             byte messageType;
             string fullMessage;
-            string str5;
             try
             {
                 messageType = serverPacket.ReadByte();
@@ -1208,8 +1207,6 @@ namespace Talos
                     return (messageType == (byte)ServerMessageType.TopRight);
             }
         }
-
-
 
         private bool ServerMessage_0x0B_ConfirmClientWalk(Client client, ServerPacket serverPacket)
         {
@@ -2989,10 +2986,7 @@ namespace Talos
                 Spell spell = client.Spellbook[slot];
                 if (spell != null)
                 {
-                   
-                    spell.Cooldown = DateTime.UtcNow;
-                    spell.Ticks = ticks;
-                    Console.WriteLine($"[ServerMessage_0x3F_Cooldown] Spell: {spell.Name}, Cooldown: {DateTime.UtcNow}, Ticks: {ticks}");
+                    client.Spellbook.UpdateSpellCooldown(spell.Name, DateTime.UtcNow, ticks);
                 }
             }
             else
@@ -3000,8 +2994,7 @@ namespace Talos
                 Skill skill = client.Skillbook[slot];
                 if (skill != null)
                 {
-                    skill.Cooldown = DateTime.UtcNow;
-                    skill.Ticks = ticks;
+                    client.Skillbook.UpdateSkillCooldown(skill.Name, DateTime.UtcNow, ticks);
                 }
             }
             return true;
@@ -3403,7 +3396,7 @@ namespace Talos
             // Check if the player exists in WorldObjects and is a Player
             if (client.WorldObjects.TryGetValue(id, out var worldObject) && worldObject is Player existingPlayer)
             {
-                Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player found in WorldObjects: {existingPlayer.Name}, Hash: {existingPlayer.GetHashCode()}");
+                //Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player found in WorldObjects: {existingPlayer.Name}, Hash: {existingPlayer.GetHashCode()}");
                 player = existingPlayer;
             }
 
@@ -3412,7 +3405,7 @@ namespace Talos
             if (player == null)
             {
                 player = new Player(id, name, location, direction);
-                Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player not found in WorldObjects, creating new player: {player.Name}, Hash: {player.GetHashCode()}");
+                //Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player not found in WorldObjects, creating new player: {player.Name}, Hash: {player.GetHashCode()}");
             }
             else
             {

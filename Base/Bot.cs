@@ -264,7 +264,7 @@ namespace Talos.Base
             LogIfSkulledAndSurrounded();
             if (!Client._safeScreen)
             {
-                Client.ServerMessage(18, "Skulled for: " + DateTime.UtcNow.Subtract(_skullTime).Seconds.ToString() + " seconds.");
+                Client.ServerMessage((byte)ServerMessageType.TopRight, "Skulled for: " + DateTime.UtcNow.Subtract(_skullTime).Seconds.ToString() + " seconds.");
             }
         }
         private void LogIfSkulled()
@@ -715,7 +715,7 @@ namespace Talos.Base
             if (!Client.UseItem("Mantid Scent") && !Client.UseItem("Potent Mantid Scent"))
             {
                 Client.ClientTab.mantidScentCbox.Checked = false;
-                Client.ServerMessage(0, "You do not own Mantid Scent");
+                Client.ServerMessage((byte)ServerMessageType.Whisper, "You do not own Mantid Scent");
                 return false;
             }
             while (Client.Dialog == null)

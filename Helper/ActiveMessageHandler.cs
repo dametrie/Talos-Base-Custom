@@ -482,7 +482,7 @@ namespace Talos.Helper
         private static void HandleDurabilityMessage(Client client, string itemName, int durabilityPercent)
         {
             string durabilityMessage = $"Your {itemName} durability is at {durabilityPercent}%.";
-            client.ServerMessage(0, durabilityMessage);
+            client.ServerMessage((byte)ServerMessageType.Whisper, durabilityMessage);
             client.ClientTab.AddMessageToChatPanel(System.Drawing.Color.Crimson, durabilityMessage);
 
             if (client.ClientTab.alertDuraCbox.Checked && durabilityPercent == 30)
@@ -920,7 +920,7 @@ namespace Talos.Helper
             messageToSend += $"{span.Seconds} second{(span.Seconds == 1 ? "" : "s")}.";
 
             if (!client.ClientTab.safeScreenCbox.Checked)
-                client.ServerMessage(3, messageToSend);
+                client.ServerMessage((byte)ServerMessageType.ActiveMessage, messageToSend);
         }
 
         private void HandleLastKillMessage(Client client, string message)
