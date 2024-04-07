@@ -486,7 +486,7 @@ namespace Talos.Base
         {
             FasSpiorad();
             Hide();
-            BubbleBlock(); //Adam fix this, it is trying to spam buble block/shield
+            BubbleBlock();
             Heal();
             DispellAllySuain();
             DispellAllyCurse();
@@ -1340,8 +1340,6 @@ namespace Talos.Base
         }
         private bool CastBubbleBlock()
         {
-            //ADAM FIX THIS IT SPAMS BUBBLE SHIELD
-
             // Check if the player has moved since the last bubble was cast.
             bool hasMoved = !Location.Equals(_lastBubbleLocation, Client._serverLocation);
 
@@ -1574,22 +1572,19 @@ namespace Talos.Base
             }
             else
             {
-                List<Creature> list7 = new List<Creature>();
+                List<Creature> toAttack = new List<Creature>();
                 foreach (Enemy enemy in ReturnEnemyList())
                 {
-                    list7.Clear();
-                    foreach (Creature class8 in Client.GetCreaturesInRange(11, new ushort[]
+                    toAttack.Clear();
+                    foreach (Creature creature in Client.GetCreaturesInRange(11, new ushort[] {enemy.SpriteID}))
                     {
-                    enemy.SpriteID
-                    }))
-                    {
-                        if (class8.SpriteID.ToString() == enemy.SpriteID.ToString())
+                        if (creature.SpriteID.ToString() == enemy.SpriteID.ToString())
                         {
-                            list7.Add(class8);
+                            toAttack.Add(creature);
                         }
                     }
-                    list7.OrderBy(new Func<Creature, Creature>(Delegates.IsCreature));
-                    if (CastAttackSpell(enemy.EnemyPage, list7))
+                    toAttack.OrderBy(new Func<Creature, Creature>(Delegates.IsCreature));
+                    if (CastAttackSpell(enemy.EnemyPage, toAttack))
                     {
                         return true;
                     }
@@ -1705,8 +1700,7 @@ namespace Talos.Base
                                 return Client.TryUseAnySpell(new[] { "ard pian na dion", "mor pian na dion", "pian na dion" }, target, _autoStaffSwitch, false);
 
                             case "Frost Arrow":
-                                //return TryCastAnyRank("Frost Arrow", target, _autoStaffSwitch, false);
-                                return Client.UseSpell("Frost Arrow 4", target, _autoStaffSwitch, false);//Adam fix. Not casting frost arrow
+                                return TryCastAnyRank("Frost Arrow", target, _autoStaffSwitch, false);
 
                             default:
                                 return Client.UseSpell(spellName, target, _autoStaffSwitch, false) || TryCastAnyRank(spellName, target, _autoStaffSwitch, false);
@@ -2219,7 +2213,6 @@ namespace Talos.Base
                 creatureList.AddRange(greenBorosInRange);
             }
             Creature targetCreature = creatureList.FirstOrDefault<Creature>();
-            Console.WriteLine($"[ExecutePramhStrategy] Attempting to cast 'pramh' on creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, IsAsleep: {targetCreature.IsAsleep}");
             if (targetCreature != null && creatureList.Any() && enemyPage.spellsControlCbox.Checked && !targetCreature.IsAsleep)
             {
                 Console.WriteLine($"[ExecutePramhStrategy] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastPramhd: {DateTime.UtcNow}");

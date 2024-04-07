@@ -32,6 +32,7 @@ namespace Talos.Objects
         internal double AiteDuration { get; set; }
         internal double DionDuration { get; set; }
         internal double PramhDuration { get; set; } 
+        internal double SuainDuration { get; set; }
         internal double FrostArrowDuration { get; set; }
         internal double CursedTuneDuration { get; set; }
         internal double RegenDuration { get; set; }
@@ -61,21 +62,13 @@ namespace Talos.Objects
         internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;
         internal bool IsAited => DateTime.UtcNow.Subtract(LastAited).TotalSeconds < AiteDuration;
         internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
+        internal bool IsSuained => DateTime.UtcNow.Subtract(LastSuained).TotalSeconds < SuainDuration;
         internal bool IsFrozen => DateTime.UtcNow.Subtract(LastFrostArrow).TotalSeconds < FrostArrowDuration;
         internal bool HasCursedTunes => DateTime.UtcNow.Subtract(LastCursedTune).TotalSeconds < CursedTuneDuration;
         internal bool HasRegen => DateTime.UtcNow.Subtract(LastRegen).TotalSeconds < RegenDuration;
         internal bool HasIncreasedRegen => DateTime.UtcNow.Subtract(LastIncreasedRegen).TotalSeconds < IncreasedRegenDuration;
         internal bool HasArmachd => DateTime.UtcNow.Subtract(LastArmachd).TotalSeconds < ArmachdDuration;
 
-        internal bool IsSuained
-        {
-            get 
-            {
-                if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Suain))
-                    return false;
-                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Suain]).TotalSeconds < 1.5;
-            }
-        }
         internal bool IsWFF
         {
             get

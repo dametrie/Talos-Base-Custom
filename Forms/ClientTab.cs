@@ -864,6 +864,7 @@ namespace Talos.Forms
         {
             _client.InMonsterForm = (sender as CheckBox).Checked;
             _client.DisplayAisling(_client.Player);
+            _client.RequestRefresh(false);
         }
         private void formNum_ValueChanged(object sender, EventArgs e)
         {

@@ -282,11 +282,17 @@ namespace Talos.Helper
                         break;
 
                     case "suain":
-                        client._server.RemoveFirstCreatureToSpell(client);
+                        if (creature != null)
+                        {
+                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
+                            creature.LastSuained = DateTime.UtcNow;
+                            creature.SuainDuration = Spell.GetSpellDuration(spellName);
+                            Console.WriteLine($"[UpdateSpellAnimationHistory] 'Suain' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Suain Duration: {creature.SuainDuration}");
+                            client._server.RemoveFirstCreatureToSpell(client);
+                        }
                         break;
 
-                    case "Master Karurua Form"://Adam add others
-                        client.EffectsBarHashSet.Add((ushort)EffectsBar.BirdForm);//need to figure out how to clear it because there is no orange message when it drops
+                    case "Master Karurua Form"://Adam add others //need to figure out how to clear it because there is no orange message when it drops
                         break;
 
                     case "beag pramh":
@@ -572,8 +578,14 @@ namespace Talos.Helper
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client._currentSpell = null;
                 }
+                if (client._currentSpell != null && client._currentSpell.Name.Contains("suain"))
+                {
+                    client._creatureToSpellList[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
+                    //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
+                    client._currentSpell = null;
+                }
 
-              
+
                 client._server.RemoveFirstCreatureToSpell(client);
             }
 

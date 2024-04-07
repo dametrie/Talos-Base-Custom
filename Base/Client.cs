@@ -766,16 +766,21 @@ namespace Talos.Base
                         return false;
 
                     case 1046347411: // suain
-                        if (spell == "suain")
-                            if (!CreatureTarget.IsSuained)
-                                CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow.Subtract(new TimeSpan(0, 0, 0, 3, 500));
-                        return true;
+                        if (CreatureTarget.IsSuained)
+                        {
+                            Console.WriteLine("ReadyToSpell: Creature is already suained, returning false");
+                            return false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("ReadyToSpell: Creature is not suained, can cast Pramh, returning true");
+                            return true;
+                        }
 
                     case 2030226177: // armachd
                         //Adam check this
-                        if (!CreatureTarget.HasArmachd)
-                            CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow.Subtract(new TimeSpan(0, 2, 25));
-                        return true;
+                        if (!CreatureTarget.HasArmachd) return true;
+                        return false;
 
                     case 3219892635: // beag pramh
                     case 2647647615: // pramh

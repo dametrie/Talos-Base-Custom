@@ -20,42 +20,7 @@ namespace Talos.Objects
         internal double Ticks { get; set; }
         internal DateTime LastUsed { get; set; }
         internal DateTime Cooldown { get; set; }
-        /* internal bool CanUse
-         {
-             get
-             {
-                 Console.WriteLine($"[DEBUG] Checking CanUse for spell {Name}. Cooldown: {Cooldown}, Ticks: {Ticks}");
 
-                 if (!(Cooldown == DateTime.MinValue) && Ticks != 0.0)
-                 {
-                     //double num = Ticks - (double)(int)CastLines + 0.5;
-                     double cooldownTicks = Ticks;
-                     TimeSpan timeSinceLastUsed = DateTime.UtcNow.Subtract(LastUsed);
-                     TimeSpan timeSinceCooldownStarted = DateTime.UtcNow.Subtract(Cooldown);
-
-                     Console.WriteLine($"[DEBUG] Cooldown Ticks: {cooldownTicks}");
-                     Console.WriteLine($"[DEBUG] Time since Last Used: {timeSinceLastUsed.TotalSeconds} seconds");
-                     Console.WriteLine($"[DEBUG] Time since Cooldown Started: {timeSinceCooldownStarted.TotalSeconds} seconds");
-
-                     if (timeSinceLastUsed.TotalSeconds > 1.5)
-                     {
-                         if (timeSinceCooldownStarted.TotalSeconds > cooldownTicks)
-                         {
-                             Console.WriteLine("[DEBUG] Spell can be used. Cooldown period has passed.");
-                             return true;
-                         }
-                         else
-                         {
-                             Console.WriteLine("[DEBUG] Spell cannot be used yet. Still within cooldown period.");
-                             return false;
-                         }
-                     }   
-                 }
-                 Console.WriteLine("[DEBUG] Spell can be used. No cooldown or ticks.");
-                 return true;
-
-             }
-         }*/
 
         internal bool CanUse
         {
@@ -120,6 +85,7 @@ namespace Talos.Objects
             { "Asgall Faileas", 13.0 },
             { "Perfect Defense", 15.0 },
             { "beah pramh", 8.0 },
+            { "suain", 18.0 },
             { "pramh", 16.0 },
             { "dall", 18.0 },
             { "Reflection", 19.0 },
