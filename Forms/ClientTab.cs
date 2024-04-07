@@ -212,7 +212,7 @@ namespace Talos.Forms
                 case "Warrior":
                     if (_client._previousClass.ToString() == "Pure")
                     {
-                        SetPureClassSpells(asgallCbox, "Asgall Faileas");
+                        SetPureClassSpells(asgallCbox, "asgall faileas");
                         SetPureClassSkills(perfectDefenseCbox, "Perfect Defense");
                     }
                     break;
@@ -1902,6 +1902,7 @@ namespace Talos.Forms
             var itemMappings = new Dictionary<string, string>
             {
                 { "Kruna 50%", "50 Percent EXP/AP Bonus" },
+                { "Kruna 100%", "Double EXP/AP Bonus" },
                 { "Xmas 50%", "XMas Bonus Exp-Ap" },
                 { "Star 100%", "Double Bonus Exp-Ap" },
                 { "Vday 100%", "VDay Bonus Exp-Ap" }
@@ -1921,7 +1922,7 @@ namespace Talos.Forms
             UpdateBonusTimer();
         }
 
-        private void UseItem(string itemText)
+        internal void UseItem(string itemText)
         {
             if (!_client.UseItem(itemText))
             {
@@ -1930,7 +1931,7 @@ namespace Talos.Forms
             }
         }
 
-        private void UpdateBonusTimer()
+        internal void UpdateBonusTimer()
         {
             _client.Bot._lastBonusAppliedTime = DateTime.Now;
             _client.Bot._bonusElapsedTime = _client.Bot._bonusElapsedTime;

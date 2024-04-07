@@ -177,6 +177,7 @@ namespace Talos.Enumerations
         BeagSuain = 97,
         WolfFangFist = 101,
         PreventAffliction = 113,
+        MantidScent = 113,
         BeagFasNadur = 119,
         FasNadur = 119,
         MorFasNadur = 119,
@@ -188,7 +189,7 @@ namespace Talos.Enumerations
         Silenced = 143,
         Regeneration = 146,
         CounterAttack = 150,
-        IncreasedRegeneration = 180,
+        IncreasedRegeneration = 181, //incorrect on Vorlof
         FeralForm = 183,
         BirdForm = 184,
         LizardForm = 185,

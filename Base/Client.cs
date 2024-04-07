@@ -1814,7 +1814,7 @@ namespace Talos.Base
                 {
                     if (!CheckWeaponCastLines(spell, out castLines))
                     {
-                        Console.WriteLine("Error in Client.cs UseSpell: staffSwitch was true but CheckWeaponCastLines returned false");
+                        //Console.WriteLine("Error in Client.cs UseSpell: staffSwitch was true but CheckWeaponCastLines returned false");
                         return false;
                     }
                 }

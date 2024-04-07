@@ -1112,7 +1112,7 @@ namespace Talos
                         }
                         client.FlashWindowEx(Process.GetProcessById(client.processId).MainWindowHandle);
                     }
-                    if (Settings.Default.whisperSound && !this._disableSound)
+                    if (Settings.Default.whisperSound && !_disableSound)
                     {
                         new SoundPlayer(Resources.whispernotif).PlaySync();
                     }

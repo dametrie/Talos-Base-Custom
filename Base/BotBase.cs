@@ -16,7 +16,7 @@ namespace Talos.Base
         internal List<Thread> BotThreadList { get; set; }
         internal List<Location> LocationList { get; set; }
         internal List<TaskDelegate> TaskList { get; set; }
-        internal volatile bool _shouldStop = false;
+        internal volatile bool _shouldThreadStop = false;
 
         internal BotBase()
         {
@@ -44,7 +44,7 @@ namespace Talos.Base
 
         internal void Stop()
         {
-            _shouldStop = true;
+            _shouldThreadStop = true;
             foreach (var thread in BotThreadList)
             {
                 thread.Join(); //previously using Thread.Abort() which is not recommended... but maybe it would stop the bot faster?

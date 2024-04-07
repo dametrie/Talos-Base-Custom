@@ -75,6 +75,8 @@ namespace Talos.Base
         private string _bubbleType;
 
         private SoundPlayer soundPlayer = new SoundPlayer();
+        private bool _swappingNecklace;
+        private DateTime _lastUsedMonsterCall = DateTime.MinValue;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -92,7 +94,7 @@ namespace Talos.Base
         }
         private void Sounds()
         {
-            while (!_shouldStop)  // Assuming _shouldStop is a volatile bool that is set to true when you want to stop all threads
+            while (!_shouldThreadStop)  // Assuming _shouldStop is a volatile bool that is set to true when you want to stop all threads
             {
                 if (_server._disableSound)
                 {
@@ -101,36 +103,36 @@ namespace Talos.Base
                 }
                 if (Client.ClientTab.alertSkulledCbox.Checked && Client.IsSkulled)
                 {
-                    this.soundPlayer.Stream = Resources.skull;
-                    this.soundPlayer.PlaySync();
+                    soundPlayer.Stream = Resources.skull;
+                    soundPlayer.PlaySync();
                 }
-                else if (Client.ClientTab.alertRangerCbox.Checked && this.IsRangerNearBy())
+                else if (Client.ClientTab.alertRangerCbox.Checked && IsRangerNearBy())
                 {
-                    this.soundPlayer.Stream = Resources.ranger;
-                    this.soundPlayer.PlaySync();
+                    soundPlayer.Stream = Resources.ranger;
+                    soundPlayer.PlaySync();
                 }
-                else if (Client.ClientTab.alertStrangerCbox.Checked && this.IsStrangerNearby())
+                else if (Client.ClientTab.alertStrangerCbox.Checked && IsStrangerNearby())
                 {
-                    this.soundPlayer.Stream = Resources.detection;
-                    this.soundPlayer.PlaySync();
+                    soundPlayer.Stream = Resources.detection;
+                    soundPlayer.PlaySync();
                 }
-                else if (Client.ClientTab.alertItemCapCbox.Checked && this._shouldAlertItemCap)
+                else if (Client.ClientTab.alertItemCapCbox.Checked && _shouldAlertItemCap)
                 {
-                    this.soundPlayer.Stream = Resources.itemCap;
-                    this.soundPlayer.PlaySync();
-                    this._shouldAlertItemCap = false;
+                    soundPlayer.Stream = Resources.itemCap;
+                    soundPlayer.PlaySync();
+                    _shouldAlertItemCap = false;
                 }
                 else
                 {
-                    if (Client.ClientTab.alertDuraCbox.Checked && this.itemDurabilityAlerts.Contains(true))
+                    if (Client.ClientTab.alertDuraCbox.Checked && itemDurabilityAlerts.Contains(true))
                     {
-                        for (int i = 0; i < this.itemDurabilityAlerts.Length; i++)
+                        for (int i = 0; i < itemDurabilityAlerts.Length; i++)
                         {
-                            if (this.itemDurabilityAlerts[i])
+                            if (itemDurabilityAlerts[i])
                             {
-                                this.soundPlayer.Stream = Resources.durability;
-                                this.soundPlayer.PlaySync();
-                                this.itemDurabilityAlerts[i] = false; // Set the current alert as handled
+                                soundPlayer.Stream = Resources.durability;
+                                soundPlayer.PlaySync();
+                                itemDurabilityAlerts[i] = false; // Set the current alert as handled
                                 break; // Exit the loop after handling the first alert
                             }
                         }
@@ -138,8 +140,8 @@ namespace Talos.Base
                     }
                     if (Client.ClientTab.alertEXPCbox.Checked && Client.Experience >= 4290000000U)
                     {
-                        this.soundPlayer.Stream = Resources.expmaxed;
-                        this.soundPlayer.PlaySync();
+                        soundPlayer.Stream = Resources.expmaxed;
+                        soundPlayer.PlaySync();
                     }
                 }
 
@@ -150,7 +152,7 @@ namespace Talos.Base
         }
         private void BotLoop()
         {
-            while (!_shouldStop)
+            while (!_shouldThreadStop)
             {
                 try
                 {
@@ -510,7 +512,7 @@ namespace Talos.Base
             ArmachdAllies();
             BeagCradh();
             BeagCradhAllies();
-            PlayerBuffs(); //Deireas Faileas, Monk Forms, Asgall, Perfect Defense,
+            CastPlayerBuffs(); //Deireas Faileas, Monk Forms, Asgall, Perfect Defense,
                            //Aegis Spehre, ao beag suain, Muscle Stim, Nerve Stim, Mist, Mana Ward
                            //Vanish Elixir, Regens, Mantid Scent
             Comlhas();
@@ -526,29 +528,29 @@ namespace Talos.Base
 
             if (AllyPage.allyMDCRbtn.Checked)
             {
-                var playerToDion = this._nearbyAllies.FirstOrDefault(Delegates.NotDioned);
+                var playerToDion = _nearbyAllies.FirstOrDefault(Delegates.NotDioned);
 
                 if (playerToDion != null)
                 {
                     Console.WriteLine($"[Comlhas] PlayerToDion: {playerToDion?.Name}, Hash: {playerToDion.GetHashCode()}, has dion: {playerToDion.IsDioned}");
-                    Client.UseSpell("mor dion comlha", null, this._autoStaffSwitch, false);
+                    Client.UseSpell("mor dion comlha", null, _autoStaffSwitch, false);
                     return false;
                 }
             }
 
             if (AllyPage.allyMDCSpamRbtn.Checked)
             {
-                if (Client.UseSpell("mor dion comlha", null, this._autoStaffSwitch, false))
+                if (Client.UseSpell("mor dion comlha", null, _autoStaffSwitch, false))
                 {
                     return false;
                 }
             }
             else if (AllyPage.allyMICSpamRbtn.Checked)
             {
-                if (!Client.UseSpell("ard ioc comlha", null, this._autoStaffSwitch, false) &&
-                    !Client.UseSpell("mor ioc comlha", null, this._autoStaffSwitch, false))
+                if (!Client.UseSpell("ard ioc comlha", null, _autoStaffSwitch, false) &&
+                    !Client.UseSpell("mor ioc comlha", null, _autoStaffSwitch, false))
                 {
-                    Client.UseSpell("ioc comlha", null, this._autoStaffSwitch, false);
+                    Client.UseSpell("ioc comlha", null, _autoStaffSwitch, false);
                 }
                 return false;
             }
@@ -556,8 +558,183 @@ namespace Talos.Base
             return true;
         }
 
-        private void PlayerBuffs()
+        private bool CastPlayerBuffs()
         {
+            if (Client.ClientTab.deireasFaileasCbox.Checked && !Client.HasEffect(EffectsBar.DeireasFaileas))
+            {
+                Client.UseSpell("deireas faileas", null, _autoStaffSwitch, true);
+                return false;
+            }
+
+            if (Client.ClientTab.dragonsFireCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.DragonsFire))
+            {
+                Client.UseItem("Dragon's Fire");
+            }
+
+            if (Client.ClientTab.druidFormCbox.Checked && !Client.HasEffect(EffectsBar.FeralForm) && !Client.HasEffect(EffectsBar.BirdForm) && !Client.HasEffect(EffectsBar.LizardForm) && !_swappingNecklace)
+            {
+                if (!Client.UseSpell("Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Feral form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Master Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Master Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Komodas Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Komodas Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Komodas Form", null, _autoStaffSwitch, true))
+                {
+                    Client.UseSpell("Master Komodas Form", null, _autoStaffSwitch, true);
+                }
+                Thread.Sleep(1000);
+            }
+
+            if (Client.ClientTab.asgallCbox.Checked && !Client.HasEffect(EffectsBar.AsgallFaileas))
+            {
+                Client.UseSpell("asgall faileas", null, true, true);
+            }
+
+            if (Client.ClientTab.perfectDefenseCbox.Checked && !Client.HasEffect(EffectsBar.PerfectDefense))
+            {
+                Client.UseSkill("Perfect Defense");
+            }
+
+            if (Client.ClientTab.aegisSphereCbox.Checked && !Client.HasEffect(EffectsBar.Armachd))
+            {
+                Client.UseSpell("Aegis Sphere", null, false, true);
+            }
+
+            if (Client.ClientTab.aoSuainCbox.Checked && Client.HasEffect(EffectsBar.BeagSuain))
+            {
+                Client.UseSkill("ao beag suain");
+            }
+
+            if (Client.ClientTab.muscleStimulantCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.FasDeireas))
+            {
+                Client.UseItem("Muscle Stimulant");
+            }
+
+            if (Client.ClientTab.nerveStimulantCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.Beannaich))
+            {
+                Client.UseItem("Nerve Stimulant");
+            }
+
+            if (Client.ClientTab.disenchanterCbox.Checked && DateTime.UtcNow.Subtract(_lastDisenchanterCast).TotalMinutes > 6.0)
+            {
+                Client.UseSpell("Disenchanter", null, _autoStaffSwitch, true);
+                Thread.Sleep(1000);
+                return false;
+            }
+
+            if (Client.ClientTab.monsterCallCbox.Checked && Client._isRegistered && DateTime.UtcNow.Subtract(_lastUsedMonsterCall).TotalSeconds > 2.0 && Client.UseItem("Monster Call"))
+            {
+                _lastUsedMonsterCall = DateTime.UtcNow;
+            }
+
+            if (Client.ClientTab.mistCbox.Checked && !Client.HasEffect(EffectsBar.Mist))
+            {
+                Client.UseSpell("Mist", null, _autoStaffSwitch, true);
+            }
+
+            if (Client.ClientTab.manaWardCbox.Checked)
+            {
+                Client.UseSpell("Mana Ward", null, false, false);
+            }
+
+            if (Client.ClientTab.vanishingElixirCbox.Checked && Client._isRegistered)
+            {
+                foreach (Player ally in _nearbyAllies)
+                {
+                    if (!ally._isHidden)
+                    {
+                        Client.UseItem("Vanishing Elixir");
+                    }
+                }
+            }
+
+            if (Client.ClientTab.autoDoubleCbox.Checked && !Client.HasEffect(EffectsBar.BonusExperience) && Client._isRegistered && Client.CurrentMP > 100)
+            {
+                // Mapping of combobox text to the item names
+                var itemMappings = new Dictionary<string, string>
+                {
+                    { "Kruna 50%", "50 Percent EXP/AP Bonus" },
+                    { "Kruna 100%", "Double EXP/AP Bonus" },
+                    { "Xmas 50%", "XMas Bonus Exp-Ap" },
+                    { "Star 100%", "Double Bonus Exp-Ap" },
+                    { "Vday 100%", "VDay Bonus Exp-Ap" }
+                };
+
+                // Check for special case where additional logic is needed
+                if (Client.ClientTab.doublesCombox.Text == "Xmas 100%")
+                {
+                    var itemText = _client.HasItem("Christmas Double Exp-Ap") ? "Christmas Double Exp-Ap" : "XMas Double Exp-Ap";
+                    Client.ClientTab.UseItem(itemText);
+                }
+                else if (itemMappings.TryGetValue(Client.ClientTab.doublesCombox.Text, out var itemText))
+                {
+                    Client.ClientTab.UseItem(itemText);
+                }
+
+                Client.ClientTab.UpdateBonusTimer();
+            }
+
+            if (Client.ClientTab.regenerationCbox.Checked && (!Client.HasEffect(EffectsBar.Regeneration) || !Client.HasEffect(EffectsBar.IncreasedRegeneration)))
+            {
+                if (Client.HasSpell("Increased Regeneration") && !Client.HasEffect(EffectsBar.IncreasedRegeneration))
+                {
+                    Client.UseSpell("Increased Regeneration", Client.Player, _autoStaffSwitch, true);
+                    return false;
+                }
+                if (Client.Spellbook.Any(new Func<Spell, bool>(Delegates.CastRegeneration)) && !Client.HasEffect(EffectsBar.Regeneration))
+                {
+                    TryCastAnyRank("Regeneration", Client.Player, _autoStaffSwitch, true);
+                    return false;
+                }
+            }
+            foreach (Ally currentAlly in ReturnAllyList())
+            {
+                if (_playersExistingOver250ms.Count > 0)
+                {
+                    foreach (Player player in _playersExistingOver250ms)
+                    {
+                        if (player.Name.Equals(currentAlly.Name, StringComparison.OrdinalIgnoreCase) && player != Client.Player && currentAlly.AllyPage.dbRegenCbox.Checked)
+                        {
+                            Client client = Client._server.FindClientByName(currentAlly.Name);
+                            if (client != null)
+                            {
+                                if (!client.HasEffect(EffectsBar.IncreasedRegeneration) && Client.UseSpell("Increased Regeneration", client.Player, _autoStaffSwitch, true))
+                                {
+                                    return false;
+                                }
+                                if (Client.Spellbook.Any(s => Delegates.CastRegeneration(s)) && !client.HasEffect(EffectsBar.Regeneration) && TryCastAnyRank("Regeneration", client.Player, _autoStaffSwitch, true))
+                                {
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                // Fallback to using spells on the player directly if the client for the ally wasn't found
+                                if ((!player.SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.IncreasedRegeneration) || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.IncreasedRegeneration]).TotalSeconds > 1.5) && Client.UseSpell("Increased Regeneration", player, _autoStaffSwitch, true))
+                                {
+                                    return false;
+                                }
+                                if (Client.Spellbook.Any(s => Delegates.CastRegeneration(s)) && (!player.SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Regeneration) || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.Regeneration]).TotalSeconds > 1.5) && TryCastAnyRank("Regeneration", player, _autoStaffSwitch, true))
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (!Client.ClientTab.mantidScentCbox.Checked || !Client._isRegistered || Client.HasEffect(EffectsBar.MantidScent))
+            {
+                return true;
+            }
+            if (!Client.UseItem("Mantid Scent") && !Client.UseItem("Potent Mantid Scent"))
+            {
+                Client.ClientTab.mantidScentCbox.Checked = false;
+                Client.ServerMessage(0, "You do not own Mantid Scent");
+                return false;
+            }
+            while (Client.Dialog == null)
+            {
+                Thread.Sleep(10);
+            }
+            Client.Dialog.DialogNext();
+            Thread.Sleep(500);
+            return false;
         }
 
         private bool DispellAllySuain()
