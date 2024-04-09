@@ -939,6 +939,7 @@ namespace Talos.Base
                 switch (spellName)
                 {
                     case "suain":
+                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()}, Currently Suained: {creature.IsSuained}");
                         return creature.IsSuained;
                     case "beag cradh":
                     case "cradh":
@@ -964,7 +965,7 @@ namespace Talos.Base
                     case "beag pramh":
                     case "pramh":
                     case "Mesmerize":
-                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Asleep: {creature.IsAsleep}");
+                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, Currently Asleep: {creature.IsAsleep}");
                         return creature.IsAsleep;
                     case "fas spiorad":
                         return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;

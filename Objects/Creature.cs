@@ -61,52 +61,84 @@ namespace Talos.Objects
         internal bool IsCursed => DateTime.UtcNow.Subtract(LastCursed).TotalSeconds < CurseDuration;
         internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;
         internal bool IsAited => DateTime.UtcNow.Subtract(LastAited).TotalSeconds < AiteDuration;
-        internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
-        internal bool IsSuained => DateTime.UtcNow.Subtract(LastSuained).TotalSeconds < SuainDuration;
+        
         internal bool IsFrozen => DateTime.UtcNow.Subtract(LastFrostArrow).TotalSeconds < FrostArrowDuration;
         internal bool HasCursedTunes => DateTime.UtcNow.Subtract(LastCursedTune).TotalSeconds < CursedTuneDuration;
         internal bool HasRegen => DateTime.UtcNow.Subtract(LastRegen).TotalSeconds < RegenDuration;
         internal bool HasIncreasedRegen => DateTime.UtcNow.Subtract(LastIncreasedRegen).TotalSeconds < IncreasedRegenDuration;
         internal bool HasArmachd => DateTime.UtcNow.Subtract(LastArmachd).TotalSeconds < ArmachdDuration;
 
-        internal bool IsWFF
+        // This implementation of IsAsleep is correct. However, it assumes that the sleep is not broken by any other action.
+        // That is, if sleep is broken it will still wait until the original sleep duration has passed.
+        // internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
+
+        // Similar problems with IsSuained. It assumes that the suain is not broken by any other action.
+        // internal bool IsSuained => DateTime.UtcNow.Subtract(LastSuained).TotalSeconds < SuainDuration;
+
+        internal bool IsAsleep
         {
             get
             {
-                if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Suain))
-                    return false;
-                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Suain]).TotalSeconds < 2.0;
+                // Check for 'Mesmerize' animation within the last 1.5 seconds
+                bool isMesmerized = SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.Mesmerize, out DateTime lastMesmerizeTime) &&
+                                    DateTime.UtcNow - lastMesmerizeTime < TimeSpan.FromSeconds(2.5);
+
+                if (isMesmerized)
+                {
+                    return true;
+                }
+
+                // Check for 'Pramh' animation within the last 3 seconds
+                bool isPramhActive = SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.Pramh, out DateTime lastPramhTime) &&
+                                     DateTime.UtcNow - lastPramhTime < TimeSpan.FromSeconds(3.0);
+
+                return isPramhActive;
             }
         }
-       /* internal bool IsFrozen
+
+        internal bool IsSuained
         {
             get
             {
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.FrostArrow) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.FrostArrow]).TotalSeconds >= 2.0))
-                    return true;
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.FrostStrike) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.FrostStrike]).TotalSeconds >= 1.0))
-                    return true;
-                return false;
+                bool isSuained = SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.Suain, out DateTime lastSuainTime) &&
+                                DateTime.UtcNow - lastSuainTime < TimeSpan.FromSeconds(2.0);
+
+                return isSuained;
             }
-        }*/
+        }
+        /* internal bool IsFrozen
+         {
+             get
+             {
+                 if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.FrostArrow) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.FrostArrow]).TotalSeconds >= 2.0))
+                     return true;
+                 if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.FrostStrike) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.FrostStrike]).TotalSeconds >= 1.0))
+                     return true;
+                 return false;
+             }
+         }*/
 
         internal bool IsPoisoned
         {
             get
             {
-                //pink poison
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.PinkPoison) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.PinkPoison]).TotalSeconds >= 1.5))
+                if (SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.PinkPoison, out DateTime lastPinkPoisonTime) &&
+                    DateTime.UtcNow - lastPinkPoisonTime < TimeSpan.FromSeconds(1.5))
+                {
                     return true;
-                //green bubble poison
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.GreenBubblePoison) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.GreenBubblePoison]).TotalSeconds >= 3.0))
+                }
+
+                if (SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.GreenBubblePoison, out DateTime lastGreenBubblePoisonTime) &&
+                    DateTime.UtcNow - lastGreenBubblePoisonTime < TimeSpan.FromSeconds(3.0))
+                {
                     return true;
-                //med poison
-                if (SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.MedeniaPoison) && !(DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.MedeniaPoison]).TotalSeconds >= 3.0))
-                    return true;
-                return false;
+                }
+
+                return SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.MedeniaPoison, out DateTime lastMedeniaPoisonTime) &&
+                       DateTime.UtcNow - lastMedeniaPoisonTime < TimeSpan.FromSeconds(3.0);
             }
         }
-        
+
         internal Creature(int id, string name, ushort sprite, byte type, Location location, Direction direction)
             : base(id, name, sprite, location)
         {

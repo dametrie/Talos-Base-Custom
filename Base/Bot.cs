@@ -1901,12 +1901,12 @@ namespace Talos.Base
         {
             lock (_lock)
             {
-                Console.WriteLine($"[CastCurseIfApplicable] Total creatures: {creatures.Count}");
+                //Console.WriteLine($"[CastCurseIfApplicable] Total creatures: {creatures.Count}");
 
                 // Filter creatures that are not cursed
                 var eligibleCreatures = creatures.Where(Delegates.IsNotCursed);
 
-                Console.WriteLine($"[CastCurseIfApplicable] Eligible creatures (not cursed): {eligibleCreatures.Count()}");
+                //Console.WriteLine($"[CastCurseIfApplicable] Eligible creatures (not cursed): {eligibleCreatures.Count()}");
 
                 // Select the nearest eligible creature if specified, otherwise select any eligible creature
                 Creature targetCreature = enemyPage.NearestFirstCbx.Checked
@@ -1916,7 +1916,7 @@ namespace Talos.Base
                 // If a target is found and casting curses is enabled, cast the curse spell
                 if (targetCreature != null && enemyPage.spellsCurseCbox.Checked)
                 {
-                    Console.WriteLine($"[CastCurseIfApplicable] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastCursed: {targetCreature.LastCursed}, IsCursed: {targetCreature.IsCursed}");
+                    //Console.WriteLine($"[CastCurseIfApplicable] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastCursed: {targetCreature.LastCursed}, IsCursed: {targetCreature.IsCursed}");
                     Client.UseSpell(enemyPage.spellsCurseCombox.Text, targetCreature, _autoStaffSwitch, false);
                     bool_13 = true; // Indicate that an action was taken
                     return true;
@@ -1931,12 +1931,12 @@ namespace Talos.Base
         {
             lock (_lock)
             {
-                Console.WriteLine($"[CastFasIfApplicable] Total creatures: {creatures.Count}");
+                //Console.WriteLine($"[CastFasIfApplicable] Total creatures: {creatures.Count}");
 
                 // Filter creatures that are not fassed
                 var eligibleCreatures = creatures.Where(Delegates.IsNotFassed);
 
-                Console.WriteLine($"[CastFasIfApplicable] Eligible creatures (not fassed): {eligibleCreatures.Count()}");
+                //Console.WriteLine($"[CastFasIfApplicable] Eligible creatures (not fassed): {eligibleCreatures.Count()}");
 
                 // Select the nearest eligible creature if specified, otherwise select any eligible creature
                 Creature targetCreature = enemyPage.NearestFirstCbx.Checked
@@ -1946,7 +1946,7 @@ namespace Talos.Base
                 // If a target is found and casting the 'fas' spell is enabled, cast the spell
                 if (targetCreature != null && enemyPage.spellsFasCbox.Checked)
                 {
-                    Console.WriteLine($"[CastFasIfApplicable] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastFassed: {targetCreature.LastFassed}, IsFassed: {targetCreature.IsFassed}");
+                    //Console.WriteLine($"[CastFasIfApplicable] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastFassed: {targetCreature.LastFassed}, IsFassed: {targetCreature.IsFassed}");
                     Client.UseSpell(enemyPage.spellsFasCombox.Text, targetCreature, _autoStaffSwitch, false);
                     bool_13 = true; // Indicate that an action was taken
                     return true;
@@ -2219,7 +2219,7 @@ namespace Talos.Base
             Creature targetCreature = creatureList.FirstOrDefault<Creature>();
             if (targetCreature != null && creatureList.Any() && enemyPage.spellsControlCbox.Checked && !targetCreature.IsAsleep)
             {
-                Console.WriteLine($"[ExecutePramhStrategy] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastPramhd: {DateTime.UtcNow}");
+                Console.WriteLine($"[ExecutePramhStrategy] Targeting creature ID: {targetCreature.ID}, Hash: {targetCreature.GetHashCode()}, Name: {targetCreature.Name}, LastPramhd: {DateTime.UtcNow}");
                 Client.UseSpell(enemyPage.spellsControlCombox.Text, creatureList.FirstOrDefault<Creature>(), _autoStaffSwitch, false);
                 return true;
             }
