@@ -77,6 +77,7 @@ namespace Talos.Base
         private SoundPlayer soundPlayer = new SoundPlayer();
         private bool _swappingNecklace;
         private DateTime _lastUsedMonsterCall = DateTime.MinValue;
+        internal bool _hasWhiteDugon;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;

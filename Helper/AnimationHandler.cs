@@ -253,18 +253,6 @@ namespace Talos.Helper
                     }
                     break;
 
-                case (ushort)SpellAnimation.PinkPoison:
-                    _targetCreature.SpellAnimationHistory[(ushort)SpellAnimation.PinkPoison] = DateTime.UtcNow;
-                    break;
-                case (ushort)SpellAnimation.Pramh:
-                    _targetCreature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
-                    break;
-                case (ushort)SpellAnimation.Mesmerize:
-                    _targetCreature.SpellAnimationHistory[(ushort)SpellAnimation.Mesmerize] = DateTime.UtcNow;
-                    break;
-                case (ushort)SpellAnimation.Suain:
-                    _targetCreature.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
-                    break;
             }
         }
     }

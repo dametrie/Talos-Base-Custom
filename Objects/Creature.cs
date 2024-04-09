@@ -57,6 +57,7 @@ namespace Talos.Objects
             get => (byte)((_health > 100) ? 100 : _health);
             set => _health = value;
         }
+
         internal bool IsDioned => DateTime.UtcNow.Subtract(LastDioned).TotalSeconds < DionDuration;
         internal bool IsCursed => DateTime.UtcNow.Subtract(LastCursed).TotalSeconds < CurseDuration;
         internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;

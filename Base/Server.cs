@@ -1995,28 +1995,28 @@ namespace Talos
                                 //client.Tasks.bool_37 = true;
                                 return false;
                             }
-                            //if (!client.Tasks.bool_40 && client.Tasks.dictionary_3.TryGetValue(npcDialog, out str5))
-                            //{
-                            //    int index = 2147483647;
-                            //    index = options.IndexOf(str5);
-                            //    if (index != 2147483647)
-                            //    {
-                            //        client.Dialog.DialogNext((byte)(index + 1));
-                            //    }
-                            //}
-                            //else
-                            //{
-                            //    string str6;
-                            //    if (client.Tasks.bool_40 && client.Tasks.dictionary_4.TryGetValue(npcDialog, out str6))
-                            //    {
-                            //        int index = 2147483647;
-                            //        index = options.IndexOf(str6);
-                            //        if (index != 2147483647)
-                            //        {
-                            //            client.Dialog.DialogNext((byte)(index + 1));
-                            //        }
-                            //    }
-                            //}
+                            if (!client.Bot._hasWhiteDugon && CONSTANTS.WHITE_DUGON_RESPONSES.TryGetValue(npcDialog, out str5))
+                            {
+                                int index = 2147483647;
+                                index = options.IndexOf(str5);
+                                if (index != 2147483647)
+                                {
+                                    client.Dialog.DialogNext((byte)(index + 1));
+                                }
+                            }
+                            else
+                            {
+                                string str6;
+                                if (client.Bot._hasWhiteDugon && CONSTANTS.GREEN_DUGON_RESPONSES.TryGetValue(npcDialog, out str6))
+                                {
+                                    int index = 2147483647;
+                                    index = options.IndexOf(str6);
+                                    if (index != 2147483647)
+                                    {
+                                        client.Dialog.DialogNext((byte)(index + 1));
+                                    }
+                                }
+                            }
                         }
                         if (objType == 2)
                         {
@@ -2704,8 +2704,8 @@ namespace Talos
             ClientPacket clientPacket = new ClientPacket(0x45);
             clientPacket.WriteByte(serverPacket.ReadByte());
             clientPacket.WriteByte(serverPacket.ReadByte());
-            Packet[] classArray1 = new Packet[] { clientPacket };
-            client.Enqueue(classArray1);
+            Packet[] toSend = new Packet[] { clientPacket };
+            client.Enqueue(toSend);
             return false;
         }
 
