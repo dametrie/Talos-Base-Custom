@@ -127,6 +127,7 @@
     <Compile Include="Forms\User Controls\NearbyEnemy.Designer.cs">
       <DependentUpon>NearbyEnemy.cs</DependentUpon>
     </Compile>
+    <Compile Include="Helper\AnimationHandler.cs" />
     <Compile Include="Helper\UIHelper.cs" />
     <Compile Include="Maps\Map.cs" />
     <Compile Include="Maps\Warp.cs" />

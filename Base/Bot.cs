@@ -94,6 +94,10 @@ namespace Talos.Base
         }
         private void Sounds()
         {
+            if (Client.ClientTab == null || Client == null)
+            {
+                return;
+            }
             while (!_shouldThreadStop)  // Assuming _shouldStop is a volatile bool that is set to true when you want to stop all threads
             {
                 if (_server._disableSound)

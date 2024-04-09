@@ -32,6 +32,7 @@ namespace Talos.Base
         }
         internal void Start()
         {
+            _shouldThreadStop = false;
             BotThreadList.Clear();
             foreach (var task in TaskList)
             {
