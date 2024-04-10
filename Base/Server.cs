@@ -2800,7 +2800,7 @@ namespace Talos
             if (client._isRefreshing)
                 client._canRefresh = true;
 
-            client.Pathfinder2 = new Pathfinder2(client._map);
+            client.Pathfinder = new Pathfinder(client);
 
             return true;
         }

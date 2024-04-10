@@ -974,7 +974,7 @@ namespace Talos.Forms
                 {
                     //_client.WalkToLocation(targetLocation);
                     //_client.TryWalkToLocation(_client.Pathfinder, targetLocation, 0);
-                    _client.TryWalkToLocation3(targetLocation, 0, true);
+                    _client.TryWalkToLocation(targetLocation, 0, true);
                 }
 
             }

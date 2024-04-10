@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -26,9 +27,9 @@ namespace Talos.Maps
         internal bool CanUseSkills { get; set; }
         internal bool CanUseSpells { get; set; }
 
-        internal Dictionary<Point, Tile> Tiles { get; set; }
-        internal Dictionary<Point, Warp> Exits { get; set; }
-        internal Dictionary<Point, WorldMap> WorldMaps { get; set; }
+        internal ConcurrentDictionary<Point, Tile> Tiles { get; set; }
+        internal ConcurrentDictionary<Point, Warp> Exits { get; set; }
+        internal ConcurrentDictionary<Point, WorldMap> WorldMaps { get; set; }
 
         internal Map(short mapID, byte sizeX, byte sizeY, byte flags, string name, sbyte music)
         {
@@ -40,9 +41,9 @@ namespace Talos.Maps
             Music = music;
             CanUseSkills = true;
             CanUseSpells = true;
-            Tiles = new Dictionary<Point, Tile>();
-            Exits = new Dictionary<Point, Warp>();
-            WorldMaps = new Dictionary<Point, WorldMap>();
+            Tiles = new ConcurrentDictionary<Point, Tile>();
+            Exits = new ConcurrentDictionary<Point, Warp>();
+            WorldMaps = new ConcurrentDictionary<Point, WorldMap>();
         }
 
         internal Map(short mapID, byte sizeX, byte sizeY, byte flags, ushort checksum, string name)
@@ -55,9 +56,9 @@ namespace Talos.Maps
             Name = name;
             CanUseSkills = true;
             CanUseSpells = true;
-            Tiles = new Dictionary<Point, Tile>();
-            Exits = new Dictionary<Point, Warp>();
-            WorldMaps = new Dictionary<Point, WorldMap>();
+            Tiles = new ConcurrentDictionary<Point, Tile>();
+            Exits = new ConcurrentDictionary<Point, Warp>();
+            WorldMaps = new ConcurrentDictionary<Point, WorldMap>();
         }
 
         internal void Initialize(byte[] data)
@@ -90,13 +91,22 @@ namespace Talos.Maps
             if (x >= 0 && y >= 0 && x < Width && y < Height)
             {
                 Point key = new Point(x, y);
-                bool isWall = Tiles[key].IsWall;
-                //Console.WriteLine($"Tile at coordinates ({x}, {y}) is{(isWall ? "" : " not")} a wall.");
-                return isWall;
+                try
+                {
+
+                    bool isWall = Tiles[key].IsWall;
+                    //Console.WriteLine($"Tile at coordinates ({x}, {y}) is{(isWall ? "" : " not")} a wall.");
+                    return isWall;
+                }
+                catch (Exception ex) // Temporarily catch all exceptions to diagnose the issue
+                {
+                    Console.WriteLine($"Exception caught for key {key}. Exception type: {ex.GetType()}. Message: {ex.Message}");
+                    throw; // Rethrow to preserve the stack trace
+                }
             }
             else
             {
-                //Console.WriteLine($"Coordinates ({x}, {y}) are outside the map boundaries.");
+                Console.WriteLine($"Coordinates ({x}, {y}) are outside the map boundaries.");
                 return false;
             }
         }

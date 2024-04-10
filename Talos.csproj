@@ -57,9 +57,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AStar\Pathfinder.cs" />
-    <Compile Include="AStar\Pathfinder2.cs" />
-    <Compile Include="AStar\Pathfinding.cs" />
-    <Compile Include="AStar\Pathnode.cs" />
     <Compile Include="Base\BotBase.cs" />
     <Compile Include="Base\Client.cs" />
     <Compile Include="Base\Program.cs" />

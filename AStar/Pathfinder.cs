@@ -47,7 +47,7 @@ namespace Talos.AStar
         {
             if (initializeBlockedNodes)
             {
-                Console.WriteLine("Initializing path nodes...");
+                //Console.WriteLine("Initializing path nodes...");
                 _pathNodes = new PathNode[_mapWidth, _mapHeight];
                 for (short x = 0; x < _mapWidth; x++)
                 {
@@ -59,9 +59,9 @@ namespace Talos.AStar
                         };
                     }
                 }
-                Console.WriteLine("Path nodes initialization complete.");
+                //Console.WriteLine("Path nodes initialization complete.");
 
-                Console.WriteLine("Initializing neighbors.");
+                //Console.WriteLine("Initializing neighbors.");
                 for (short x = 0; x < _mapWidth; x++)
                 {
                     for (short y = 0; y < _mapHeight; y++)
@@ -86,25 +86,25 @@ namespace Talos.AStar
                         }
                     }
                 }
-                Console.WriteLine("Neighbors initialization complete.");
+                //Console.WriteLine("Neighbors initialization complete.");
             
         }
-            Console.WriteLine("Collecting obstacles...");
+            //Console.WriteLine("Collecting obstacles...");
             List<Location> obstacles = new List<Location>(from creature in _client.GetWorldObjects().OfType<Creature>()
                                                           where (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && creature != _client.Player
                                                           select creature.Location);
-            Console.WriteLine("Obstacles from world objects:");
+            //Console.WriteLine("Obstacles from world objects:");
             foreach (var obstacle in obstacles)
             {
-                Console.WriteLine($"- {obstacle}");
+                //Console.WriteLine($"- {obstacle}");
             }
 
-            Console.WriteLine("Obstacles from special locations:");
+            //Console.WriteLine("Obstacles from special locations:");
             if (_specialLocations.TryGetValue(_map.MapID, out Location[] specialObstacles))
             {
                 foreach (var obstacle in specialObstacles)
                 {
-                    Console.WriteLine($"- {obstacle}");
+                    //Console.WriteLine($"- {obstacle}");
                     if (!obstacles.Contains(obstacle))
                     {
                         obstacles.Add(obstacle);
@@ -114,11 +114,11 @@ namespace Talos.AStar
 
             if (includeExits)
             {
-                Console.WriteLine("Obstacles from exits:");
+                //Console.WriteLine("Obstacles from exits:");
 
                 foreach (Location location2 in _client.GetExitLocations(location))
                 {
-                    Console.WriteLine($"- {location2}");
+                    //Console.WriteLine($"- {location2}");
                     if (!obstacles.Contains(location2))
                     {
                         obstacles.Add(location2);
@@ -126,12 +126,12 @@ namespace Talos.AStar
                 }
             }
 
-            Console.WriteLine("Obstacles from creature coverage:");
+            //Console.WriteLine("Obstacles from creature coverage:");
             foreach (Creature creature in _client.GetCreaturesInRange(12, CONSTANTS.GREEN_BOROS.ToArray()))
             {
                 foreach (Location loc in _client.GetCreatureCoverage(creature))
                 {
-                    Console.WriteLine($"- {loc}");
+                    //Console.WriteLine($"- {loc}");
                     if (!obstacles.Contains(loc))
                     {
                         obstacles.Add(loc);
@@ -139,8 +139,8 @@ namespace Talos.AStar
                 }
             }
 
-            Console.WriteLine("Obstacles collection complete.");
-            Console.WriteLine("Resetting path nodes properties...");
+            //Console.WriteLine("Obstacles collection complete.");
+            //Console.WriteLine("Resetting path nodes properties...");
             for (short x = 0; x < _mapWidth; x++)
             {
                 for (short y = 0; y < _mapHeight; y++)
@@ -154,7 +154,7 @@ namespace Talos.AStar
                     currentNode.FCost = 0f;
                 }
             }
-            Console.WriteLine("Setting obstacles...");
+            //Console.WriteLine("Setting obstacles...");
             foreach (Location obstacle in obstacles)
             {
                 _pathNodes[obstacle.X, obstacle.Y].IsOpen = true;
@@ -182,13 +182,13 @@ namespace Talos.AStar
 
         internal Stack<Location> FindPath(Location start, Location end, bool ignoreObstacles = true, short threshold = 1)
         {
-            Console.WriteLine("Initializing path nodes...");
+            //Console.WriteLine("Initializing path nodes...");
             InitializePathNodes(false, end, ignoreObstacles);
-            Console.WriteLine("Path nodes initialization complete.");
+            //Console.WriteLine("Path nodes initialization complete.");
 
             if (Location.Equals(start, end))
             {
-                Console.WriteLine("Start and end locations are the same. Returning empty path.");
+                //Console.WriteLine("Start and end locations are the same. Returning empty path.");
                 return new Stack<Location>();
             }
 
@@ -197,7 +197,7 @@ namespace Talos.AStar
 
             if (startNode.IsOpen && endNode.IsOpen && startNode != null && endNode != null)
             {
-                Console.WriteLine("Start and end nodes are open and not null. Proceeding with pathfinding.");
+                //Console.WriteLine("Start and end nodes are open and not null. Proceeding with pathfinding.");
 
                 startNode.IsInOpenSet = true;
                 startNode.GCost = start.DistanceFrom(end);
@@ -208,19 +208,19 @@ namespace Talos.AStar
                 {
                     if (_openNodes.Count > 0)
                     {
-                        Console.WriteLine("Nodes in open set. Proceeding with pathfinding loop.");
+                        //Console.WriteLine("Nodes in open set. Proceeding with pathfinding loop.");
 
                         PathNode currentNode = GetNextNode();
 
                         if (currentNode == null)
                         {
-                            Console.WriteLine("Current node is null. Exiting pathfinding loop.");
+                            //Console.WriteLine("Current node is null. Exiting pathfinding loop.");
                             break;
                         }
 
                         if (currentNode != endNode)
                         {
-                            Console.WriteLine("Current node is not the end node. Exploring neighbors.");
+                            //Console.WriteLine("Current node is not the end node. Exploring neighbors.");
 
                             PathNode[] adjacentNodes = currentNode.Neighbors;
 
@@ -253,7 +253,7 @@ namespace Talos.AStar
                             continue;
                         }
 
-                        Console.WriteLine("End node reached. Constructing path.");
+                        //Console.WriteLine("End node reached. Constructing path.");
 
                         Stack<Location> path = new Stack<Location>();
 
@@ -265,28 +265,23 @@ namespace Talos.AStar
                             }
                             currentNode = currentNode.ParentNode;
                         }
-                        Console.WriteLine($"Returning path: {path}");
+                        //Console.WriteLine($"Returning path: {path}");
                         return path;
                     }
 
-                    Console.WriteLine("No nodes in open set. Exiting pathfinding loop.");
+                    //Console.WriteLine("No nodes in open set. Exiting pathfinding loop.");
                     return new Stack<Location>();
                 }
 
-                Console.WriteLine("Requesting refresh from client.");
+                //Console.WriteLine("Requesting refresh from client.");
                 _client.RequestRefresh();
                 return new Stack<Location>();
             }
 
-            Console.WriteLine("Start or end node is closed or null. Returning empty path.");
+            //Console.WriteLine("Start or end node is closed or null. Returning empty path.");
             return new Stack<Location>();
         }
 
-
-
-
-
-        [CompilerGenerated]
         private bool FilterCreature(Creature creature)
         {
             if (creature.Type != CreatureType.Aisling && creature.Type != CreatureType.Merchant && creature.Type != CreatureType.Normal)
@@ -299,53 +294,14 @@ namespace Talos.AStar
 
     internal sealed class PathNode
     {
-        internal Location Location
-        {
-            get;
-            private set;
-        }
-
-        internal bool IsOpen
-        {
-            get;
-            set;
-        }
-
-        internal PathNode[] Neighbors
-        {
-            get;
-            private set;
-        }
-
-        internal PathNode ParentNode
-        {
-            get;
-            set;
-        }
-
-        internal bool IsVisited
-        {
-            get;
-            set;
-        }
-
-        internal bool IsInOpenSet
-        {
-            get;
-            set;
-        }
-
-        internal float GCost
-        {
-            get;
-            set;
-        }
-
-        internal float FCost
-        {
-            get;
-            set;
-        }
+        internal Location Location { get; private set; }
+        internal bool IsOpen { get; set; }
+        internal PathNode[] Neighbors { get; private set; }
+        internal PathNode ParentNode { get; set; }
+        internal bool IsVisited { get; set; }
+        internal bool IsInOpenSet { get; set; }
+        internal float GCost { get; set; }
+        internal float FCost { get; set; }
 
         internal PathNode(short mapID, short x, short y)
         {

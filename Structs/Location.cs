@@ -59,6 +59,27 @@ namespace Talos.Structs
             return result;
         }
 
+        internal Direction GetDirection(Location loc)
+        {
+            if (Y >= loc.Y)
+            {
+                if (X <= loc.X)
+                {
+                    if (Y <= loc.Y)
+                    {
+                        if (X >= loc.X)
+                        {
+                            return Direction.Invalid;
+                        }
+                        return Direction.West;
+                    }
+                    return Direction.South;
+                }
+                return Direction.East;
+            }
+            return Direction.North;
+        }
+
         internal int DistanceFrom(Location other)
         {
             if (MapID != other.MapID)
@@ -161,10 +182,5 @@ namespace Talos.Structs
             return true;
         }
 
-        internal int DistanceFrom(PathNode2 node)
-        {
-            //check the distance from location to node
-            return Math.Abs(X - node.X) + Math.Abs(Y - node.Y);
-        }
     }
 }
