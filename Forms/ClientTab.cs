@@ -23,6 +23,7 @@ using Talos.Capricorn.Drawing;
 using Talos.Capricorn.IO;
 using Talos.Properties;
 using Talos.PInvoke;
+using System.Threading.Tasks;
 
 namespace Talos.Forms
 {
@@ -970,12 +971,28 @@ namespace Talos.Forms
             if (textBox6 != null && textBox5 != null && textBox4 != null)
             {
                 Location targetLocation = new Location(textMap, new Structs.Point(textX, testY));
-                while (!(_client._clientLocation.Equals(targetLocation)))
+                // Start the walking process on a new thread
+                Task.Run(() =>
                 {
-                    //_client.WalkToLocation(targetLocation);
-                    //_client.TryWalkToLocation(_client.Pathfinder, targetLocation, 0);
-                    _client.TryWalkToLocation(targetLocation, 0, true);
-                }
+                    while (!(_client._clientLocation.Equals(targetLocation)))
+                    {
+                        // Safely update the UI or check conditions that involve UI elements
+                        bool shouldContinue = true;
+                        this.Invoke((MethodInvoker)delegate
+                        {
+                            // Example of checking a condition or updating UI
+                            shouldContinue = !_client._clientLocation.Equals(targetLocation);
+                        });
+
+                        if (!shouldContinue)
+                            break;
+
+                        _client.TryWalkToLocation(targetLocation, 0, true);
+
+                        // Optionally add a small delay to prevent tight looping
+                        Thread.Sleep(100);
+                    }
+                });
 
             }
         }
@@ -985,7 +1002,11 @@ namespace Talos.Forms
             _client.RemoveShield();
         }
 
-
+        private void walkSpeedSldr_Scroll(object sender, EventArgs e)
+        {
+            walkSpeedLbl.Text = (sender as TrackBar).Value.ToString();
+            _client._walkSpeed = walkSpeedSldr.Value;
+        }
 
         internal void UpdateStrangerListAfterCharge()
         {

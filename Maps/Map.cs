@@ -86,30 +86,29 @@ namespace Talos.Maps
 
         internal bool IsTileWall(short x, short y)
         {
-            //Console.WriteLine($"Checking coordinates: ({x}, {y})");
-
+            //Console.WriteLine($"Checking tile at coordinates: ({x}, {y})");
             if (x >= 0 && y >= 0 && x < Width && y < Height)
             {
                 Point key = new Point(x, y);
-                try
+                if (Tiles.TryGetValue(key, out Tile tile))
                 {
-
-                    bool isWall = Tiles[key].IsWall;
-                    //Console.WriteLine($"Tile at coordinates ({x}, {y}) is{(isWall ? "" : " not")} a wall.");
+                    bool isWall = tile.IsWall;
+                    //Console.WriteLine($"Tile at ({x}, {y}) is {(isWall ? "a wall" : "not a wall")}");
                     return isWall;
                 }
-                catch (Exception ex) // Temporarily catch all exceptions to diagnose the issue
+                else
                 {
-                    Console.WriteLine($"Exception caught for key {key}. Exception type: {ex.GetType()}. Message: {ex.Message}");
-                    throw; // Rethrow to preserve the stack trace
+                    //Console.WriteLine($"No tile found at ({x}, {y}). Assuming open.");
+                    return false;
                 }
             }
             else
             {
-                Console.WriteLine($"Coordinates ({x}, {y}) are outside the map boundaries.");
-                return false;
+                //Console.WriteLine($"Coordinates ({x}, {y}) are outside the map boundaries. Assuming blocked.");
+                return true;  // If outside bounds, consider it blocked for safety.
             }
         }
+
 
 
         internal bool IsLocationOpenForInteraction(Client client, Location location)

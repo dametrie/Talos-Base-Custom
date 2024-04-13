@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AStar\Pathfinder.cs" />
+    <Compile Include="AStar\PriorityQueue.cs" />
     <Compile Include="Base\BotBase.cs" />
     <Compile Include="Base\Client.cs" />
     <Compile Include="Base\Program.cs" />

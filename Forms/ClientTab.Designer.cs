@@ -2075,6 +2075,7 @@ namespace Talos.Forms
             this.walkSpeedSldr.TickFrequency = 200;
             this.walkSpeedSldr.TickStyle = System.Windows.Forms.TickStyle.Both;
             this.walkSpeedSldr.Value = 420;
+            this.walkSpeedSldr.Scroll += new System.EventHandler(this.walkSpeedSldr_Scroll);
             // 
             // walkAllClientsBtn
             // 

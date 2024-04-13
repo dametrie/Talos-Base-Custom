@@ -1,26 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Generic;
+using System;
+using Talos.AStar;
 using Talos.Base;
-using Talos.Definitions;
-using Talos.Enumerations;
 using Talos.Maps;
-using Talos.Objects;
 using Talos.Structs;
+using System.Linq;
+using Talos.Enumerations;
+using Talos.Objects;
+using Talos.Definitions;
 
-namespace Talos.AStar
+internal class Pathfinder
 {
-    internal class Pathfinder
-    {
-        private PathNode[,] _pathNodes;
-        private readonly byte _mapWidth;
-        private readonly byte _mapHeight;
-        private List<PathNode> _openNodes;
-        private Map _map;
-        private Client _client;
+    private PathNode[,] _pathNodes;
+    private readonly byte _mapWidth;
+    private readonly byte _mapHeight;
+    private PriorityQueue<PathNode> _openNodes;
+    private Map _map;
+    private Client _client;
 
-        internal static Dictionary<short, Location[]> _specialLocations = new Dictionary<short, Location[]>
+    internal static Dictionary<short, Location[]> _specialLocations = new Dictionary<short, Location[]>
         {
             {
                 3058, // Pravat Deep
@@ -30,283 +28,209 @@ namespace Talos.AStar
             }
         };
 
-        internal Pathfinder(Client client)
+    internal Pathfinder(Client client)
+    {
+        _client = client;
+        _map = client._map;
+        _mapWidth = _map.Width;
+        _mapHeight = _map.Height;
+        _openNodes = new PriorityQueue<PathNode>((int)QueuePriorityEnum.High + 1);
+        InitializePathNodes(true);
+    }
+
+    internal void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool includeExits = true)
+    {
+        if (initializeBlockedNodes)
         {
-            _client = client;
-            _map = client._map;
-            _mapWidth = _map.Width;
-            _mapHeight = _map.Height;
-            _openNodes = new List<PathNode>();
-            InitializePathNodes(true);
-        }
-        public bool IsLocationBlocked(Location loc)
-        {
-            return !_pathNodes[loc.Point.X, loc.Point.Y].IsOpen;
-        }
-        private void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool includeExits = true)
-        {
-            if (initializeBlockedNodes)
-            {
-                //Console.WriteLine("Initializing path nodes...");
-                _pathNodes = new PathNode[_mapWidth, _mapHeight];
-                for (short x = 0; x < _mapWidth; x++)
-                {
-                    for (short y = 0; y < _mapHeight; y++)
-                    {
-                        _pathNodes[x, y] = new PathNode(_map.MapID, x, y)
-                        {
-                            IsOpen = !_map.IsTileWall(x, y)
-                        };
-                    }
-                }
-                //Console.WriteLine("Path nodes initialization complete.");
+            _pathNodes = new PathNode[_mapWidth, _mapHeight];
 
-                //Console.WriteLine("Initializing neighbors.");
-                for (short x = 0; x < _mapWidth; x++)
-                {
-                    for (short y = 0; y < _mapHeight; y++)
-                    {
-                        PathNode currentNode = _pathNodes[x, y];
-                        Location currentLocation = currentNode.Location;
-                        if (currentLocation.Y > 0)
-                        {
-                            currentNode.Neighbors[0] = _pathNodes[currentLocation.X, currentLocation.Y - 1];
-                        }
-                        if (currentLocation.X < _mapWidth - 1)
-                        {
-                            currentNode.Neighbors[1] = _pathNodes[currentLocation.X + 1, currentLocation.Y];
-                        }
-                        if (currentLocation.Y < _mapHeight - 1)
-                        {
-                            currentNode.Neighbors[2] = _pathNodes[currentLocation.X, currentLocation.Y + 1];
-                        }
-                        if (currentLocation.X > 0)
-                        {
-                            currentNode.Neighbors[3] = _pathNodes[currentLocation.X - 1, currentLocation.Y];
-                        }
-                    }
-                }
-                //Console.WriteLine("Neighbors initialization complete.");
-            
-        }
-            //Console.WriteLine("Collecting obstacles...");
-            List<Location> obstacles = new List<Location>(from creature in _client.GetWorldObjects().OfType<Creature>()
-                                                          where (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && creature != _client.Player
-                                                          select creature.Location);
-            //Console.WriteLine("Obstacles from world objects:");
-            foreach (var obstacle in obstacles)
+            // Initialize all path nodes with wall data
+            for (short x = 0; x < _mapWidth; x++)
             {
-                //Console.WriteLine($"- {obstacle}");
-            }
-
-            //Console.WriteLine("Obstacles from special locations:");
-            if (_specialLocations.TryGetValue(_map.MapID, out Location[] specialObstacles))
-            {
-                foreach (var obstacle in specialObstacles)
+                for (short y = 0; y < _mapHeight; y++)
                 {
-                    //Console.WriteLine($"- {obstacle}");
-                    if (!obstacles.Contains(obstacle))
+                    bool isWall = _map.IsTileWall(x, y);
+                    _pathNodes[x, y] = new PathNode(_map.MapID, x, y)
                     {
-                        obstacles.Add(obstacle);
-                    }
+                        IsOpen = !isWall
+                    };
+                    //Console.WriteLine($"Node at ({x},{y}) initialized as " + (isWall ? "Wall" : "Open"));
                 }
             }
 
-            if (includeExits)
-            {
-                //Console.WriteLine("Obstacles from exits:");
-
-                foreach (Location location2 in _client.GetExitLocations(location))
-                {
-                    //Console.WriteLine($"- {location2}");
-                    if (!obstacles.Contains(location2))
-                    {
-                        obstacles.Add(location2);
-                    }
-                }
-            }
-
-            //Console.WriteLine("Obstacles from creature coverage:");
-            foreach (Creature creature in _client.GetCreaturesInRange(12, CONSTANTS.GREEN_BOROS.ToArray()))
-            {
-                foreach (Location loc in _client.GetCreatureCoverage(creature))
-                {
-                    //Console.WriteLine($"- {loc}");
-                    if (!obstacles.Contains(loc))
-                    {
-                        obstacles.Add(loc);
-                    }
-                }
-            }
-
-            //Console.WriteLine("Obstacles collection complete.");
-            //Console.WriteLine("Resetting path nodes properties...");
+            // Setting neighbors for each node
             for (short x = 0; x < _mapWidth; x++)
             {
                 for (short y = 0; y < _mapHeight; y++)
                 {
                     PathNode currentNode = _pathNodes[x, y];
-                    currentNode.IsOpen = !_map.IsLocationWall(_pathNodes[x, y].Location);
-                    //Console.WriteLine($"- {currentNode.Location} is open: {currentNode.IsOpen}");
-                    currentNode.IsVisited = false;
-                    currentNode.IsInOpenSet = false;
-                    currentNode.GCost = 0f;
-                    currentNode.FCost = 0f;
+                    if (y > 0) currentNode.Neighbors[0] = _pathNodes[x, y - 1]; // Up
+                    if (x < _mapWidth - 1) currentNode.Neighbors[1] = _pathNodes[x + 1, y]; // Right
+                    if (y < _mapHeight - 1) currentNode.Neighbors[2] = _pathNodes[x, y + 1]; // Down
+                    if (x > 0) currentNode.Neighbors[3] = _pathNodes[x - 1, y]; // Left
                 }
             }
-            //Console.WriteLine("Setting obstacles...");
-            foreach (Location obstacle in obstacles)
-            {
-                _pathNodes[obstacle.X, obstacle.Y].IsOpen = true;
-            }
-            //Console.WriteLine("Clearing open nodes list...");
-            _openNodes.Clear();
         }
 
+        // Handling dynamic obstacles
+        List<Location> obstacles = (from creature in _client.GetWorldObjects().OfType<Creature>()
+                                    where creature != _client.Player && (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal)
+                                    select creature.Location).ToList();
 
-
-        private PathNode GetNextNode()
-        {
-            PathNode result = null;
-            float minCost = float.MaxValue;
-            foreach (PathNode node in _openNodes)
+        if (_specialLocations.TryGetValue(_map.MapID, out Location[] specialObstacles))
             {
-                if (node != null && node.FCost < minCost)
+            foreach (var obstacle in specialObstacles)
+            {
+                //Console.WriteLine($"- {obstacle}");
+                if (!obstacles.Contains(obstacle))
                 {
-                    result = node;
-                    minCost = node.FCost;
+                    obstacles.Add(obstacle);
                 }
             }
-            return result;
         }
 
-        internal Stack<Location> FindPath(Location start, Location end, bool ignoreObstacles = true, short threshold = 1)
+        if (includeExits)
         {
-            //Console.WriteLine("Initializing path nodes...");
-            InitializePathNodes(false, end, ignoreObstacles);
-            //Console.WriteLine("Path nodes initialization complete.");
+            //Console.WriteLine("Obstacles from exits:");
+            obstacles.AddRange(_client.GetExitLocations(location));
+        }
 
-            if (Location.Equals(start, end))
+        //Console.WriteLine("Obstacles from creature coverage:");
+        foreach (Creature creature in _client.GetCreaturesInRange(12, CONSTANTS.GREEN_BOROS.ToArray()))
+        {
+            foreach (Location loc in _client.GetCreatureCoverage(creature))
             {
-                //Console.WriteLine("Start and end locations are the same. Returning empty path.");
-                return new Stack<Location>();
-            }
-
-            PathNode startNode = _pathNodes[start.X, start.Y];
-            PathNode endNode = _pathNodes[end.X, end.Y];
-
-            if (startNode.IsOpen && endNode.IsOpen && startNode != null && endNode != null)
-            {
-                //Console.WriteLine("Start and end nodes are open and not null. Proceeding with pathfinding.");
-
-                startNode.IsInOpenSet = true;
-                startNode.GCost = start.DistanceFrom(end);
-                startNode.FCost = 0f;
-                _openNodes.Add(startNode);
-
-                while (true)
+                //Console.WriteLine($"- {loc}");
+                if (!obstacles.Contains(loc))
                 {
-                    if (_openNodes.Count > 0)
-                    {
-                        //Console.WriteLine("Nodes in open set. Proceeding with pathfinding loop.");
-
-                        PathNode currentNode = GetNextNode();
-
-                        if (currentNode == null)
-                        {
-                            //Console.WriteLine("Current node is null. Exiting pathfinding loop.");
-                            break;
-                        }
-
-                        if (currentNode != endNode)
-                        {
-                            //Console.WriteLine("Current node is not the end node. Exploring neighbors.");
-
-                            PathNode[] adjacentNodes = currentNode.Neighbors;
-
-                            foreach (PathNode nextNode in adjacentNodes)
-                            {
-                                if (nextNode != null && !nextNode.IsVisited && (nextNode == endNode || nextNode.IsOpen))
-                                {
-                                    float newGCost = currentNode.GCost + 1f;
-                                    float newFCost = newGCost + nextNode.Location.DistanceFrom(end);
-
-                                    if (!nextNode.IsInOpenSet)
-                                    {
-                                        nextNode.GCost = newGCost;
-                                        nextNode.FCost = newFCost;
-                                        nextNode.ParentNode = currentNode;
-                                        nextNode.IsInOpenSet = true;
-                                        _openNodes.Add(nextNode);
-                                    }
-                                    else if (nextNode.GCost > newGCost)
-                                    {
-                                        nextNode.GCost = newGCost;
-                                        nextNode.FCost = newFCost;
-                                        nextNode.ParentNode = currentNode;
-                                    }
-                                }
-                            }
-                            _openNodes.Remove(currentNode);
-                            currentNode.IsVisited = true;
-                            currentNode.IsInOpenSet = false;
-                            continue;
-                        }
-
-                        //Console.WriteLine("End node reached. Constructing path.");
-
-                        Stack<Location> path = new Stack<Location>();
-
-                        while (currentNode != startNode)
-                        {
-                            if (currentNode.Location.DistanceFrom(end) >= threshold)
-                            {
-                                path.Push(currentNode.Location);
-                            }
-                            currentNode = currentNode.ParentNode;
-                        }
-                        //Console.WriteLine($"Returning path: {path}");
-                        return path;
-                    }
-
-                    //Console.WriteLine("No nodes in open set. Exiting pathfinding loop.");
-                    return new Stack<Location>();
+                    obstacles.Add(loc);
                 }
-
-                //Console.WriteLine("Requesting refresh from client.");
-                _client.RequestRefresh();
-                return new Stack<Location>();
             }
+        }
 
-            //Console.WriteLine("Start or end node is closed or null. Returning empty path.");
+        // Reevaluating each node after obstacle collection
+        for (short x = 0; x < _mapWidth; x++)
+        {
+            for (short y = 0; y < _mapHeight; y++)
+            {
+                PathNode currentNode = _pathNodes[x, y];
+                currentNode.IsOpen = !_map.IsTileWall(x, y) && !obstacles.Contains(new Location(_map.MapID, x, y));
+                currentNode.IsVisited = false;
+                currentNode.IsInOpenSet = false;
+                currentNode.GCost = 0;
+                currentNode.FCost = 0;
+            }
+        }
+    }
+
+    private float CalculateHeuristic(Location a, Location b)
+    {
+        // Manhattan distance
+        return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
+    }
+
+    internal Stack<Location> FindPath(Location start, Location end, bool ignoreObstacles = true)
+    {
+        Console.WriteLine($"Starting pathfinding from {start} to {end}.");
+
+        if (!_pathNodes[start.X, start.Y].IsOpen || !_pathNodes[end.X, end.Y].IsOpen)
+        {
+            //Console.WriteLine("Start or end location is blocked.");
             return new Stack<Location>();
         }
 
-        private bool FilterCreature(Creature creature)
+        PathNode startNode = _pathNodes[start.X, start.Y];
+        PathNode endNode = _pathNodes[end.X, end.Y];
+        startNode.GCost = 0;
+        startNode.FCost = CalculateHeuristic(startNode.Location, endNode.Location);
+        _openNodes.Enqueue(QueuePriorityEnum.High, startNode);
+
+        while (_openNodes.Count > 0)
         {
-            if (creature.Type != CreatureType.Aisling && creature.Type != CreatureType.Merchant && creature.Type != CreatureType.Normal)
+            PathNode currentNode = _openNodes.Dequeue();
+            //Console.WriteLine($"Processing node at {currentNode.Location}, FCost: {currentNode.FCost}");
+
+            if (currentNode == endNode)
             {
-                return false;
+                //Console.WriteLine("Reached destination, constructing path.");
+                return ConstructPath(currentNode);
             }
-            return creature != _client.Player;
+
+            //Console.WriteLine($"Processing node at {currentNode.Location}, Neighbors: {currentNode.Neighbors.Length}");
+            foreach (var neighbor in currentNode.Neighbors)
+            {
+                if (neighbor == null)
+                {
+                    //Console.WriteLine($"Skipped neighbor at {neighbor?.Location} - null.");
+                    continue;
+                }
+
+                if (!neighbor.IsOpen)
+                {
+                    //Console.WriteLine($"Skipped neighbor at {neighbor?.Location} - not open.");
+                    continue;
+                }
+
+
+                if (neighbor.IsVisited)
+                {
+                    //Console.WriteLine($"Skipped neighbor at {neighbor.Location} - Already visited.");
+                    continue;
+                }
+
+                //Console.WriteLine($"Neighbor at {neighbor.Location} is open and will be evaluated.");
+
+                float tentativeGCost = currentNode.GCost + 1;  // Adjust cost calculation if necessary
+                if (!neighbor.IsInOpenSet || tentativeGCost < neighbor.GCost)
+                {
+                    neighbor.ParentNode = currentNode;
+                    neighbor.GCost = tentativeGCost;
+                    neighbor.FCost = tentativeGCost + CalculateHeuristic(neighbor.Location, end);
+
+                    if (!neighbor.IsInOpenSet)
+                    {
+                        _openNodes.Enqueue(QueuePriorityEnum.High, neighbor);
+                        neighbor.IsInOpenSet = true;
+                        //Console.WriteLine($"Enqueued neighbor at {neighbor.Location} with GCost: {tentativeGCost}, FCost: {neighbor.FCost}");
+                    }
+                }
+            }
+            currentNode.IsVisited = true;
         }
+
+        Console.WriteLine("Failed to find a path.");
+        return new Stack<Location>(); // No path found
     }
 
-    internal sealed class PathNode
-    {
-        internal Location Location { get; private set; }
-        internal bool IsOpen { get; set; }
-        internal PathNode[] Neighbors { get; private set; }
-        internal PathNode ParentNode { get; set; }
-        internal bool IsVisited { get; set; }
-        internal bool IsInOpenSet { get; set; }
-        internal float GCost { get; set; }
-        internal float FCost { get; set; }
 
-        internal PathNode(short mapID, short x, short y)
+    private Stack<Location> ConstructPath(PathNode node)
+    {
+        Stack<Location> path = new Stack<Location>();
+        while (node != null)
         {
-            Location = new Location(mapID, x, y);
-            Neighbors = new PathNode[4];
+            Console.WriteLine($"Traceback - Current Node: {node.Location}, Parent Node: {node.ParentNode?.Location}");
+            path.Push(node.Location);
+            node = node.ParentNode;
         }
+        return path;
     }
 }
+
+internal sealed class PathNode
+{
+    public Location Location { get; }
+    public bool IsOpen { get; set; }
+    public PathNode[] Neighbors { get; set; }
+    public PathNode ParentNode { get; set; }
+    public bool IsVisited { get; set; }
+    public bool IsInOpenSet { get; set; }
+    public float GCost { get; set; } = float.MaxValue; // Set high default cost
+    public float FCost { get; set; } = float.MaxValue;
+
+    public PathNode(short mapID, short x, short y)
+    {
+        Location = new Location(mapID, x, y);
+        Neighbors = new PathNode[4];
+    }
+}
+
