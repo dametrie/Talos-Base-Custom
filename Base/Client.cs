@@ -136,6 +136,7 @@ namespace Talos.Base
         internal System.Windows.Forms.Timer _spellTimer;
         internal Stack<Location> pathStack = new Stack<Location>();
         internal Pathfinder Pathfinder { get; set; }
+        internal RouteFinder RouteFinder { get; set; }
 
         internal Location lastDestination;
 
@@ -379,6 +380,7 @@ namespace Talos.Base
                 Interval = 1000
             };
             _spellTimer.Tick += SpellTimerTick;
+            RouteFinder = new RouteFinder(_server, this);
             Stats = new Statistics();
             Bot = new Bot(this, server);
         }
@@ -2497,32 +2499,6 @@ namespace Talos.Base
 
             return creatureList;
         }
-
-        private void ChangeMap(short targetMapID, Location targetLocation)
-        {
-            if (targetMapID != _clientLocation.MapID)
-            {
-                // We are on a different map, find the corresponding exit
-                Map currentMap = _server._maps[_clientLocation.MapID];
-
-                if (currentMap.Exits.TryGetValue(_clientLocation.Point, out Warp exitWarp))
-                {
-                    // Walk to the exit warp location
-                    //WalkToExitWarp(exitWarp);
-                }
-                else
-                {
-                    // Handle the case where there is no exit warp to the target map
-                    // You might want to implement some fallback logic or handle this case differently
-                    Console.WriteLine($"No exit warp found from MapID {_clientLocation.MapID} at Point {_clientLocation.Point} to {targetMapID}");
-                }
-            }
-
-            // Update the player's location to the target location
-            _clientLocation = targetLocation;
-        }
-
-
 
         internal void Turn(Direction direction)
         {

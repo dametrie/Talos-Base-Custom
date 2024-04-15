@@ -35,7 +35,7 @@ namespace Talos.Maps
                 int y = (int)position.Y;
                 binaryWriter3.Write((short)y);
                 binaryWriter1.Write(node.Name);
-                binaryWriter1.Write(node.MapId);
+                binaryWriter1.Write(node.MapID);
             }
             binaryWriter1.Flush();
             byte[] array = output.ToArray();

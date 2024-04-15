@@ -6,9 +6,6 @@ namespace Talos.Maps
 {
     internal class Warp : MapObject
     {
-        internal override short SourceX => SourceX;
-        internal override short SourceY => SourceY;
-        internal override short SourceMapID => SourceMapID;
         internal byte TargetX { get; }
         internal byte TargetY { get; }
         internal short TargetMapID { get; }
@@ -23,6 +20,11 @@ namespace Talos.Maps
             TargetY = targetYbyte;
             SourceMapID = sourceMapID;
             TargetMapID = targetMapID;
+        }
+
+        public override string ToString()
+        {
+            return $"Warp from {SourceMapID}:({SourceX}, {SourceY}) to {TargetMapID}:({TargetX}, {TargetY})";
         }
     }
 }

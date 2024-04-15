@@ -971,28 +971,31 @@ namespace Talos.Forms
             if (textBox6 != null && textBox5 != null && textBox4 != null)
             {
                 Location targetLocation = new Location(textMap, new Structs.Point(textX, testY));
-                // Start the walking process on a new thread
-                Task.Run(() =>
-                {
-                    while (!(_client._clientLocation.Equals(targetLocation)))
-                    {
-                        // Safely update the UI or check conditions that involve UI elements
-                        bool shouldContinue = true;
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            // Example of checking a condition or updating UI
-                            shouldContinue = !_client._clientLocation.Equals(targetLocation);
-                        });
+                _client.RouteFinder.FindRoute(_client._clientLocation, targetLocation);
 
-                        if (!shouldContinue)
-                            break;
+                //// Start the walking process on a new thread
+                //Task.Run(() =>
+                //{
+                //    while (!(_client._clientLocation.Equals(targetLocation)))
+                //    {
+                //        // Safely update the UI or check conditions that involve UI elements
+                //        bool shouldContinue = true;
+                //        this.Invoke((MethodInvoker)delegate
+                //        {
+                //            // Example of checking a condition or updating UI
+                //            shouldContinue = !_client._clientLocation.Equals(targetLocation);
+                //        });
 
-                        _client.TryWalkToLocation(targetLocation, 0, true);
+                //        if (!shouldContinue)
+                //            break;
 
-                        // Optionally add a small delay to prevent tight looping
-                        Thread.Sleep(100);
-                    }
-                });
+                //        _client.TryWalkToLocation(targetLocation, 0, true);
+                //        //_client.RouteFinder.FindRoute(_client._clientLocation, targetLocation);
+
+                //        // Optionally add a small delay to prevent tight looping
+                //        Thread.Sleep(100);
+                //    }
+                //});
 
             }
         }
@@ -2211,6 +2214,25 @@ namespace Talos.Forms
         internal void UpdateClientStatus()
         {
             //Adam
+        }
+
+        private void button2_Click_1(object sender, EventArgs e)
+        {
+            // Iterate through Exits on the current map and print them to the console
+            foreach (KeyValuePair<Structs.Point, Warp> exit in _client._map.Exits)
+            {
+                Structs.Point exitPoint = exit.Key; // The point where the warp exists on the map
+                Warp warp = exit.Value;     // The warp object itself
+                Console.WriteLine($"Exit at {exitPoint}: {warp}");
+            }
+
+            foreach (KeyValuePair<Structs.Point, WorldMap> worldMapLinks in _client._map.WorldMaps)
+            {
+                Structs.Point exitPoint = worldMapLinks.Key;
+                WorldMap worldMap = worldMapLinks.Value;    
+                Console.WriteLine($"World Map Link at {exitPoint}: {worldMap}");
+            }
+
         }
     }
 }

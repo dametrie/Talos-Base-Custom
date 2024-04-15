@@ -89,8 +89,8 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
-            this.manaBar = new Talos.Forms.UI.ResourceBar("manaBar");
-            this.healthBar = new Talos.Forms.UI.ResourceBar("healthBar");
+            this.manaBar = new Talos.Forms.UI.ResourceBar();
+            this.healthBar = new Talos.Forms.UI.ResourceBar();
             this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
@@ -509,6 +509,7 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -6005,6 +6006,7 @@ namespace Talos.Forms
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.button2);
             this.tabPage1.Controls.Add(this.button1);
             this.tabPage1.Controls.Add(this.label13);
             this.tabPage1.Controls.Add(this.label12);
@@ -6330,6 +6332,16 @@ namespace Talos.Forms
             this.currentAction.TabIndex = 6;
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(291, 113);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(97, 23);
+            this.button2.TabIndex = 155;
+            this.button2.Text = "print map exits";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click_1);
             // 
             // ClientTab
             // 
@@ -6996,5 +7008,6 @@ namespace Talos.Forms
         private System.Windows.Forms.Timer bonusCooldownTimer;
         internal Label currentAction;
         private CheckBox deformCbox;
+        private Button button2;
     }
 }

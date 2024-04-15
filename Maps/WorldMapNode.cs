@@ -11,17 +11,17 @@ namespace Talos.Maps
     {
         internal Point Position { get; set; }
         internal string Name { get; set; }  
-        internal short MapId { get; set; }
+        internal short MapID { get; set; }
         
         internal Point Location { get; set; }
 
-        internal Location TargetLocation => new Location(MapId, Location);
+        internal Location TargetLocation => new Location(MapID, Location);
 
         internal WorldMapNode(Point position, string name, short mapId, Point location)
         {
             Position = position;
             Name = name;
-            MapId = mapId;
+            MapID = mapId;
             Location = location;
         }
     }

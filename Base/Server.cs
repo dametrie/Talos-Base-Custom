@@ -7,6 +7,7 @@ using System.Linq;
 using System.Media;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
@@ -2050,7 +2051,7 @@ namespace Talos
         {
             byte num = serverPacket.ReadByte();
             serverPacket.ReadByte();
-            if (num.Equals((byte)2))
+            if (num.Equals(2))
             {
                 serverPacket.ReadUInt16();
                 serverPacket.ReadString8();
@@ -2065,7 +2066,7 @@ namespace Talos
                     serverPacket.ReadString8();
                 }
             }
-            if (num.Equals((byte)3))
+            if (num.Equals(3))
             {
                 serverPacket.ReadUInt16();
                 serverPacket.ReadByte();
@@ -2721,7 +2722,7 @@ namespace Talos
             object[] mapID = new object[] { client._map.MapID };
             string path = Program.WriteMapFiles(Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", mapID);
             FileStream output = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
-            output.Seek((long)((client._map.Width * 6) * num), SeekOrigin.Begin);
+            output.Seek((client._map.Width * 6) * num, SeekOrigin.Begin);
             BinaryWriter writer = new BinaryWriter(output);
             for (short i = 0; i < client._map.Width; i = (short)(i + 1))
             {
@@ -2972,28 +2973,36 @@ namespace Talos
         private bool LoadMapCache()
         {
             BinaryReader binaryReader = new BinaryReader(new MemoryStream(Resources.maps));
-            binaryReader.ReadInt32();
+            int header = binaryReader.ReadInt32();
+            //Console.WriteLine($"Header/version: {header}");
 
             short worldMapCount = binaryReader.ReadInt16();
-            for (int index1 = 0; index1 < (int)worldMapCount; ++index1)
+            //Console.WriteLine($"World maps count: {worldMapCount}");
+            for (int i = 0; i < worldMapCount; i++)
             {
-                WorldMap worldMap = new WorldMap(binaryReader.ReadString(), new WorldMapNode[0]);
-                byte num2 = binaryReader.ReadByte();
-                for (int index2 = 0; index2 < (int)num2; ++index2)
+                string worldMapName = binaryReader.ReadString();
+                WorldMap worldMap = new WorldMap(worldMapName, new WorldMapNode[0]);
+                byte nodeCount = binaryReader.ReadByte();
+                //Console.WriteLine($"World Map '{worldMapName}' with {nodeCount} nodes:");
+
+                for (int index2 = 0; index2 < nodeCount; ++index2)
                 {
-                    short x1 = binaryReader.ReadInt16();
-                    short y1 = binaryReader.ReadInt16();
-                    string name = binaryReader.ReadString();
+                    short sourceX = binaryReader.ReadInt16();
+                    short sourceY = binaryReader.ReadInt16();
+                    string nodeName = binaryReader.ReadString();
                     short mapId = binaryReader.ReadInt16();
-                    byte x2 = binaryReader.ReadByte();
-                    byte y2 = binaryReader.ReadByte();
-                    worldMap.Nodes.Add(new WorldMapNode(new Point(x1, y1), name, mapId, new Point(x2, y2)));
+                    byte targetX = binaryReader.ReadByte();
+                    byte targetY = binaryReader.ReadByte();
+                    worldMap.Nodes.Add(new WorldMapNode(new Point(sourceX, sourceY), nodeName, mapId, new Point(targetX, targetY)));
+                    //Console.WriteLine($" - Node {nodeName} at [{sourceX},{sourceY}] to Map {mapId} at [{targetX},{targetY}]");
                 }
                 _worldMaps[worldMap.GetCRC32()] = worldMap;
             }
 
             short mapCount = binaryReader.ReadInt16();
-            for (int index3 = 0; index3 < (int)mapCount; ++index3)
+            //Console.WriteLine($"Map count: {mapCount}");
+
+            for (int index3 = 0; index3 < mapCount; ++index3)
             {
                 try
                 {
@@ -3003,9 +3012,13 @@ namespace Talos
                     string name = binaryReader.ReadString();
                     byte flags = binaryReader.ReadByte();
                     sbyte music = binaryReader.ReadSByte();
+
                     Map map = new Map(sourceMapId, sizeX, sizeY, flags, name, music);
-                    short num5 = binaryReader.ReadInt16();
-                    for (int index4 = 0; index4 < (int)num5; ++index4)
+                    //Console.WriteLine($"Processing map '{name}' ID {sourceMapId} Size {sizeX}x{sizeY}");
+
+                    short warpCount = binaryReader.ReadInt16();
+                    //Console.WriteLine($" - {warpCount} warps:");
+                    for (int index4 = 0; index4 < warpCount; ++index4)
                     {
                         byte sourceX = binaryReader.ReadByte();
                         byte sourceY = binaryReader.ReadByte();
@@ -3013,21 +3026,32 @@ namespace Talos
                         byte targetX = binaryReader.ReadByte();
                         byte targetY = binaryReader.ReadByte();
                         Warp warp = new Warp(sourceX, sourceY, targetX, targetY, sourceMapId, targetMapId);
-                        map.Exits[new Point((short)sourceX, (short)sourceY)] = warp;
+                        map.Exits[new Point(sourceX, sourceY)] = warp;
+                        //Console.WriteLine($" - Warp from Map {sourceMapId} [{sourceX},{sourceY}] to Map {targetMapId} at [{targetX},{targetY}]");
                     }
-                    byte num8 = binaryReader.ReadByte();
-                    for (int index5 = 0; index5 < (int)num8; ++index5)
+
+                    byte numWorldMaps = binaryReader.ReadByte();
+                    //Console.WriteLine($" - {numWorldMaps} world map links:");
+                    for (int index5 = 0; index5 < numWorldMaps; ++index5)
                     {
                         byte x = binaryReader.ReadByte();
                         byte y = binaryReader.ReadByte();
                         uint key = binaryReader.ReadUInt32();
                         if (_worldMaps.ContainsKey(key))
-                            map.WorldMaps[new Point((short)x, (short)y)] = _worldMaps[key];
+                        {
+                            map.WorldMaps[new Point(x, y)] = _worldMaps[key];
+                            //Console.WriteLine($" - World map link at [{x},{y}] to world map with key {key}");
+                        }
+                        else
+                        {
+                            //Console.WriteLine($" - Failed to find world map with key {key} for position [{x},{y}]");
+                        }
                     }
                     _maps.Add(sourceMapId, map);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    //Console.WriteLine($"Error processing map ID {index3}: {ex.Message}");
                 }
             }
             binaryReader.Close();
