@@ -135,6 +135,8 @@ namespace Talos.Base
         internal Spell _currentSpell;
         internal System.Windows.Forms.Timer _spellTimer;
         internal Stack<Location> pathStack = new Stack<Location>();
+        internal Stack<Location> routeStack = new Stack<Location>();
+        internal Location _routeDestination;
         internal Pathfinder Pathfinder { get; set; }
         internal RouteFinder RouteFinder { get; set; }
 
@@ -497,6 +499,101 @@ namespace Talos.Base
                 }
             }
             return null;
+        }
+
+        internal Creature GetNearyByNPC(string name)
+        {
+            if (Monitor.TryEnter(Server.Lock, 300))
+            {
+                try
+                {
+                    return (!NearbyNPC.ContainsKey(name)) ? null : NearbyNPC[name];
+                }
+                finally
+                {
+                    Monitor.Exit(Server.Lock);
+                }
+            }
+            return null;
+        }
+        internal bool ClickNPCDialog(Creature creature, string dialogText, bool click)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            if (creature != null)
+            {
+                if (!_server.PursuitIDs.Values.Contains(dialogText))
+                {
+                    bool flag = false;
+                    ClickObject(creature.ID);
+                    while (Dialog == null)
+                    {
+                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds > 2.0)
+                        {
+                            if (flag)
+                            {
+                                return false;
+                            }
+                            ClickObject(creature.ID);
+                            flag = true;
+                        }
+                        Thread.Sleep(10);
+                    }
+                    Dialog.Reply();
+                }
+                utcNow = DateTime.UtcNow;
+                Dialog = null;
+                RequestDialog(1, creature.ID, _server.PursuitIDs.FirstOrDefault((KeyValuePair<ushort, string> keyValuePair_0) => keyValuePair_0.Value == dialogText).Key);
+                if (click)
+                {
+                    while (Dialog == null)
+                    {
+                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
+                        {
+                            Thread.Sleep(10);
+                            continue;
+                        }
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        internal bool WaitForDialog()
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            while (true)
+            {
+                if (Dialog == null)
+                {
+                    if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 3.0))
+                    {
+                        break;
+                    }
+                    Thread.Sleep(10);
+                    continue;
+                }
+                return true;
+            }
+            return false;
+        }
+        internal void RequestDialog(byte objType, int objID, ushort pursuitID, params object[] args)
+        {
+            ClientPacket cp = new ClientPacket(57);
+            cp.WriteByte(objType);
+            cp.WriteInt32(objID);
+            cp.WriteUInt16(pursuitID);
+            cp.WriteArray(args);
+            Enqueue(cp);
+        }
+
+        internal void PublicChat(byte type, string message)
+        {
+            ClientPacket clientPacket = new ClientPacket(14);
+            clientPacket.WriteByte(type);
+            clientPacket.WriteString8(message);
+            Enqueue(clientPacket);
         }
 
 
@@ -2161,6 +2258,7 @@ namespace Talos.Base
 
         private static int walkCallCount = 0;
         private static DateTime lastWalkTime = DateTime.MinValue;
+        private DateTime dateTime_1;
 
         internal void Walk(Direction dir)
         {
@@ -2239,10 +2337,10 @@ namespace Talos.Base
         internal bool TryWalkToLocation(Location destination, short followDistance = 1, bool lockRequired = true, bool ignoreObstacles = true)
         {
             if ((DateTime.UtcNow - LastMoved).TotalMilliseconds < _walkSpeed)
-{
-    Console.WriteLine("Walk throttled due to timing.");
-    return false;
-}
+            {
+                Console.WriteLine("Walk throttled due to timing.");
+                return false;
+            }
 
             //Console.WriteLine($"Current location of client: {_clientLocation}"); // Debugging: Log current client location
             //Console.WriteLine($"Current location of client according to server: {_serverLocation}"); // Debugging: Log current server location
@@ -2434,6 +2532,379 @@ namespace Talos.Base
             return !HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending");
         }
 
+        internal bool RouteFind(Location destination, short followDistance = 0, bool bool_57 = false, bool lockRequired = true, bool ignoreObstacles = true)
+        {
+            try
+            {
+                Console.WriteLine($"***Starting RouteFind to {destination}");
+                if (_server._stopWalking)
+                {
+                    Console.WriteLine("***Walking stopped by server.");
+                    return false;
+                }
+
+                Location currentLocation = new Location(_map.MapID, _clientLocation.X, _clientLocation.Y);
+                Console.WriteLine($"***Current location: {currentLocation}");
+
+                if (Location.Equals(currentLocation, destination))
+                {
+                    if (Location.Equals(destination, new Location(395, 6, 6))) //Path Temple 1
+                    {
+                        //Bot.bool_36 = true;
+                    }
+                    else if (Location.Equals(destination, new Location(344, 6, 6))) //Path Temple 6
+                    {
+                        //Bot.bool_37 = true;
+                    }
+                    Console.WriteLine("***Already at destination.");
+                    routeStack.Clear();
+                    return false;
+                }
+
+                if (routeStack.Count == 1 && destination.MapID == _map.MapID && bool_57)
+                {
+                    routeStack.Clear();
+                    return false;
+                }
+
+                if (Location.NotEquals(_routeDestination, destination) || routeStack.Count == 0)
+                {
+                    Console.WriteLine("***Finding new route.");
+                    _routeDestination = destination;
+                    routeStack = RouteFinder.FindRoute(currentLocation, destination);
+                }
+
+                if (_map.Name.Contains("***Plamit"))
+                {
+                    routeStack = RouteFinder.FindRoute(currentLocation, destination);
+                }
+
+                if (routeStack.Count == 0)
+                {
+                    Console.WriteLine("***Route not found, initializing new RouteFinder.");
+                    RouteFinder = new RouteFinder(_server, this);
+                    _routeDestination = destination;
+                    dateTime_1 = DateTime.MinValue;
+                    routeStack = RouteFinder.FindRoute(currentLocation, destination);
+                    return false;
+                }
+
+                Location nextLocation = routeStack.Peek();
+                
+                if (routeStack.Count != 1)
+                {
+                    Console.WriteLine("***routeStack.Count != 1");
+                    followDistance = 0;
+                }
+                
+                if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
+                {
+                    Console.WriteLine("***routeStack.Count > 1 & nextLocaiton = _serverLocation");
+                    routeStack.Pop();
+                    nextLocation = routeStack.Peek();
+                }
+
+                if (_worldMap != null)
+                {
+                    Console.WriteLine("***World map is not null, processing world map navigation.");
+                    List<Location> list = RouteFinder.FindRoute(currentLocation, destination).Reverse().ToList();
+                    if (DateTime.UtcNow.Subtract(dateTime_1).TotalSeconds < 1.0)
+                    {
+                        Console.WriteLine("***DateTime.UtcNow.Subtract(dateTime_1).TotalSeconds < 1.0");
+                        return false;
+                    }
+                    foreach (Location location in list)
+                    {
+                        Console.WriteLine($"***Checking world map node for location {location}");
+
+                        foreach (WorldMapNode node in _worldMap.Nodes)
+                        {
+                            Console.WriteLine($"***Checking node {node.Location}");
+                            if (node.MapID == location.MapID)
+                            {
+                                Console.WriteLine($"***Need to click world map");
+                                dateTime_1 = DateTime.UtcNow;
+                                ClickWorldMap(node.MapID, node.Location);
+                                return true;
+                            }
+                        }
+                    }
+                    foreach (WorldMapNode node in _worldMap.Nodes)
+                    {
+                        Console.WriteLine($"***[2]Checking node {node.Location}");
+
+                        if (node.MapID == nextLocation.MapID)
+                        {
+                            Console.WriteLine($"***[2]Need to click world map");
+                            dateTime_1 = DateTime.UtcNow;
+                            ClickWorldMap(node.MapID, node.Location);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                if (nextLocation.MapID != _map.MapID)
+                {
+                    if (!_server._maps.TryGetValue(_map.MapID, out Map value))
+                    {
+                        Console.WriteLine("***Map not found in server maps. Clearing routeStack.");
+                        routeStack.Clear();
+                        return false;
+                    }
+                    if (value.WorldMaps.TryGetValue(_clientLocation.Point, out WorldMap _worldMapNodeList))
+                    {
+                        if (!value.WorldMaps.TryGetValue(_serverLocation.Point, out _worldMapNodeList))
+                        {
+                            Console.WriteLine($"***Need to refresh");
+                            RequestRefresh();
+                            return false;
+                        }
+                        foreach (WorldMapNode worldMapNode in _worldMapNodeList.Nodes)
+                        {
+                            if (worldMapNode.MapID == nextLocation.MapID)
+                            {
+                                Console.WriteLine($"***maps are equal");
+                                return false;
+                            }
+                        }
+                    }
+                    if (value.Exits.TryGetValue(_clientLocation.Point, out Warp warp) && warp.TargetMapID == nextLocation.MapID)
+                    {
+                        Console.WriteLine("***Warping with NPC");
+                        WarpWithNPC(nextLocation);
+                        RequestRefresh();
+                        return true;
+                    }
+                    routeStack.Clear();
+                    return false;
+                }
+                if (!TryWalkToLocation(nextLocation, followDistance, lockRequired, ignoreObstacles))
+                {
+                    if (_map.Name.Contains("***Threshold"))
+                    {
+                        Console.WriteLine("***Threshold map detected, attempting to walk south.");
+                        Walk(Direction.South);
+                        Thread.Sleep(1000);
+                        return true;
+                    }
+                    Console.WriteLine("***TryWalkToLocation failed, returning false.");
+                    return false;
+                }
+            }
+            catch
+            {
+                Console.WriteLine("***Exception in RouteFind. Refreshing.");
+                RequestRefresh();
+                return false;
+            }
+            if (routeStack.Count <= 0)
+            {
+                Console.WriteLine("***Route stack empty, returning false.");
+                return false;
+            }
+            Console.WriteLine($"***Returning true");
+            return true;
+        }
+
+        private void WarpWithNPC(Location nextLocation)
+        {
+            if (ClientTab != null)
+            {
+                try
+                {
+                    if (Location.Equals(_clientLocation, new Location(5220, 0, 6)) && nextLocation.MapID == 5210 && Dialog != null)
+                    {
+                        Dialog.DialogNext(2);
+                    }
+                    if (Location.Equals(_clientLocation, new Location(6926, 8, 9)) && nextLocation.MapID == 10028)
+                    {
+                        Creature creature = GetNearyByNPC("Quard");
+                        ClickNPCDialog(creature, "Express Ship", true);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        //map switching shit ADAM
+                        //if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
+                        //{
+                        //    Server.dictionary_5[Name] = ClientTab.walkMapCombox.Text;
+                        //}
+                        //if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
+                        //{
+                        //    Server.dictionary_6[Name] = ClientTab.followText.Text;
+                        //}
+                        //if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
+                        //{
+                        //    Server.dictionary_7[Name] = ClientTab.walkSpeedSldr.Value;
+                        //}
+                        //if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        //{
+                        //    Server.dictionary_6[Name] = "bugEvent";
+                        //    Server.dictionary_7[Name] = ClientTab.walkSpeedSldr.Value;
+                        //}
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
+                    {
+                        PublicChat(3, "Enter Sewer Maze");
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(10000, 29, 31)) && nextLocation.MapID == 10999)
+                    {
+                        Creature creature = GetNearyByNPC("Lenoa");
+                        ClickNPCDialog(creature, "Caravan to Noam", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(10055, 46, 23)) && nextLocation.MapID == 10999)
+                    {
+                        Creature creature = GetNearyByNPC("Habab");
+                        ClickNPCDialog(creature, "Caravan to Asilon or Hwarone", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(10265, 87, 47)) && nextLocation.MapID == 10998)
+                    {
+                        Creature creature = GetNearyByNPC("Mank");
+                        ClickNPCDialog(creature, "Caravan to Noam", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(10055, 46, 24)) && nextLocation.MapID == 1960)
+                    {
+                        Creature creature = GetNearyByNPC("Habab");
+                        ClickNPCDialog(creature, "Carpet Merchant", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        //map switching shit ADAM
+                        //if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
+                        //{
+                        //    Server.dictionary_5[Name] = ClientTab.walkMapCombox.Text;
+                        //}
+                        //if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
+                        //{
+                        //    Server.dictionary_6[Name] = ClientTab.followText.Text;
+                        //}
+                        //if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
+                        //{
+                        //    Server.dictionary_7[Name] = ClientTab.walkSpeedSldr.Value;
+                        //}
+                        //if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        //{
+                        //    Server.dictionary_6[Name] = "bugEvent";
+                        //    Server.dictionary_7[Name] = ClientTab.walkSpeedSldr.Value;
+                        //}
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(3634, 16, 6)) && nextLocation.MapID == 8420)
+                    {
+                        Creature creature = GetNearyByNPC("Fallen Soldier");
+                        ClickNPCDialog(creature, "ChadulEntry", true);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(8318, 50, 95)) && nextLocation.MapID == 8345)
+                    {
+                        Creature class7 = GetNearyByNPC("Ashlee");
+                        ClickObject(class7.ID);
+                        ReplyDialog(1, class7.ID, 0, 2);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(8355, 32, 5)) && nextLocation.MapID == 8356)
+                    {
+                        Creature class8 = GetNearyByNPC("Norrie");
+                        PublicChat(0, "let me through");
+                        while (Dialog == null)
+                        {
+                            Thread.Sleep(25);
+                        }
+                        if (!Dialog.Message.Contains("Sorry, I forgot..."))
+                        {
+                            ReplyDialog(1, class8.ID, 0, 2, 1);
+                            ReplyDialog(1, class8.ID, 0, 2, 1);
+                            Thread.Sleep(1000);
+                            PublicChat(0, "let me through");
+                        }
+                        ReplyDialog(1, class8.ID, 0, 2);
+                        ReplyDialog(1, class8.ID, 0, 2);
+                        ReplyDialog(1, class8.ID, 0, 2);
+                        Thread.Sleep(1000);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(8361, 32, 7)) && nextLocation.MapID == 8362)
+                    {
+                        Creature class9 = GetNearyByNPC("Yowien Guard");
+                        if (class9 != null && Inventory.HasItem("Yowien Costume"))
+                        {
+                            UseSkill("Assail");
+                            UseItem("Yowien Costume");
+                            UseItem("Yowien Headgear");
+                            Thread.Sleep(1000);
+                        }
+                        PublicChat(0, "graauuloow");
+                        DateTime utcNow = DateTime.UtcNow;
+                        while (Dialog == null)
+                        {
+                            if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0))
+                            {
+                                return;
+                            }
+                            Thread.Sleep(25);
+                        }
+                        if (Dialog.Message == "*The Yowien Guard sniffs you, then suddenly attacks you. You run back to a safe distance*")
+                        {
+                            Thread.Sleep(1000);
+                        }
+                        else
+                        {
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    else if (_map.MapID == 3052 && _clientLocation.X == 44 && _clientLocation.Y >= 18 && _clientLocation.Y <= 25)
+                    {
+                        Creature class10 = GetNearyByNPC("Celesta");
+                        ClickNPCDialog(class10, "Enter Balanced Arena", true);
+                        ReplyDialog(1, class10.ID, 0, 2);
+                        while (Dialog == null)
+                        {
+                            Thread.Sleep(10);
+                        }
+                        Thread.Sleep(1000);
+                        if (Dialog != null && Dialog.Message.Contains("Lumen Amulet"))
+                        {
+                            ServerMessage(0, "Deposit your lumen, then re-enable bot. damn nub");
+                            Bot.Stop();
+                        }
+                    }
+                    else if (_map.MapID == 393 && _clientLocation.DistanceFrom(new Location(393, 7, 6)) <= 1)
+                    {
+                        Creature npc = GetNearyByNPC("Aoife");
+                        RequestDialog(1, npc.ID, 1171);
+                        if (WaitForDialog())
+                        {
+                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 1);
+                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, (ushort)((Player.BodySprite == 16) ? 6 : 3));
+                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 8, 1);
+                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 15, 1);
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(503, 41, 59)) && nextLocation.MapID == 3014)
+                    {
+                        Creature npc = GetNearyByNPC("Keane");
+                        ClickNPCDialog(npc, "Suomi Help", true);
+                        ReplyDialog(1, npc.ID, 0, 2, 1);
+                        ReplyDialog(1, npc.ID, 0, 2);
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+
         internal List<Location> GetCreatureCoverage(Creature creature)
         {
             if (HasEffect(EffectsBar.Hide))
@@ -2570,6 +3041,13 @@ namespace Talos.Base
             Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - {phase}: Memory Usage = {memoryUsage} bytes, Thread Count = {threadCount}");
         }
 
+        internal void ClickWorldMap(short mapId, Point point)
+        {
+            ClientPacket clientPacket = new ClientPacket(63);
+            clientPacket.WriteInt32(mapId);
+            clientPacket.WriteStruct(point);
+            Enqueue(clientPacket);
+        }
         internal void Attributes(StatUpdateFlags value, Statistics stats)
         {
             ServerPacket serverPacket = new ServerPacket(8);

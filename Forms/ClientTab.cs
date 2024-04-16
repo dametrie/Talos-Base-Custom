@@ -971,31 +971,31 @@ namespace Talos.Forms
             if (textBox6 != null && textBox5 != null && textBox4 != null)
             {
                 Location targetLocation = new Location(textMap, new Structs.Point(textX, testY));
-                _client.RouteFinder.FindRoute(_client._clientLocation, targetLocation);
+                //_client.RouteFinder.FindRoute(_client._clientLocation, targetLocation);
+                //_client.RouteFind(targetLocation);
+                // Start the walking process on a new thread
+                Task.Run(() =>
+                {
+                    while (_client._clientLocation != targetLocation)
+                    {
+                        // Safely update the UI or check conditions that involve UI elements
+                        bool shouldContinue = true;
+                        this.Invoke((MethodInvoker)delegate
+                        {
+                            // Example of checking a condition or updating UI
+                            shouldContinue = (_client._clientLocation != targetLocation);
+                        });
 
-                //// Start the walking process on a new thread
-                //Task.Run(() =>
-                //{
-                //    while (!(_client._clientLocation.Equals(targetLocation)))
-                //    {
-                //        // Safely update the UI or check conditions that involve UI elements
-                //        bool shouldContinue = true;
-                //        this.Invoke((MethodInvoker)delegate
-                //        {
-                //            // Example of checking a condition or updating UI
-                //            shouldContinue = !_client._clientLocation.Equals(targetLocation);
-                //        });
+                        if (!shouldContinue)
+                            break;
 
-                //        if (!shouldContinue)
-                //            break;
+                        _client.RouteFind(targetLocation);
 
-                //        _client.TryWalkToLocation(targetLocation, 0, true);
-                //        //_client.RouteFinder.FindRoute(_client._clientLocation, targetLocation);
 
-                //        // Optionally add a small delay to prevent tight looping
-                //        Thread.Sleep(100);
-                //    }
-                //});
+                        // Optionally add a small delay to prevent tight looping
+                        Thread.Sleep(100);
+                    }
+                });
 
             }
         }
@@ -2208,7 +2208,7 @@ namespace Talos.Forms
         }
         internal void UpdateInventoryAndWaypoints()
         {
-            //Adam
+            //Adaml
         }
 
         internal void UpdateClientStatus()
@@ -2230,7 +2230,7 @@ namespace Talos.Forms
             {
                 Structs.Point exitPoint = worldMapLinks.Key;
                 WorldMap worldMap = worldMapLinks.Value;    
-                Console.WriteLine($"World Map Link at {exitPoint}: {worldMap}");
+                Console.WriteLine($"World Map Link at {exitPoint}: Field: {worldMap.Field}");
             }
 
         }

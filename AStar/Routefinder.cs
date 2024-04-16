@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Talos.Base;
+using Talos.Forms.UI;
 using Talos.Maps;
 using Talos.Structs;
 
@@ -27,195 +28,170 @@ namespace Talos.AStar
 
         internal Stack<Location> FindRoute(Location start, Location end)
         {
-            Console.WriteLine($"Starting route finding from {start} to {end}");
-            RouteNodes = new Dictionary<Location, RouteNode>();
-            OpenNodes = new PriorityQueue<RouteNode>();
-
-            RouteNode startNode = new RouteNode(start) { AccumulatedCost = 0f, IsOpen = true };
-            RouteNode endNode = new RouteNode(end);
-            RouteNodes[start] = startNode;
-            RouteNodes[end] = endNode;
-
-            OpenNodes.Enqueue(QueuePriorityEnum.High, startNode);
-
-            while (OpenNodes.Count > 0)
+            try
             {
-                if (OpenNodes.TryDequeue(out RouteNode currentNode))
+                RouteNodes = new Dictionary<Location, RouteNode>();
+                OpenNodes = new PriorityQueue<RouteNode>(); 
+                RouteNode startNode = new RouteNode(start);
+                RouteNode endNode = new RouteNode(end);
+                RouteNodes.Add(start, startNode);
+                RouteNodes.Add(end, endNode);
+                startNode.IsOpen = true;
+                startNode.AccumulatedCost = 0f;
+                OpenNodes.Enqueue(QueuePriorityEnum.High, startNode);
+                RouteNode currentNode;
+                while (true)
                 {
-                    Console.WriteLine($"Dequeued node at {currentNode.Location}, Cost: {currentNode.AccumulatedCost}");
-
+                    if (OpenNodes.Count <= 0)
+                    {
+                        return new Stack<Location>();
+                    }
+                    currentNode = OpenNodes.Dequeue();
                     if (currentNode.Location.MapID == end.MapID)
                     {
-                        Console.WriteLine("Reached end node.");
-                        return ConstructPath(startNode, endNode);
+                        break;
                     }
-
-                    if (ClosedNodes.Contains(currentNode.Location))
+                    Map currentMap = _server._maps[currentNode.Location.MapID];
+                    List<Warp> exits = (from exit in currentMap.Exits.Values
+                                        where currentMap.MapID != _client._map.MapID || !_client.IsLocationSurrounded(exit.SourceLocation)
+                                        orderby currentNode.Location.DistanceFrom(exit.SourceLocation)
+                                        select exit).ToList();
+                    foreach (KeyValuePair<Point, WorldMap> worldMapEntry in (from worldMapEntry in currentMap.WorldMaps
+                                                                             where currentMap.MapID != _client._map.MapID || !_client.IsLocationSurrounded(new Location(currentMap.MapID, worldMapEntry.Key.X, worldMapEntry.Key.Y))
+                                                                             orderby _client._serverLocation.DistanceFrom(new Location(currentMap.MapID, worldMapEntry.Key.X, worldMapEntry.Key.Y))
+                                                                             select worldMapEntry).ToList())
                     {
-                        Console.WriteLine($"Skipping processing for {currentNode.Location} as it is already closed.");
-                        continue;
+                        foreach (WorldMapNode worldMapNode in worldMapEntry.Value.Nodes)
+                        {
+                            if (_server._maps.ContainsKey(worldMapNode.MapID))
+                            {
+                                Location newLocation = worldMapNode.TargetLocation;
+                                Warp warp = new Warp((byte)worldMapEntry.Key.X, (byte)worldMapEntry.Key.Y, (byte)newLocation.X, (byte)newLocation.Y, currentMap.MapID, newLocation.MapID);
+                                RouteNode adjacentNode;
+                                if (RouteNodes.ContainsKey(newLocation))
+                                {
+                                    adjacentNode = RouteNodes[newLocation];
+                                }
+                                else
+                                {
+                                    adjacentNode = new RouteNode(newLocation)
+                                    {
+                                        Warp = warp
+                                    };
+                                    RouteNodes.Add(newLocation, adjacentNode);
+                                }
+                                if (!adjacentNode.IsClosed)
+                                {
+                                    float newDistance = currentNode.AccumulatedCost + 1f;
+                                    if (adjacentNode.IsOpen)
+                                    {
+                                        if ((double)adjacentNode.AccumulatedCost > (double)newDistance)
+                                        {
+                                            adjacentNode.AccumulatedCost = newDistance;
+                                            adjacentNode.Parent = currentNode;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        adjacentNode.AccumulatedCost = newDistance;
+                                        adjacentNode.Parent = currentNode;
+                                        adjacentNode.IsOpen = true;
+                                        OpenNodes.Enqueue(QueuePriorityEnum.High, adjacentNode);
+                                    }
+                                }
+                            }
+                        }
                     }
-
-                    ProcessCurrentNode(currentNode, end);
-                    ClosedNodes.Add(currentNode.Location);
-                    Console.WriteLine($"Added {currentNode.Location} to closed nodes.");
-
+                    foreach (Warp exit in exits)
+                    {
+                        Location newLocation = exit.TargetLocation;
+                        RouteNode adjacentNode;
+                        if (RouteNodes.ContainsKey(newLocation) && Location.NotEquals(newLocation, end))
+                        {
+                            adjacentNode = RouteNodes[newLocation];
+                        }
+                        else if (Location.Equals(newLocation, end))
+                        {
+                            adjacentNode = RouteNodes[newLocation];
+                            RouteNodes[newLocation].Warp = exit;
+                        }
+                        else
+                        {
+                            adjacentNode = new RouteNode(newLocation)
+                            {
+                                Warp = exit
+                            };
+                            RouteNodes.Add(newLocation, adjacentNode);
+                        }
+                        if (!adjacentNode.IsClosed)
+                        {
+                            float newDistance = currentNode.AccumulatedCost + 1f;
+                            if (adjacentNode.IsOpen)
+                            {
+                                if ((double)adjacentNode.AccumulatedCost > (double)newDistance)
+                                {
+                                    adjacentNode.AccumulatedCost = newDistance;
+                                    adjacentNode.Parent = currentNode;
+                                }
+                            }
+                            else
+                            {
+                                adjacentNode.AccumulatedCost = newDistance;
+                                adjacentNode.Parent = currentNode;
+                                adjacentNode.IsOpen = true;
+                                OpenNodes.Enqueue(QueuePriorityEnum.High, adjacentNode);
+                            }
+                        }
+                    }
+                    OpenNodes.TryRemove(QueuePriorityEnum.High, currentNode);
                     currentNode.IsOpen = false;
                     currentNode.IsClosed = true;
                 }
-            }
-
-            Console.WriteLine("Failed to find a route.");
-            return new Stack<Location>();
-        }
-
-        private void ProcessCurrentNode(RouteNode currentNode, Location end)
-        {
-            if (!_server._maps.ContainsKey(currentNode.Location.MapID))
-            {
-                Console.WriteLine($"Map ID {currentNode.Location.MapID} not found. Skipping node.");
-                return; // Skip further processing of this node
-            }
-
-            Map currentMap = _server._maps[currentNode.Location.MapID];
-
-            // Using LINQ to filter and sort exits
-            var exits = currentMap.Exits.Values
-                .Where(exit => currentMap.MapID != _client._map.MapID || !_client.IsLocationSurrounded(exit.SourceLocation))
-                .OrderBy(exit => currentNode.Location.DistanceFrom(exit.TargetLocation))
-                .ToList();
-
-            foreach (var exit in exits)
-            {
-                UpdateNode(currentNode, exit.TargetLocation, exit, end);
-            }
-
-            // Using LINQ to filter and sort world map links
-            var worldMapEntries = currentMap.WorldMaps
-                .Where(entry => currentMap.MapID != _client._map.MapID || !_client.IsLocationSurrounded(new Location(currentMap.MapID, entry.Key.X, entry.Key.Y)))
-                .OrderBy(entry => _client._serverLocation.DistanceFrom(new Location(currentMap.MapID, entry.Key.X, entry.Key.Y))) 
-                .ToList();
-
-            foreach (var entry in worldMapEntries)
-            {
-                foreach (var node in entry.Value.Nodes)
+                Stack<Location> route = new Stack<Location>();
+                if (Location.NotEquals(currentNode.Location, end))
                 {
-                    if (_server._maps.ContainsKey(node.MapID))
+                    route.Push(end);
+                }
+                while (true)
+                {
+                    if (currentNode == startNode)
                     {
-                        var newLocation = new Location(node.MapID, node.Location.X, node.Location.Y); 
-                        UpdateNode(currentNode, newLocation, new Warp((byte)entry.Key.X, (byte)entry.Key.Y, (byte)node.Location.X, (byte)node.Location.Y, currentNode.Location.MapID, node.MapID), end);
+                        return route;
                     }
+                    if (currentNode == null || currentNode.Warp == null)
+                    {
+                        break;
+                    }
+                    _ = currentNode.Warp.SourceLocation;
+                    route.Push(currentNode.Warp.SourceLocation);
+                    currentNode = currentNode.Parent;
                 }
+                return route;
+            }
+            catch
+            {
+                return new Stack<Location>();
             }
         }
 
 
-        private void UpdateNode(RouteNode currentNode, Location targetLocation, Warp warp, Location end)
+        internal sealed class RouteNode
         {
-            if (!RouteNodes.TryGetValue(targetLocation, out RouteNode adjacentNode))
+            internal Warp Warp { get; set; }
+            internal Location Location { get; }
+            internal RouteNode Parent { get; set; }
+            internal List<RouteNode> Neighbors { get; set; } = new List<RouteNode>();
+            internal bool IsOpen { get; set; }
+            internal bool IsClosed { get; set; }
+            internal float AccumulatedCost { get; set; }
+            internal string Source { get; set; }
+
+            internal RouteNode(Location location)
             {
-                adjacentNode = new RouteNode(targetLocation) { Warp = warp };
-                RouteNodes[targetLocation] = adjacentNode;
-                Console.WriteLine($"Added new node for location {targetLocation}");
+                Location = location;
+                AccumulatedCost = float.MaxValue;
             }
 
-            float newCost = currentNode.AccumulatedCost + 1; // Assuming a cost of 1 for simplicity
-            if (!adjacentNode.IsClosed && (!adjacentNode.IsOpen || adjacentNode.AccumulatedCost > newCost))
-            {
-                Console.WriteLine($"Updating node at {targetLocation} from cost {adjacentNode.AccumulatedCost} to {newCost}");
-                adjacentNode.AccumulatedCost = newCost;
-                adjacentNode.Parent = currentNode; // Ensure parent is set here correctly
-                if (!adjacentNode.IsOpen)
-                {
-                    adjacentNode.IsOpen = true;
-                    OpenNodes.Enqueue(QueuePriorityEnum.Low, adjacentNode);
-                    Console.WriteLine($"Enqueued {targetLocation} with cost {newCost}");
-                }
-                else
-                {
-                    Console.WriteLine($"Re-enqueued {targetLocation} with updated cost {newCost}");
-                    // Consider logic here to remove the older node from the queue if it exists
-                }
-            }
-            else if (!adjacentNode.IsClosed && adjacentNode.Parent == null)
-            {
-                // If the node is not closed and has no parent, ensure it is linked back
-                adjacentNode.Parent = currentNode;
-                Console.WriteLine($"Linking parent to node at {targetLocation} as it was previously unlinked.");
-            }
-            else
-            {
-                Console.WriteLine($"No update required for {targetLocation} with existing cost {adjacentNode.AccumulatedCost}");
-            }
-        }
-
-
-        private float Heuristic(Location a, Location b)
-        {
-            return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y); // Manhattan distance
-        }
-
-        private Stack<Location> ConstructPath(RouteNode startNode, RouteNode endNode)
-        {
-            Stack<Location> path = new Stack<Location>();
-            RouteNode currentNode = endNode;
-
-            if (currentNode == null)
-            {
-                Console.WriteLine("End node is null, cannot construct path.");
-                return path;
-            }
-
-            if (currentNode.Parent == null && currentNode != startNode)
-            {
-                Console.WriteLine("End node's parent is null and it is not the start node.");
-            }
-
-            while (currentNode != null && currentNode != startNode)
-            {
-                if (currentNode.Location == null)
-                {
-                    Console.WriteLine("Current node's location is null, breaking loop.");
-                    break;
-                }
-
-                path.Push(currentNode.Location);
-                Console.WriteLine($"Added {currentNode.Location} to path; moving to parent node.");
-                currentNode = currentNode.Parent;
-            }
-
-            if (currentNode == null)
-            {
-                Console.WriteLine("Reached a null parent before reaching the start node.");
-            }
-            else if (currentNode == startNode)
-            {
-                Console.WriteLine($"Reached the start node; final path length: {path.Count}");
-            }
-
-            Console.WriteLine("Path construction complete. Path has " + path.Count + " steps.");
-            return path;
-        }
-
-    }
-
-    internal sealed class RouteNode
-    {
-        internal Warp Warp { get; set; }
-
-        internal Location Location { get; }
-
-        internal RouteNode Parent { get; set; }
-
-        internal bool IsOpen { get; set; }
-
-        internal bool IsClosed { get; set; }
-
-        internal float AccumulatedCost { get; set; }
-
-        internal RouteNode(Location location)
-        {
-            Location = location;
         }
     }
 }

@@ -82,5 +82,16 @@ namespace Talos.AStar
             }
             throw new InvalidOperationException("The Queue is empty.");
         }
+
+        public bool TryRemove(QueuePriorityEnum priority, T item)
+        {
+            Queue<T> queue = _queues[(int)priority];
+            if (queue.Contains(item))
+            {
+                queue = new Queue<T>(queue.Where(x => !EqualityComparer<T>.Default.Equals(x, item)));
+                return true;
+            }
+            return false;
+        }
     }
 }

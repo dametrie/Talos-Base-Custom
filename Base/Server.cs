@@ -66,6 +66,7 @@ namespace Talos
 
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
+        internal SortedDictionary<ushort, string> PursuitIDs { get; set; }
         private bool _isMapping;
         internal bool _stopWalking;
         internal bool _stopCasting;
@@ -73,6 +74,7 @@ namespace Talos
         private bool _shouldCloseProfile = false;
         private bool _canCloseProfile = false;
         public static object Lock { get; internal set; } = new object();
+
 
         internal Server(MainForm mainForm)
         {
@@ -954,7 +956,8 @@ namespace Talos
 
                         if (type == (byte)CreatureType.Merchant)
                         {
-                            client.NearbyNPC[name] = creature;
+                            Console.WriteLine("Adding Merchant: " + name);
+                            client.NearbyNPC.TryAdd(name, creature);
                         }
                         else if ((client.Bot.EnemyPage != null) && !client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
                         {
@@ -1367,6 +1370,7 @@ namespace Talos
                     var creature = worldObject as Creature;
                     if (creature.Type == CreatureType.Merchant && client.NearbyNPC.ContainsKey(creature.Name))
                     {
+                        Console.WriteLine("Removing merchant: " + creature.Name + " from nearbyNPC");
                         client.NearbyNPC.TryRemove(creature.Name, out _);
                     }
 
