@@ -2248,6 +2248,12 @@ namespace Talos
             player.FaceSprite = faceSprite;
             //}
 
+            if (!client.CreatureHashSet.Contains(id))
+            {
+                client.CreatureHashSet.Add(id);
+            }
+          
+
             if (!string.IsNullOrEmpty(player.Name))
             {
                 client.NearbyPlayers.AddOrUpdate(player.Name, player, (key, oldValue) => player);

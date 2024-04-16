@@ -2334,7 +2334,7 @@ namespace Talos.Base
         }
 
 
-        internal bool TryWalkToLocation(Location destination, short followDistance = 1, bool lockRequired = true, bool ignoreObstacles = true)
+        internal bool TryWalkToLocation(Location destination, short followDistance = 1, bool lockRequired = true, bool avoidObstacles = true)
         {
             if ((DateTime.UtcNow - LastMoved).TotalMilliseconds < _walkSpeed)
             {
@@ -2412,13 +2412,13 @@ namespace Talos.Base
                 {
                     //Console.WriteLine("New destination or empty path stack. Calculating new path.");
                     lastDestination = destination;
-                    pathStack = Pathfinder.FindPath(_clientLocation, destination, ignoreObstacles);
+                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidObstacles);
 
                 }
 
                 if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && shouldRefresh)
                 {
-                    pathStack = Pathfinder.FindPath(_serverLocation, destination, ignoreObstacles);
+                    pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidObstacles);
                     if (pathStack.Count == 0)
                     {
                         return false;
@@ -2454,7 +2454,7 @@ namespace Talos.Base
                     if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(npc => Location.NotEquals(loc, destination) && Location.Equals(npc.Location, loc) || (!HasEffect(EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.SpriteID) && GetCreatureCoverage(npc).Contains(loc))))
                     {
                         //Console.WriteLine($"Creature interaction required at {loc}, recalculating path.");
-                        pathStack = Pathfinder.FindPath(_clientLocation, destination, ignoreObstacles);
+                        pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidObstacles);
                         return false;
                     }
                 }
@@ -2489,7 +2489,7 @@ namespace Talos.Base
                         }
                         shouldRefresh = false;
                     }
-                    pathStack = Pathfinder.FindPath(_clientLocation, destination, ignoreObstacles);
+                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidObstacles);
                     return false;
                 }
 
@@ -2532,7 +2532,7 @@ namespace Talos.Base
             return !HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending");
         }
 
-        internal bool RouteFind(Location destination, short followDistance = 0, bool bool_57 = false, bool lockRequired = true, bool ignoreObstacles = true)
+        internal bool RouteFind(Location destination, short followDistance = 0, bool bool_57 = false, bool lockRequired = true, bool avoidObstacles = true)
         {
             try
             {
@@ -2678,7 +2678,7 @@ namespace Talos.Base
                     routeStack.Clear();
                     return false;
                 }
-                if (!TryWalkToLocation(nextLocation, followDistance, lockRequired, ignoreObstacles))
+                if (!TryWalkToLocation(nextLocation, followDistance, lockRequired, avoidObstacles))
                 {
                     if (_map.Name.Contains("***Threshold"))
                     {

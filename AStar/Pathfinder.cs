@@ -38,7 +38,7 @@ internal class Pathfinder
         InitializePathNodes(true);
     }
 
-    internal void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool includeExits = true)
+    internal void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool includeExits = true, bool includeAdditionalObstacles = true)
     {
         if (initializeBlockedNodes)
         {
@@ -74,8 +74,9 @@ internal class Pathfinder
 
         // Handling dynamic obstacles
         List<Location> obstacles = (from creature in _client.GetWorldObjects().OfType<Creature>()
-                                    where creature != _client.Player && (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal)
+                                    where (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && creature != _client.Player
                                     select creature.Location).ToList();
+
 
         if (_specialLocations.TryGetValue(_map.MapID, out Location[] specialObstacles))
             {
@@ -93,6 +94,17 @@ internal class Pathfinder
         {
             //Console.WriteLine("Obstacles from exits:");
             obstacles.AddRange(_client.GetExitLocations(location));
+        }
+
+        if (includeAdditionalObstacles)
+        {
+            foreach (Location location2 in _client.GetObstacleLocations(location))
+            {
+                if (!obstacles.Contains(location2))
+                {
+                    obstacles.Add(location2);
+                }
+            }
         }
 
         //Console.WriteLine("Obstacles from creature coverage:");
@@ -129,8 +141,9 @@ internal class Pathfinder
         return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
     }
 
-    internal Stack<Location> FindPath(Location start, Location end, bool ignoreObstacles = true)
+    internal Stack<Location> FindPath(Location start, Location end, bool avoidObstacles = true)
     {
+        InitializePathNodes(false, end, avoidObstacles);
         Console.WriteLine($"Starting pathfinding from {start} to {end}.");
 
         if (!_pathNodes[start.X, start.Y].IsOpen || !_pathNodes[end.X, end.Y].IsOpen)
