@@ -38,7 +38,7 @@ internal class Pathfinder
         InitializePathNodes(true);
     }
 
-    internal void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool includeExits = true, bool includeAdditionalObstacles = true)
+    internal void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool avoidExits = true)
     {
         if (initializeBlockedNodes)
         {
@@ -50,11 +50,14 @@ internal class Pathfinder
                 for (short y = 0; y < _mapHeight; y++)
                 {
                     bool isWall = _map.IsTileWall(x, y);
+                    Point currentPoint = new Point(x, y);
+                    bool isExit = _map.Exits.ContainsKey(currentPoint);
+
                     _pathNodes[x, y] = new PathNode(_map.MapID, x, y)
                     {
-                        IsOpen = !isWall
+                        IsOpen = !isWall || isExit  // Nodes are open if not a wall or if it's an exit
                     };
-                    //Console.WriteLine($"Node at ({x},{y}) initialized as " + (isWall ? "Wall" : "Open"));
+                    //Console.WriteLine($"Node at ({x}, {y}) initialized as " + (_pathNodes[x, y].IsOpen ? "Open" : "Closed"));
                 }
             }
 
@@ -72,14 +75,31 @@ internal class Pathfinder
             }
         }
 
+
         // Handling dynamic obstacles
         List<Location> obstacles = (from creature in _client.GetWorldObjects().OfType<Creature>()
                                     where (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && creature != _client.Player
                                     select creature.Location).ToList();
 
 
-        if (_specialLocations.TryGetValue(_map.MapID, out Location[] specialObstacles))
+        if (avoidExits)
+        {
+            foreach (Location location2 in _client.GetExitLocationsAsObstacles(location))
             {
+                if (!obstacles.Contains(location2))
+                {
+                    obstacles.Add(location2);
+                }
+            }
+        }
+        else
+        {
+            //remove exits from obstacles
+            obstacles.RemoveAll(loc => _map.Exits.ContainsKey(new Point(loc.X, loc.Y)));
+        }
+
+        if (_specialLocations.TryGetValue(_map.MapID, out Location[] specialObstacles))
+        {
             foreach (var obstacle in specialObstacles)
             {
                 //Console.WriteLine($"- {obstacle}");
@@ -90,22 +110,7 @@ internal class Pathfinder
             }
         }
 
-        if (includeExits)
-        {
-            //Console.WriteLine("Obstacles from exits:");
-            obstacles.AddRange(_client.GetExitLocations(location));
-        }
 
-        if (includeAdditionalObstacles)
-        {
-            foreach (Location location2 in _client.GetObstacleLocations(location))
-            {
-                if (!obstacles.Contains(location2))
-                {
-                    obstacles.Add(location2);
-                }
-            }
-        }
 
         //Console.WriteLine("Obstacles from creature coverage:");
         foreach (Creature creature in _client.GetCreaturesInRange(12, CONSTANTS.GREEN_BOROS.ToArray()))
@@ -126,7 +131,9 @@ internal class Pathfinder
             for (short y = 0; y < _mapHeight; y++)
             {
                 PathNode currentNode = _pathNodes[x, y];
-                currentNode.IsOpen = !_map.IsTileWall(x, y) && !obstacles.Contains(new Location(_map.MapID, x, y));
+                currentNode.IsOpen &= !obstacles.Contains(new Location(_map.MapID, x, y));
+                //Print the name of each node and whether it is blocked
+                //Console.WriteLine($"Node at ({x},{y}) is " + (currentNode.IsOpen ? "Open" : "Blocked"));
                 currentNode.IsVisited = false;
                 currentNode.IsInOpenSet = false;
                 currentNode.GCost = 0;
@@ -141,14 +148,22 @@ internal class Pathfinder
         return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
     }
 
-    internal Stack<Location> FindPath(Location start, Location end, bool avoidObstacles = true)
+    internal Stack<Location> FindPath(Location start, Location end, bool avoidExits = true)
     {
-        InitializePathNodes(false, end, avoidObstacles);
+        InitializePathNodes(false, end, avoidExits);
         Console.WriteLine($"Starting pathfinding from {start} to {end}.");
 
         if (!_pathNodes[start.X, start.Y].IsOpen || !_pathNodes[end.X, end.Y].IsOpen)
         {
-            //Console.WriteLine("Start or end location is blocked.");
+            if (!_pathNodes[end.X, end.Y].IsOpen)
+            {
+                Console.WriteLine("End location is blocked.");
+            }
+            else
+            {
+                Console.WriteLine("Start location is blocked.");
+            }
+
             return new Stack<Location>();
         }
 
@@ -225,6 +240,8 @@ internal class Pathfinder
             path.Push(node.Location);
             node = node.ParentNode;
         }
+        //print out each location in path stack
+
         return path;
     }
 }

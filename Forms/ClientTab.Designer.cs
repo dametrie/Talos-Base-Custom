@@ -89,9 +89,6 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
-            this.manaBar = new Talos.Forms.UI.ResourceBar();
-            this.healthBar = new Talos.Forms.UI.ResourceBar();
-            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -474,6 +471,7 @@ namespace Talos.Forms
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleDialogBtn = new System.Windows.Forms.ToolStripButton();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.label13 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
@@ -509,7 +507,10 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
-            this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.manaBar = new Talos.Forms.UI.ResourceBar();
+            this.healthBar = new Talos.Forms.UI.ResourceBar();
+            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -1281,41 +1282,6 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // manaBar
-            // 
-            this.manaBar.BackColor = System.Drawing.Color.White;
-            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.manaBar.Location = new System.Drawing.Point(65, 282);
-            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.manaBar.Name = "manaBar";
-            this.manaBar.Size = new System.Drawing.Size(50, 196);
-            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.manaBar.TabIndex = 15;
-            // 
-            // healthBar
-            // 
-            this.healthBar.BackColor = System.Drawing.Color.White;
-            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
-            this.healthBar.Location = new System.Drawing.Point(6, 282);
-            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.healthBar.Name = "healthBar";
-            this.healthBar.Size = new System.Drawing.Size(50, 196);
-            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.healthBar.TabIndex = 14;
-            // 
-            // chatPanel
-            // 
-            this.chatPanel.AutoDetectUrls = true;
-            this.chatPanel.BackColor = System.Drawing.Color.White;
-            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel.Name = "chatPanel";
-            this.chatPanel.ReadOnly = true;
-            this.chatPanel.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel.TabIndex = 0;
-            this.chatPanel.Text = "";
             // 
             // mainAislingsTab
             // 
@@ -6006,6 +5972,7 @@ namespace Talos.Forms
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.button3);
             this.tabPage1.Controls.Add(this.button2);
             this.tabPage1.Controls.Add(this.button1);
             this.tabPage1.Controls.Add(this.label13);
@@ -6033,6 +6000,16 @@ namespace Talos.Forms
             this.tabPage1.Size = new System.Drawing.Size(842, 516);
             this.tabPage1.TabIndex = 14;
             this.tabPage1.Text = "DEBUG";
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(294, 114);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(117, 23);
+            this.button2.TabIndex = 155;
+            this.button2.Text = "print map exits";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click_1);
             // 
             // button1
             // 
@@ -6090,7 +6067,7 @@ namespace Talos.Forms
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(410, 117);
+            this.label11.Location = new System.Drawing.Point(433, 117);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(14, 15);
             this.label11.TabIndex = 148;
@@ -6099,7 +6076,7 @@ namespace Talos.Forms
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(410, 88);
+            this.label10.Location = new System.Drawing.Point(433, 88);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(14, 15);
             this.label10.TabIndex = 147;
@@ -6108,7 +6085,7 @@ namespace Talos.Forms
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(394, 59);
+            this.label9.Location = new System.Drawing.Point(417, 59);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(42, 15);
             this.label9.TabIndex = 146;
@@ -6133,7 +6110,7 @@ namespace Talos.Forms
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(583, 74);
+            this.button7.Location = new System.Drawing.Point(610, 74);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(139, 23);
             this.button7.TabIndex = 143;
@@ -6143,7 +6120,7 @@ namespace Talos.Forms
             // 
             // textBox4
             // 
-            this.textBox4.Location = new System.Drawing.Point(442, 114);
+            this.textBox4.Location = new System.Drawing.Point(465, 114);
             this.textBox4.Name = "textBox4";
             this.textBox4.Size = new System.Drawing.Size(100, 23);
             this.textBox4.TabIndex = 142;
@@ -6151,7 +6128,7 @@ namespace Talos.Forms
             // 
             // textBox5
             // 
-            this.textBox5.Location = new System.Drawing.Point(442, 85);
+            this.textBox5.Location = new System.Drawing.Point(465, 85);
             this.textBox5.Name = "textBox5";
             this.textBox5.Size = new System.Drawing.Size(100, 23);
             this.textBox5.TabIndex = 141;
@@ -6159,7 +6136,7 @@ namespace Talos.Forms
             // 
             // textBox6
             // 
-            this.textBox6.Location = new System.Drawing.Point(442, 56);
+            this.textBox6.Location = new System.Drawing.Point(465, 56);
             this.textBox6.Name = "textBox6";
             this.textBox6.Size = new System.Drawing.Size(100, 23);
             this.textBox6.TabIndex = 140;
@@ -6167,11 +6144,11 @@ namespace Talos.Forms
             // 
             // button8
             // 
-            this.button8.Location = new System.Drawing.Point(291, 74);
+            this.button8.Location = new System.Drawing.Point(294, 53);
             this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(97, 23);
+            this.button8.Size = new System.Drawing.Size(117, 23);
             this.button8.TabIndex = 139;
-            this.button8.Text = "set location";
+            this.button8.Text = "Route Find";
             this.button8.UseVisualStyleBackColor = true;
             this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
@@ -6333,15 +6310,50 @@ namespace Talos.Forms
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // button2
+            // button3
             // 
-            this.button2.Location = new System.Drawing.Point(291, 113);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(97, 23);
-            this.button2.TabIndex = 155;
-            this.button2.Text = "print map exits";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click_1);
+            this.button3.Location = new System.Drawing.Point(294, 85);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(117, 23);
+            this.button3.TabIndex = 156;
+            this.button3.Text = "Route Find Once";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click_1);
+            // 
+            // manaBar
+            // 
+            this.manaBar.BackColor = System.Drawing.Color.White;
+            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.manaBar.Location = new System.Drawing.Point(65, 282);
+            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.manaBar.Name = "manaBar";
+            this.manaBar.Size = new System.Drawing.Size(50, 196);
+            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.manaBar.TabIndex = 15;
+            // 
+            // healthBar
+            // 
+            this.healthBar.BackColor = System.Drawing.Color.White;
+            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
+            this.healthBar.Location = new System.Drawing.Point(6, 282);
+            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.healthBar.Name = "healthBar";
+            this.healthBar.Size = new System.Drawing.Size(50, 196);
+            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.healthBar.TabIndex = 14;
+            // 
+            // chatPanel
+            // 
+            this.chatPanel.AutoDetectUrls = true;
+            this.chatPanel.BackColor = System.Drawing.Color.White;
+            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel.Name = "chatPanel";
+            this.chatPanel.ReadOnly = true;
+            this.chatPanel.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel.TabIndex = 0;
+            this.chatPanel.Text = "";
             // 
             // ClientTab
             // 
@@ -7009,5 +7021,6 @@ namespace Talos.Forms
         internal Label currentAction;
         private CheckBox deformCbox;
         private Button button2;
+        private Button button3;
     }
 }

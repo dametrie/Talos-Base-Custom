@@ -2207,7 +2207,7 @@ namespace Talos.Base
                 List<Creature> greenBorosInRange = Client.GetCreaturesInRange(8, CONSTANTS.GREEN_BOROS.ToArray());
                 foreach (Creature creature in greenBorosInRange.ToList<Creature>())
                 {
-                    foreach (Location location in Client.GetObstacleLocations(new Location(Client._map.MapID, 0, 0)))
+                    foreach (Location location in Client.GetExitLocationsAsObstacles(new Location(Client._map.MapID, 0, 0)))
                     {
                         if (creature.Location.DistanceFrom(location) <= 3)
                         {
@@ -2234,7 +2234,7 @@ namespace Talos.Base
             if (CONSTANTS.GREEN_BOROS.Contains(enemyPage.Enemy.SpriteID))
             {
                 var additionalCreatures = Client.GetCreaturesInRange(8, CONSTANTS.GREEN_BOROS.ToArray())
-                    .Where(creature => !Client.GetObstacleLocations(new Location(Client._map.MapID, 0, 0))
+                    .Where(creature => !Client.GetExitLocationsAsObstacles(new Location(Client._map.MapID, 0, 0))
                     .Any(location => creature.Location.DistanceFrom(location) <= 3))
                     .ToList();
 

@@ -8,7 +8,7 @@ namespace Talos.Objects
         internal Point Point => new Point(SourceX, SourceY);
         internal Location Location => new Location(SourceMapID, SourceX, SourceY);
         internal DateTime LastClicked { get; set; }
-        internal bool RecentlyClosed => DateTime.UtcNow.Subtract(LastClicked).TotalSeconds < 1.5;
+        internal bool RecentlyClicked => DateTime.UtcNow.Subtract(LastClicked).TotalSeconds < 1.5;
         internal bool Closed {  get; set; }
         internal Door(Location location, bool closed)
         {

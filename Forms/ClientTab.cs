@@ -45,6 +45,8 @@ namespace Talos.Forms
         internal uint _sessionAbility;
         internal uint _sessionGold;
 
+        internal bool shouldContinue = true;
+
         private Stopwatch _sessionExperienceStopWatch = new Stopwatch();
         private Stopwatch _sessionAbilityStopWatch = new Stopwatch();
         private Stopwatch _sessionGoldStopWatch = new Stopwatch();
@@ -979,7 +981,7 @@ namespace Talos.Forms
                     while (_client._clientLocation != targetLocation)
                     {
                         // Safely update the UI or check conditions that involve UI elements
-                        bool shouldContinue = true;
+
                         this.Invoke((MethodInvoker)delegate
                         {
                             // Example of checking a condition or updating UI
@@ -996,6 +998,16 @@ namespace Talos.Forms
                         Thread.Sleep(100);
                     }
                 });
+
+            }
+        }
+
+        private void button3_Click_1(object sender, EventArgs e)
+        {
+            if (textBox6 != null && textBox5 != null && textBox4 != null)
+            {
+                Location targetLocation = new Location(textMap, new Structs.Point(textX, testY));
+                _client.RouteFind(targetLocation);
 
             }
         }
@@ -2234,6 +2246,8 @@ namespace Talos.Forms
             }
 
         }
+
+
     }
 }
 

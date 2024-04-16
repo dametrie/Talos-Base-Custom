@@ -2099,9 +2099,13 @@ namespace Talos
                     Location currentLocation = new Location(client._map.MapID, x, y);
                     Console.WriteLine($"Door found at: {client._map.MapID}, {x},{y}, closed: {closed}, openedRight: {openedRight}");
                     Door door = new Door(currentLocation, closed);
-                    if (!client.Doors.Contains(door))
+                    if (!client.Doors.ContainsKey(door.Location))
                     {
-                        client.Doors.Add(door);
+                        client.Doors.TryAdd(door.Location, door);
+                    }
+                    else
+                    {
+                        client.Doors[door.Location] = door;
                     }
                 }
             }
