@@ -8,6 +8,7 @@ using System.Media;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
@@ -59,6 +60,13 @@ namespace Talos
         private bool _initialized;
         #endregion
 
+        private bool _isMapping;
+        internal bool _stopWalking;
+        internal bool _stopCasting;
+        internal bool _disableSound = false;
+        private bool _shouldCloseProfile = false;
+        private bool _canCloseProfile = false;
+
         InputSimulator inputSimulator = new InputSimulator();
 
         // Create a single instance of ActiveMessageHandler
@@ -66,14 +74,11 @@ namespace Talos
 
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
-        internal SortedDictionary<ushort, string> PursuitIDs { get; set; }
-        private bool _isMapping;
-        internal bool _stopWalking;
-        internal bool _stopCasting;
-        internal bool _disableSound = false;
-        private bool _shouldCloseProfile = false;
-        private bool _canCloseProfile = false;
+        internal SortedDictionary<ushort, string> PursuitIDs { get; set; } = new SortedDictionary<ushort, string>();
         public static object Lock { get; internal set; } = new object();
+
+   
+ 
 
 
         internal Server(MainForm mainForm)
@@ -167,7 +172,7 @@ namespace Talos
             ClientMessage[(int)ClientOpCode.ToggleGroup] = new ClientMessageHandler(ClientMessage_0x2F_ToggleGroup);
             ClientMessage[(int)ClientOpCode.SwapSlot] = new ClientMessageHandler(ClientMessage_0x30_SwapSlot);
             ClientMessage[(int)ClientOpCode.RefreshRequest] = new ClientMessageHandler(ClientMessage_0x38_RefreshRequest);
-            ClientMessage[(int)ClientOpCode.PursuitRequest] = new ClientMessageHandler(ClientMessage_0x39_PursuitRequest);
+            ClientMessage[(int)ClientOpCode.PursuitRequest] = new ClientMessageHandler(ClientMessage_0x39_MenuInteraction);
             ClientMessage[(int)ClientOpCode.DialogResponse] = new ClientMessageHandler(ClientMessage_0x3A_DialogResponse);
             ClientMessage[(int)ClientOpCode.BoardRequest] = new ClientMessageHandler(ClientMessage_0x3B_BoardRequest);
             ClientMessage[(int)ClientOpCode.UseSkill] = new ClientMessageHandler(ClientMessage_0x3E_UseSkill);
@@ -219,7 +224,7 @@ namespace Talos
             ServerMessage[(int)ServerOpCode.AddSkillToPane] = new ServerMessageHandler(ServerMessage_0x2C_AddSkillToPane);
             ServerMessage[(int)ServerOpCode.RemoveSkillFromPane] = new ServerMessageHandler(ServerMessage_0x2D_RemoveSkillFromPane);
             ServerMessage[(int)ServerOpCode.WorldMap] = new ServerMessageHandler(ServerMessage_0x2E_WorldMap);
-            ServerMessage[(int)ServerOpCode.MerchantMenu] = new ServerMessageHandler(ServerMessage_0x2F_MerchantMenu);
+            ServerMessage[(int)ServerOpCode.MerchantMenu] = new ServerMessageHandler(ServerMessage_0x2F_DisplayMenu);
             ServerMessage[(int)ServerOpCode.Dialog] = new ServerMessageHandler(ServerMessage_0x30_Dialog);
             ServerMessage[(int)ServerOpCode.Board] = new ServerMessageHandler(ServerMessage_0x31_Board);
             ServerMessage[(int)ServerOpCode.Door] = new ServerMessageHandler(ServerMessage_0x32_Door);
@@ -600,7 +605,7 @@ namespace Talos
             return true;
         }
 
-        private bool ClientMessage_0x39_PursuitRequest(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x39_MenuInteraction(Client client, ClientPacket clientPacket)
         {
             byte objectType = clientPacket.ReadByte();
             uint objectID = clientPacket.ReadUInt32();
@@ -956,7 +961,6 @@ namespace Talos
 
                         if (type == (byte)CreatureType.Merchant)
                         {
-                            Console.WriteLine("Adding Merchant: " + name);
                             client.NearbyNPC.TryAdd(name, creature);
                         }
                         else if ((client.Bot.EnemyPage != null) && !client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
@@ -1208,7 +1212,8 @@ namespace Talos
                     return true;
 
                 default:
-                    return (messageType == (byte)ServerMessageType.TopRight);
+                    //return (messageType == (byte)ServerMessageType.TopRight);
+                    return true;
             }
         }
 
@@ -1370,7 +1375,6 @@ namespace Talos
                     var creature = worldObject as Creature;
                     if (creature.Type == CreatureType.Merchant && client.NearbyNPC.ContainsKey(creature.Name))
                     {
-                        Console.WriteLine("Removing merchant: " + creature.Name + " from nearbyNPC");
                         client.NearbyNPC.TryRemove(creature.Name, out _);
                     }
 
@@ -1825,8 +1829,91 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x2F_MerchantMenu(Client client, ServerPacket serverPacket)
+        private bool ServerMessage_0x2F_DisplayMenu(Client client, ServerPacket serverPacket)
         {
+            if (serverPacket.Data.Length >= 0x10)//16
+            {
+                byte menuType = serverPacket.ReadByte();
+                int merchant = (int)serverPacket.ReadByte();
+                uint merchantID = serverPacket.ReadUInt32();
+                serverPacket.ReadByte();
+                int menuSprite1 = (int)serverPacket.ReadInt16();
+                serverPacket.Read(2);
+                int menutSprite2 = (int)serverPacket.ReadInt16();
+                serverPacket.Read(2);
+                string merchantName = serverPacket.ReadString8();
+                string merchantText = serverPacket.ReadString16();
+
+
+                if ((merchantText == "Hello.  What can I do for you?") && (merchantName == "ColiseumTor") && (DateTime.UtcNow.Subtract(client._arenaAnnounceTimer).TotalMinutes < 6.0))
+                {
+                    string str = "";
+                    TimeSpan span2 = new TimeSpan(0, 6, 0) - DateTime.UtcNow.Subtract(client._arenaAnnounceTimer);
+                    str = "You may broadcast again in " + ((client._arenaAnnounceTimer != DateTime.MinValue) ? (((span2.Minutes > 1) ? $"{span2.Minutes} minutes and " : ((span2.Minutes > 0) ? $"{span2.Minutes} minutes and " : string.Empty)) + $"{span2.Seconds} seconds.") : "unkown value.");
+                    client.ServerMessage(3, str);
+                }
+                client._npcDialog = merchantText;
+                client.ClientTab.npcText.Text = merchantText;
+                int num7 = serverPacket.Position;
+                //byte num = sp.ReadByte();
+                switch (menuType)
+                {
+                    case (byte)MenuType.Menu:
+                        {
+                            byte menuCount = serverPacket.ReadByte();
+                            for (int i = 0; i < menuCount; i++)
+                            {
+                                string pursuit = serverPacket.ReadString8();
+                                ushort pursuitID = serverPacket.ReadUInt16();
+                                PursuitIDs[pursuitID] = pursuit;
+                            }
+                            break;
+                        }
+
+                        case (byte)MenuType.WithdrawlOrBuy:
+                        {
+                            client._inventoryList.Clear();
+                            serverPacket.Read(3);
+                            byte uniqueItemCount = serverPacket.ReadByte();
+                            for (int index = 0; index < uniqueItemCount; index++)
+                            {
+                                uint sprite = serverPacket.ReadUInt16();  // Presuming these are used elsewhere or logged
+                                byte itemColor = serverPacket.ReadByte();
+                                uint itemCount = serverPacket.ReadUInt32();
+                                string itemName = serverPacket.ReadString8();
+                                string unknown = serverPacket.ReadString8();  // Presuming these are used elsewhere or logged
+
+                                client._inventoryList.Add(itemName);
+                            }
+
+                            if (client._inventoryList.Count > 0)
+                            {
+                                StringBuilder builder = new StringBuilder();
+                                foreach (string item in client._inventoryList)
+                                {
+                                    if (!string.IsNullOrEmpty(item))
+                                    {
+                                        builder.AppendLine(item);
+                                    }
+                                }
+
+                                string clientInventoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "inventory", client.Name.ToLower());
+                                string clientInventoryFile = Path.Combine(clientInventoryPath, "bank.txt");
+
+                                if (!Directory.Exists(clientInventoryPath))
+                                {
+                                    Directory.CreateDirectory(clientInventoryPath);
+                                }
+
+                                File.WriteAllText(clientInventoryFile, builder.ToString());
+                            }
+                            break;
+                        }
+                    default:
+                        break;
+
+                }
+            }
             return true;
         }
 

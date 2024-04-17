@@ -92,6 +92,25 @@ namespace Talos.Base
             _server = server;
             AddTask(new TaskDelegate(BotLoop));
             AddTask(new TaskDelegate(Sounds));
+            AddTask(new TaskDelegate(Walker));
+        }
+        private void Walker()
+        {
+            _shouldBotStop = IsRangerNearBy();
+            if(!Client.bool_44 && Client.ClientTab != null)
+            {
+                HandleDialog();
+                //Adam handle walking
+
+            }
+        }
+        private void HandleDialog()
+        {
+            if (Client._npcDialog != null && Client._npcDialog.Equals("You see strange dark fog upstream. Curiosity overcomes you and you take a small raft up the river through the black mist."))
+            {
+                Client.EnterKey();
+                Client._npcDialog = "";
+            }
         }
         private void Sounds()
         {

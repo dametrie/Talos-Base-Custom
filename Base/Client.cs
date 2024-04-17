@@ -76,10 +76,17 @@ namespace Talos.Base
 
         internal Location _clientLocation;
         internal Location _serverLocation;
+        internal Location _routeDestination;
+        internal Location _lastDestination;
+
         internal DateTime _lastWorldShout = DateTime.MinValue;
         internal DateTime _lastMapChange = DateTime.MinValue;
         internal DateTime _comboScrollLastUsed = DateTime.MinValue;
         internal DateTime _arenaAnnounceTimer = DateTime.MinValue;
+        internal DateTime _lastHidden = DateTime.MinValue;
+        private DateTime _lastClickedWorldMap = DateTime.MinValue;
+        private static DateTime _lastWalkTime = DateTime.MinValue;
+
         internal Map _map;
         internal WorldMap _worldMap;
         internal Cheats _cheats;
@@ -98,6 +105,7 @@ namespace Talos.Base
         internal string _currentItem = "";
         internal string _offenseElement = "";
         internal string _action = "Current Action: ";
+        internal string _itemToReEquip = "";
         internal bool _safeScreen;
         internal bool _atDoor;
         internal bool _isCasting;
@@ -118,6 +126,8 @@ namespace Talos.Base
         internal bool bool_18;
         internal bool bool_44;
         internal bool bool_45;
+        internal bool bool_41 = true;
+        internal bool _distnationReached;
         internal bool isStatusUpdated;
         internal bool _recentlyCrashered;
         internal bool unmaxedBashingSkillsLoaded = false;
@@ -129,6 +139,7 @@ namespace Talos.Base
         internal bool _deformNearStrangers = false;
         internal int _spellCounter;
         private int _customSpellLineCounter;
+        private static int _walkCallCount = 0;
         internal int _identifier;
         internal int _stuckCounter;
         internal byte _comboScrollCounter;
@@ -136,11 +147,9 @@ namespace Talos.Base
         internal System.Windows.Forms.Timer _spellTimer;
         internal Stack<Location> pathStack = new Stack<Location>();
         internal Stack<Location> routeStack = new Stack<Location>();
-        internal Location _routeDestination;
-        internal Pathfinder Pathfinder { get; set; }
-        internal RouteFinder RouteFinder { get; set; }
+  
 
-        internal Location lastDestination;
+
 
         internal readonly object Lock = new object();
 
@@ -150,6 +159,7 @@ namespace Talos.Base
         internal List<MeleeWeapon> _meleeList = new List<MeleeWeapon>();
         internal List<Bow> _bowList = new List<Bow>();
         internal List<CreatureToSpell> _creatureToSpellList = new List<CreatureToSpell>();
+        internal List<string> _inventoryList = new List<string>();
 
         internal BindingList<int> _worldObjectBindingList = new BindingList<int>();
         internal BindingList<int> _creatureBindingList = new BindingList<int>();
@@ -269,7 +279,6 @@ namespace Talos.Base
         internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<ushort> EffectsBarHashSet { get; set; } = new HashSet<ushort>();
- 
         internal HashSet<string> AllyListHashSet { get; set; } = new HashSet<string> { };
 
         internal static HashSet<string> AoSuainHashSet = new HashSet<string>(new string[3]
@@ -278,10 +287,8 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
-        internal string _itemToReEquip;
-        internal DateTime _lastHidden;
-        internal bool bool_41 = true;
-        internal bool _distnationReached;
+        internal Pathfinder Pathfinder { get; set; }
+        internal RouteFinder RouteFinder { get; set; }
 
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }
@@ -2148,6 +2155,21 @@ namespace Talos.Base
             Enqueue(clientPacket);
         }
 
+        internal void EscapeKey()
+        {
+            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 256, 27, MakeLParam(1, NativeMethods.MapVirtualKey(27, 0)));
+            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 257, 27, MakeLParam(1, NativeMethods.MapVirtualKey(27, 0)));
+        }
+
+        internal void EnterKey()
+        {
+            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 256, 13, MakeLParam(1, NativeMethods.MapVirtualKey(13, 0)));
+            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 257, 13, MakeLParam(1, NativeMethods.MapVirtualKey(13, 0)));
+        }
+        internal int MakeLParam(int LoWord, int HiWord)
+        {
+            return (HiWord << 16) | (LoWord & 0xFFFF);
+        }
         internal void EnableMapZoom()
         {
             ServerPacket serverPacket = new ServerPacket(5);
@@ -2257,14 +2279,12 @@ namespace Talos.Base
             Enqueue(serverPacket);
         }
 
-        private static int walkCallCount = 0;
-        private static DateTime lastWalkTime = DateTime.MinValue;
-        private DateTime dateTime_1;
+
 
         internal void Walk(Direction dir)
         {
             DateTime currentTime = DateTime.UtcNow;
-            double millisecondsSinceLastWalk = (currentTime - lastWalkTime).TotalMilliseconds;
+            double millisecondsSinceLastWalk = (currentTime - _lastWalkTime).TotalMilliseconds;
 
             // Check if the walk calls are too frequent
             if (millisecondsSinceLastWalk < _walkSpeed)
@@ -2277,11 +2297,11 @@ namespace Talos.Base
             //Console.WriteLine($"Time since last walk: {millisecondsSinceLastWalk} ms");
 
             // Update the last walk time to now after checking the interval
-            lastWalkTime = currentTime;
+            _lastWalkTime = currentTime;
 
             if (Dialog == null && !_server._stopWalking && dir != Direction.Invalid && !_isRefreshing)
             {
-                walkCallCount++;
+                _walkCallCount++;
                 //Console.WriteLine($"Walk method called {walkCallCount} times");
 
                 //Console.WriteLine("Walk conditions met. Proceeding..."); // Debugging: Log that conditions are met
@@ -2409,10 +2429,10 @@ namespace Talos.Base
                     return true;
                 }
 
-                if (Location.NotEquals(destination, lastDestination) || pathStack.Count == 0)
+                if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
                 {
                     //Console.WriteLine("New destination or empty path stack. Calculating new path.");
-                    lastDestination = destination;
+                    _lastDestination = destination;
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidExits);
 
                 }
@@ -2591,7 +2611,7 @@ namespace Talos.Base
                     //Console.WriteLine("***Route not found, initializing new RouteFinder.");
                     RouteFinder = new RouteFinder(_server, this);
                     _routeDestination = destination;
-                    dateTime_1 = DateTime.MinValue;
+                    _lastClickedWorldMap = DateTime.MinValue;
                     routeStack = RouteFinder.FindRoute(currentLocation, destination);
                     return false;
                 }
@@ -2615,7 +2635,7 @@ namespace Talos.Base
                 {
                     //Console.WriteLine("***World map is not null, processing world map navigation.");
                     List<Location> list = RouteFinder.FindRoute(currentLocation, destination).Reverse().ToList();
-                    if (DateTime.UtcNow.Subtract(dateTime_1).TotalSeconds < 1.0)
+                    if (DateTime.UtcNow.Subtract(_lastClickedWorldMap).TotalSeconds < 1.0)
                     {
                         //Console.WriteLine("***DateTime.UtcNow.Subtract(dateTime_1).TotalSeconds < 1.0");
                         return false;
@@ -2630,7 +2650,7 @@ namespace Talos.Base
                             if (node.MapID == location.MapID)
                             {
                                 //Console.WriteLine($"***Need to click world map");
-                                dateTime_1 = DateTime.UtcNow;
+                                _lastClickedWorldMap = DateTime.UtcNow;
                                 ClickWorldMap(node.MapID, node.Location);
                                 return true;
                             }
@@ -2643,7 +2663,7 @@ namespace Talos.Base
                         if (node.MapID == nextLocation.MapID)
                         {
                             //Console.WriteLine($"***[2]Need to click world map");
-                            dateTime_1 = DateTime.UtcNow;
+                            _lastClickedWorldMap = DateTime.UtcNow;
                             ClickWorldMap(node.MapID, node.Location);
                             return true;
                         }

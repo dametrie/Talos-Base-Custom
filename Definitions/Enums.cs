@@ -93,6 +93,20 @@ namespace Talos.Enumerations
         Accessory3 = 18
     }
 
+    internal enum MenuType : byte
+    {
+        Menu = 0,
+        MenuWithArgs = 1,
+        TextEntry = 2,
+        WithdrawlOrBuy = 4,
+        DepositOrSell = 5,
+        LearnSpell = 6,
+        LearnSkills = 7,
+        DisplaySpells = 8,
+        DisplaySkills = 9,
+        Dialog = 255
+    }
+
     internal enum Stat
     {
         STR = 1,

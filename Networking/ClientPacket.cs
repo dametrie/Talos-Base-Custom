@@ -223,7 +223,7 @@ namespace Talos.Networking
                 {1005721705u, "[ToggleGroup] Sent> "},
                 {2280673654u, "[SwapSlot] Sent> "},
                 {2414894606u, "[RefreshRequest] Sent> "},
-                {2431672225u, "[PursuitRequest] Sent> "},
+                {2431672225u, "[MenuIteraction] Sent> "},
                 {418357945u, "[DialogResponse] Sent> "},
                 {368025088u, "[BoardRequest] Sent> "},
                 {485468421u, "[UseSkill] Sent> "},

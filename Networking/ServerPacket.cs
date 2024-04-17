@@ -166,7 +166,7 @@ namespace Talos.Networking
                 {1056054562u, "[AddSkillToPane] Recv> "},
                 {972166467u, "[RemoveSkillFromPane] Recv> "},
                 {955388848u, "[WorldMap] Recv> "},
-                {1005721705u, "[MerchantMenu] Recv> "},
+                {1005721705u, "[DisplayMenu] Recv> "},
                 {2280673654u, "[Dialog] Recv> "},
                 {2297451273u, "[Board] Recv> "},
                 {2247118416u, "[Door] Recv> "},
