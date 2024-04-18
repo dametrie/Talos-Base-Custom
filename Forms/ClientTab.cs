@@ -1363,7 +1363,7 @@ namespace Talos.Forms
                 }
                 _client._isWalking = false;
                 _client._isCasting = false;
-                _client.Bot.bool_11 = false;
+                _client.Bot._reddingOtherPlayer = false;
                 _client.Bot.bool_12 = false;
                 _client.bool_44 = false;
             }
@@ -2247,7 +2247,16 @@ namespace Talos.Forms
 
         }
 
-
+        private void walkBtn_Click(object sender, EventArgs e)
+        {
+            if (walkBtn.Text == "Walk")
+            {
+                walkBtn.Text = "Stop";
+                return;
+            }
+            walkBtn.Text = "Walk";
+            _client._isWalking = false;
+        }
     }
 }
 

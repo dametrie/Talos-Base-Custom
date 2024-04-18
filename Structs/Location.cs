@@ -88,6 +88,11 @@ namespace Talos.Structs
                 return Point.DistanceFrom(other.Point);
         }
 
+        internal int AbsoluteXY(short x, short y)
+        {
+            return Math.Abs(x - X) + Math.Abs(y - Y);
+        }
+
         /// <summary>
         /// Returns true if both locations are equal
         /// </summary>

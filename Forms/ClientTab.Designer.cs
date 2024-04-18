@@ -89,6 +89,9 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
+            this.manaBar = new Talos.Forms.UI.ResourceBar();
+            this.healthBar = new Talos.Forms.UI.ResourceBar();
+            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -471,6 +474,7 @@ namespace Talos.Forms
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleDialogBtn = new System.Windows.Forms.ToolStripButton();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.button3 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.label13 = new System.Windows.Forms.Label();
@@ -507,10 +511,6 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
-            this.button3 = new System.Windows.Forms.Button();
-            this.manaBar = new Talos.Forms.UI.ResourceBar();
-            this.healthBar = new Talos.Forms.UI.ResourceBar();
-            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -1282,6 +1282,41 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // manaBar
+            // 
+            this.manaBar.BackColor = System.Drawing.Color.White;
+            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
+            this.manaBar.Location = new System.Drawing.Point(65, 282);
+            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.manaBar.Name = "manaBar";
+            this.manaBar.Size = new System.Drawing.Size(50, 196);
+            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.manaBar.TabIndex = 15;
+            // 
+            // healthBar
+            // 
+            this.healthBar.BackColor = System.Drawing.Color.White;
+            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
+            this.healthBar.Location = new System.Drawing.Point(6, 282);
+            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
+            this.healthBar.Name = "healthBar";
+            this.healthBar.Size = new System.Drawing.Size(50, 196);
+            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.healthBar.TabIndex = 14;
+            // 
+            // chatPanel
+            // 
+            this.chatPanel.AutoDetectUrls = true;
+            this.chatPanel.BackColor = System.Drawing.Color.White;
+            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel.Name = "chatPanel";
+            this.chatPanel.ReadOnly = true;
+            this.chatPanel.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel.TabIndex = 0;
+            this.chatPanel.Text = "";
             // 
             // mainAislingsTab
             // 
@@ -2066,12 +2101,14 @@ namespace Talos.Forms
             this.walkBtn.TabIndex = 14;
             this.walkBtn.Text = "Walk";
             this.walkBtn.UseVisualStyleBackColor = false;
+            this.walkBtn.Click += new System.EventHandler(this.walkBtn_Click);
             // 
             // walkMapCombox
             // 
             this.walkMapCombox.ForeColor = System.Drawing.Color.Black;
             this.walkMapCombox.FormattingEnabled = true;
             this.walkMapCombox.Items.AddRange(new object[] {
+            "WayPoints",
             "Aman Jungle",
             "Aman Skills/Spells",
             "Andor Lobby",
@@ -2107,7 +2144,7 @@ namespace Talos.Forms
             "YT 24",
             "YT Vine Rooms",
             "SW Lure",
-            "WayPoints"});
+            });
             this.walkMapCombox.Location = new System.Drawing.Point(6, 77);
             this.walkMapCombox.Name = "walkMapCombox";
             this.walkMapCombox.Size = new System.Drawing.Size(121, 23);
@@ -6001,6 +6038,16 @@ namespace Talos.Forms
             this.tabPage1.TabIndex = 14;
             this.tabPage1.Text = "DEBUG";
             // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(294, 85);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(117, 23);
+            this.button3.TabIndex = 156;
+            this.button3.Text = "Route Find Once";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click_1);
+            // 
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(294, 114);
@@ -6309,51 +6356,6 @@ namespace Talos.Forms
             this.currentAction.TabIndex = 6;
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(294, 85);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(117, 23);
-            this.button3.TabIndex = 156;
-            this.button3.Text = "Route Find Once";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click_1);
-            // 
-            // manaBar
-            // 
-            this.manaBar.BackColor = System.Drawing.Color.White;
-            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.manaBar.Location = new System.Drawing.Point(65, 282);
-            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.manaBar.Name = "manaBar";
-            this.manaBar.Size = new System.Drawing.Size(50, 196);
-            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.manaBar.TabIndex = 15;
-            // 
-            // healthBar
-            // 
-            this.healthBar.BackColor = System.Drawing.Color.White;
-            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
-            this.healthBar.Location = new System.Drawing.Point(6, 282);
-            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.healthBar.Name = "healthBar";
-            this.healthBar.Size = new System.Drawing.Size(50, 196);
-            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.healthBar.TabIndex = 14;
-            // 
-            // chatPanel
-            // 
-            this.chatPanel.AutoDetectUrls = true;
-            this.chatPanel.BackColor = System.Drawing.Color.White;
-            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel.Name = "chatPanel";
-            this.chatPanel.ReadOnly = true;
-            this.chatPanel.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel.TabIndex = 0;
-            this.chatPanel.Text = "";
             // 
             // ClientTab
             // 

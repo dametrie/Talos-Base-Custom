@@ -602,7 +602,10 @@ namespace Talos.Base
             clientPacket.WriteString8(message);
             Enqueue(clientPacket);
         }
-
+        internal bool RouteFindByMapID(short mapID)
+        {
+            return RouteFind(new Location(mapID, 0, 0), 0, true);
+        }
 
         internal List<Player> GetNearbyPlayerList()
         {
@@ -754,7 +757,7 @@ namespace Talos.Base
 
         internal void UseExperienceGem(byte choice)
         {
-            Bot.bool_11 = true;
+            Bot._reddingOtherPlayer = true;
             if (!UseItem("Experience Gem"))
             {
                 ServerMessage(1, "You do not have any experience gems.");
@@ -788,7 +791,7 @@ namespace Talos.Base
             ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1), 2);
             ReplyDialog(type, objID, pursuitID, dialogID);
             Bot._lastUsedGem = DateTime.UtcNow;
-            Bot.bool_11 = false;
+            Bot._reddingOtherPlayer = false;
         }
 
         private bool IsValidSpell(Client client, string spellName, Creature creature)
@@ -2342,7 +2345,7 @@ namespace Talos.Base
         }
 
 
-        internal bool TryWalkToLocation(Location destination, short followDistance = 1, bool lockRequired = true, bool avoidExits = true)
+        internal bool TryWalkToLocation(Location destination, short destinationThreshold = 1, bool lockRequired = true, bool avoidExits = true)
         {
 
             while (true)
@@ -2370,7 +2373,7 @@ namespace Talos.Base
             //Console.WriteLine($"Current location of client: {_clientLocation}"); // Debugging: Log current client location
             //Console.WriteLine($"Current location of client according to server: {_serverLocation}"); // Debugging: Log current server location
 
-            //Console.WriteLine($"Trying to walk to location: {destination} with follow distance: {followDistance}, lock required: {lockRequired}, ignore obstacles: {ignoreObstacles}");
+            //Console.WriteLine($"Trying to walk to location: {destination} with follow distance: {followDistance}, lock required: {lockRequired}, avoid exits: {avoidExits}");
 
             if (PlayersWithNoName.Count > 0 || _isCasting)
             {
@@ -2385,7 +2388,7 @@ namespace Talos.Base
 
             if ((!_map.IsLocationWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
-                if (followDistance != 0 && _clientLocation.DistanceFrom(destination) <= followDistance)
+                if (destinationThreshold != 0 && _clientLocation.DistanceFrom(destination) <= destinationThreshold)
                 {
                     //Console.WriteLine("Too close to destination to require movement.");
                     Thread.Sleep(25);
@@ -2533,7 +2536,7 @@ namespace Talos.Base
                 return true;
             }
 
-           // Console.WriteLine("Conditions not met for walking, requesting client refresh.");
+            // Console.WriteLine("Conditions not met for walking, requesting client refresh.");
             RequestRefresh();
             shouldRefresh = false;
             return false;
@@ -2543,7 +2546,7 @@ namespace Talos.Base
             return !HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending");
         }
 
-        internal bool RouteFind(Location destination, short followDistance = 0, bool bool_57 = false, bool lockRequired = true, bool avoidExits = true)
+        internal bool RouteFind(Location destination, short destinationThreshold = 0, bool bool_57 = false, bool lockRequired = true, bool avoidExits = true)
         {
             try
             {
@@ -2580,7 +2583,7 @@ namespace Talos.Base
 
                 if (Location.NotEquals(_routeDestination, destination) || routeStack.Count == 0)
                 {
-                    ///Console.WriteLine("***Finding new route.");
+                    //Console.WriteLine("***Finding new route.");
                     _routeDestination = destination;
                     routeStack = RouteFinder.FindRoute(currentLocation, destination);
                 }
@@ -2605,7 +2608,7 @@ namespace Talos.Base
                 if (routeStack.Count != 1)
                 {
                     //Console.WriteLine("***routeStack.Count != 1");
-                    followDistance = 0;
+                    destinationThreshold = 0;
                 }
                 
                 if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
@@ -2689,7 +2692,7 @@ namespace Talos.Base
                     routeStack.Clear();
                     return false;
                 }
-                if (!TryWalkToLocation(nextLocation, followDistance, lockRequired, avoidExits = true))
+                if (!TryWalkToLocation(nextLocation, destinationThreshold, lockRequired, avoidExits = true))
                 {
                     if (_map.Name.Contains("Threshold"))
                     {

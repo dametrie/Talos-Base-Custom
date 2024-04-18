@@ -233,14 +233,22 @@ internal class Pathfinder
 
     private Stack<Location> ConstructPath(PathNode node)
     {
+        HashSet<Location> visitedLocations = new HashSet<Location>();
         Stack<Location> path = new Stack<Location>();
+
         while (node != null)
         {
-            //Console.WriteLine($"Traceback - Current Node: {node.Location}, Parent Node: {node.ParentNode?.Location}");
+            // Check if we have already visited this node to detect cycles.
+            if (visitedLocations.Contains(node.Location))
+            {
+                Console.WriteLine($"Cycle detected at location {node.Location}. Breaking out of loop.");
+                break;
+            }
+
+            visitedLocations.Add(node.Location);
             path.Push(node.Location);
             node = node.ParentNode;
         }
-        //print out each location in path stack
 
         return path;
     }
