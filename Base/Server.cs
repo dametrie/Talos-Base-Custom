@@ -307,12 +307,12 @@ namespace Talos
             client.StepCount = stepCount++;
             clientPacket.Data[1] = stepCount;
             client._clientLocation = client._clientLocation.TranslateLocationByDirection(facing);
-            //Console.WriteLine("CLIENT Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
-            client.LastStep = DateTime.Now;
-            //Console.WriteLine("CLIENT Last step = " + client.LastStep);
+            //Console.WriteLine("[ClientWalk] Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
+            client.LastStep = DateTime.UtcNow;
+            //Console.WriteLine("[ClientWalk] Last step = " + client.LastStep);
             client._isCasting = false;
-            client.LastMoved = DateTime.Now;
-            //Console.WriteLine("CLIENT Last moved = " + client.LastMoved);
+            client.LastMoved = DateTime.UtcNow;
+            //Console.WriteLine($"[ClientWalk] LastMoved set to: {client.LastMoved}"); // Debugging: Log LastMoved update
 
             if (client.ClientTab != null)
             {
@@ -1228,7 +1228,7 @@ namespace Talos
             client._serverLocation.X = location.X;
             client._serverLocation.Y = location.Y;
             client._clientDirection = direction;
-            client.LastMoved = DateTime.Now;
+            client.LastMoved = DateTime.UtcNow;
 
             client.ClientTab.DisplayMapInfoOnCover(client._map);
 
@@ -1855,7 +1855,6 @@ namespace Talos
                 client._npcDialog = merchantText;
                 client.ClientTab.npcText.Text = merchantText;
                 int num7 = serverPacket.Position;
-                //byte num = sp.ReadByte();
                 switch (menuType)
                 {
                     case (byte)MenuType.Menu:
@@ -2184,7 +2183,7 @@ namespace Talos
                     bool openedRight = serverPacket.ReadBoolean();
 
                     Location currentLocation = new Location(client._map.MapID, x, y);
-                    Console.WriteLine($"Door found at: {client._map.MapID}, {x},{y}, closed: {closed}, openedRight: {openedRight}");
+                    //Console.WriteLine($"Door found at: {client._map.MapID}, {x},{y}, closed: {closed}, openedRight: {openedRight}");
                     Door door = new Door(currentLocation, closed);
                     if (!client.Doors.ContainsKey(door.Location))
                     {

@@ -236,7 +236,7 @@ internal class Pathfinder
         Stack<Location> path = new Stack<Location>();
         while (node != null)
         {
-            Console.WriteLine($"Traceback - Current Node: {node.Location}, Parent Node: {node.ParentNode?.Location}");
+            //Console.WriteLine($"Traceback - Current Node: {node.Location}, Parent Node: {node.ParentNode?.Location}");
             path.Push(node.Location);
             node = node.ParentNode;
         }

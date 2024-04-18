@@ -2283,21 +2283,8 @@ namespace Talos.Base
 
         internal void Walk(Direction dir)
         {
-            DateTime currentTime = DateTime.UtcNow;
-            double millisecondsSinceLastWalk = (currentTime - _lastWalkTime).TotalMilliseconds;
-
-            // Check if the walk calls are too frequent
-            if (millisecondsSinceLastWalk < _walkSpeed)
-            {
-                //Console.WriteLine($"Walk called too frequently: only {millisecondsSinceLastWalk} ms since last walk. Walk aborted.");
-                return;
-            }
 
             //Console.WriteLine($"Attempting to walk in direction: {dir}"); // Log the direction
-            //Console.WriteLine($"Time since last walk: {millisecondsSinceLastWalk} ms");
-
-            // Update the last walk time to now after checking the interval
-            _lastWalkTime = currentTime;
 
             if (Dialog == null && !_server._stopWalking && dir != Direction.Invalid && !_isRefreshing)
             {
@@ -2339,7 +2326,7 @@ namespace Talos.Base
                 //Console.WriteLine($"Client location updated to: {_clientLocation}"); // Debugging: Log client location update
 
                 LastMoved = DateTime.UtcNow;
-                //Console.WriteLine($"LastMoved set to: {LastMoved}"); // Debugging: Log LastMoved update
+                Console.WriteLine($"[WalkLastMoved set to: {LastMoved}"); // Debugging: Log LastMoved update
 
                 ClientTab.Invoke((Action)delegate
                 {
@@ -2357,10 +2344,27 @@ namespace Talos.Base
 
         internal bool TryWalkToLocation(Location destination, short followDistance = 1, bool lockRequired = true, bool avoidExits = true)
         {
-            if ((DateTime.UtcNow - LastMoved).TotalMilliseconds < _walkSpeed)
+
+            while (true)
             {
-                //Console.WriteLine("Walk throttled due to timing.");
-                return false;
+                double totalMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+                Console.WriteLine($"Checking walk throttle: {totalMilliseconds}ms elapsed since last move");
+
+                if (Bot.IsStrangerNearby() || Bot._shouldBotStop)
+                {
+                    Console.WriteLine($"Stranger nearby or bot stop required, waiting...");
+                    if (totalMilliseconds >= 420.0)
+                    {
+                        Console.WriteLine("Elapsed time exceeds maximum wait time, proceeding with action.");
+                        break;
+                    }
+                }
+                else if (!(totalMilliseconds < _walkSpeed))
+                {
+                    Console.WriteLine($"Proceeding with try walk. Value of totalMilliseconds: {totalMilliseconds}");
+                    break;
+                }
+                Thread.Sleep(10);
             }
 
             //Console.WriteLine($"Current location of client: {_clientLocation}"); // Debugging: Log current client location
@@ -2401,27 +2405,7 @@ namespace Talos.Base
                     return true;
                 }
 
-                while (true)
-                {
-                    double totalMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
-                    //Console.WriteLine($"Checking walk throttle: {totalMilliseconds}ms elapsed since last move");
 
-                    if (Bot.IsStrangerNearby() || Bot._shouldBotStop)
-                    {
-                        Console.WriteLine($"Stranger nearby or bot stop required, waiting...");
-                        if (totalMilliseconds >= 420.0)
-                        {
-                            Console.WriteLine("Elapsed time exceeds maximum wait time, proceeding with action.");
-                            break;
-                        }
-                    }
-                    else if (!(totalMilliseconds < _walkSpeed))
-                    {
-                        //Console.WriteLine("Sufficient time has elapsed since last move, proceeding with action.");
-                        break;
-                    }
-                    Thread.Sleep(10);
-                }
 
                 if (Equals(_clientLocation, destination))
                 {
@@ -2577,11 +2561,11 @@ namespace Talos.Base
                 {
                     if (Location.Equals(destination, new Location(395, 6, 6))) //Path Temple 1
                     {
-                        //Bot.bool_36 = true;
+                        //Bot.bool_36 = true; //Adam
                     }
                     else if (Location.Equals(destination, new Location(344, 6, 6))) //Path Temple 6
                     {
-                        //Bot.bool_37 = true;
+                        //Bot.bool_37 = true; //Adam
                     }
                     //Console.WriteLine("***Already at destination.");
                     routeStack.Clear();
