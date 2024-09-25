@@ -84,14 +84,14 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.Aite:
-                    if ((_sourceID != _client.Player.ID) || _client._creatureToSpellList.Count <= 0) //we didn't cast it or our creature to spell list is empty
+                    if ((_sourceID != _client.Player.ID) || _client._spellHistory.Count <= 0) //we didn't cast it or our creature to spell list is empty
                     {
                         _targetCreature.AiteDuration = Spell.GetSpellDuration("ard naomh aite");
                         _targetCreature.LastAited = DateTime.UtcNow;
                     }
                     else
                     {
-                        _targetCreature.AiteDuration = Spell.GetSpellDuration(_client._creatureToSpellList[0].Spell.Name);
+                        _targetCreature.AiteDuration = Spell.GetSpellDuration(_client._spellHistory[0].Spell.Name);
                         _targetCreature.LastAited = DateTime.UtcNow;
                     }
                     break;
@@ -100,14 +100,14 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.Fas:
-                    if ((_sourceID != _client.Player.ID) || (_client._creatureToSpellList.Count <= 0)) //we didn't cast it or our creature to spell list is empty
+                    if ((_sourceID != _client.Player.ID) || (_client._spellHistory.Count <= 0)) //we didn't cast it or our creature to spell list is empty
                     {
                         _targetCreature.FasDuration = Spell.GetSpellDuration("ard fas nadur");
                         _targetCreature.LastFassed = DateTime.UtcNow;
                     }
                     else
                     {
-                        _targetCreature.FasDuration = Spell.GetSpellDuration(_client._creatureToSpellList[0].Spell.Name);
+                        _targetCreature.FasDuration = Spell.GetSpellDuration(_client._spellHistory[0].Spell.Name);
                         _targetCreature.LastFassed = DateTime.UtcNow;
                     }
                     break;

@@ -1365,7 +1365,7 @@ namespace Talos.Forms
                 _client._isCasting = false;
                 _client.Bot._reddingOtherPlayer = false;
                 _client.Bot.bool_12 = false;
-                _client.bool_44 = false;
+                _client._exchangeOpen = false;
             }
         }
 

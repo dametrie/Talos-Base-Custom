@@ -126,7 +126,7 @@ namespace Talos.Capricorn.Drawing
             return pal;
         }
 
-        public static Palette256 ApplyDye(Palette256 palette, int dye)//Adam
+        public static Palette256 ApplyDye(Palette256 palette, int dye)
         {
             if (dye <= 0)
                 return palette;

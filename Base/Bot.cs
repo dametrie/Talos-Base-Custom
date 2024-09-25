@@ -82,6 +82,8 @@ namespace Talos.Base
         private DateTime _lastUsedMonsterCall = DateTime.MinValue;
         internal bool _hasWhiteDugon;
         private List<Player> _nearbyPlayers;
+        internal bool _circle1;
+        internal bool _circle2;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -102,7 +104,7 @@ namespace Talos.Base
         private void Walker()
         {
             _shouldBotStop = IsRangerNearBy();
-            if(!Client.bool_44 && Client.ClientTab != null)
+            if(!Client._exchangeOpen && Client.ClientTab != null)
             {
                 HandleDialog();
                 HandleDumbMTGWarp();
@@ -740,7 +742,7 @@ namespace Talos.Base
         {
             return (Client._inventoryFull && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
                    (Client.Bot.bool_32 && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
-                   Client.bool_44 || Client.ClientTab == null || Client.Dialog != null || bool_12;
+                   Client._exchangeOpen || Client.ClientTab == null || Client.Dialog != null || bool_12;
         }
         private void ProcessPlayers()
         {
@@ -1815,7 +1817,7 @@ namespace Talos.Base
                     return false;
                 }
             }
-            else if (isBubbleBlockChecked && Client.bool_41)
+            else if (isBubbleBlockChecked && Client._okToBubble)
             {
                 if (walkMap == "WayPoints")
                 {
@@ -1824,7 +1826,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                else if (isFollowChecked && Client._distnationReached && CastBubbleBlock())
+                else if (isFollowChecked && Client._destnationReached && CastBubbleBlock())
                 {
                     return false;
                 }
@@ -2807,17 +2809,17 @@ namespace Talos.Base
         private void ManageSpellCasting()
         {
             DateTime utcNow = DateTime.UtcNow;
-            while (Client._creatureToSpellList.Count >= 3 || Client._spellCounter >= 3)
+            while (Client._spellHistory.Count >= 3 || Client._spellCounter >= 3)
             {
                 if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds > 1.0)
                 {
-                    Client._creatureToSpellList.Clear();
+                    Client._spellHistory.Clear();
                 }
                 Thread.Sleep(10);
             }
             if (DateTime.UtcNow.Subtract(_lastCast).TotalSeconds > 1.0)
             {
-                Client._creatureToSpellList.Clear();
+                Client._spellHistory.Clear();
             }
         }
 

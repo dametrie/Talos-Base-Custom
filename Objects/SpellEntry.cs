@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Talos.Objects
 {
-    internal class CreatureToSpell
+    internal class SpellEntry
     {
         internal Spell Spell { get; set; }
         internal Creature Creature { get; set; }
         internal DateTime CooldownEndTime { get; set; }
-        internal CreatureToSpell(Spell spell, Creature creature)
+        internal SpellEntry(Spell spell, Creature creature)
         {
             Spell = spell;
             Creature = creature;

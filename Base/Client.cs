@@ -107,7 +107,7 @@ namespace Talos.Base
         internal string _action = "Current Action: ";
         internal string _itemToReEquip = "";
         internal bool _safeScreen;
-        internal bool _atDoor;
+        internal bool _clientWalkPending;
         internal bool _isCasting;
         internal bool _isWalking;
         internal bool _isRefreshing;
@@ -121,18 +121,18 @@ namespace Talos.Base
         internal bool _inventoryFull;
         internal bool _shouldEquipBow;
         internal bool _trainingGroundsMember;
-        private bool shouldRefresh;
-        internal bool bool_17;
-        internal bool bool_18;
-        internal bool bool_44;
-        internal bool bool_45;
-        internal bool bool_41 = true;
-        internal bool _distnationReached;
+        private bool _shouldRefresh;
+        internal bool _cancelPressed;
+        internal bool _acceptPressed;
+        internal bool _exchangeOpen;
+        internal bool _exchangeClosing;
+        internal bool _okToBubble = true;
+        internal bool _destnationReached;
         internal bool isStatusUpdated;
         internal bool _recentlyCrashered;
-        internal bool unmaxedBashingSkillsLoaded = false;
-        internal bool unmaxedSpellsLoaded = false;
-        internal bool unmaxedSkillsLoaded = false;
+        internal bool _unmaxedBashingSkillsLoaded = false;
+        internal bool _unmaxedSpellsLoaded = false;
+        internal bool _unmaxedSkillsLoaded = false;
 
         internal double _walkSpeed = 420.0;
         internal ushort _monsterFormID = 1;
@@ -158,7 +158,7 @@ namespace Talos.Base
         internal List<Staff> _staffList = new List<Staff>();
         internal List<MeleeWeapon> _meleeList = new List<MeleeWeapon>();
         internal List<Bow> _bowList = new List<Bow>();
-        internal List<CreatureToSpell> _creatureToSpellList = new List<CreatureToSpell>();
+        internal List<SpellEntry> _spellHistory = new List<SpellEntry>();
         internal List<string> _inventoryList = new List<string>();
 
         internal BindingList<int> _worldObjectBindingList = new BindingList<int>();
@@ -1092,7 +1092,7 @@ namespace Talos.Base
                 }
             } 
         }
-        internal bool ClearSpell()
+        internal bool WaitForSpellChant()
         {
             DateTime utcNow = DateTime.UtcNow;
             while (true)
@@ -1742,12 +1742,12 @@ namespace Talos.Base
         }
 
 
-        internal void ResetExchangeVars() //Adam
+        internal void ResetExchangeVars()
         {
-            bool_45 = true;
+            _exchangeClosing = true;
             Thread.Sleep(1500);
-            bool_44 = false;
-            bool_45 = false;
+            _exchangeOpen = false;
+            _exchangeClosing = false;
         }
 
         internal void LoadUnmaxedSkills()
@@ -1768,7 +1768,7 @@ namespace Talos.Base
                     }
                 }
             }
-            unmaxedSkillsLoaded = true;
+            _unmaxedSkillsLoaded = true;
         }
 
         internal void LoadUnmaxedBashingSkills()
@@ -1789,7 +1789,7 @@ namespace Talos.Base
                     }
                 }
             }
-            unmaxedBashingSkillsLoaded = true;
+            _unmaxedBashingSkillsLoaded = true;
         }
 
         internal void LoadUnmaxedSpells()
@@ -1809,7 +1809,7 @@ namespace Talos.Base
                     }
                 }
             }
-            unmaxedSpellsLoaded = true;
+            _unmaxedSpellsLoaded = true;
         }
 
 
@@ -1933,7 +1933,7 @@ namespace Talos.Base
                 CreatureTarget = (creature ?? Player);
                 if (ReadyToSpell(spell.Name))
                 {
-                    var existingEntry = _creatureToSpellList.FirstOrDefault(cts => cts.Creature.ID == CreatureTarget.ID && cts.Spell.Name == spell.Name);
+                    var existingEntry = _spellHistory.FirstOrDefault(cts => cts.Creature.ID == CreatureTarget.ID && cts.Spell.Name == spell.Name);
 
                     if (existingEntry != null)
                     {
@@ -1950,11 +1950,11 @@ namespace Talos.Base
                     }
                     else
                     {
-                        var newEntry = new CreatureToSpell(spell, CreatureTarget)
+                        var newEntry = new SpellEntry(spell, CreatureTarget)
                         {
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
-                        _creatureToSpellList.Add(newEntry);
+                        _spellHistory.Add(newEntry);
                         //Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {creature?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
                         //Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
                     }
@@ -2069,7 +2069,7 @@ namespace Talos.Base
                 {
                     _currentSpell = spell;
                 }
-                return !keepSpellAfterUse || ClearSpell();
+                return !keepSpellAfterUse || WaitForSpellChant();
             }
         }
 
@@ -2305,7 +2305,7 @@ namespace Talos.Base
                     Turn(dir);
                 }
 
-                shouldRefresh = true;
+                _shouldRefresh = true;
                 //Console.WriteLine("shouldRefresh set to true"); // Debugging: Log shouldRefresh update
 
 
@@ -2386,7 +2386,7 @@ namespace Talos.Base
                 _isCasting = false;
             }
 
-            if ((!_map.IsLocationWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
+            if ((!_map.IsLocationWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
                 if (destinationThreshold != 0 && _clientLocation.DistanceFrom(destination) <= destinationThreshold)
                 {
@@ -2396,14 +2396,14 @@ namespace Talos.Base
                 }
                 if (Equals(_clientLocation, destination))
                 {
-                    if (shouldRefresh || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
+                    if (_shouldRefresh || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
                     {
                         if (_stuckCounter == 0)
                         {
                             //Console.WriteLine("Refreshing client due to timeout or refresh needed.");
                             RequestRefresh();
                         }
-                        shouldRefresh = false;
+                        _shouldRefresh = false;
                     }
                     return true;
                 }
@@ -2424,7 +2424,7 @@ namespace Talos.Base
 
                 }
 
-                if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && shouldRefresh)
+                if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _shouldRefresh)
                 {
                     pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidExits);
                     if (pathStack.Count == 0)
@@ -2433,7 +2433,7 @@ namespace Talos.Base
                     }
                     //Console.WriteLine("Location difference detected, requesting refresh.");
                     RequestRefresh();
-                    shouldRefresh = false;
+                    _shouldRefresh = false;
                     return false;
                 }
 
@@ -2494,14 +2494,14 @@ namespace Talos.Base
                 if (nextPosition.DistanceFrom(_clientLocation) != 1)
                 {
                     //Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
-                    if (nextPosition.DistanceFrom(_clientLocation) > 2 && shouldRefresh)
+                    if (nextPosition.DistanceFrom(_clientLocation) > 2 && _shouldRefresh)
                     {
                         if (_stuckCounter == 0)
                         {
                             //Console.WriteLine("Refreshing client due to unexpected position distance.");
                             RequestRefresh();
                         }
-                        shouldRefresh = false;
+                        _shouldRefresh = false;
                     }
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidExits);
                     return false;
@@ -2538,7 +2538,7 @@ namespace Talos.Base
 
             // Console.WriteLine("Conditions not met for walking, requesting client refresh.");
             RequestRefresh();
-            shouldRefresh = false;
+            _shouldRefresh = false;
             return false;
         }
         private bool CanWalk()
@@ -2564,11 +2564,11 @@ namespace Talos.Base
                 {
                     if (Location.Equals(destination, new Location(395, 6, 6))) //Path Temple 1
                     {
-                        //Bot.bool_36 = true; //Adam
+                        Bot._circle1 = true;
                     }
                     else if (Location.Equals(destination, new Location(344, 6, 6))) //Path Temple 6
                     {
-                        //Bot.bool_37 = true; //Adam
+                        Bot._circle2 = true;
                     }
                     //Console.WriteLine("***Already at destination.");
                     routeStack.Clear();
@@ -2736,24 +2736,24 @@ namespace Talos.Base
                         ClickNPCDialog(creature, "Express Ship", true);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
-                        //map switching shit ADAM
-                        //if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
-                        //{
-                        //    Server.dictionary_5[Name] = ClientTab.walkMapCombox.Text;
-                        //}
-                        //if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
-                        //{
-                        //    Server.dictionary_6[Name] = ClientTab.followText.Text;
-                        //}
-                        //if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
-                        //{
-                        //    Server.dictionary_7[Name] = ClientTab.walkSpeedSldr.Value;
-                        //}
-                        //if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
-                        //{
-                        //    Server.dictionary_6[Name] = "bugEvent";
-                        //    Server.dictionary_7[Name] = ClientTab.walkSpeedSldr.Value;
-                        //}
+ 
+                        if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
+                        }
+                        if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = ClientTab.followText.Text;
+                        }
+                        if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                        if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = "bugEvent";
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
                     }
                     else if (Location.Equals(_clientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
                     {
@@ -2791,24 +2791,24 @@ namespace Talos.Base
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
-                        //map switching shit ADAM
-                        //if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
-                        //{
-                        //    Server.dictionary_5[Name] = ClientTab.walkMapCombox.Text;
-                        //}
-                        //if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
-                        //{
-                        //    Server.dictionary_6[Name] = ClientTab.followText.Text;
-                        //}
-                        //if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
-                        //{
-                        //    Server.dictionary_7[Name] = ClientTab.walkSpeedSldr.Value;
-                        //}
-                        //if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
-                        //{
-                        //    Server.dictionary_6[Name] = "bugEvent";
-                        //    Server.dictionary_7[Name] = ClientTab.walkSpeedSldr.Value;
-                        //}
+ 
+                        if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
+                        }
+                        if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = ClientTab.followText.Text;
+                        }
+                        if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                        if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = "bugEvent";
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
                     }
                     else if (Location.Equals(_clientLocation, new Location(3634, 16, 6)) && nextLocation.MapID == 8420)
                     {

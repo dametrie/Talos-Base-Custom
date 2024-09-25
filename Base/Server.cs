@@ -74,6 +74,9 @@ namespace Talos
 
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
+        internal Dictionary<string, string> _medWalk = new Dictionary<string, string>();
+        internal Dictionary<string, string> _medTask = new Dictionary<string, string>();
+        internal Dictionary<string, int> _medWalkSpeed = new Dictionary<string, int>();
         internal SortedDictionary<ushort, string> PursuitIDs { get; set; } = new SortedDictionary<ushort, string>();
         public static object Lock { get; internal set; } = new object();
 
@@ -756,11 +759,11 @@ namespace Talos
                         break;
                     }
                 case ExchangeType.Cancel:
-                    client.bool_17 = true;
+                    client._cancelPressed = true;
                     ThreadPool.QueueUserWorkItem(_ => client.ResetExchangeVars());
                     break;
                 case ExchangeType.Accept:
-                    client.bool_18 = true;
+                    client._acceptPressed = true;
                     break;
             }
             return true;
@@ -885,15 +888,15 @@ namespace Talos
                 }
             }
 
-            if (!client.unmaxedSkillsLoaded)
+            if (!client._unmaxedSkillsLoaded)
             {
                 client.LoadUnmaxedSkills();
             }
-            if (!client.unmaxedSpellsLoaded)
+            if (!client._unmaxedSpellsLoaded)
             {
                 client.LoadUnmaxedSpells();
             }
-            if (!client.unmaxedBashingSkillsLoaded)
+            if (!client._unmaxedBashingSkillsLoaded)
             {
                 client.LoadUnmaxedBashingSkills();
             }
@@ -1582,7 +1585,7 @@ namespace Talos
 
             client._mapChangePending = false;
             client._worldMap = null;
-            client._atDoor = false;
+            client._clientWalkPending = false;
             //client.Pathfinder = new Pathfinder(client);
             //client.Pathfinding = new Pathfinding(client);   
 
@@ -1817,14 +1820,14 @@ namespace Talos
             WorldMap newWorldMap = worldMap;
             _worldMaps[crc] = newWorldMap;
 
-            if (_isMapping && (client._atDoor && _maps.ContainsKey(client._map.MapID)))
+            if (_isMapping && (client._clientWalkPending && _maps.ContainsKey(client._map.MapID)))
             {
                 Location loc = client._clientLocation;
                 loc.TranslateLocationByDirection(client._clientDirection);
                 _maps[client._map.MapID].WorldMaps[loc.Point] = newWorldMap;
             }
 
-            client._atDoor = false;
+            client._clientWalkPending = false;
 
             return true;
         }
@@ -2176,7 +2179,7 @@ namespace Talos
                 byte length = serverPacket.ReadByte();
                 for (int i = 0; i < length; i++)
                 {
-                    client._atDoor = true;
+                    client._clientWalkPending = true;
                     byte x = serverPacket.ReadByte();
                     byte y = serverPacket.ReadByte();
                     bool closed = serverPacket.ReadBoolean();
@@ -2960,10 +2963,10 @@ namespace Talos
         {
             lock (Lock)
             {
-                if (client._creatureToSpellList != null && client._creatureToSpellList.Count > 0)
+                if (client._spellHistory != null && client._spellHistory.Count > 0)
                 {
-                    Console.WriteLine($"[RemoveFirstCreatureToSpell] Creature ID: {client._creatureToSpellList[0].Creature.ID}, Spellname: {client._creatureToSpellList[0].Spell.Name}");
-                    client._creatureToSpellList.RemoveAt(0);
+                    Console.WriteLine($"[RemoveFirstCreatureToSpell] Creature ID: {client._spellHistory[0].Creature.ID}, Spellname: {client._spellHistory[0].Spell.Name}");
+                    client._spellHistory.RemoveAt(0);
                 }
             }
         }

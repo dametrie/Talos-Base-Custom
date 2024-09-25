@@ -166,7 +166,7 @@ namespace Talos.Helper
         {
             lock (_lock)
             {
-                Creature creature = client._creatureToSpellList.Count > 0 ? client._creatureToSpellList[0].Creature : null;
+                Creature creature = client._spellHistory.Count > 0 ? client._spellHistory[0].Creature : null;
                 if (creature != null)
                 {
                     //Console.WriteLine($"[HandleSpellCastMessage] Creature ID: {creature?.ID}. _creatureToSpellList[0] Creature ID: {client._creatureToSpellList[0].Creature.ID}");
@@ -383,7 +383,7 @@ namespace Talos.Helper
                     default:
                         //Console.WriteLine($"[HandleSpellCastMessage] default case encountered");
                         //Console.WriteLine($"[HandleSpellCastMessage] _creatureToSpellList.Count {client._creatureToSpellList.Count}");
-                        if (client._creatureToSpellList.Count <= 0)
+                        if (client._spellHistory.Count <= 0)
                             client._currentSpell = null;
                         break;
                 }
@@ -523,9 +523,9 @@ namespace Talos.Helper
 
         private void HandleSpiritWorldMessage(Client client, string message)
         {
-            if ((client._creatureToSpellList.Count > 0) && client.CreatureHashSet.Contains(client._creatureToSpellList[0].Creature.ID))
+            if ((client._spellHistory.Count > 0) && client.CreatureHashSet.Contains(client._spellHistory[0].Creature.ID))
             {
-                client.CreatureHashSet.Remove(client._creatureToSpellList[0].Creature.ID);
+                client.CreatureHashSet.Remove(client._spellHistory[0].Creature.ID);
                 client._server.RemoveFirstCreatureToSpell(client);
             }
         }
@@ -559,28 +559,28 @@ namespace Talos.Helper
         private void HandleAlreadyCastMessage(Client client, string message)
         {
 
-            if (client._creatureToSpellList.Count > 0)
+            if (client._spellHistory.Count > 0)
             {
                 //Console.WriteLine($"[HandleAlreadyCastMessage] Already cast message received on {client._creatureToSpellList[0].Creature.ID}");
                 //Console.WriteLine($"[HandleAlreadyCastMessage] _creatureToSpellList.Count before removal: {client._creatureToSpellList.Count}");
 
                 if (client._currentSpell != null && client._currentSpell.Name.Contains("fas"))
                 {
-                    client._creatureToSpellList[0].Creature.LastFassed = DateTime.UtcNow;
-                    client._creatureToSpellList[0].Creature.FasDuration = Spell.GetSpellDuration(client._currentSpell.Name);
-                    if (client._creatureToSpellList[0].Creature.ID != client.Player.ID)
-                        client.UpdateFasTargets(client, client._creatureToSpellList[0].Creature.ID, client._creatureToSpellList[0].Creature.FasDuration);
+                    client._spellHistory[0].Creature.LastFassed = DateTime.UtcNow;
+                    client._spellHistory[0].Creature.FasDuration = Spell.GetSpellDuration(client._currentSpell.Name);
+                    if (client._spellHistory[0].Creature.ID != client.Player.ID)
+                        client.UpdateFasTargets(client, client._spellHistory[0].Creature.ID, client._spellHistory[0].Creature.FasDuration);
                     client._currentSpell = null;
                 }
                 if (client._currentSpell != null && client._currentSpell.Name.Contains("pramh"))
                 {
-                    client._creatureToSpellList[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
+                    client._spellHistory[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client._currentSpell = null;
                 }
                 if (client._currentSpell != null && client._currentSpell.Name.Contains("suain"))
                 {
-                    client._creatureToSpellList[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
+                    client._spellHistory[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client._currentSpell = null;
                 }
@@ -885,14 +885,14 @@ namespace Talos.Helper
         {
             if (client._currentSpell != null)
             {
-                if ((client._creatureToSpellList.Count > 0) && (client._creatureToSpellList[0].Creature != null))
+                if ((client._spellHistory.Count > 0) && (client._spellHistory[0].Creature != null))
                 {
-                    Console.WriteLine($"[HandleCurseMessage] Received 'another curse afflicts thee' message for {match.Groups[1].Value} on Creature ID: {client._creatureToSpellList[0].Creature?.ID}. Updating LastCursed.");
+                    Console.WriteLine($"[HandleCurseMessage] Received 'another curse afflicts thee' message for {match.Groups[1].Value} on Creature ID: {client._spellHistory[0].Creature?.ID}. Updating LastCursed.");
 
-                    client._creatureToSpellList[0].Creature.LastCursed = DateTime.UtcNow;
-                    client._creatureToSpellList[0].Creature.CurseDuration = Spell.GetSpellDuration(match.Groups[1].Value);
-                    client._creatureToSpellList[0].Creature.Curse = match.Groups[1].Value;
-                    client.UpdateCurseTargets(client, client._creatureToSpellList[0].Creature.ID, match.Groups[1].Value);
+                    client._spellHistory[0].Creature.LastCursed = DateTime.UtcNow;
+                    client._spellHistory[0].Creature.CurseDuration = Spell.GetSpellDuration(match.Groups[1].Value);
+                    client._spellHistory[0].Creature.Curse = match.Groups[1].Value;
+                    client.UpdateCurseTargets(client, client._spellHistory[0].Creature.ID, match.Groups[1].Value);
                     client._server.RemoveFirstCreatureToSpell(client);
                 }
                 client._currentSpell = null;
