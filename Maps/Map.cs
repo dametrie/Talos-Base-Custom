@@ -79,12 +79,12 @@ namespace Talos.Maps
             IsLoaded = true;
         }
 
-        internal bool IsLocationWall(Location loc)
+        internal bool IsWall(Location loc)
         {
-            return IsTileWall(loc.X, loc.Y);
+            return IsWall(loc.X, loc.Y);
         }
 
-        internal bool IsTileWall(short x, short y)
+        internal bool IsWall(short x, short y)
         {
             //Console.WriteLine($"Checking tile at coordinates: ({x}, {y})");
             if (x >= 0 && y >= 0 && x < Width && y < Height)
@@ -113,7 +113,7 @@ namespace Talos.Maps
 
         internal bool IsLocationOpenForInteraction(Client client, Location location)
         {
-            if (!IsLocationWall(location))
+            if (!IsWall(location))
             {
                 return !client.GetWorldObjects().Any(delegate (WorldObject worldEntity)
                 {

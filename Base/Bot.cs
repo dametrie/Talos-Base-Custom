@@ -7,14 +7,17 @@ using System.Media;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Talos.Definitions;
 using Talos.Enumerations;
+using Talos.Extensions;
 using Talos.Forms;
 using Talos.Forms.UI;
 using Talos.Maps;
 using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Talos.Base
 {
@@ -23,6 +26,7 @@ namespace Talos.Base
         private static object _lock { get; set; } = new object();
         private Dictionary<int, bool> routeFindPerformed = new Dictionary<int, bool>();
         private int _dropCounter;
+
 
 
         internal Client _client;
@@ -46,8 +50,9 @@ namespace Talos.Base
         internal bool _hasRescue;
 
         internal byte _fowlCount;
+        internal int currentWay;
 
-        internal DateTime _lastKill = DateTime.MinValue;
+        internal DateTime _lastEXP = DateTime.MinValue;
         internal DateTime _lastDisenchanterCast = DateTime.MinValue;
         internal DateTime _lastGrimeScentCast = DateTime.MinValue;
         internal DateTime _skullTime = DateTime.MinValue;
@@ -57,9 +62,9 @@ namespace Talos.Base
         internal DateTime _lastBonusAppliedTime = DateTime.MinValue;
         internal DateTime _lastCast = DateTime.MinValue;
         internal DateTime _lastUsedGem = DateTime.MinValue;
-        internal TimeSpan _bonusElapsedTime = TimeSpan.Zero;
         private DateTime _lastUsedFungusBeetle = DateTime.MinValue;
         private DateTime _lastUsedBeetleAid = DateTime.MinValue;
+        internal TimeSpan _bonusElapsedTime = TimeSpan.Zero;
 
         internal List<Ally> _allyList = new List<Ally>();
         internal List<Enemy> _enemyList = new List<Enemy>();
@@ -67,6 +72,7 @@ namespace Talos.Base
         internal List<Player> _playersNeedingRed = new List<Player>();
         internal List<Player> _nearbyAllies = new List<Player>();
         internal List<Creature> _nearbyValidCreatures = new List<Creature>();
+        internal List<Location> ways = new List<Location>();
 
         internal HashSet<string> _allyListName = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
         internal HashSet<ushort> _enemyListID = new HashSet<ushort>();
@@ -84,6 +90,8 @@ namespace Talos.Base
         private List<Player> _nearbyPlayers;
         internal bool _circle1;
         internal bool _circle2;
+        internal DateTime _doorTime;
+        internal Point _doorPoint;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -118,7 +126,7 @@ namespace Talos.Base
             {
                 _nearbyPlayers = Client.GetNearbyPlayerList();
                 _nearbyValidCreatures = Client.GetNearbyValidCreatures(12);
-                var shouldWalk = !this._reddingOtherPlayer &&
+                var shouldWalk = !_reddingOtherPlayer &&
                     (!Client.ClientTab.rangerStopCbox.Checked || !_shouldBotStop);
 
                 if (shouldWalk)
@@ -170,9 +178,227 @@ namespace Talos.Base
             }
         }
 
-        private void FollowWalking(string playerName)
+        private void FollowWalking(string playerName) //Adam debug this
         {
-            throw new NotImplementedException();
+            try
+            {
+                Client client = _server.GetClient(playerName);
+                Player player = client?.Player
+                    ?? Client.WorldObjects.Values.OfType<Player>()
+                    .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
+
+                if (player != null)
+                {
+                    Location playerLocation = player.Location;
+                    int distance = playerLocation.DistanceFrom(Client._clientLocation);
+
+                    RefresLastStep(client, player);
+
+                    if (_nearbyPlayers.Any(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase)))
+                    {
+                        player = Client.WorldObjects.Values.OfType<Player>()
+                            .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
+
+                        if (player != null)
+                        {
+                            string walkMapText = client?.ClientTab?.walkMapCombox.Text;
+
+                            if (walkMapText == "WayPoints"
+                                && client.ClientTab.walkBtn.Text == "Stop"
+                                && client.Bot.ways[(client.Bot.currentWay >= client.Bot.ways.Count) ? 0 : client.Bot.currentWay] == Client._serverLocation
+                                && client._stopped)
+                            {
+                                MoveToNearbyLocation();
+                            }
+
+                            BasherWalking(client);
+
+                            if (!UnStucker(player))
+                            {
+                                if (Client.ClientTab.lockstepCbox.Checked
+                                    && client != null
+                                    && client._map.MapID == Client._map.MapID)
+                                {
+                                    Location clientLocation = client._clientLocation;
+                                    distance = clientLocation.DistanceFrom(Client._clientLocation);
+                                    if (distance > Client.ClientTab.followDistanceNum.Value)
+                                    {
+                                        Client._confirmBubble = false;
+                                        Client._isWalking = Client.RouteFind(clientLocation, (short)Client.ClientTab.followDistanceNum.Value, true, true)
+                                                          && !Client.ClientTab.oneLineWalkCbox.Checked
+                                                          && !Server._toggleWalk;
+                                        return;
+                                    }
+                                }
+
+                                else if (distance > Client.ClientTab.followDistanceNum.Value)
+                                {
+                                    Client._confirmBubble = false;
+                                    if (player != null)
+                                    {
+                                        Client._isWalking = Client.RouteFind(playerLocation, (short)Client.ClientTab.followDistanceNum.Value, true, true)
+                                                          && !Client.ClientTab.oneLineWalkCbox.Checked
+                                                          && !Server._toggleWalk;
+                                    }
+                                }
+                                Client._isWalking = false;
+
+                                if (client != null && Client._okToBubble
+                                    && DateTime.UtcNow.Subtract(client.LastMoved).TotalMilliseconds > 1000.0
+                                    && DateTime.UtcNow.Subtract(Client.LastStep).TotalMilliseconds > 500.0
+                                    && DateTime.UtcNow.Subtract(Client.LastMoved).TotalMilliseconds > 500.0)
+                                {
+                                    if (Client._serverLocation != Client._clientLocation)
+                                    {
+                                        Client._confirmBubble = false;
+                                        Client.RequestRefresh(true);
+                                    }
+                                    else if (Client._map.Name.Contains("Lost Ruins")
+                                          || Client._map.Name.Contains("Assassin Dungeon")
+                                          || _nearbyValidCreatures.Any((Creature c) => Client._serverLocation.DistanceFrom(c.Location) <= 6))
+                                    {
+                                        Client._confirmBubble = true;
+                                    }
+                                }
+                            }
+
+                        }
+                        else if ((client != null ? client.Player : null) == player)
+                        {
+                            Map map = client._map;
+                            Location serverLocation = client._serverLocation;
+                            if (!Client.RouteFind(client._serverLocation, 0, false, true, true) && Client.LastSeenLocations.ContainsKey((int)client.PlayerID) && Client.LastSeenLocations[(int)client.PlayerID].MapID == Client._map.MapID)
+                            {
+                                Client.RouteFind(Client.LastSeenLocations[(int)client.PlayerID], 0, true, true);
+                            }
+                            Client._isWalking = (!Client.ClientTab.oneLineWalkCbox.Checked && !Server._toggleWalk);
+                        }
+                        else if (Client.LastSeenLocations.ContainsKey(player.ID) && Client.LastSeenLocations[player.ID].MapID == Client._map.MapID)
+                        {
+                            Client._isWalking = (Client.RouteFind(Client.LastSeenLocations[player.ID], 0, true, true) && !Client.ClientTab.oneLineWalkCbox.Checked && !Server._toggleWalk);
+
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Client._isWalking = false;
+                Console.WriteLine(ex.Message);
+            }
+
+        }
+        private bool UnStucker(Player leader)
+        {
+            if (Server._toggleWalk)
+            {
+                return false;
+            }
+
+            if (DateTime.UtcNow.Subtract(leader.LastStep).TotalSeconds > 5.0
+                && leader.Location.MapID == Client._map.MapID
+                && (DateTime.UtcNow.Subtract(_lastEXP).TotalSeconds > 5.0
+                || DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 10.0))
+            {
+
+                // Get nearby object points (creatures with type Merchant or Aisling)
+                HashSet<Location> objectPoints = (from c in Client.GetNearbyObjects().OfType<Creature>()
+                                                  where c != null &&
+                                                        c.Type == CreatureType.Merchant ||
+                                                        c.Type == CreatureType.Aisling
+                                                  select c.Location).ToHashSet<Location>();
+
+                // Get warp points
+                List<Location> warps = Client.GetAllWarpPoints(leader.Location);
+
+                // Convert kvp.Key (Point) to Location using the leader's MapID
+                List<Location> list = (from kvp in Server._maps[leader.Location.MapID].Tiles
+                                       where !kvp.Value.IsWall
+                                             && !warps.Contains(new Location(leader.Location.MapID, kvp.Key)) // Convert Point to Location
+                                             && !objectPoints.Contains(new Location(leader.Location.MapID, kvp.Key)) // Convert Point to Location
+                                             && kvp.Key != leader.Location.Point
+                                       select new Location(leader.Location.MapID, kvp.Key)).ToList();
+
+                // Determine the flood fill threshold
+                int val = list.Count / 100;
+                int num = Math.Max(5, Math.Min(val, 25));
+
+                // Perform flood fill and check if the result meets the criteria
+                bool flag = list.FloodFill(leader.Location).Take(26).Count() <= num;
+
+                if (flag)
+                {
+                    // Select a random location from the list
+                    Random random = new Random();
+                    Location location = list.OrderBy(_ => random.Next()).FirstOrDefault();
+
+                    // Perform the route find operation
+                    if (Client.RouteFind(location, 0, true, true))
+                    {
+                        Thread.Sleep(1500);
+                    }
+                }
+
+                return flag;
+            }
+
+            return false;
+        }
+
+        private void BasherWalking(Client client)
+        {
+            bool? isBashing = client?.ClientTab?._isBashing;
+
+            if (isBashing.GetValueOrDefault()
+                && !_shouldBotStop
+                && !Client.HasEffect(EffectsBar.BeagSuain)
+                && !Client.HasEffect(EffectsBar.Pramh)
+                && !Client.HasEffect(EffectsBar.Suain)
+                && Client.GetAllNearbyMonsters(0).Any<Creature>())
+            {
+                Direction direction = Utility.RandomEnumValue<Direction>();
+                Client.Walk(direction);
+                Thread.Sleep(300);
+                Client.RequestRefresh(false);
+            }
+        }
+
+        private void MoveToNearbyLocation()
+        {
+            // Move to nearby location logic
+            Location serverLoc = Client._serverLocation;
+            List<Location> potentialLocations = new List<Location>
+            {
+                new Location(serverLoc.MapID, serverLoc.X, (short)(serverLoc.Y - 1)),
+                new Location(serverLoc.MapID, (short)(serverLoc.X + 1), serverLoc.Y),
+                new Location(serverLoc.MapID, serverLoc.X, (short)(serverLoc.Y + 1)),
+                new Location(serverLoc.MapID, (short)(serverLoc.X - 1), serverLoc.Y)
+            };
+
+            List<Creature> nearbyCreatures = Client.GetNearbyObjects().OfType<Creature>().ToList();
+
+            foreach (var location in potentialLocations)
+            {
+                if (!Client._map.IsWall(location)
+                    && nearbyCreatures.All(c => c.Location != location)
+                    && Client.RouteFind(location, 0, true, true))
+                {
+                    break;
+                }
+            }
+
+            Thread.Sleep(2500);
+        }
+
+        private void RefresLastStep(Client client, Player player)
+        {
+            Point point = player.Location.Point;
+            int value = point.Distance(Client._clientLocation.Point);
+            if (client != null && (client.ClientTab._isBashing || !client._stopped) && DateTime.UtcNow.Subtract(Client.LastStep).TotalSeconds > (double)Client.ClientTab.numLastStepTime.Value)
+            {
+                Client.RequestRefresh(true);
+            }
         }
 
         private void WayPointWalking()
@@ -805,7 +1031,7 @@ namespace Talos.Base
         private bool ShouldRequestRefresh()
         {
             return DateTime.UtcNow.Subtract(Client.LastStep).TotalSeconds > 20.0 &&
-                   DateTime.UtcNow.Subtract(_lastKill).TotalSeconds > 20.0 &&
+                   DateTime.UtcNow.Subtract(_lastEXP).TotalSeconds > 20.0 &&
                    DateTime.UtcNow.Subtract(_lastRefresh).TotalSeconds > 30.0;
         }
         private void CheckAndHandleSpells()
@@ -1826,7 +2052,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                else if (isFollowChecked && Client._destnationReached && CastBubbleBlock())
+                else if (isFollowChecked && Client._confirmBubble && CastBubbleBlock())
                 {
                     return false;
                 }
@@ -2564,7 +2790,7 @@ namespace Talos.Base
                 }
                 int maxDistance = (enemyPage.targetCombox.Text == "Cluster 29") ? 3 : ((enemyPage.targetCombox.Text == "Cluster 13") ? 2 : 1);
                 Dictionary<Creature, int> dictionary = new Dictionary<Creature, int>();
-                List<Creature> list2 = Client.GetListOfValidCreatures(12).Concat(_playersExistingOver250ms).ToList<Creature>();
+                List<Creature> list2 = Client.GetAllNearbyMonsters(12).Concat(_playersExistingOver250ms).ToList<Creature>();
                 List<Creature> list3 = Client.GetNearbyValidCreatures(12);
                 List<Creature> list4 = list3.Where(creature => CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID)).ToList();
                 if (!list2.Contains(Client.Player))                {
@@ -2698,7 +2924,7 @@ namespace Talos.Base
                 List<Creature> greenBorosInRange = Client.GetCreaturesInRange(8, CONSTANTS.GREEN_BOROS.ToArray());
                 foreach (Creature creature in greenBorosInRange.ToList<Creature>())
                 {
-                    foreach (Location location in Client.GetExitLocationsAsObstacles(new Location(Client._map.MapID, 0, 0)))
+                    foreach (Location location in Client.GetWarpPoints(new Location(Client._map.MapID, 0, 0)))
                     {
                         if (creature.Location.DistanceFrom(location) <= 3)
                         {
@@ -2725,7 +2951,7 @@ namespace Talos.Base
             if (CONSTANTS.GREEN_BOROS.Contains(enemyPage.Enemy.SpriteID))
             {
                 var additionalCreatures = Client.GetCreaturesInRange(8, CONSTANTS.GREEN_BOROS.ToArray())
-                    .Where(creature => !Client.GetExitLocationsAsObstacles(new Location(Client._map.MapID, 0, 0))
+                    .Where(creature => !Client.GetWarpPoints(new Location(Client._map.MapID, 0, 0))
                     .Any(location => creature.Location.DistanceFrom(location) <= 3))
                     .ToList();
 

@@ -127,7 +127,7 @@ namespace Talos.Base
         internal bool _exchangeOpen;
         internal bool _exchangeClosing;
         internal bool _okToBubble = true;
-        internal bool _destnationReached;
+        internal bool _confirmBubble;
         internal bool isStatusUpdated;
         internal bool _recentlyCrashered;
         internal bool _unmaxedBashingSkillsLoaded = false;
@@ -265,7 +265,7 @@ namespace Talos.Base
 
         internal Dictionary<string, byte> AvailableSpellsAndCastLines { get; set; } = new Dictionary<string, byte>();
         internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
-        internal Dictionary<int, Location> Locations { get; set; } = new Dictionary<int, Location>();
+        internal Dictionary<int, Location> LastSeenLocations { get; set; } = new Dictionary<int, Location>();
 
         internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
         internal ConcurrentDictionary<int, Player> PlayersWithNoName { get; private set; } = new ConcurrentDictionary<int, Player>();
@@ -287,6 +287,9 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
+        internal bool _stopped;
+        internal short _previousMapID;
+
         internal Pathfinder Pathfinder { get; set; }
         internal RouteFinder RouteFinder { get; set; }
 
@@ -671,7 +674,7 @@ namespace Talos.Base
         {
             var worldObjects = new List<WorldObject>();
 
-            foreach (var item in CreatureHashSet)//Adam check this.. it looks like it only iterates through the creature hashset
+            foreach (var item in CreatureHashSet)
             {
                 if (WorldObjects.TryGetValue(item, out var worldObject))
                 {
@@ -698,7 +701,7 @@ namespace Talos.Base
                 .ToHashSet(); // Using HashSet for O(1) lookups.
 
             // Get obstacle locations within the same map once to avoid repeated calls.
-            var obstacleLocations = GetExitLocationsAsObstacles(location).Where(obstacle => obstacle.MapID == location.MapID).ToHashSet(); // Using HashSet for O(1) lookups.
+            var obstacleLocations = GetWarpPoints(location).Where(obstacle => obstacle.MapID == location.MapID).ToHashSet(); // Using HashSet for O(1) lookups.
 
             // Define adjacent locations based on cardinal directions.
             var adjacentLocations = new[]
@@ -712,7 +715,7 @@ namespace Talos.Base
             // Check each adjacent location for being surrounded conditions.
             foreach (var loc in adjacentLocations)
             {
-                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || _map.IsLocationWall(loc);
+                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || _map.IsWall(loc);
 
                 // If any adjacent location is not occupied or within bounds, the location is not surrounded.
                 if (!isOccupiedOrBound)
@@ -725,17 +728,17 @@ namespace Talos.Base
             return true;
         }
 
-        internal List<Location> GetExitLocationsAsObstacles(Location location)
+        internal List<Location> GetWarpPoints(Location destination)
         {
             List<Location> obstacles = new List<Location>();
 
-            if (_server._maps.TryGetValue(location.MapID, out Map map))
+            if (_server._maps.TryGetValue(destination.MapID, out Map map))
             {
                 // Process Exits as obstacles
                 foreach (var exit in map.Exits)
                 {
-                    var exitLocation = new Location(location.MapID, exit.Key.X, exit.Key.Y);
-                    if (!Location.Equals(exitLocation, location))
+                    var exitLocation = new Location(destination.MapID, exit.Key.X, exit.Key.Y);
+                    if (!Location.Equals(exitLocation, destination))
                     {
                         obstacles.Add(exitLocation);
                     }
@@ -744,8 +747,8 @@ namespace Talos.Base
                 // Process WorldMaps as obstacles
                 foreach (var worldMap in map.WorldMaps)
                 {
-                    var worldMapLocation = new Location(location.MapID, worldMap.Key.X, worldMap.Key.Y);
-                    if (!Location.Equals(worldMapLocation, location))
+                    var worldMapLocation = new Location(destination.MapID, worldMap.Key.X, worldMap.Key.Y);
+                    if (!Location.Equals(worldMapLocation, destination))
                     {
                         obstacles.Add(worldMapLocation);
                     }
@@ -753,6 +756,24 @@ namespace Talos.Base
             }
 
             return obstacles;
+        }
+        internal List<Location> GetAllWarpPoints(Location location)
+        {
+            if (!_server._maps.TryGetValue(location.MapID, out Map value))
+            {
+                return new List<Location>();
+            }
+
+            var exits = value.Exits
+                .Where(item => !location.Point.Equals(item.Key))
+                .Select(item => new Location(location.MapID, item.Key))
+                .ToList();
+
+            exits.AddRange(value.WorldMaps
+                .Where(item => !location.Point.Equals(item.Key))
+                .Select(item => new Location(location.MapID, item.Key)));
+
+            return exits;
         }
 
         internal void UseExperienceGem(byte choice)
@@ -1688,7 +1709,7 @@ namespace Talos.Base
                 !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance);
         }
 
-        internal List<Creature> GetListOfValidCreatures(int distance = 12)
+        internal List<Creature> GetAllNearbyMonsters(int distance = 12)
         {
             List<Creature> list = new List<Creature>();
             if (Monitor.TryEnter(Server.Lock, 1000))
@@ -2386,7 +2407,7 @@ namespace Talos.Base
                 _isCasting = false;
             }
 
-            if ((!_map.IsLocationWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
+            if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
                 if (destinationThreshold != 0 && _clientLocation.DistanceFrom(destination) <= destinationThreshold)
                 {
@@ -2546,7 +2567,7 @@ namespace Talos.Base
             return !HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending");
         }
 
-        internal bool RouteFind(Location destination, short destinationThreshold = 0, bool bool_57 = false, bool lockRequired = true, bool avoidExits = true)
+        internal bool RouteFind(Location destination, short distance = 0, bool mapOnly = false, bool lockRequired = true, bool avoidWarps = true)
         {
             try
             {
@@ -2575,7 +2596,7 @@ namespace Talos.Base
                     return false;
                 }
 
-                if (routeStack.Count == 1 && destination.MapID == _map.MapID && bool_57)
+                if (routeStack.Count == 1 && destination.MapID == _map.MapID && mapOnly)
                 {
                     routeStack.Clear();
                     return false;
@@ -2608,7 +2629,7 @@ namespace Talos.Base
                 if (routeStack.Count != 1)
                 {
                     //Console.WriteLine("***routeStack.Count != 1");
-                    destinationThreshold = 0;
+                    distance = 0;
                 }
                 
                 if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
@@ -2692,7 +2713,7 @@ namespace Talos.Base
                     routeStack.Clear();
                     return false;
                 }
-                if (!TryWalkToLocation(nextLocation, destinationThreshold, lockRequired, avoidExits = true))
+                if (!TryWalkToLocation(nextLocation, distance, lockRequired, avoidWarps = true))
                 {
                     if (_map.Name.Contains("Threshold"))
                     {
@@ -2942,24 +2963,7 @@ namespace Talos.Base
             };
         }
 
-        internal List<Location> GetExitLocations(Location location)
-        {
-            if (!_server._maps.TryGetValue(location.MapID, out Map value))
-            {
-                return new List<Location>();
-            }
 
-            var obstacleLocations = value.Exits
-                .Where(item => !location.Point.Equals(item.Key))
-                .Select(item => new Location(location.MapID, item.Key))
-                .ToList();
-
-            obstacleLocations.AddRange(value.WorldMaps
-                .Where(item => !location.Point.Equals(item.Key))
-                .Select(item => new Location(location.MapID, item.Key)));
-
-            return obstacleLocations;
-        }
 
         internal List<Creature> GetCreaturesInRange(int distance = 12, params ushort[] creatureArray)
         {
@@ -3051,7 +3055,7 @@ namespace Talos.Base
         {
             // Log memory usage and thread count
             long memoryUsage = GC.GetTotalMemory(forceFullCollection: false);
-            int threadCount = System.Diagnostics.Process.GetCurrentProcess().Threads.Count;
+            int threadCount = Process.GetCurrentProcess().Threads.Count;
             Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - {phase}: Memory Usage = {memoryUsage} bytes, Thread Count = {threadCount}");
         }
 

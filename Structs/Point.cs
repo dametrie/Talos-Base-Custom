@@ -52,6 +52,42 @@ namespace Talos.Structs
         public bool Equals(Point other) => X == other.X && Y == other.Y;
 
         /// <summary>
+        /// Override Equals method to check equality
+        /// </summary>
+        public override bool Equals(object obj)
+        {
+            if (obj is Point point)
+            {
+                return Equals(point);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Override GetHashCode to ensure consistency with Equals
+        /// </summary>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + X.GetHashCode();
+                hash = hash * 23 + Y.GetHashCode();
+                return hash;
+            }
+        }
+
+        /// <summary>
+        /// Implements the == operator for Points
+        /// </summary>
+        public static bool operator ==(Point left, Point right) => left.Equals(right);
+
+        /// <summary>
+        /// Implements the != operator for Points
+        /// </summary>
+        public static bool operator !=(Point left, Point right) => !left.Equals(right);
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="dir"></param>
@@ -68,17 +104,17 @@ namespace Talos.Structs
             };
         }
 
-        internal Direction GetDirection(Point loc)
+        internal Direction GetDirection(Point point)
         {
-            if (Y == loc.Y)
+            if (Y == point.Y)
             {
-                if (X == loc.X)
+                if (X == point.X)
                 {
                     return Direction.Invalid;
                 }
-                return X < loc.X ? Direction.West : Direction.East;
+                return X < point.X ? Direction.West : Direction.East;
             }
-            return Y < loc.Y ? Direction.North : Direction.South;
+            return Y < point.Y ? Direction.North : Direction.South;
         }
 
         /// <summary>

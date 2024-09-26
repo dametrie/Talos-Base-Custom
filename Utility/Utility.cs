@@ -25,5 +25,11 @@ namespace Talos
             }
             return num;
         }
+
+        internal static T RandomEnumValue<T>() where T : Enum
+        {
+            Array values = Enum.GetValues(typeof(T));
+            return (T)values.GetValue(_random.Next(values.Length));
+        }
     }
 }

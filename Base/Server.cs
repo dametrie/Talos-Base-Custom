@@ -78,10 +78,32 @@ namespace Talos
         internal Dictionary<string, string> _medTask = new Dictionary<string, string>();
         internal Dictionary<string, int> _medWalkSpeed = new Dictionary<string, int>();
         internal SortedDictionary<ushort, string> PursuitIDs { get; set; } = new SortedDictionary<ushort, string>();
+        internal List<Client> _clients = new List<Client>();
+        internal bool _toggleWalk;
+
         public static object Lock { get; internal set; } = new object();
 
-   
- 
+        internal IEnumerable<Client> Clients
+        {
+            get
+            {
+                return _clientList?
+                    .Where(client => client != null
+                                  && !string.IsNullOrEmpty(client.Name)
+                                  && !client.Name.Contains('[')
+                                  && client.ClientTab != null
+                                  && client.Player != null)
+                    ?? Enumerable.Empty<Client>();
+            }
+        }
+
+        internal Client GetClient(string clientName)
+        {
+            return Clients.FirstOrDefault(c => c.Name == clientName);
+        }
+
+
+
 
 
         internal Server(MainForm mainForm)
@@ -1253,7 +1275,7 @@ namespace Talos
             point.GetDirection(direction);
 
             Location location = new Location(client._clientLocation.MapID, point);
-            client.Locations[id] = location;
+            client.LastSeenLocations[id] = location;
             if (!client.WorldObjects.ContainsKey(id))
             {
                 return false;
@@ -1262,7 +1284,7 @@ namespace Talos
             {
                 creature.Location = location;
                 creature.Direction = direction;
-                creature.LastWalked = DateTime.UtcNow;
+                creature.LastStep = DateTime.UtcNow;
                 //Console.WriteLine("[ConfirmCreatureWalk] Creature ID: " + creature.ID);
                 //Console.WriteLine("[ConfirmCreatureWalk] Direction facing: " + creature.Direction);
                 //Console.WriteLine("[ConfirmCreatureWalk] Last moved: " + creature.LastWalked);
@@ -1676,7 +1698,10 @@ namespace Talos
         private bool ServerMessage_0x1F_MapChangeComplete(Client client, ServerPacket serverPacket)
         {
             client._mapChangePending = false;
+            client._previousMapID = client._map.MapID;
             client._lastMapChange = DateTime.UtcNow;
+            client.Bot._doorTime = DateTime.UtcNow;
+            client.Bot._doorPoint = client._clientLocation.Point;
 
             client.NearbyPlayers.Clear();
             client.PlayersWithNoName.Clear();
@@ -2278,7 +2303,7 @@ namespace Talos
             name = serverPacket.ReadString8();
             groupName = serverPacket.ReadString8();
 
-            client.Locations[id] = location;
+            client.LastSeenLocations[id] = location;
 
             if ((bodySprite == 0) && (client.WorldObjects.ContainsKey(id) && (client.GetCheats(Cheats.None | Cheats.SeeHidden) && !client.InArena)))
             {

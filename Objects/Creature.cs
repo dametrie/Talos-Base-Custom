@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Talos.Enumerations;
+using Talos.Maps;
 using Talos.Structs;
 
 namespace Talos.Objects
@@ -18,7 +19,7 @@ namespace Talos.Objects
         internal DateTime LastCursed { get; set; }
         internal DateTime LastFassed { get; set; } 
         internal DateTime LastAited { get; set; }
-        internal DateTime LastWalked { get; set; }
+        internal DateTime LastStep { get; set; }
         internal DateTime LastDioned { get; set; }
         internal DateTime LastSuained { get; set; }
         internal DateTime LastArmachd { get; set; }
@@ -148,7 +149,7 @@ namespace Talos.Objects
             SourceAnimationHistory = new Dictionary<ushort, DateTime>();
             HealthPercent = 100;
             Type = (CreatureType)type;
-            LastWalked = DateTime.UtcNow;
+            LastStep = DateTime.UtcNow;
             LastCursed = DateTime.MinValue;
             LastFassed = DateTime.MinValue;
             LastAited = DateTime.MinValue;

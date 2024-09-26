@@ -80,6 +80,7 @@
     <Compile Include="Definitions\CONSTANTS.cs" />
     <Compile Include="Definitions\Enums.cs" />
     <Compile Include="Definitions\Flags.cs" />
+    <Compile Include="Extensions\EnumerableExtensions.cs" />
     <Compile Include="Forms\User Controls\AllyPage.cs">
       <SubType>UserControl</SubType>
     </Compile>

@@ -103,7 +103,7 @@ namespace Talos.Forms
         internal EPFImage skillImageArchive;
         internal EPFImage spellImageArchive;
         internal Palette256 palette256;
-
+        internal bool _isBashing;
 
         internal ClientTab(Client client)
         {
@@ -982,7 +982,7 @@ namespace Talos.Forms
                     {
                         // Safely update the UI or check conditions that involve UI elements
 
-                        this.Invoke((MethodInvoker)delegate
+                        Invoke((MethodInvoker)delegate
                         {
                             // Example of checking a condition or updating UI
                             shouldContinue = (_client._clientLocation != targetLocation);

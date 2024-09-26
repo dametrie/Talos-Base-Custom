@@ -472,7 +472,7 @@ namespace Talos.Helper
                 }
             }
 
-            client.Bot._lastKill = DateTime.UtcNow;
+            client.Bot._lastEXP = DateTime.UtcNow;
         }
 
 
@@ -937,7 +937,7 @@ namespace Talos.Helper
 
         private void HandleLastKillMessage(Client client, string message)
         {
-            client.Bot._lastKill = DateTime.UtcNow;
+            client.Bot._lastEXP = DateTime.UtcNow;
         }
         private void HandleInventoryMessage(Client client, string message)
         {

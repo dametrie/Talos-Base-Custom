@@ -38,7 +38,7 @@ internal class Pathfinder
         InitializePathNodes(true);
     }
 
-    internal void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool avoidExits = true)
+    internal void InitializePathNodes(bool initializeBlockedNodes, Location location = default(Location), bool avoidWarps = true)
     {
         if (initializeBlockedNodes)
         {
@@ -49,7 +49,7 @@ internal class Pathfinder
             {
                 for (short y = 0; y < _mapHeight; y++)
                 {
-                    bool isWall = _map.IsTileWall(x, y);
+                    bool isWall = _map.IsWall(x, y);
                     Point currentPoint = new Point(x, y);
                     bool isExit = _map.Exits.ContainsKey(currentPoint);
 
@@ -82,9 +82,9 @@ internal class Pathfinder
                                     select creature.Location).ToList();
 
 
-        if (avoidExits)
+        if (avoidWarps)
         {
-            foreach (Location location2 in _client.GetExitLocationsAsObstacles(location))
+            foreach (Location location2 in _client.GetWarpPoints(location))
             {
                 if (!obstacles.Contains(location2))
                 {
