@@ -523,9 +523,9 @@ namespace Talos.Helper
 
         private void HandleSpiritWorldMessage(Client client, string message)
         {
-            if ((client._spellHistory.Count > 0) && client.CreatureHashSet.Contains(client._spellHistory[0].Creature.ID))
+            if ((client._spellHistory.Count > 0) && client.NearbyObjects.Contains(client._spellHistory[0].Creature.ID))
             {
-                client.CreatureHashSet.Remove(client._spellHistory[0].Creature.ID);
+                client.NearbyObjects.Remove(client._spellHistory[0].Creature.ID);
                 client._server.RemoveFirstCreatureToSpell(client);
             }
         }

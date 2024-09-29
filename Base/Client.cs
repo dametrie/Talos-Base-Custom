@@ -276,7 +276,7 @@ namespace Talos.Base
         internal ConcurrentDictionary<string, Player> DeadPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
         internal ConcurrentDictionary<Location, Door> Doors { get; private set; } = new ConcurrentDictionary<Location, Door> { };
 
-        internal HashSet<int> CreatureHashSet { get; private set; } = new HashSet<int>();
+        internal HashSet<int> NearbyObjects { get; private set; } = new HashSet<int>();
         internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<ushort> EffectsBarHashSet { get; set; } = new HashSet<ushort>();
         internal HashSet<string> AllyListHashSet { get; set; } = new HashSet<string> { };
@@ -674,7 +674,7 @@ namespace Talos.Base
         {
             var worldObjects = new List<WorldObject>();
 
-            foreach (var item in CreatureHashSet)
+            foreach (var item in NearbyObjects)
             {
                 if (WorldObjects.TryGetValue(item, out var worldObject))
                 {
@@ -1210,7 +1210,7 @@ namespace Talos.Base
         }
         internal bool IsCreatureNearby(VisibleObject sprite, int dist = 12)
         {
-            if (!CreatureHashSet.Contains(sprite.ID))
+            if (!NearbyObjects.Contains(sprite.ID))
                 return false;
             return _serverLocation.DistanceFrom(sprite.Location) <= dist;
         }
@@ -1996,7 +1996,7 @@ namespace Talos.Base
                 ClientPacket clientPacket = new ClientPacket(15);
                 clientPacket.WriteByte(spell.Slot);
 
-                if (creature != null && (CreatureHashSet.Contains(creature.ID) || creature is Player))
+                if (creature != null && (NearbyObjects.Contains(creature.ID) || creature is Player))
                 {
                     clientPacket.WriteInt32(creature.ID);
                     clientPacket.WriteStruct(creature.Location);
@@ -2372,7 +2372,7 @@ namespace Talos.Base
             while (true)
             {
                 double totalMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
-                Console.WriteLine($"Checking walk throttle: {totalMilliseconds}ms elapsed since last move");
+                //Console.WriteLine($"Checking walk throttle: {totalMilliseconds}ms elapsed since last move");
 
                 if (Bot.IsStrangerNearby() || Bot._shouldBotStop)
                 {
@@ -2398,10 +2398,10 @@ namespace Talos.Base
 
             if (PlayersWithNoName.Count > 0 || _isCasting)
             {
-                //Console.WriteLine($"Cannot walk because PlayersWithNoName count is {PlayersWithNoName.Count} or is casting {_isCasting}");
+                Console.WriteLine($"Cannot walk because PlayersWithNoName count is {PlayersWithNoName.Count} or is casting {_isCasting}");
                 if (!_isWalking)
                 {
-                    //Console.WriteLine("Not currently walking.");
+                    Console.WriteLine("Not currently walking.");
                     return false;
                 }
                 _isCasting = false;
@@ -2409,19 +2409,25 @@ namespace Talos.Base
 
             if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
-                if (destinationThreshold != 0 && _clientLocation.DistanceFrom(destination) <= destinationThreshold)
-                {
-                    //Console.WriteLine("Too close to destination to require movement.");
-                    Thread.Sleep(25);
-                    return false;
-                }
+                int distance = _clientLocation.DistanceFrom(destination);
+                Console.WriteLine($"Current distance to destination: {distance}, Threshold: {destinationThreshold}");
+
+                //Adam - commented this out because we were ending up 2x the distance from the destination on follow
+                //Not sure if this is needed
+                //if (destinationThreshold != 0 && _clientLocation.DistanceFrom(destination) <= destinationThreshold)
+                //{
+                //    Console.WriteLine("Too close to destination to require movement.");
+                //    Thread.Sleep(25);
+                //    return false;
+                //}
+
                 if (Equals(_clientLocation, destination))
                 {
                     if (_shouldRefresh || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
                     {
                         if (_stuckCounter == 0)
                         {
-                            //Console.WriteLine("Refreshing client due to timeout or refresh needed.");
+                            Console.WriteLine("Refreshing client due to timeout or refresh needed.");
                             RequestRefresh();
                         }
                         _shouldRefresh = false;
@@ -2433,13 +2439,13 @@ namespace Talos.Base
 
                 if (Equals(_clientLocation, destination))
                 {
-                    //Console.WriteLine("Destination reached.");
+                    Console.WriteLine("Destination reached.");
                     return true;
                 }
 
                 if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
                 {
-                    //Console.WriteLine("New destination or empty path stack. Calculating new path.");
+                    Console.WriteLine("New destination or empty path stack. Calculating new path.");
                     _lastDestination = destination;
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidExits);
 
@@ -2452,7 +2458,7 @@ namespace Talos.Base
                     {
                         return false;
                     }
-                    //Console.WriteLine("Location difference detected, requesting refresh.");
+                    Console.WriteLine("Location difference detected, requesting refresh.");
                     RequestRefresh();
                     _shouldRefresh = false;
                     return false;
@@ -2460,12 +2466,12 @@ namespace Talos.Base
 
                 if (pathStack.Count == 0)
                 {
-                    //Console.WriteLine("Path stack is empty, no further movement possible.");
+                    Console.WriteLine("Path stack is empty, no further movement possible.");
                     return false;
                 }
                 else
                 {
-                    //Console.WriteLine($"Next step in path stack: {pathStack.Peek()}, Stack count: {pathStack.Count}");
+                    Console.WriteLine($"Next step in path stack: {pathStack.Peek()}, Stack count: {pathStack.Count}");
                 }
 
 
@@ -2500,7 +2506,7 @@ namespace Talos.Base
                     pathStack.Pop();
                     if (pathStack.Count == 0)
                     {
-                        //Console.WriteLine("Path complete. Destination reached.");
+                        Console.WriteLine("Path complete. Destination reached.");
                         return true;
                     }
                     nextPosition = pathStack.Peek();
@@ -2514,12 +2520,12 @@ namespace Talos.Base
 
                 if (nextPosition.DistanceFrom(_clientLocation) != 1)
                 {
-                    //Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
+                    Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
                     if (nextPosition.DistanceFrom(_clientLocation) > 2 && _shouldRefresh)
                     {
                         if (_stuckCounter == 0)
                         {
-                            //Console.WriteLine("Refreshing client due to unexpected position distance.");
+                            Console.WriteLine("Refreshing client due to unexpected position distance.");
                             RequestRefresh();
                         }
                         _shouldRefresh = false;
@@ -2536,14 +2542,14 @@ namespace Talos.Base
                         //Console.WriteLine($"Acquired lock and attempting to walk towards {directionToWalk}.");
                         if (CanWalk())
                         {
-                            //Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
+                            Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
                             Walk(directionToWalk);
                         }
                     }
                 }
                 else if (CanWalk())
                 {
-                    //Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
+                    Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
                     //Console.WriteLine($"Walking towards {directionToWalk} without lock.");
                     Walk(directionToWalk);
                 }
@@ -2557,7 +2563,7 @@ namespace Talos.Base
                 return true;
             }
 
-            // Console.WriteLine("Conditions not met for walking, requesting client refresh.");
+            Console.WriteLine("Conditions not met for walking, requesting client refresh.");
             RequestRefresh();
             _shouldRefresh = false;
             return false;
@@ -2580,14 +2586,24 @@ namespace Talos.Base
 
                 Location currentLocation = new Location(_map.MapID, _clientLocation.X, _clientLocation.Y);
                 //Console.WriteLine($"***Current location: {currentLocation}");
-
-                if (Location.Equals(currentLocation, destination))
+                Location adjustedDestination;
+                //adjust for followdistance?
+                if (ClientTab.followCbox.Checked)
                 {
-                    if (Location.Equals(destination, new Location(395, 6, 6))) //Path Temple 1
+                    adjustedDestination = GetValidLocationNearTarget(destination, (short)ClientTab.followDistanceNum.Value);
+                }
+                else
+                {
+                    adjustedDestination = destination;
+                }
+
+                if (Location.Equals(currentLocation, adjustedDestination))
+                {
+                    if (Location.Equals(adjustedDestination, new Location(395, 6, 6))) //Path Temple 1
                     {
                         Bot._circle1 = true;
                     }
-                    else if (Location.Equals(destination, new Location(344, 6, 6))) //Path Temple 6
+                    else if (Location.Equals(adjustedDestination, new Location(344, 6, 6))) //Path Temple 6
                     {
                         Bot._circle2 = true;
                     }
@@ -2596,41 +2612,41 @@ namespace Talos.Base
                     return false;
                 }
 
-                if (routeStack.Count == 1 && destination.MapID == _map.MapID && mapOnly)
+                if (routeStack.Count == 1 && adjustedDestination.MapID == _map.MapID && mapOnly)
                 {
                     routeStack.Clear();
                     return false;
                 }
 
-                if (Location.NotEquals(_routeDestination, destination) || routeStack.Count == 0)
+                if (Location.NotEquals(_routeDestination, adjustedDestination) || routeStack.Count == 0)
                 {
                     //Console.WriteLine("***Finding new route.");
-                    _routeDestination = destination;
-                    routeStack = RouteFinder.FindRoute(currentLocation, destination);
+                    _routeDestination = adjustedDestination;
+                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
                 }
 
                 if (_map.Name.Contains("Plamit"))
                 {
-                    routeStack = RouteFinder.FindRoute(currentLocation, destination);
+                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
                 }
 
                 if (routeStack.Count == 0)
                 {
                     //Console.WriteLine("***Route not found, initializing new RouteFinder.");
                     RouteFinder = new RouteFinder(_server, this);
-                    _routeDestination = destination;
+                    _routeDestination = adjustedDestination;
                     _lastClickedWorldMap = DateTime.MinValue;
-                    routeStack = RouteFinder.FindRoute(currentLocation, destination);
+                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
                     return false;
                 }
 
                 Location nextLocation = routeStack.Peek();
                 
-                if (routeStack.Count != 1)
-                {
+                //if (routeStack.Count != 1)
+                //{
                     //Console.WriteLine("***routeStack.Count != 1");
-                    distance = 0;
-                }
+                //    distance = 0;
+                //}
                 
                 if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
                 {
@@ -2642,7 +2658,7 @@ namespace Talos.Base
                 if (_worldMap != null)
                 {
                     //Console.WriteLine("***World map is not null, processing world map navigation.");
-                    List<Location> list = RouteFinder.FindRoute(currentLocation, destination).Reverse().ToList();
+                    List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
                     if (DateTime.UtcNow.Subtract(_lastClickedWorldMap).TotalSeconds < 1.0)
                     {
                         //Console.WriteLine("***DateTime.UtcNow.Subtract(dateTime_1).TotalSeconds < 1.0");
@@ -2713,6 +2729,7 @@ namespace Talos.Base
                     routeStack.Clear();
                     return false;
                 }
+                Console.WriteLine($"***About to call TryWalkLocation with distance value of: {distance}");
                 if (!TryWalkToLocation(nextLocation, distance, lockRequired, avoidWarps = true))
                 {
                     if (_map.Name.Contains("Threshold"))
@@ -2739,6 +2756,100 @@ namespace Talos.Base
             }
             //Console.WriteLine($"***Returning true");
             return true;
+        }
+        private Location GetValidLocationNearTarget(Location targetLocation, short followDistance)
+        {
+            List<Location> potentialLocations = new List<Location>();
+
+            // Check exactly followDistance tiles away in each direction (Up, Down, Left, Right)
+            short[] dx = { followDistance, (short)-followDistance, 0, 0 };
+            short[] dy = { 0, 0, followDistance, (short)-followDistance };
+
+            //Console.WriteLine($"Checking cardinal directions around target: {targetLocation}, followDistance: {followDistance}");
+
+            // Try to find valid locations in the cardinal directions
+            for (int i = 0; i < 4; i++)
+            {
+                Location potentialLocation = new Location(
+                    targetLocation.MapID,
+                    (short)(targetLocation.X + dx[i]),
+                    (short)(targetLocation.Y + dy[i])
+                );
+
+          
+                //Console.WriteLine($"Checking cardinal direction location: {potentialLocation}");
+
+                // Check if the location is valid and walkable
+                if (IsWalkable(potentialLocation))
+                {
+                    //Console.WriteLine($"Location {potentialLocation} is walkable.");
+                    potentialLocations.Add(potentialLocation);
+                }
+                else
+                {
+                    //Console.WriteLine($"Location {potentialLocation} is NOT walkable.");
+                }
+            }
+
+            // Return the first valid location found in the cardinal directions
+            if (potentialLocations.Any())
+            {
+                //Console.WriteLine($"Returning valid cardinal direction location: {potentialLocations.First()}");
+                return potentialLocations.First();
+            }
+
+            // As a fallback, calculate diagonal movements exactly followDistance away
+            //Console.WriteLine($"No valid cardinal locations found. Checking diagonals...");
+
+            for (short xOffset = (short)-followDistance; xOffset <= followDistance; xOffset++)
+            {
+                for (short yOffset = (short)-followDistance; yOffset <= followDistance; yOffset++)
+                {
+                    if (Math.Abs(xOffset) == followDistance || Math.Abs(yOffset) == followDistance)
+                    {
+                        Location diagonalLocation = new Location(
+                            targetLocation.MapID,
+                            (short)(targetLocation.X + xOffset),
+                            (short)(targetLocation.Y + yOffset)
+                        );
+
+
+                        //Console.WriteLine($"Checking diagonal location: {diagonalLocation}");
+
+                        // Check if the diagonal location is walkable
+                        if (IsWalkable(diagonalLocation))
+                        {
+                            //Console.WriteLine($"Diagonal location {diagonalLocation} is walkable.");
+                            potentialLocations.Add(diagonalLocation);
+                        }
+                        else
+                        {
+                            //Console.WriteLine($"Diagonal location {diagonalLocation} is NOT walkable.");
+                        }
+                    }
+                }
+            }
+
+            // If valid diagonal locations were found, return the first one
+            if (potentialLocations.Any())
+            {
+                //Console.WriteLine($"Returning valid diagonal location: {potentialLocations.First()}");
+                return potentialLocations.First();
+            }
+
+            // If no valid locations were found, return the original target location
+            //Console.WriteLine($"No valid locations found. Returning original target location: {targetLocation}");
+            return targetLocation;
+        }
+
+        private bool IsWalkable(Location location)
+        {
+            // Check if the location is walkable (not blocked)
+            if (_map.Tiles.TryGetValue(location.Point, out Tile tile))
+            {
+                return !tile.IsWall;
+            }
+            return false;
         }
 
         private void WarpWithNPC(Location nextLocation)
@@ -3006,9 +3117,9 @@ namespace Talos.Base
                 return;
             }
 
-            Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - Requesting client refresh...");
+            //Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - Requesting client refresh...");
             // Before refresh actions
-            LogPerformanceMetrics("Before Refresh");
+            //LogPerformanceMetrics("Before Refresh");
 
 
             // Set flag to indicate refresh is in progress
@@ -3026,8 +3137,8 @@ namespace Talos.Base
             // Reset the flag to indicate refresh is completed
             _isRefreshing = false;
 
-            LogPerformanceMetrics("After Refresh");
-            Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - Client refresh completed.");
+            //LogPerformanceMetrics("After Refresh");
+            //Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - Client refresh completed.");
         }
 
         private void WaitForRefreshCompletion()

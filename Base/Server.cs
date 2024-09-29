@@ -981,8 +981,8 @@ namespace Talos
                         if (!client.WorldObjects.ContainsKey(id))
                             client.WorldObjects.TryAdd(id, creature);
 
-                        if (!client.CreatureHashSet.Contains(id))
-                            client.CreatureHashSet.Add(id);
+                        if (!client.NearbyObjects.Contains(id))
+                            client.NearbyObjects.Add(id);
 
                         if (type == (byte)CreatureType.Merchant)
                         {
@@ -1289,9 +1289,13 @@ namespace Talos
                 //Console.WriteLine("[ConfirmCreatureWalk] Direction facing: " + creature.Direction);
                 //Console.WriteLine("[ConfirmCreatureWalk] Last moved: " + creature.LastWalked);
                 //Console.WriteLine("[ConfirmCreatureWalk] Location: " + creature.Location);
+                //Console.WriteLine($"[ConfirmCreatureWalk] Updated {creature.Name}'s location to {creature.Location} at {creature.LastStep}");
             }
             if (client.WorldObjects[id] is Player player)
             {
+                player.Location = location; // Make sure this is happening for players too
+                //Console.WriteLine($"[ConfirmCreatureWalk] Updated Player {player.Name}'s location to {player.Location} at {DateTime.UtcNow}");
+
                 if (!client.NearbyPlayers.ContainsKey(player.Name) && !client.NearbyGhosts.ContainsKey(player.Name))
                 {
                     client.NearbyGhosts.TryAdd(player.Name, player);
@@ -1344,9 +1348,9 @@ namespace Talos
         {
             int id = serverPacket.ReadInt32();
 
-            if (client.CreatureHashSet.Contains(id))
+            if (client.NearbyObjects.Contains(id))
             {
-                client.CreatureHashSet.Remove(id);
+                client.NearbyObjects.Remove(id);
             }
 
             if (client.WorldObjects.ContainsKey(id))
@@ -1409,7 +1413,7 @@ namespace Talos
                         if (!client._map.Name.Contains("Plamit") || (creature.Location.DistanceFrom(client._serverLocation) >= 10))
                         {
                             client.WorldObjects.TryRemove(creature.ID, out _);
-                            client.CreatureHashSet.Remove(creature.ID);
+                            client.NearbyObjects.Remove(creature.ID);
                         }
 
                         if (!client.WorldObjects.Values.Any(worldObj =>
@@ -1430,6 +1434,8 @@ namespace Talos
                         }
                     }
                 }
+
+                client.WorldObjects.TryRemove(worldObject.ID, out _);
             }
 
             return true;
@@ -1707,7 +1713,7 @@ namespace Talos
             client.PlayersWithNoName.Clear();
             client.NearbyNPC.Clear();
             client.NearbyGhosts.Clear();
-            client.CreatureHashSet.Clear();
+            client.NearbyObjects.Clear();
             client.ClientTab.ClearNearbyEnemies();
             client.ClientTab.ClearNearbyAllies();
 
@@ -2366,9 +2372,9 @@ namespace Talos
             player.FaceSprite = faceSprite;
             //}
 
-            if (!client.CreatureHashSet.Contains(id))
+            if (!client.NearbyObjects.Contains(id))
             {
-                client.CreatureHashSet.Add(id);
+                client.NearbyObjects.Add(id);
             }
           
 

@@ -45,8 +45,9 @@ namespace Talos.Base
 
         internal bool _reddingOtherPlayer;
         internal bool bool_12;
-        private bool bool_13;
+        private bool _dontBash;
         private bool bool_32;
+        private int? _leaderID;
         internal bool _hasRescue;
 
         internal byte _fowlCount;
@@ -111,6 +112,9 @@ namespace Talos.Base
 
         private void Walker()
         {
+            //var start = DateTime.UtcNow;
+            //Console.WriteLine($"Walker started at {start:HH:mm:ss.fff}");
+
             _shouldBotStop = IsRangerNearBy();
             if(!Client._exchangeOpen && Client.ClientTab != null)
             {
@@ -118,10 +122,17 @@ namespace Talos.Base
                 HandleDumbMTGWarp();
                 WalkActions();
             }
+
+            //var end = DateTime.UtcNow;
+            //Console.WriteLine($"Walker ended at {end:HH:mm:ss.fff}, Duration: {(end - start).TotalMilliseconds} ms");
+            Thread.Sleep(10); // Add a small sleep to avoid flooding the CPU
         }
 
         private void WalkActions()
         {
+            //var start = DateTime.UtcNow;
+            //Console.WriteLine($"WalkActions started at {start:HH:mm:ss.fff}");
+
             while (!_shouldThreadStop)
             {
                 _nearbyPlayers = Client.GetNearbyPlayerList();
@@ -135,10 +146,15 @@ namespace Talos.Base
                 }
             }
 
+            //var end = DateTime.UtcNow;
+            //Console.WriteLine($"WalkActions ended at {end:HH:mm:ss.fff}, Duration: {(end - start).TotalMilliseconds} ms");
         }
 
         private void HandleWalkingCommand()
         {
+            //var start = DateTime.UtcNow;
+            //Console.WriteLine($"HandleWalkingCommand started at {start:HH:mm:ss.fff}");
+
             string comboBoxText = Client.ClientTab.walkMapCombox.Text;
             bool followChecked = Client.ClientTab.followCbox.Checked;
             string followName = Client.ClientTab.followText.Text;
@@ -176,118 +192,168 @@ namespace Talos.Base
                     }
                 }
             }
+
+            //var end = DateTime.UtcNow;
+            //Console.WriteLine($"HandleWalkingCommand ended at {end:HH:mm:ss.fff}, Duration: {(end - start).TotalMilliseconds} ms");
+
         }
 
-        private void FollowWalking(string playerName) //Adam debug this
+        private void FollowWalking(string playerName)
         {
             try
             {
-                Client client = _server.GetClient(playerName);
-                Player player = client?.Player
-                    ?? Client.WorldObjects.Values.OfType<Player>()
-                    .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
+                Console.WriteLine($"Attempting to follow player: {playerName}");
 
-                if (player != null)
+                Client botClient = _server.GetClient(playerName);
+                Player leader = null;
+                Location leaderLocation;
+                int distance = 0;
+
+                if (botClient != null)
                 {
-                    Location playerLocation = player.Location;
-                    int distance = playerLocation.DistanceFrom(Client._clientLocation);
-
-                    RefresLastStep(client, player);
-
-                    if (_nearbyPlayers.Any(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase)))
+                    // We are following a bot client
+                    if (botClient.Player == Client.Player)
                     {
-                        player = Client.WorldObjects.Values.OfType<Player>()
-                            .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
+                        Client.ServerMessage((byte)ServerMessageType.Whisper, "Cannot follow yourself");
+                        Client.ClientTab.followText.Text = string.Empty;
+                        return;
+                    }
 
-                        if (player != null)
+                    leader = botClient.Player;
+                    leaderLocation = botClient._clientLocation;
+                    _leaderID = leader.ID;
+                }
+                else
+                {
+                    // We are following a non-bot client
+                    leader = Client.WorldObjects.Values.OfType<Player>()
+                        .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
+
+                    if (leader != null)
+                    {
+                        leaderLocation = leader.Location;
+                        _leaderID = leader.ID;
+                    }
+                    else
+                    {
+                        // Leader is not visible
+                        if (_leaderID.HasValue && Client.LastSeenLocations.TryGetValue(_leaderID.Value, out leaderLocation))
                         {
-                            string walkMapText = client?.ClientTab?.walkMapCombox.Text;
-
-                            if (walkMapText == "WayPoints"
-                                && client.ClientTab.walkBtn.Text == "Stop"
-                                && client.Bot.ways[(client.Bot.currentWay >= client.Bot.ways.Count) ? 0 : client.Bot.currentWay] == Client._serverLocation
-                                && client._stopped)
-                            {
-                                MoveToNearbyLocation();
-                            }
-
-                            BasherWalking(client);
-
-                            if (!UnStucker(player))
-                            {
-                                if (Client.ClientTab.lockstepCbox.Checked
-                                    && client != null
-                                    && client._map.MapID == Client._map.MapID)
-                                {
-                                    Location clientLocation = client._clientLocation;
-                                    distance = clientLocation.DistanceFrom(Client._clientLocation);
-                                    if (distance > Client.ClientTab.followDistanceNum.Value)
-                                    {
-                                        Client._confirmBubble = false;
-                                        Client._isWalking = Client.RouteFind(clientLocation, (short)Client.ClientTab.followDistanceNum.Value, true, true)
-                                                          && !Client.ClientTab.oneLineWalkCbox.Checked
-                                                          && !Server._toggleWalk;
-                                        return;
-                                    }
-                                }
-
-                                else if (distance > Client.ClientTab.followDistanceNum.Value)
-                                {
-                                    Client._confirmBubble = false;
-                                    if (player != null)
-                                    {
-                                        Client._isWalking = Client.RouteFind(playerLocation, (short)Client.ClientTab.followDistanceNum.Value, true, true)
-                                                          && !Client.ClientTab.oneLineWalkCbox.Checked
-                                                          && !Server._toggleWalk;
-                                    }
-                                }
-                                Client._isWalking = false;
-
-                                if (client != null && Client._okToBubble
-                                    && DateTime.UtcNow.Subtract(client.LastMoved).TotalMilliseconds > 1000.0
-                                    && DateTime.UtcNow.Subtract(Client.LastStep).TotalMilliseconds > 500.0
-                                    && DateTime.UtcNow.Subtract(Client.LastMoved).TotalMilliseconds > 500.0)
-                                {
-                                    if (Client._serverLocation != Client._clientLocation)
-                                    {
-                                        Client._confirmBubble = false;
-                                        Client.RequestRefresh(true);
-                                    }
-                                    else if (Client._map.Name.Contains("Lost Ruins")
-                                          || Client._map.Name.Contains("Assassin Dungeon")
-                                          || _nearbyValidCreatures.Any((Creature c) => Client._serverLocation.DistanceFrom(c.Location) <= 6))
-                                    {
-                                        Client._confirmBubble = true;
-                                    }
-                                }
-                            }
-
+                            Console.WriteLine($"Using last seen location for player {playerName}: {leaderLocation}");
+                            Client._isWalking = Client.RouteFind(leaderLocation, 0, true, true)
+                                                    && !Client.ClientTab.oneLineWalkCbox.Checked
+                                                    && !Server._toggleWalk;
                         }
-                        else if ((client != null ? client.Player : null) == player)
+                        else
                         {
-                            Map map = client._map;
-                            Location serverLocation = client._serverLocation;
-                            if (!Client.RouteFind(client._serverLocation, 0, false, true, true) && Client.LastSeenLocations.ContainsKey((int)client.PlayerID) && Client.LastSeenLocations[(int)client.PlayerID].MapID == Client._map.MapID)
-                            {
-                                Client.RouteFind(Client.LastSeenLocations[(int)client.PlayerID], 0, true, true);
-                            }
-                            Client._isWalking = (!Client.ClientTab.oneLineWalkCbox.Checked && !Server._toggleWalk);
-                        }
-                        else if (Client.LastSeenLocations.ContainsKey(player.ID) && Client.LastSeenLocations[player.ID].MapID == Client._map.MapID)
-                        {
-                            Client._isWalking = (Client.RouteFind(Client.LastSeenLocations[player.ID], 0, true, true) && !Client.ClientTab.oneLineWalkCbox.Checked && !Server._toggleWalk);
-
+                            Console.WriteLine("No known location for player.");
+                            Client._isWalking = false;
+                            _leaderID = null;
+                            return;
                         }
                     }
                 }
 
+                distance = leaderLocation.DistanceFrom(Client._clientLocation);
+                Console.WriteLine($"Leader found at location: {leaderLocation}. Distance from client: {distance}");
+
+                if (leader != null)
+                {
+                    // Apply UnStucker logic
+                    if (!UnStucker(leader))
+                    {
+                        // Determine the follow distance
+                        short followDistance = (leader != null && leaderLocation.MapID == Client._map.MapID)
+                            ? (short)Client.ClientTab.followDistanceNum.Value
+                            : (short)0; // Use 0 if the leader is not visible or on a different map
+
+
+                        // Apply lockstep logic
+                        if (Client.ClientTab.lockstepCbox.Checked
+                            && leaderLocation.MapID == Client._map.MapID)
+                        {
+                            Console.WriteLine("Lockstep mode active.");
+                            if (distance > Client.ClientTab.followDistanceNum.Value)
+                            {
+                                Console.WriteLine("Initiating route find in lockstep mode.");
+                                Client._confirmBubble = false;
+                                Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
+                                                    && !Client.ClientTab.oneLineWalkCbox.Checked
+                                                    && !Server._toggleWalk;
+                            }
+                        }
+                        else if (distance > Client.ClientTab.followDistanceNum.Value)
+                        {
+                            Console.WriteLine($"Distance greater than follow threshold: {distance}");
+                            Client._confirmBubble = false;
+                            Console.WriteLine($"Leader location: {leaderLocation}. Initiating route find.");
+                            Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
+                                                && !Client.ClientTab.oneLineWalkCbox.Checked
+                                                && !Server._toggleWalk;
+                        }
+                        else
+                        {
+                            Client._isWalking = false;
+                        }
+
+                        // Apply bubble logic
+                        if (Client._okToBubble
+                            //&& DateTime.UtcNow.Subtract(Client.LastMoved).TotalMilliseconds > 1000.0
+                            && DateTime.UtcNow.Subtract(Client.LastStep).TotalMilliseconds > 500.0
+                            && DateTime.UtcNow.Subtract(Client.LastMoved).TotalMilliseconds > 500.0)
+                        {
+                            Console.WriteLine("Bubble conditions met, checking for refresh.");
+
+                            if (Client._serverLocation != Client._clientLocation)
+                            {
+                                Console.WriteLine("Client position differs from server, requesting refresh.");
+                                Client._confirmBubble = false;
+                                Client.RequestRefresh(true);
+                            }
+                            else if (Client._map.Name.Contains("Lost Ruins")
+                                    || Client._map.Name.Contains("Assassin Dungeon")
+                                    || _nearbyValidCreatures.Any(c => Client._serverLocation.DistanceFrom(c.Location) <= 6))
+                            {
+                                Console.WriteLine("Bubble confirmed for specific maps or valid creatures nearby.");
+                                Client._confirmBubble = true;
+                            }
+                        }
+                    }
+                }
+               
             }
             catch (Exception ex)
             {
                 Client._isWalking = false;
                 Console.WriteLine(ex.Message);
             }
+        }
 
+
+
+        private bool TryFollowPlayer(Player player)
+        {
+            if (player == null)
+            {
+                return false;
+            }
+
+            // Try to route to the player's current or last known location
+            bool routeSuccess = false;
+
+            // First, check if the player is in LastSeenLocations and still on the same map
+            //Adam debug this - not always walking to new map
+            if (Client.LastSeenLocations.ContainsKey(player.ID) && Client.LastSeenLocations[player.ID].MapID == Client._map.MapID)
+            {
+                Console.WriteLine($"Attempting to route to last seen location of player ID: {player.ID}");
+                routeSuccess = Client.RouteFind(Client.LastSeenLocations[player.ID], 0, true, true);
+            }
+
+            // Update walking status
+            Client._isWalking = routeSuccess && !Client.ClientTab.oneLineWalkCbox.Checked && !Server._toggleWalk;
+            Console.WriteLine($"Walking status updated: {Client._isWalking}");
+
+            return routeSuccess;
         }
         private bool UnStucker(Player leader)
         {
@@ -2102,7 +2168,7 @@ namespace Talos.Base
         {
             if (CastHide())
             {
-                bool_13 = true;
+                _dontBash = true;
                 return false;
             }
 
@@ -2188,12 +2254,12 @@ namespace Talos.Base
                         creature = null;
                         if (priority.Count > 0 && DecideAndExecuteEngagementStrategy(EnemyPage, priority))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                         if (nonPriority.Count > 0 && DecideAndExecuteEngagementStrategy(EnemyPage, nonPriority))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                     }
@@ -2201,12 +2267,12 @@ namespace Talos.Base
                     {
                         if (priority.Count > 0 && SpellOneAtATime(EnemyPage, priority))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                         if (!priority.Contains(creature) && nonPriority.Count > 0 && SpellOneAtATime(EnemyPage, nonPriority))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                     }
@@ -2217,14 +2283,14 @@ namespace Talos.Base
                     creature = null;
                     if (_nearbyValidCreatures.Count > 0 && DecideAndExecuteEngagementStrategy(EnemyPage, _nearbyValidCreatures))
                     {
-                        bool_13 = true;
+                        _dontBash = true;
                         return true;
                     }
                 }
                 //Spell one at a time
                 else if (_nearbyValidCreatures.Count > 0 && SpellOneAtATime(EnemyPage, _nearbyValidCreatures))
                 {
-                    bool_13 = true;
+                    _dontBash = true;
                     return true;
                 }
             }
@@ -2249,13 +2315,13 @@ namespace Talos.Base
                             creature = null;
                             if (DecideAndExecuteEngagementStrategy(enemy.EnemyPage, creatureList))
                             {
-                                bool_13 = true;
+                                _dontBash = true;
                                 return true;
                             }
                         }
                         else if (SpellOneAtATime(enemy.EnemyPage, creatureList))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                     }
@@ -2312,7 +2378,7 @@ namespace Talos.Base
                     }
                 }
             }
-            bool_13 = false;
+            _dontBash = false;
             return false;
         }
 
@@ -2510,25 +2576,25 @@ namespace Talos.Base
         {
             if (enemyPage.fasFirstRbtn.Checked && enemyPage.spellsFasCbox.Checked && !creature.IsFassed)
             {
-                bool_13 = true;
+                _dontBash = true;
                 Client.UseSpell(enemyPage.spellsFasCombox.Text, creature, _autoStaffSwitch, false);
                 return true;
             }
             if (enemyPage.curseFirstRbtn.Checked && enemyPage.spellsCurseCbox.Checked && !creature.IsCursed)
             {
-                bool_13 = true;
+                _dontBash = true;
                 Client.UseSpell(enemyPage.spellsCurseCombox.Text, creature, _autoStaffSwitch, false);
                 return true;
             }
             if ((!enemyPage.fasFirstRbtn.Checked || !enemyPage.spellsFasCbox.Checked || creature.IsFassed) && enemyPage.spellsCurseCbox.Checked && !creature.IsCursed)
             {
-                bool_13 = true;
+                _dontBash = true;
                 Client.UseSpell(enemyPage.spellsCurseCombox.Text, creature, _autoStaffSwitch, false);
                 return true;
             }
             if ((!enemyPage.curseFirstRbtn.Checked || !enemyPage.spellsCurseCbox.Checked || creature.IsCursed) && enemyPage.spellsFasCbox.Checked && !creature.IsFassed)
             {
-                bool_13 = true;
+                _dontBash = true;
                 Client.UseSpell(enemyPage.spellsFasCombox.Text, creature, _autoStaffSwitch, false);
                 return true;
             }
@@ -2578,7 +2644,7 @@ namespace Talos.Base
                     {
                         if (CastFasIfApplicable(enemyPage, eligibleCreatures))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                     }
@@ -2586,7 +2652,7 @@ namespace Talos.Base
                     {
                         if (CastCurseIfApplicable(enemyPage, eligibleCreatures))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                     }
@@ -2597,7 +2663,7 @@ namespace Talos.Base
                     {
                         if (CastCurseIfApplicable(enemyPage, eligibleCreatures))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                     }
@@ -2605,7 +2671,7 @@ namespace Talos.Base
                     {
                         if (CastFasIfApplicable(enemyPage, eligibleCreatures))
                         {
-                            bool_13 = true;
+                            _dontBash = true;
                             return true;
                         }
                     }
@@ -2636,7 +2702,7 @@ namespace Talos.Base
                 {
                     //Console.WriteLine($"[CastCurseIfApplicable] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastCursed: {targetCreature.LastCursed}, IsCursed: {targetCreature.IsCursed}");
                     Client.UseSpell(enemyPage.spellsCurseCombox.Text, targetCreature, _autoStaffSwitch, false);
-                    bool_13 = true; // Indicate that an action was taken
+                    _dontBash = true; // Indicate that an action was taken
                     return true;
                 }
 
@@ -2666,7 +2732,7 @@ namespace Talos.Base
                 {
                     //Console.WriteLine($"[CastFasIfApplicable] Targeting creature ID: {targetCreature.ID}, Name: {targetCreature.Name}, LastFassed: {targetCreature.LastFassed}, IsFassed: {targetCreature.IsFassed}");
                     Client.UseSpell(enemyPage.spellsFasCombox.Text, targetCreature, _autoStaffSwitch, false);
-                    bool_13 = true; // Indicate that an action was taken
+                    _dontBash = true; // Indicate that an action was taken
                     return true;
                 }
 

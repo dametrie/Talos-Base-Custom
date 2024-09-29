@@ -154,7 +154,7 @@ namespace Talos.Structs
         /// <returns></returns>
         internal int AbsoluteXY(short x, short y)
         {
-            return Math.Abs(X - x) + Math.Abs(Y - y);
+            return Math.Max(Math.Abs(X - x), Math.Abs(Y - y));
         }
     }
 }
