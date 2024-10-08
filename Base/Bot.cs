@@ -202,78 +202,52 @@ namespace Talos.Base
         {
             try
             {
-                Console.WriteLine($"Attempting to follow player: {playerName}");
+                // Check if follow is enabled and player name is provided
+                if (!Client.ClientTab.followCbox.Checked || string.IsNullOrEmpty(Client.ClientTab.followText.Text))
+                    return;
 
+                // Try to identify the leader (bot or player)
                 Client botClient = _server.GetClient(playerName);
-                Player leader = null;
-                Location leaderLocation;
-                int distance = 0;
+                Player leader = botClient?.Player ?? Client.WorldObjects.Values.OfType<Player>()
+                    .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
 
-                if (botClient != null)
+                if (leader == null)
                 {
-                    // We are following a bot client
-                    if (botClient.Player == Client.Player)
+                    // If no visible leader, check the last seen location
+                    if (_leaderID.HasValue && Client.LastSeenLocations.TryGetValue(_leaderID.Value, out Location lastSeenLocation))
                     {
-                        Client.ServerMessage((byte)ServerMessageType.Whisper, "Cannot follow yourself");
-                        Client.ClientTab.followText.Text = string.Empty;
-                        return;
-                    }
-
-                    leader = botClient.Player;
-                    leaderLocation = botClient._clientLocation;
-                    _leaderID = leader.ID;
-                }
-                else
-                {
-                    // We are following a non-bot client
-                    leader = Client.WorldObjects.Values.OfType<Player>()
-                        .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
-
-                    if (leader != null)
-                    {
-                        leaderLocation = leader.Location;
-                        _leaderID = leader.ID;
+                        // If we have the last seen location, use it
+                        Console.WriteLine($"Using last seen location for player {playerName}: {lastSeenLocation}");
+                        Client._isWalking = Client.RouteFind(lastSeenLocation, 0, true, true)
+                                            && !Client.ClientTab.oneLineWalkCbox.Checked
+                                            && !Server._toggleWalk;
                     }
                     else
                     {
-                        // Leader is not visible
-                        if (_leaderID.HasValue && Client.LastSeenLocations.TryGetValue(_leaderID.Value, out leaderLocation))
-                        {
-                            Console.WriteLine($"Using last seen location for player {playerName}: {leaderLocation}");
-                            Client._isWalking = Client.RouteFind(leaderLocation, 0, true, true)
-                                                    && !Client.ClientTab.oneLineWalkCbox.Checked
-                                                    && !Server._toggleWalk;
-                        }
-                        else
-                        {
-                            Console.WriteLine("No known location for player.");
-                            Client._isWalking = false;
-                            _leaderID = null;
-                            return;
-                        }
+                        Console.WriteLine("No known location for player.");
+                        Client._isWalking = false;
+                        return;
                     }
                 }
-
-                distance = leaderLocation.DistanceFrom(Client._clientLocation);
-                Console.WriteLine($"Leader found at location: {leaderLocation}. Distance from client: {distance}");
-
-                if (leader != null)
+                else
                 {
-                    // Apply UnStucker logic
+                    // We have a visible leader, proceed with following logic
+                    _leaderID = leader.ID;
+                    Location leaderLocation = leader.Location;
+                    int distance = leaderLocation.DistanceFrom(Client._clientLocation);
+
+                    // UnStucker logic if necessary
                     if (!UnStucker(leader))
                     {
-                        // Determine the follow distance
-                        short followDistance = (leader != null && leaderLocation.MapID == Client._map.MapID)
+                        // Determine follow distance
+                        short followDistance = (leaderLocation.MapID == Client._map.MapID)
                             ? (short)Client.ClientTab.followDistanceNum.Value
-                            : (short)0; // Use 0 if the leader is not visible or on a different map
-
+                            : (short)0;
 
                         // Apply lockstep logic
-                        if (Client.ClientTab.lockstepCbox.Checked
-                            && leaderLocation.MapID == Client._map.MapID)
+                        if (Client.ClientTab.lockstepCbox.Checked && leaderLocation.MapID == Client._map.MapID)
                         {
-                            Console.WriteLine("Lockstep mode active.");
-                            if (distance > Client.ClientTab.followDistanceNum.Value)
+                            if (distance > followDistance)
                             {
                                 Console.WriteLine("Initiating route find in lockstep mode.");
                                 Client._confirmBubble = false;
@@ -282,11 +256,10 @@ namespace Talos.Base
                                                     && !Server._toggleWalk;
                             }
                         }
-                        else if (distance > Client.ClientTab.followDistanceNum.Value)
+                        else if (distance > followDistance)
                         {
-                            Console.WriteLine($"Distance greater than follow threshold: {distance}");
+                            Console.WriteLine($"Distance greater than follow threshold: {distance}. Recalculating path.");
                             Client._confirmBubble = false;
-                            Console.WriteLine($"Leader location: {leaderLocation}. Initiating route find.");
                             Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                 && !Client.ClientTab.oneLineWalkCbox.Checked
                                                 && !Server._toggleWalk;
@@ -296,23 +269,20 @@ namespace Talos.Base
                             Client._isWalking = false;
                         }
 
-                        // Apply bubble logic
+                        // Apply bubble logic for synchronization
                         if (Client._okToBubble
-                            //&& DateTime.UtcNow.Subtract(Client.LastMoved).TotalMilliseconds > 1000.0
                             && DateTime.UtcNow.Subtract(Client.LastStep).TotalMilliseconds > 500.0
                             && DateTime.UtcNow.Subtract(Client.LastMoved).TotalMilliseconds > 500.0)
                         {
                             Console.WriteLine("Bubble conditions met, checking for refresh.");
-
                             if (Client._serverLocation != Client._clientLocation)
                             {
                                 Console.WriteLine("Client position differs from server, requesting refresh.");
                                 Client._confirmBubble = false;
                                 Client.RequestRefresh(true);
                             }
-                            else if (Client._map.Name.Contains("Lost Ruins")
-                                    || Client._map.Name.Contains("Assassin Dungeon")
-                                    || _nearbyValidCreatures.Any(c => Client._serverLocation.DistanceFrom(c.Location) <= 6))
+                            else if (Client._map.Name.Contains("Lost Ruins") || Client._map.Name.Contains("Assassin Dungeon")
+                                     || _nearbyValidCreatures.Any(c => Client._serverLocation.DistanceFrom(c.Location) <= 6))
                             {
                                 Console.WriteLine("Bubble confirmed for specific maps or valid creatures nearby.");
                                 Client._confirmBubble = true;
@@ -320,7 +290,6 @@ namespace Talos.Base
                         }
                     }
                 }
-               
             }
             catch (Exception ex)
             {
@@ -328,6 +297,7 @@ namespace Talos.Base
                 Console.WriteLine(ex.Message);
             }
         }
+
 
 
 
@@ -355,6 +325,7 @@ namespace Talos.Base
 
             return routeSuccess;
         }
+
         private bool UnStucker(Player leader)
         {
             if (Server._toggleWalk)

@@ -215,7 +215,33 @@ namespace Talos
 
         private void launchDA_Click(object sender, EventArgs e)
         {
-            LaunchDarkages();
+            try
+            {
+                string dawnd = Settings.Default.DarkAgesPath.Replace("Darkages.exe", "dawnd.dll");
+                if (!File.Exists(dawnd))
+                    File.WriteAllBytes(dawnd, Resources.dawnd);
+            }
+            catch
+            {
+                int num = (int)MessageDialog.Show(this, "Failed to write dawnd.dll, please check Dark Ages path.");
+                return;
+            }
+            if (khanFiles.Count == 0)
+            {
+                try
+                {
+                    string str = Properties.Settings.Default.DarkAgesPath.Replace("Darkages.exe", "");
+                    foreach (string file in Directory.GetFiles(str, "khan*", (SearchOption)0))
+                        khanFiles.Add(file.Replace(str, ""), DATArchive.FromFile(file));
+                }
+                catch
+                {
+                    int num = (int)MessageDialog.Show(this, "Failed to load .dats, please check Dark Ages path.");
+                    return;
+                }
+            }
+            ThreadPool.QueueUserWorkItem((WaitCallback)(z => this.LaunchDarkages()));
+
         }
 
         private void mapCacheMenuItem_Click(object sender, EventArgs e)

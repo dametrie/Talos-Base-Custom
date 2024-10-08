@@ -126,7 +126,7 @@ namespace Talos.Base
         internal bool _acceptPressed;
         internal bool _exchangeOpen;
         internal bool _exchangeClosing;
-        internal bool _okToBubble = true;
+        internal bool _okToBubble = false;
         internal bool _confirmBubble;
         internal bool isStatusUpdated;
         internal bool _recentlyCrashered;
