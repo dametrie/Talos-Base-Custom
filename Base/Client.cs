@@ -22,7 +22,7 @@ using System.Text.RegularExpressions;
 using System.ComponentModel;
 using Talos.Base;
 using System.Collections.Concurrent;
-using Object = Talos.Objects.Object;
+using GroundItem = Talos.Objects.GroundItem;
 using Talos.PInvoke;
 
 
@@ -110,8 +110,8 @@ namespace Talos.Base
         internal bool _clientWalkPending;
         internal bool _isCasting;
         internal bool _isWalking;
-        internal bool _isRefreshing;
-        internal bool _canRefresh;
+        internal int _isRefreshing;
+        internal bool _mapChanged;
         internal bool _hasLabor;
         internal bool _bool_39;
         internal bool _overrideMapFlags;
@@ -279,6 +279,7 @@ namespace Talos.Base
         internal HashSet<int> NearbyObjects { get; private set; } = new HashSet<int>();
         internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
         internal HashSet<ushort> EffectsBarHashSet { get; set; } = new HashSet<ushort>();
+        internal HashSet<ushort> SpellBar { get; set; } = new HashSet<ushort>();
         internal HashSet<string> AllyListHashSet { get; set; } = new HashSet<string> { };
 
         internal static HashSet<string> AoSuainHashSet = new HashSet<string>(new string[3]
@@ -376,7 +377,7 @@ namespace Talos.Base
         internal bool IsSkulled => Player?._isSkulled == true && (EffectsBarHashSet.Contains((ushort)EffectsBar.Skull) || EffectsBarHashSet.Contains((ushort)EffectsBar.WormSkull));
 
         public int Int32_1 { get; internal set; }
-
+        public object CastLock { get; internal set; }
 
         internal Client(Server server, Socket socket)
         {
@@ -422,6 +423,7 @@ namespace Talos.Base
         internal bool HasItem(string itemName) => Inventory.HasItem(itemName);
         internal bool HasSkill(string skillName) => Skillbook[skillName] != null;
         internal bool HasSpell(string spellName) => Spellbook[spellName] != null;
+
         internal int CalculateHealAmount(string spellName)
         {
             int num = (Stats.CurrentWis >= 99) ? Stats.CurrentWis : 99;
@@ -495,17 +497,45 @@ namespace Talos.Base
             return false;
         }
 
-        internal Player GetNearbyPlayer(string allyName)
+        internal List<GroundItem> GetNearbyGroundItems(int distance = 12, params ushort[] sprites)
         {
-            if (Monitor.TryEnter(Server.Lock, 300))
+            var spriteSet = new HashSet<ushort>(sprites);
+            var nearbyGroundItems = new List<GroundItem>();
+
+            if (Monitor.TryEnter(Server.SyncObj, 150))
             {
                 try
                 {
-                    return (!NearbyPlayers.ContainsKey(allyName)) ? null : NearbyPlayers[allyName];
+                    foreach (var objectId in ObjectHashSet)
+                    {
+                        if (WorldObjects[objectId] is GroundItem groundItem
+                            && this.WithinRange(groundItem, distance)
+                            && spriteSet.Contains(groundItem.SpriteID))
+                        {
+                            nearbyGroundItems.Add(groundItem);
+                        }
+                    }
                 }
                 finally
                 {
-                    Monitor.Exit(Server.Lock);
+                    Monitor.Exit(Server.SyncObj);
+                }
+            }
+
+            return nearbyGroundItems;
+        }
+
+        internal Player GetNearbyPlayer(string name)
+        {
+            if (Monitor.TryEnter(Server.SyncObj, 300))
+            {
+                try
+                {
+                    return (!NearbyPlayers.ContainsKey(name)) ? null : NearbyPlayers[name];
+                }
+                finally
+                {
+                    Monitor.Exit(Server.SyncObj);
                 }
             }
             return null;
@@ -513,7 +543,7 @@ namespace Talos.Base
 
         internal Creature GetNearyByNPC(string name)
         {
-            if (Monitor.TryEnter(Server.Lock, 300))
+            if (Monitor.TryEnter(Server.SyncObj, 300))
             {
                 try
                 {
@@ -521,7 +551,7 @@ namespace Talos.Base
                 }
                 finally
                 {
-                    Monitor.Exit(Server.Lock);
+                    Monitor.Exit(Server.SyncObj);
                 }
             }
             return null;
@@ -612,7 +642,7 @@ namespace Talos.Base
 
         internal List<Player> GetNearbyPlayerList()
         {
-            if (!Monitor.TryEnter(Server.Lock, 1000))
+            if (!Monitor.TryEnter(Server.SyncObj, 1000))
             {
                 return new List<Player>();
             }
@@ -624,7 +654,7 @@ namespace Talos.Base
             }
             finally
             {
-                Monitor.Exit(Server.Lock);
+                Monitor.Exit(Server.SyncObj);
             }
         }
           
@@ -632,7 +662,7 @@ namespace Talos.Base
         internal List<Player> GetNearbyAllies()
         {
 
-            if (!Monitor.TryEnter(Server.Lock, 1000))
+            if (!Monitor.TryEnter(Server.SyncObj, 1000))
             {
                 return new List<Player>();
             }
@@ -644,30 +674,31 @@ namespace Talos.Base
             }
             finally
             {
-                Monitor.Exit(Server.Lock);
+                Monitor.Exit(Server.SyncObj);
             }
         }
 
 
-        internal List<Object> GetNearbyObjects(int distance = 12)
+        internal List<GroundItem> GetNearbyObjects(int distance = 12)
         {
-            if (!Monitor.TryEnter(Server.Lock, 1000))
+            if (!Monitor.TryEnter(Server.SyncObj, 1000))
             {
-                return new List<Object>();
+                return new List<GroundItem>();
             }
             try
             {
                 return WorldObjects.Values
-                    .OfType<Object>()
-                    .Where(obj => obj.GetType() == typeof(Objects.Object))
+                    .OfType<GroundItem>()
+                    .Where(obj => obj.GetType() == typeof(Objects.GroundItem))
                     .Where(obj => _serverLocation.DistanceFrom(obj.Location) <= distance)
                     .ToList();
             }
             finally
             {
-                Monitor.Exit(Server.Lock);
+                Monitor.Exit(Server.SyncObj);
             }
         }
+
 
 
         internal List<WorldObject> GetWorldObjects()
@@ -683,6 +714,11 @@ namespace Talos.Base
             }
 
             return worldObjects;
+        }
+
+        internal bool WithinRange(VisibleObject obj, int range = 12)
+        {
+            return NearbyObjects.Contains(obj.ID) && _serverLocation.DistanceFrom(obj.Location) <= range;
         }
 
         internal bool IsLocationSurrounded(Location location)
@@ -1657,7 +1693,7 @@ namespace Talos.Base
         {
             var whiteList = new HashSet<ushort>();
             List<Creature> creatureList = new List<Creature>();
-            if (!Monitor.TryEnter(Server.Lock, 1000))
+            if (!Monitor.TryEnter(Server.SyncObj, 1000))
             {
                 return creatureList;
             }
@@ -1680,7 +1716,7 @@ namespace Talos.Base
             }
             finally
             {
-                Monitor.Exit(Server.Lock);
+                Monitor.Exit(Server.SyncObj);
             }
         }
 
@@ -1712,7 +1748,7 @@ namespace Talos.Base
         internal List<Creature> GetAllNearbyMonsters(int distance = 12)
         {
             List<Creature> list = new List<Creature>();
-            if (Monitor.TryEnter(Server.Lock, 1000))
+            if (Monitor.TryEnter(Server.SyncObj, 1000))
             {
                 try
                 {
@@ -1729,7 +1765,7 @@ namespace Talos.Base
                 }
                 finally
                 {
-                    Monitor.Exit(Server.Lock);
+                    Monitor.Exit(Server.SyncObj);
                 }
             }
             return list;
@@ -2310,7 +2346,7 @@ namespace Talos.Base
 
             //Console.WriteLine($"Attempting to walk in direction: {dir}"); // Log the direction
 
-            if (Dialog == null && !_server._stopWalking && dir != Direction.Invalid && !_isRefreshing)
+            if (Dialog == null || !_server._stopWalking || dir != Direction.Invalid || _isRefreshing ==1)
             {
                 _walkCallCount++;
                 //Console.WriteLine($"Walk method called {walkCallCount} times");
@@ -2366,7 +2402,7 @@ namespace Talos.Base
         }
 
 
-        internal bool TryWalkToLocation(Location destination, short destinationThreshold = 1, bool lockRequired = true, bool avoidExits = true)
+        internal bool Pathfind(Location destination, short distance = 1, bool shouldBlock = true, bool avoidWarps = true)
         {
 
             while (true)
@@ -2409,8 +2445,8 @@ namespace Talos.Base
 
             if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
-                int distance = _clientLocation.DistanceFrom(destination);
-                Console.WriteLine($"Current distance to destination: {distance}, Threshold: {destinationThreshold}");
+                int dist = _clientLocation.DistanceFrom(destination);
+                Console.WriteLine($"Current distance to destination: {dist}, Threshold: {distance}");
 
                 //Adam - commented this out because we were ending up 2x the distance from the destination on follow
                 //Not sure if this is needed
@@ -2447,13 +2483,13 @@ namespace Talos.Base
                 {
                     Console.WriteLine("New destination or empty path stack. Calculating new path.");
                     _lastDestination = destination;
-                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidExits);
+                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
 
                 }
 
                 if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _shouldRefresh)
                 {
-                    pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidExits);
+                    pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidWarps);
                     if (pathStack.Count == 0)
                     {
                         return false;
@@ -2495,7 +2531,7 @@ namespace Talos.Base
                     if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(npc => Location.NotEquals(loc, destination) && Location.Equals(npc.Location, loc) || (!HasEffect(EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.SpriteID) && GetCreatureCoverage(npc).Contains(loc))))
                     {
                         //Console.WriteLine($"Creature interaction required at {loc}, recalculating path.");
-                        pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidExits);
+                        pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
                         return false;
                     }
                 }
@@ -2530,14 +2566,14 @@ namespace Talos.Base
                         }
                         _shouldRefresh = false;
                     }
-                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidExits);
+                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
                     return false;
                 }
 
                 Direction directionToWalk = nextPosition.GetDirection(_clientLocation);
-                if (lockRequired)
+                if (shouldBlock)
                 {
-                    lock (Lock)
+                    lock (CastLock)
                     {
                         //Console.WriteLine($"Acquired lock and attempting to walk towards {directionToWalk}.");
                         if (CanWalk())
@@ -2573,7 +2609,7 @@ namespace Talos.Base
             return !HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending");
         }
 
-        internal bool RouteFind(Location destination, short distance = 0, bool mapOnly = false, bool lockRequired = true, bool avoidWarps = true)
+        internal bool RouteFind(Location destination, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)
         {
             try
             {
@@ -2730,7 +2766,7 @@ namespace Talos.Base
                     return false;
                 }
                 Console.WriteLine($"***About to call TryWalkLocation with distance value of: {distance}");
-                if (!TryWalkToLocation(nextLocation, distance, lockRequired, avoidWarps = true))
+                if (!Pathfind(nextLocation, distance, shouldBlock, avoidWarps = true))
                 {
                     if (_map.Name.Contains("Threshold"))
                     {
@@ -3081,7 +3117,7 @@ namespace Talos.Base
             var creatureList = new List<Creature>();
             var hashSet = new HashSet<ushort>(creatureArray);
 
-            lock (Server.Lock)
+            lock (Server.SyncObj)
             {
                 foreach (var creature in GetWorldObjects().OfType<Creature>())
                 {
@@ -3111,55 +3147,40 @@ namespace Talos.Base
 
         internal void RequestRefresh(bool waitForCompletion = true)
         {
-            // Check if a refresh is already in progress
-            if (_isRefreshing)
+            if (Interlocked.CompareExchange(ref _isRefreshing, 1, 0) == 0)
             {
-                return;
+                this.Enqueue((Packet)new ClientPacket((byte)56));
+                this.Bot._lastRefresh = DateTime.UtcNow;
             }
 
-            //Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - Requesting client refresh...");
-            // Before refresh actions
-            //LogPerformanceMetrics("Before Refresh");
+            var expirationTime = DateTime.UtcNow.AddMilliseconds(1500);
 
-
-            // Set flag to indicate refresh is in progress
-            _isRefreshing = true;
-
-            // Enqueue the refresh request
-            Enqueue(new ClientPacket(56));
-
-            // Optionally wait for the refresh to complete
             if (waitForCompletion)
             {
-                WaitForRefreshCompletion();
-            }
-
-            // Reset the flag to indicate refresh is completed
-            _isRefreshing = false;
-
-            //LogPerformanceMetrics("After Refresh");
-            //Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - Client refresh completed.");
-        }
-
-        private void WaitForRefreshCompletion()
-        {
-            DateTime startTime = DateTime.UtcNow;
-
-            // Wait for up to 1500 milliseconds for the refresh to complete
-            while (DateTime.UtcNow.Subtract(startTime).TotalMilliseconds < 1500.0)
-            {
-                // Check if the refresh can proceed
-                if (!_canRefresh)
+                try
                 {
-                    // If not, wait for a short duration before checking again
-                    Thread.Sleep(10);
-                    continue;
-                }
+                    while (DateTime.UtcNow < expirationTime)
+                    {
+                        if (this._mapChanged || this._isRefreshing == 0)
+                        {
+                            this._mapChanged = false;
+                            break;
+                        }
 
-                // Allow the refresh to proceed and exit the loop
-                _canRefresh = false;
-                break;
+                        Thread.Sleep(10);
+                    }
+                }
+                catch (ThreadInterruptedException ex)
+                {
+                    Console.WriteLine("Thread was interrupted.");
+                }
+                finally
+                {
+                    this._isRefreshing = 0;
+                }
             }
+            else
+                this._isRefreshing = 0;
         }
 
         private void LogPerformanceMetrics(string phase)
@@ -3394,7 +3415,7 @@ namespace Talos.Base
                             ClientMessageHandler clientHandle = _server.ClientMessage[clientPacket.Opcode];
                             if (clientHandle != null)
                             {
-                                lock (Server.Lock)
+                                lock (Server.SyncObj)
                                 {
                                     try
                                     {
@@ -3413,7 +3434,7 @@ namespace Talos.Base
                             ServerMessageHandler serverHandle = _server.ServerMessage[serverPacket.Opcode];
                             if (serverHandle != null)
                             {
-                                lock (Server.Lock)
+                                lock (Server.SyncObj)
                                 {
                                     try
                                     {

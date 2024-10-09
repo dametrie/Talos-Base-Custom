@@ -148,9 +148,9 @@ internal class Pathfinder
         return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
     }
 
-    internal Stack<Location> FindPath(Location start, Location end, bool avoidExits = true)
+    internal Stack<Location> FindPath(Location start, Location end, bool avoidWarps = true)
     {
-        InitializePathNodes(false, end, avoidExits);
+        InitializePathNodes(false, end, avoidWarps);
         Console.WriteLine($"Starting pathfinding from {start} to {end}.");
 
         if (!_pathNodes[start.X, start.Y].IsOpen || !_pathNodes[end.X, end.Y].IsOpen)

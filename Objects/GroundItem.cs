@@ -2,11 +2,11 @@
 
 namespace Talos.Objects
 {
-    internal class Object : VisibleObject
+    internal class GroundItem : VisibleObject
     {
         internal bool Exists { get; private set; }
 
-        internal Object(int id, ushort sprite, Location location, bool exists)
+        internal GroundItem(int id, ushort sprite, Location location, bool exists)
             : base(id, string.Empty, sprite, location)
         {
             Exists = exists;

@@ -406,4 +406,20 @@ namespace Talos.Enumerations
         Swimming = 192,
         Full = 60
     }
+
+    internal enum CharacterState
+    {
+        Idle,
+        Hunting,
+        LoadingWaypointProfile,
+        LoadingHuntingProfile,
+        LoadingWalkingProfile,
+        WantsToAscend,
+        ClearProfile,
+        Ascending,
+        AscendingComplete,
+        Walking,
+        Waiting,
+        WaitForSpells,
+    }
 }

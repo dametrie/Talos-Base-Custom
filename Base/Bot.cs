@@ -93,6 +93,8 @@ namespace Talos.Base
         internal bool _circle2;
         internal DateTime _doorTime;
         internal Point _doorPoint;
+        private bool _together;
+        private DateTime _followerTimer;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -299,33 +301,6 @@ namespace Talos.Base
         }
 
 
-
-
-        private bool TryFollowPlayer(Player player)
-        {
-            if (player == null)
-            {
-                return false;
-            }
-
-            // Try to route to the player's current or last known location
-            bool routeSuccess = false;
-
-            // First, check if the player is in LastSeenLocations and still on the same map
-            //Adam debug this - not always walking to new map
-            if (Client.LastSeenLocations.ContainsKey(player.ID) && Client.LastSeenLocations[player.ID].MapID == Client._map.MapID)
-            {
-                Console.WriteLine($"Attempting to route to last seen location of player ID: {player.ID}");
-                routeSuccess = Client.RouteFind(Client.LastSeenLocations[player.ID], 0, true, true);
-            }
-
-            // Update walking status
-            Client._isWalking = routeSuccess && !Client.ClientTab.oneLineWalkCbox.Checked && !Server._toggleWalk;
-            Console.WriteLine($"Walking status updated: {Client._isWalking}");
-
-            return routeSuccess;
-        }
-
         private bool UnStucker(Player leader)
         {
             if (Server._toggleWalk)
@@ -438,15 +413,362 @@ namespace Talos.Base
             }
         }
 
-        private void WayPointWalking()
+        private void WayPointWalking(bool skip = false)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Check if there are any waypoints to walk to
+                if (ways.Count == 0 ||
+                    (_server.ClientStateList.ContainsKey(Client.Name)
+                    && _server.ClientStateList[Client.Name] == CharacterState.WaitForSpells))
+                {
+                    Console.WriteLine("No waypoints available or client in WaitForSpells state.");
+                    return;
+                }
+
+                if (currentWay < ways.Count)
+                {
+     
+                    Client._walkSpeed = (double)Client.ClientTab.walkSpeedSldr.Value;
+
+                   
+                    if (skip && Client.GetNearbyObjects().OfType<Creature>()
+                        .Any(creature => creature.Type != CreatureType.WalkThrough && creature.Location.Point == ways[currentWay].Point))
+                    {
+                        Console.WriteLine($"Skipping waypoint {currentWay} due to nearby creature.");
+                        currentWay++;
+                    }
+                    else
+                    {
+                        WayForm waysForm = Client.ClientTab._waysForm;
+
+                        // Special door proximity condition
+                        if (DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 2.5 &&
+                            Client._clientLocation.Point.Distance(_doorPoint) < 6)
+                        {
+                            Console.WriteLine("Near door, adjusting walking speed.");
+                            Client._walkSpeed = Client._walkSpeed > 350.0 ? 350.0 : Client._walkSpeed;
+                        }
+                        else
+                        {
+
+                            List<Creature> nearbyCreatures = Client.GetNearbyValidCreatures(12);
+
+                            // Filter out creatures that are walled in and cannot be reached if selected
+                            if (Client.ClientTab._isBashing && Client.ClientTab.ignoreWalledInCbox.Checked)
+                            {
+                                // Remove creatures that are walled in
+                                nearbyCreatures = nearbyCreatures
+                                    .Where(creature => !Client.IsLocationSurrounded(creature.Location))
+                                    .ToList();
+                                Console.WriteLine("Filtered out walled-in creatures while bashing.");
+                            }
+
+                            // Filter out creatures that are dioned if selected
+                            if (Client.ClientTab.chkIgnoreDionWaypoints.Checked)
+                            {
+                                // Remove creatures that are dioned
+                                nearbyCreatures = nearbyCreatures
+                                    .Where(creature => !creature.IsDioned)
+                                    .ToList();
+                                Console.WriteLine("Filtered out dioned creatures");
+                            }
+
+                            // Condition 1 - Slow down walking speed if certain creatures are nearby
+                            if (waysForm.condition1.Checked
+                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)waysForm.proximityUpDwn1.Value))
+                                    >= waysForm.mobSizeUpDwn1.Value
+                                && !Client.ClientTab._isBashing)
+                            {
+                                Client._walkSpeed = (double)waysForm.walkSlowUpDwn1.Value;
+                                Console.WriteLine("Condition 1 met, adjusting walking speed.");
+                            }
+
+                            // Condition 2 - Additional slowing based on proximity to creatures
+                            if (waysForm.condition2.Checked
+                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)waysForm.proximityUpDwn2.Value))
+                                    >= waysForm.mobSizeUpDwn2.Value
+                                && !Client.ClientTab._isBashing)
+                            {
+                                Client._walkSpeed = (double)waysForm.walkSlowUpDwn2.Value;
+                                Console.WriteLine("Condition 2 met, adjusting walking speed.");
+                            }
+
+                            // Condition 3 - Similar proximity-based speed adjustment
+                            if (waysForm.condition3.Checked
+                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)waysForm.proximityUpDwn3.Value))
+                                    >= waysForm.mobSizeUpDwn3.Value
+                                && !Client.ClientTab._isBashing)
+                            {
+                                Client._walkSpeed = (double)waysForm.walkSlowUpDwn3.Value;
+                                Console.WriteLine("Condition 3 met, adjusting walking speed.");
+                            }
+
+                            // Condition 4 - Stop if certain conditions are met, enabling defensive measures
+                            if (waysForm.condition4.Checked
+                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)waysForm.proximityUpDwn4.Value))
+                                    >= waysForm.mobSizeUpDwn4.Value)
+                            {
+                                Console.WriteLine("Condition 4 met, stopping movement and checking bubble conditions.");
+                                Client._stopped = true;
+                                if (BackTracking())
+                                {
+                                    return;
+                                }
+
+                                if (Client._map.Name.Contains("Lost Ruins") || Client._map.Name.Contains("Assassin Dungeon")
+                                    || _nearbyValidCreatures.Any(monster => monster.Location.DistanceFrom(Client._serverLocation) <= 6))
+                                {
+                                    Client._okToBubble = true;
+                                }
+
+                                // Also apply bubble to the bot's follow chain
+                                foreach (Client client in Server.GetFollowChain(Client))
+                                {
+                                    if (!client._okToBubble)
+                                    {
+                                        client._okToBubble = true;
+                                    }
+                                }
+
+                                Client._isWalking = false;
+                                return;
+                            }
+                        }
+
+                        // Reset stop status if none of the conditions applied
+                        Client._stopped = false;
+                        foreach (Client client in Server.GetFollowChain(Client))
+                        {
+                            client._okToBubble = false;
+                        }
+                        Client._okToBubble = false;
+
+                        // Check if the bot needs to backtrack
+                        if (BackTracking())
+                        {
+                            Console.WriteLine("Backtracking logic triggered, stopping waypoint navigation.");
+                            return;
+                        }
+
+                        // Handle specific status effects and conditions on followers
+                        foreach (Client client in Server.GetFollowChain(Client))
+                        {
+                            if (client.HasEffect(EffectsBar.Pramh) || client.HasEffect(EffectsBar.Suain)
+                                || client.HasEffect(EffectsBar.BeagSuain) || client.HasEffect(EffectsBar.Skull)
+                                || client.Player.IsSkulled)
+                            {
+                                Console.WriteLine("Cannot move due to effect, stopping waypoint navigation.");
+                                return;
+                            }
+                        }
+
+
+                        // Handle item pickup logic if configured
+                        if (Client.ClientTab.toggleOverrideCbox.Checked && Client.ClientTab.overrideList.Items.Count > 0)
+                        {
+                            try
+                            {
+                                List<ushort> itemsToPickUp = new List<ushort>();
+
+                                foreach (string item in Client.ClientTab.overrideList.Items.OfType<string>())
+                                {
+                                    if (ushort.TryParse(item, out ushort itemID))
+                                    {
+                                        itemsToPickUp.Add(itemID);
+                                    }
+                                }
+
+                                if (itemsToPickUp.Count != 1 && itemsToPickUp[0] != (ushort)140 && !Client._inventoryFull)
+                                    return;
+
+
+                                List<GroundItem> nearbyGroundItems = Client.GetNearbyGroundItems(12, itemsToPickUp.ToArray());
+
+                                foreach(GroundItem groundItem in nearbyGroundItems)
+                                {
+                                    int count = Client.Pathfinder.FindPath(Client._clientLocation, groundItem.Location).Count;
+
+                                    if (count == 0)
+                                    {
+                                        count = Client.Pathfinder.FindPath(Client._clientLocation, groundItem.Location).Count;
+                                    }
+
+                                    if (count == 0 || count > Client.ClientTab.overrideDistanceNum.Value)
+                                    {
+                                        nearbyGroundItems.Remove(groundItem);
+                                    }
+                                }
+
+                                if (nearbyGroundItems.Any())
+                                {
+                                    GroundItem closestItem = nearbyGroundItems.OrderBy(item => item.Location.DistanceFrom(Client._clientLocation)).FirstOrDefault();
+                                    if (closestItem != null && Client._clientLocation.DistanceFrom(closestItem.Location) > 2)
+                                    {
+                                        // Move to the item
+                                        Client._isWalking = Client.Pathfind(closestItem.Location, 2)
+                                                                && !Client.ClientTab.oneLineWalkCbox.Checked
+                                                                && !Server._toggleWalk;
+                                        return;
+                                    }
+
+                                    if (Client._clientLocation.DistanceFrom(closestItem.Location) <= 2 && Client._serverLocation.DistanceFrom(closestItem.Location) > 2)
+                                    {
+                                        Client.RequestRefresh(true);
+                                    }
+
+                                    // Pick up the item if nearby
+                                    if (Monitor.TryEnter(Client.CastLock, 200))
+                                    {
+                                        try
+                                        {
+                                            Client.Pickup((byte)0, closestItem.Location);
+                                            Console.WriteLine("Picked up item.");
+                                        }
+                                        finally
+                                        {
+                                            Monitor.Exit(Client.CastLock);
+                                        }
+                                    }
+                                    Client._isWalking = false;
+                                    return;
+                                }
+                                
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error during item pickup: {ex.Message}");
+                                Client._isWalking = false;
+                            }
+                        }
+
+                        Point currentPoint = this.Client._serverLocation.Point;
+
+                        if (this.Client.ClientTab._isBashing)
+                        {
+                            Location currentWay = this.ways[this.currentWay];
+                            Location nextWay = this.currentWay < this.ways.Count - 1 ? this.ways[this.currentWay + 1] : this.ways[0];
+
+                            int distanceToCurrentWay = currentPoint.Distance(currentWay.Point);
+                            int distanceToNextWay = currentWay.Point.Distance(nextWay.Point);
+                            Direction currentDirection = currentPoint.Relation(currentWay.Point);
+                            Direction nextDirection = nextWay.Point.Relation(currentWay.Point);
+
+                            if (currentWay.MapID == this.Client._map.MapID && currentWay.MapID == nextWay.MapID && distanceToCurrentWay > 3 && distanceToCurrentWay < distanceToNextWay && currentDirection == nextDirection)
+                            {
+                                this.currentWay++;
+                                return;
+                            }
+                        }
+
+                        Location targetWay = this.ways[this.currentWay];
+                        int distanceToTarget = this.Client._clientLocation.Point.Distance(targetWay.Point);
+
+                        if (distanceToTarget > waysForm.distanceUpDwn.Value)
+                        {
+                            if (this.Client._map.MapID == targetWay.MapID)
+                            {
+                                this.Client._isWalking = this.Client.RouteFind(targetWay, (short)waysForm.distanceUpDwn.Value) && !this.Client.ClientTab.oneLineWalkCbox.Checked && !this.Server._toggleWalk;
+                            }
+                        }
+                        else
+                        {
+                            this.Client._isWalking = false;
+
+                            if (this.Client._clientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
+                            {
+                                if (this.Client._map.MapID == targetWay.MapID)
+                                {
+                                    if (this.Client._serverLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
+                                    {
+                                        this.Client.RequestRefresh();
+                                    }
+                                    else
+                                    {
+                                        this.currentWay++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+                else
+                    currentWay = 0;
+            }
+            catch (ThreadAbortException ex)
+            {
+
+            }
+            catch (Exception ex)
+            {
+                string str = AppDomain.CurrentDomain.BaseDirectory + "PathfinderCrashLogs\\";
+                if (!Directory.Exists(str))
+                    Directory.CreateDirectory(str);
+                File.WriteAllText(str + DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log", ex.ToString());
+            }
+
+
+
+        }
+
+        private bool BackTracking()
+        {
+            try
+            {
+                // Get list of clients that are following this client and have their 'startStrip' set to 'Stop'
+                var clientList = Server.Clients
+                    .Where(x => x?.ClientTab?.startStrip.Text == "Stop"
+                                && x.ClientTab.followCbox.Checked
+                                && x.ClientTab.followText.Text.Equals(Client.Name, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                bool wasTogether = _together;
+                _together = true;
+                Client clientToFollow = null;
+
+                // Check if any client is on a different map or too far away
+                foreach (var client in clientList)
+                {
+                    if (client._map.MapID != Client._map.MapID || client._serverLocation.DistanceFrom(Client._serverLocation) > 9)
+                    {
+                        clientToFollow = client;
+                        _together = false;
+                        break;
+                    }
+                }
+
+                // If the clients were together and are now apart, start the timer
+                if (wasTogether && !_together)
+                {
+                    this._followerTimer = DateTime.UtcNow;
+                }
+                // If the clients have been apart for more than 5 seconds, backtrack to the client
+                else if (!_together && DateTime.UtcNow.Subtract(this._followerTimer).TotalSeconds > 5.0)
+                {
+                    Client._walkSpeed = (double)Client.ClientTab.walkSpeedSldr.Value;
+                    if (clientToFollow != null)
+                    {
+                        Client._isWalking = Client.RouteFind(clientToFollow._serverLocation, 3, shouldBlock: false);
+                    }
+                    return true;
+                }
+
+                return false;
+            }
+            catch
+            {
+                _together = true;
+                return false;
+            }
         }
 
         private void SWLure()
         {
             throw new NotImplementedException();
         }
+
+
 
         private void HandleExtraMapActions(Location destination)
         {
@@ -471,7 +793,7 @@ namespace Talos.Base
             {
                 if (location.AbsoluteXY(7, 13) > 2)
                 {
-                    Client.TryWalkToLocation(new Location(3938, 7, 13), 0, true, false);
+                    Client.Pathfind(new Location(3938, 7, 13), 0, true, false);
                     return;
                 }
                 else
@@ -483,7 +805,7 @@ namespace Talos.Base
             {
                 if (location.AbsoluteXY(13, 12) > 2)
                 {
-                    Client.TryWalkToLocation(new Location(3920, 13, 12), 0, true, false);
+                    Client.Pathfind(new Location(3920, 13, 12), 0, true, false);
                     return;
                 }
                 else
@@ -495,7 +817,7 @@ namespace Talos.Base
             {
                 if (location.AbsoluteXY(15, 0) > 2)
                 {
-                    Client.TryWalkToLocation(new Location(3012, 15, 0), 0, true, false);
+                    Client.Pathfind(new Location(3012, 15, 0), 0, true, false);
                     return;
                 }
                 else
@@ -507,7 +829,7 @@ namespace Talos.Base
             {
                 if (location.AbsoluteXY(93, 48) > 2)
                 {
-                    Client.TryWalkToLocation(new Location(10265, 93, 48), 0, true, false);
+                    Client.Pathfind(new Location(10265, 93, 48), 0, true, false);
                     return;
                 }
                 else
@@ -519,7 +841,7 @@ namespace Talos.Base
             {
                 if (location.AbsoluteXY(6, 6) > 2)
                 {
-                    Client.TryWalkToLocation(new Location(424, 6, 6), 0, true, false);
+                    Client.Pathfind(new Location(424, 6, 6), 0, true, false);
                     return;
                 }
                 else
@@ -533,42 +855,42 @@ namespace Talos.Base
             {
                 if (Client._map.MapID == 6530 && !Client.RouteFind(new Location(6537, 65, 1), 0, false, true, true))
                 {
-                    Client.TryWalkToLocation(new Location(6530, 10, 0), 0, true, false);
+                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6537 && Client._clientLocation.X < 31 && Client._clientLocation.Y < 43)
                 {
-                    Client.TryWalkToLocation(new Location(6537, 0, 31), 0, true, false);
+                    Client.Pathfind(new Location(6537, 0, 31), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6535 && Client._clientLocation.X > 68 && Client._clientLocation.Y < 56)
                 {
-                    Client.TryWalkToLocation(new Location(6535, 74, 49), 0, true, false);
+                    Client.Pathfind(new Location(6535, 74, 49), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6537 && Client._clientLocation.X < 43 && Client._clientLocation.Y > 43)
                 {
-                    Client.TryWalkToLocation(new Location(6537, 14, 74), 0, true, false);
+                    Client.Pathfind(new Location(6537, 14, 74), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6536 && Client._clientLocation.X < 25 && Client._clientLocation.Y < 24)
                 {
-                    Client.TryWalkToLocation(new Location(6536, 0, 15), 0, true, false);
+                    Client.Pathfind(new Location(6536, 0, 15), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6534 && Client._clientLocation.X > 45)
                 {
-                    Client.TryWalkToLocation(new Location(6534, 74, 28), 0, true, false);
+                    Client.Pathfind(new Location(6534, 74, 28), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6536 && (Client._clientLocation.X > 25 || Client._clientLocation.Y > 26) && Client._clientLocation.X < 69)
                 {
-                    Client.TryWalkToLocation(new Location(6536, 72, 4), 0, true, false);
+                    Client.Pathfind(new Location(6536, 72, 4), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6536 && Client._clientLocation.X > 68)
                 {
-                    Client.TryWalkToLocation(new Location(6536, 69, 0), 0, true, false);
+                    Client.Pathfind(new Location(6536, 69, 0), 0, true, false);
                     return;
                 }
                 if (!Client.RouteFind(new Location(6537, 65, 1), 3, false, true, true) && !Client.RouteFind(new Location(6537, 65, 1), 3, false, true, true))
@@ -589,37 +911,37 @@ namespace Talos.Base
             {
                 if (Client._map.MapID == 6530 && !Client.RouteFind(new Location(6541, 73, 4), 0, false, true, true))
                 {
-                    Client.TryWalkToLocation(new Location(6530, 10, 0), 0, true, false);
+                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6537)
                 {
-                    Client.TryWalkToLocation(new Location(6537, 0, 4), 0, true, false);
+                    Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6539)
                 {
-                    Client.TryWalkToLocation(new Location(6539, 53, 74), 0, true, true);
+                    Client.Pathfind(new Location(6539, 53, 74), 0, true, true);
                     return;
                 }
                 if (Client._map.MapID == 6538)
                 {
-                    Client.TryWalkToLocation(new Location(6538, 74, 16), 0, true, false);
+                    Client.Pathfind(new Location(6538, 74, 16), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6540 && Client._clientLocation.X < 4)
                 {
-                    Client.TryWalkToLocation(new Location(6540, 3, 0), 0, true, false);
+                    Client.Pathfind(new Location(6540, 3, 0), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6541 && Client._clientLocation.X < 28 && Client._clientLocation.Y > 63)
                 {
-                    Client.TryWalkToLocation(new Location(6541, 23, 74), 0, true, false);
+                    Client.Pathfind(new Location(6541, 23, 74), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6540)
                 {
-                    Client.TryWalkToLocation(new Location(6540, 35, 0), 0, true, false);
+                    Client.Pathfind(new Location(6540, 35, 0), 0, true, false);
                     return;
                 }
                 if (!Client.RouteFind(new Location(6541, 73, 4), 3, false, true, true) && !Client.RouteFind(new Location(6541, 73, 4), 3, false, true, true))
@@ -639,32 +961,32 @@ namespace Talos.Base
             {
                 if (Client._map.MapID == 6530 && !Client.RouteFind(new Location(6538, 58, 73), 0, false, true, true))
                 {
-                    Client.TryWalkToLocation(new Location(6530, 10, 0), 0, true, false);
+                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6537)
                 {
-                    Client.TryWalkToLocation(new Location(6537, 0, 4), 0, true, false);
+                    Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6539 && Client._clientLocation.Y < 8)
                 {
-                    Client.TryWalkToLocation(new Location(6539, 1, 8), 1, true, false);
+                    Client.Pathfind(new Location(6539, 1, 8), 1, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6539)
                 {
-                    Client.TryWalkToLocation(new Location(6539, 4, 74), 0, true, true);
+                    Client.Pathfind(new Location(6539, 4, 74), 0, true, true);
                     return;
                 }
                 if (Client._map.MapID == 6538 && Client._clientLocation.Y < 50)
                 {
-                    Client.TryWalkToLocation(new Location(6538, 74, 47), 0, true, false);
+                    Client.Pathfind(new Location(6538, 74, 47), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6540)
                 {
-                    Client.TryWalkToLocation(new Location(6540, 0, 67), 0, true, false);
+                    Client.Pathfind(new Location(6540, 0, 67), 0, true, false);
                     return;
                 }
                 if (!Client.RouteFind(new Location(6538, 58, 73), 3, false, true, true) && !Client.RouteFind(new Location(6538, 58, 73), 3, false, true, true))
@@ -684,17 +1006,17 @@ namespace Talos.Base
             {
                 if (Client._map.MapID == 6530 && !Client.RouteFind(new Location(6534, 1, 36), 0, false, true, true))
                 {
-                    Client.TryWalkToLocation(new Location(6530, 10, 0), 0, true, false);
+                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6537)
                 {
-                    Client.TryWalkToLocation(new Location(6537, 0, 4), 0, true, false);
+                    Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
                     return;
                 }
                 if (Client._map.MapID == 6535)
                 {
-                    Client.TryWalkToLocation(new Location(6535, 20, 74), 0, true, false);
+                    Client.Pathfind(new Location(6535, 20, 74), 0, true, false);
                     return;
                 }
                 if (!Client.RouteFind(new Location(6534, 1, 36), 3, false, true, true) && !Client.RouteFind(new Location(6534, 1, 36), 3, false, true, true))
@@ -1110,7 +1432,7 @@ namespace Talos.Base
                 if (canUseBeetleAid || canUseOtherItems)
                 {
                     _reddingOtherPlayer = true;
-                    Direction direction = player.Location.Point.GetDirection(Client._serverLocation.Point);
+                    Direction direction = player.Location.Point.Relation(Client._serverLocation.Point);
 
                     if (Client._serverLocation.DistanceFrom(player.Location) > 1)
                     {
@@ -1118,7 +1440,7 @@ namespace Talos.Base
                         {
                             Client.RequestRefresh(true);
                         }
-                        Client.TryWalkToLocation(player.Location, 1, true, true);
+                        Client.Pathfind(player.Location, 1, true, true);
                     }
                     else if (direction != Client._clientDirection)
                     {
@@ -3237,7 +3559,7 @@ namespace Talos.Base
                 if (!IsStrangerNearby())
                 {
                     var lootArea = new Structs.Rectangle(new Point(Client._serverLocation.X - 2, Client._serverLocation.Y - 2), new Point(5, 5));
-                    List<Objects.Object> nearbyObjects = Client.GetNearbyObjects(4);
+                    List<Objects.GroundItem> nearbyObjects = Client.GetNearbyObjects(4);
 
                     if (nearbyObjects.Count > 0)
                     {
@@ -3253,7 +3575,7 @@ namespace Talos.Base
             }
         }
 
-        private void ProcessLoot(List<Objects.Object> nearbyObjects, Rectangle lootArea)
+        private void ProcessLoot(List<Objects.GroundItem> nearbyObjects, Rectangle lootArea)
         {
             bool isPickupGoldChecked = Client.ClientTab.pickupGoldCbox.Checked;
             bool isPickupItemsChecked = Client.ClientTab.pickupItemsCbox.Checked;
@@ -3276,12 +3598,12 @@ namespace Talos.Base
             }
         }
 
-        private bool IsGold(Objects.Object obj, Rectangle lootArea)
+        private bool IsGold(Objects.GroundItem obj, Rectangle lootArea)
         {
             return lootArea.ContainsPoint(obj.Location.Point) && obj.SpriteID == 140 && DateTime.UtcNow.Subtract(obj.Creation).TotalSeconds > 2.0;
         }
 
-        private bool IsLootableItem(Objects.Object obj, Rectangle lootArea)
+        private bool IsLootableItem(Objects.GroundItem obj, Rectangle lootArea)
         {
             return lootArea.ContainsPoint(obj.Location.Point) && obj.SpriteID != 140 && DateTime.UtcNow.Subtract(obj.Creation).TotalSeconds > 2.0;
         }

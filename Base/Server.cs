@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -78,10 +79,11 @@ namespace Talos
         internal Dictionary<string, string> _medTask = new Dictionary<string, string>();
         internal Dictionary<string, int> _medWalkSpeed = new Dictionary<string, int>();
         internal SortedDictionary<ushort, string> PursuitIDs { get; set; } = new SortedDictionary<ushort, string>();
+        internal ConcurrentDictionary<string, CharacterState> ClientStateList {  get; set; } = new ConcurrentDictionary<string, CharacterState>();
         internal List<Client> _clients = new List<Client>();
         internal bool _toggleWalk;
 
-        public static object Lock { get; internal set; } = new object();
+        public static object SyncObj { get; internal set; } = new object();
 
         internal IEnumerable<Client> Clients
         {
@@ -102,8 +104,47 @@ namespace Talos
             return Clients.FirstOrDefault(c => c.Name == clientName);
         }
 
+        internal List<Client> GetFollowChain(Client leader)
+        {
+            List<Client> followChain = new List<Client>();
+            bool hasFollowers = false;
 
+            try
+            {
+                int count;
+                do
+                {
+                    count = followChain.Count;
 
+                    foreach (var client in this.Clients)
+                    {
+                        if (client.ClientTab != null
+                            && !client.Name.Contains("[")
+                            && client.ClientTab.followCbox.Checked
+                            && !followChain.Contains(client))
+                        {
+                            // Check if this client follows the leader or any client in the follow chain
+                            bool isFollower = hasFollowers
+                                ? followChain.Any(x => client.ClientTab.followText.Text.Equals(x.ClientTab.followText.Text, StringComparison.OrdinalIgnoreCase))
+                                : client.ClientTab.followText.Text.Equals(leader.Name, StringComparison.OrdinalIgnoreCase);
+
+                            if (isFollower)
+                            {
+                                followChain.Add(client);
+                                hasFollowers = true;
+                            }
+                        }
+                    }
+                }
+                while (count != followChain.Count); // Continue until no new followers are added
+            }
+            catch
+            {
+                return new List<Client>(); // Return an empty list if any error occurs
+            }
+
+            return followChain;
+        }
 
 
         internal Server(MainForm mainForm)
@@ -955,7 +996,7 @@ namespace Talos
                     if (sprite >= CONSTANTS.ITEM_SPRITE_OFFSET) // Is not a creature
                     {
                         serverPacket.Read(3);
-                        var obj = new Objects.Object(id, (ushort)(sprite - CONSTANTS.ITEM_SPRITE_OFFSET), location, true);
+                        var obj = new GroundItem(id, (ushort)(sprite - CONSTANTS.ITEM_SPRITE_OFFSET), location, true);
                         if (!client.WorldObjects.ContainsKey(id))
                             client.WorldObjects.TryAdd(id, obj);
 
@@ -1357,7 +1398,7 @@ namespace Talos
             {
                 var worldObject = client.WorldObjects[id];
 
-                if (worldObject is Objects.Object obj && obj.Exists)
+                if (worldObject is GroundItem obj && obj.Exists)
                 {
                     client.WorldObjects.TryRemove(worldObject.ID, out _);
 
@@ -2932,8 +2973,8 @@ namespace Talos
 
         private bool ServerMessage_0x58_MapLoadComplete(Client client, ServerPacket serverPacket)
         {
-            if (client._isRefreshing)
-                client._canRefresh = true;
+            if (client._isRefreshing == 1)
+                client._mapChanged = true;
 
             client.Pathfinder = new Pathfinder(client);
 
@@ -2992,7 +3033,7 @@ namespace Talos
 
         internal void RemoveFirstCreatureToSpell(Client client)
         {
-            lock (Lock)
+            lock (SyncObj)
             {
                 if (client._spellHistory != null && client._spellHistory.Count > 0)
                 {

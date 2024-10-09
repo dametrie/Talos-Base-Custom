@@ -104,7 +104,7 @@ namespace Talos.Structs
             };
         }
 
-        internal Direction GetDirection(Point point)
+        internal Direction Relation(Point point)
         {
             if (Y == point.Y)
             {

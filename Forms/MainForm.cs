@@ -240,7 +240,7 @@ namespace Talos
                     return;
                 }
             }
-            ThreadPool.QueueUserWorkItem((WaitCallback)(z => this.LaunchDarkages()));
+            ThreadPool.QueueUserWorkItem((WaitCallback)(z => LaunchDarkages()));
 
         }
 

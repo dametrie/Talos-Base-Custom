@@ -131,6 +131,12 @@
     <Compile Include="Forms\User Controls\NearbyEnemy.Designer.cs">
       <DependentUpon>NearbyEnemy.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\WayForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\WayForm.Designer.cs">
+      <DependentUpon>WayForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Helper\AnimationHandler.cs" />
     <Compile Include="Helper\UIHelper.cs" />
     <Compile Include="Maps\Map.cs" />
@@ -151,7 +157,7 @@
     <Compile Include="Objects\Item.cs" />
     <Compile Include="Objects\MapObject.cs" />
     <Compile Include="Objects\MeleeWeapon.cs" />
-    <Compile Include="Objects\Object.cs" />
+    <Compile Include="Objects\GroundItem.cs" />
     <Compile Include="Objects\Player.cs" />
     <Compile Include="Objects\Skill.cs" />
     <Compile Include="Objects\Skillbook.cs" />
@@ -190,6 +196,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\User Controls\NearbyEnemy.resx">
       <DependentUpon>NearbyEnemy.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\WayForm.resx">
+      <DependentUpon>WayForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

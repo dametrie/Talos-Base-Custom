@@ -54,6 +54,8 @@ namespace Talos.Forms
         internal DateTime _inventoryUpdateTime;
         internal DateTime _lastStatusUpdate;
 
+        internal WayForm _waysForm;
+
         private List<string> _chatPanelList = new List<string>
         {
             "",
@@ -851,15 +853,15 @@ namespace Talos.Forms
 
         private void button7_Click(object sender, EventArgs e)
         {
-            if (_client._isRefreshing)
+            if (_client._isRefreshing == 1)
             {
                 button7.Text = "Refresh";
-                _client._isRefreshing = false;
+                _client._isRefreshing = 0;
             }
             else
             {
                 button7.Text = "Stop Refreshing";
-                _client._isRefreshing = true;
+                _client._isRefreshing = 1;
             }   
         }
 
