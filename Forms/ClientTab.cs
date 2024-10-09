@@ -38,6 +38,7 @@ namespace Talos.Forms
         private short textMap;
         private short textX;
         private short testY;
+        private WayForm wayFormInstance = null;
 
         private uint _abilityExp;
         private uint _gold;
@@ -2258,6 +2259,20 @@ namespace Talos.Forms
             }
             walkBtn.Text = "Walk";
             _client._isWalking = false;
+        }
+
+        private void waypointsMenu_Click_1(object sender, EventArgs e)
+        {
+            if (wayFormInstance == null || wayFormInstance.IsDisposed)
+            {
+                wayFormInstance = new WayForm();
+                wayFormInstance.Show();
+            }
+            else
+            {
+                // Bring the existing form to the front
+                wayFormInstance.BringToFront();
+            }
         }
     }
 }

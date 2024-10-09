@@ -455,14 +455,14 @@ namespace Talos.Base
                             List<Creature> nearbyCreatures = Client.GetNearbyValidCreatures(12);
 
                             // Filter out creatures that are walled in and cannot be reached if selected
-                            if (Client.ClientTab._isBashing && Client.ClientTab.ignoreWalledInCbox.Checked)
-                            {
-                                // Remove creatures that are walled in
-                                nearbyCreatures = nearbyCreatures
-                                    .Where(creature => !Client.IsLocationSurrounded(creature.Location))
-                                    .ToList();
-                                Console.WriteLine("Filtered out walled-in creatures while bashing.");
-                            }
+                            //if (Client.ClientTab._isBashing && Client.ClientTab.ignoreWalledInCbox.Checked)
+                            //{
+                            //    // Remove creatures that are walled in
+                            //    nearbyCreatures = nearbyCreatures
+                            //        .Where(creature => !Client.IsLocationSurrounded(creature.Location))
+                            //        .ToList();
+                            //    Console.WriteLine("Filtered out walled-in creatures while bashing.");
+                            //}
 
                             // Filter out creatures that are dioned if selected
                             if (Client.ClientTab.chkIgnoreDionWaypoints.Checked)

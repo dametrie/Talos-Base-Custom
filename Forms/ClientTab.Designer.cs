@@ -96,6 +96,11 @@ namespace Talos.Forms
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
             this.stuffGroup = new System.Windows.Forms.GroupBox();
+            this.lblSecs = new System.Windows.Forms.Label();
+            this.numLastStepTime = new System.Windows.Forms.NumericUpDown();
+            this.chkLastStepF5 = new System.Windows.Forms.CheckBox();
+            this.chkIgnoreDionWaypoints = new System.Windows.Forms.CheckBox();
+            this.chkNoCastOffense = new System.Windows.Forms.CheckBox();
             this.optionsSkullSurrbox = new System.Windows.Forms.CheckBox();
             this.safeFSTbox = new System.Windows.Forms.TextBox();
             this.safeFSCbox = new System.Windows.Forms.CheckBox();
@@ -117,6 +122,7 @@ namespace Talos.Forms
             this.alertDuraCbox = new System.Windows.Forms.CheckBox();
             this.alertStrangerCbox = new System.Windows.Forms.CheckBox();
             this.usableItemsGroup = new System.Windows.Forms.GroupBox();
+            this.equipmentrepairCbox = new System.Windows.Forms.CheckBox();
             this.autoRedCbox = new System.Windows.Forms.CheckBox();
             this.mantidScentCbox = new System.Windows.Forms.CheckBox();
             this.fungusExtractCbox = new System.Windows.Forms.CheckBox();
@@ -145,6 +151,8 @@ namespace Talos.Forms
             this.perfectDefenseCbox = new System.Windows.Forms.CheckBox();
             this.aegisSphereCbox = new System.Windows.Forms.CheckBox();
             this.walkGroup = new System.Windows.Forms.GroupBox();
+            this.chkSpeedStrangers = new System.Windows.Forms.CheckBox();
+            this.lockstepCbox = new System.Windows.Forms.CheckBox();
             this.spamBubbleCbox = new System.Windows.Forms.CheckBox();
             this.bubbleBlockCbox = new System.Windows.Forms.CheckBox();
             this.rangerStopCbox = new System.Windows.Forms.CheckBox();
@@ -511,14 +519,6 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
-            this.chkNoCastOffense = new System.Windows.Forms.CheckBox();
-            this.chkIgnoreDionWaypoints = new System.Windows.Forms.CheckBox();
-            this.chkLastStepF5 = new System.Windows.Forms.CheckBox();
-            this.numLastStepTime = new System.Windows.Forms.NumericUpDown();
-            this.lblSecs = new System.Windows.Forms.Label();
-            this.equipmentrepairCbox = new System.Windows.Forms.CheckBox();
-            this.lockstepCbox = new System.Windows.Forms.CheckBox();
-            this.chkSpeedStrangers = new System.Windows.Forms.CheckBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -531,6 +531,7 @@ namespace Talos.Forms
             this.aislingTabControl.SuspendLayout();
             this.selfTab.SuspendLayout();
             this.stuffGroup.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numLastStepTime)).BeginInit();
             this.overrideGroup.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.overrideDistanceNum)).BeginInit();
             this.alertsGroup.SuspendLayout();
@@ -629,7 +630,6 @@ namespace Talos.Forms
             this.packetStrip.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.menuStrip.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numLastStepTime)).BeginInit();
             this.SuspendLayout();
             // 
             // clientTabControl
@@ -1390,6 +1390,63 @@ namespace Talos.Forms
             this.stuffGroup.TabStop = false;
             this.stuffGroup.Text = "Stuff";
             // 
+            // lblSecs
+            // 
+            this.lblSecs.AutoSize = true;
+            this.lblSecs.Location = new System.Drawing.Point(180, 152);
+            this.lblSecs.Name = "lblSecs";
+            this.lblSecs.Size = new System.Drawing.Size(29, 15);
+            this.lblSecs.TabIndex = 25;
+            this.lblSecs.Text = "secs";
+            // 
+            // numLastStepTime
+            // 
+            this.numLastStepTime.Location = new System.Drawing.Point(145, 150);
+            this.numLastStepTime.Name = "numLastStepTime";
+            this.numLastStepTime.Size = new System.Drawing.Size(30, 23);
+            this.numLastStepTime.TabIndex = 24;
+            this.numLastStepTime.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.numLastStepTime.Value = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            // 
+            // chkLastStepF5
+            // 
+            this.chkLastStepF5.AutoSize = true;
+            this.chkLastStepF5.ForeColor = System.Drawing.Color.Black;
+            this.chkLastStepF5.Location = new System.Drawing.Point(7, 151);
+            this.chkLastStepF5.Name = "chkLastStepF5";
+            this.chkLastStepF5.Size = new System.Drawing.Size(140, 19);
+            this.chkLastStepF5.TabIndex = 23;
+            this.chkLastStepF5.Text = "Refresh if last move >";
+            this.chkLastStepF5.UseVisualStyleBackColor = true;
+            // 
+            // chkIgnoreDionWaypoints
+            // 
+            this.chkIgnoreDionWaypoints.AutoSize = true;
+            this.chkIgnoreDionWaypoints.ForeColor = System.Drawing.Color.Black;
+            this.chkIgnoreDionWaypoints.Location = new System.Drawing.Point(7, 129);
+            this.chkIgnoreDionWaypoints.Name = "chkIgnoreDionWaypoints";
+            this.chkIgnoreDionWaypoints.Size = new System.Drawing.Size(134, 19);
+            this.chkIgnoreDionWaypoints.TabIndex = 22;
+            this.chkIgnoreDionWaypoints.Text = "Ignore Dioned Mobs";
+            this.chkIgnoreDionWaypoints.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.chkIgnoreDionWaypoints.UseVisualStyleBackColor = true;
+            // 
+            // chkNoCastOffense
+            // 
+            this.chkNoCastOffense.AutoSize = true;
+            this.chkNoCastOffense.ForeColor = System.Drawing.Color.Black;
+            this.chkNoCastOffense.Location = new System.Drawing.Point(7, 104);
+            this.chkNoCastOffense.Name = "chkNoCastOffense";
+            this.chkNoCastOffense.Size = new System.Drawing.Size(205, 19);
+            this.chkNoCastOffense.TabIndex = 21;
+            this.chkNoCastOffense.Text = "No Offense If Basher Waypointing";
+            this.chkNoCastOffense.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.chkNoCastOffense.UseVisualStyleBackColor = true;
+            // 
             // optionsSkullSurrbox
             // 
             this.optionsSkullSurrbox.AutoSize = true;
@@ -1640,6 +1697,17 @@ namespace Talos.Forms
             this.usableItemsGroup.TabIndex = 7;
             this.usableItemsGroup.TabStop = false;
             this.usableItemsGroup.Text = "Items";
+            // 
+            // equipmentrepairCbox
+            // 
+            this.equipmentrepairCbox.AutoSize = true;
+            this.equipmentrepairCbox.ForeColor = System.Drawing.Color.Black;
+            this.equipmentrepairCbox.Location = new System.Drawing.Point(6, 97);
+            this.equipmentrepairCbox.Name = "equipmentrepairCbox";
+            this.equipmentrepairCbox.Size = new System.Drawing.Size(92, 19);
+            this.equipmentrepairCbox.TabIndex = 15;
+            this.equipmentrepairCbox.Text = "Equip Repair";
+            this.equipmentrepairCbox.UseVisualStyleBackColor = true;
             // 
             // autoRedCbox
             // 
@@ -2011,6 +2079,28 @@ namespace Talos.Forms
             this.walkGroup.TabIndex = 6;
             this.walkGroup.TabStop = false;
             this.walkGroup.Text = "Walk";
+            // 
+            // chkSpeedStrangers
+            // 
+            this.chkSpeedStrangers.AutoSize = true;
+            this.chkSpeedStrangers.ForeColor = System.Drawing.Color.Black;
+            this.chkSpeedStrangers.Location = new System.Drawing.Point(255, 52);
+            this.chkSpeedStrangers.Name = "chkSpeedStrangers";
+            this.chkSpeedStrangers.Size = new System.Drawing.Size(124, 19);
+            this.chkSpeedStrangers.TabIndex = 24;
+            this.chkSpeedStrangers.Text = "Speed w/Strangers";
+            this.chkSpeedStrangers.UseVisualStyleBackColor = true;
+            // 
+            // lockstepCbox
+            // 
+            this.lockstepCbox.AutoSize = true;
+            this.lockstepCbox.ForeColor = System.Drawing.Color.Black;
+            this.lockstepCbox.Location = new System.Drawing.Point(184, 52);
+            this.lockstepCbox.Name = "lockstepCbox";
+            this.lockstepCbox.Size = new System.Drawing.Size(73, 19);
+            this.lockstepCbox.TabIndex = 23;
+            this.lockstepCbox.Text = "Lockstep";
+            this.lockstepCbox.UseVisualStyleBackColor = true;
             // 
             // spamBubbleCbox
             // 
@@ -6317,6 +6407,7 @@ namespace Talos.Forms
             this.waypointsMenu.Name = "waypointsMenu";
             this.waypointsMenu.Size = new System.Drawing.Size(75, 24);
             this.waypointsMenu.Text = "Waypoints";
+            this.waypointsMenu.Click += new System.EventHandler(this.waypointsMenu_Click_1);
             // 
             // walkToMenu
             // 
@@ -6373,96 +6464,6 @@ namespace Talos.Forms
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // chkNoCastOffense
-            // 
-            this.chkNoCastOffense.AutoSize = true;
-            this.chkNoCastOffense.ForeColor = System.Drawing.Color.Black;
-            this.chkNoCastOffense.Location = new System.Drawing.Point(7, 104);
-            this.chkNoCastOffense.Name = "chkNoCastOffense";
-            this.chkNoCastOffense.Size = new System.Drawing.Size(205, 19);
-            this.chkNoCastOffense.TabIndex = 21;
-            this.chkNoCastOffense.Text = "No Offense If Basher Waypointing";
-            this.chkNoCastOffense.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.chkNoCastOffense.UseVisualStyleBackColor = true;
-            // 
-            // chkIgnoreDionWaypoints
-            // 
-            this.chkIgnoreDionWaypoints.AutoSize = true;
-            this.chkIgnoreDionWaypoints.ForeColor = System.Drawing.Color.Black;
-            this.chkIgnoreDionWaypoints.Location = new System.Drawing.Point(7, 129);
-            this.chkIgnoreDionWaypoints.Name = "chkIgnoreDionWaypoints";
-            this.chkIgnoreDionWaypoints.Size = new System.Drawing.Size(134, 19);
-            this.chkIgnoreDionWaypoints.TabIndex = 22;
-            this.chkIgnoreDionWaypoints.Text = "Ignore Dioned Mobs";
-            this.chkIgnoreDionWaypoints.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.chkIgnoreDionWaypoints.UseVisualStyleBackColor = true;
-            // 
-            // chkLastStepF5
-            // 
-            this.chkLastStepF5.AutoSize = true;
-            this.chkLastStepF5.ForeColor = System.Drawing.Color.Black;
-            this.chkLastStepF5.Location = new System.Drawing.Point(7, 151);
-            this.chkLastStepF5.Name = "chkLastStepF5";
-            this.chkLastStepF5.Size = new System.Drawing.Size(140, 19);
-            this.chkLastStepF5.TabIndex = 23;
-            this.chkLastStepF5.Text = "Refresh if last move >";
-            this.chkLastStepF5.UseVisualStyleBackColor = true;
-            // 
-            // numLastStepTime
-            // 
-            this.numLastStepTime.Location = new System.Drawing.Point(145, 150);
-            this.numLastStepTime.Name = "numLastStepTime";
-            this.numLastStepTime.Size = new System.Drawing.Size(30, 23);
-            this.numLastStepTime.TabIndex = 24;
-            this.numLastStepTime.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.numLastStepTime.Value = new decimal(new int[] {
-            3,
-            0,
-            0,
-            0});
-            // 
-            // lblSecs
-            // 
-            this.lblSecs.AutoSize = true;
-            this.lblSecs.Location = new System.Drawing.Point(180, 152);
-            this.lblSecs.Name = "lblSecs";
-            this.lblSecs.Size = new System.Drawing.Size(29, 15);
-            this.lblSecs.TabIndex = 25;
-            this.lblSecs.Text = "secs";
-            // 
-            // equipmentrepairCbox
-            // 
-            this.equipmentrepairCbox.AutoSize = true;
-            this.equipmentrepairCbox.ForeColor = System.Drawing.Color.Black;
-            this.equipmentrepairCbox.Location = new System.Drawing.Point(6, 97);
-            this.equipmentrepairCbox.Name = "equipmentrepairCbox";
-            this.equipmentrepairCbox.Size = new System.Drawing.Size(92, 19);
-            this.equipmentrepairCbox.TabIndex = 15;
-            this.equipmentrepairCbox.Text = "Equip Repair";
-            this.equipmentrepairCbox.UseVisualStyleBackColor = true;
-            // 
-            // lockstepCbox
-            // 
-            this.lockstepCbox.AutoSize = true;
-            this.lockstepCbox.ForeColor = System.Drawing.Color.Black;
-            this.lockstepCbox.Location = new System.Drawing.Point(184, 52);
-            this.lockstepCbox.Name = "lockstepCbox";
-            this.lockstepCbox.Size = new System.Drawing.Size(73, 19);
-            this.lockstepCbox.TabIndex = 23;
-            this.lockstepCbox.Text = "Lockstep";
-            this.lockstepCbox.UseVisualStyleBackColor = true;
-            // 
-            // chkSpeedStrangers
-            // 
-            this.chkSpeedStrangers.AutoSize = true;
-            this.chkSpeedStrangers.ForeColor = System.Drawing.Color.Black;
-            this.chkSpeedStrangers.Location = new System.Drawing.Point(255, 52);
-            this.chkSpeedStrangers.Name = "chkSpeedStrangers";
-            this.chkSpeedStrangers.Size = new System.Drawing.Size(124, 19);
-            this.chkSpeedStrangers.TabIndex = 24;
-            this.chkSpeedStrangers.Text = "Speed w/Strangers";
-            this.chkSpeedStrangers.UseVisualStyleBackColor = true;
-            // 
             // ClientTab
             // 
             this.AllowDrop = true;
@@ -6495,6 +6496,7 @@ namespace Talos.Forms
             this.selfTab.ResumeLayout(false);
             this.stuffGroup.ResumeLayout(false);
             this.stuffGroup.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numLastStepTime)).EndInit();
             this.overrideGroup.ResumeLayout(false);
             this.overrideGroup.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.overrideDistanceNum)).EndInit();
@@ -6645,7 +6647,6 @@ namespace Talos.Forms
             this.tabPage1.PerformLayout();
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numLastStepTime)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
