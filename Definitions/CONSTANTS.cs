@@ -51,7 +51,7 @@ namespace Talos.Definitions
 
         public static readonly IReadOnlyDictionary<string, IReadOnlyCollection<ushort>> WHITELIST_BY_MAP_NAME = new Dictionary<string, IReadOnlyCollection<ushort>>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Crypt", new ushort[] { 53 } }, // allow spider only in crypt maps cuz spider spawn spell),
+            //{ "Crypt", new ushort[] { 53 } }, // allow spider only in crypt maps cuz spider spawn spell),
             { "Shinewood Forest 3", new ushort[] { 263, 266 } }, // allow beetle/mantis in sw2 30+),
             { "Shinewood Forest 4", new ushort[] { 263, 266 } }, // allow beetle/mantis in sw2 40+),
             { "Aman Jungle", new ushort[] { 856, 873, 874, 875 } }, // allow frogs in aman jungle),

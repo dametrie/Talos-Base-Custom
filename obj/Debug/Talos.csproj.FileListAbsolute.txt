@@ -38,3 +38,4 @@ C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.csproj.CoreCompileInputs.
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.csproj.Up2Date
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.exe
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.pdb
+C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.Forms.WayForm.resources

@@ -1195,7 +1195,7 @@ namespace Talos.Forms
                     AddNearbyEnemy(npc);
                 });
             }
-            else if (_client.Bot.EnemyPage == null && !_client.Bot._enemyListID.Contains(npc.SpriteID) && !nearbyEnemyTable.Controls.ContainsKey(npc.SpriteID.ToString()))
+            else if (_client.Bot.AllMonsters == null && !_client.Bot._enemyListID.Contains(npc.SpriteID) && !nearbyEnemyTable.Controls.ContainsKey(npc.SpriteID.ToString()))
             {
                 NearbyEnemy control = new NearbyEnemy(npc, _client)
                 {
@@ -1227,7 +1227,7 @@ namespace Talos.Forms
         internal void UpdateNearbyEnemyTable(ushort sprite)
         {
             // Exit early if the EnemyPage is not null or the control does not exist.
-            if (_client.Bot.EnemyPage != null || !nearbyEnemyTable.Controls.ContainsKey(sprite.ToString()))
+            if (_client.Bot.AllMonsters != null || !nearbyEnemyTable.Controls.ContainsKey(sprite.ToString()))
             {
                 return;
             }
@@ -1348,7 +1348,7 @@ namespace Talos.Forms
                     _client.BotBase = _client.Bot;
                     _client.BotBase.Client = _client;
                     _client.BotBase.Server = _client._server;
-                    _client.Int32_1 = 0;
+                    _client.CurrentWaypoint = 0;
                 }
                 _client.BotBase.Start();
                 if (!_client.ClientTab.safeScreenCbox.Checked)
@@ -1366,8 +1366,8 @@ namespace Talos.Forms
                 }
                 _client._isWalking = false;
                 _client._isCasting = false;
-                _client.Bot._reddingOtherPlayer = false;
-                _client.Bot.bool_12 = false;
+                _client.Bot._dontWalk = false;
+                _client.Bot._dontCast = false;
                 _client._exchangeOpen = false;
             }
         }
@@ -1573,7 +1573,7 @@ namespace Talos.Forms
 
         private void addAllMonstersBtn_Click(object sender, EventArgs e)
         {
-            if (_client.Bot.EnemyPage != null)
+            if (_client.Bot.AllMonsters != null)
             {
                 MessageDialog.Show(_client._server._mainForm, "Enemy already in list");
                 return;
@@ -1612,7 +1612,7 @@ namespace Talos.Forms
                 clientTabControl.SelectTab(2);
                 monsterTabControl.SelectTab(tabPage);
             }
-            _client.Bot.EnemyPage = enemyPage;
+            _client.Bot.AllMonsters = enemyPage;
         }
 
         private void addMonsterBtn_Click(object sender, EventArgs e)
@@ -1633,7 +1633,7 @@ namespace Talos.Forms
         {
             if (sprite >= 1 && sprite <= 1000)
             {
-                if (!_client.Bot.IsEnemyAlreadyListed(sprite) && _client.Bot.EnemyPage == null)
+                if (!_client.Bot.IsEnemyAlreadyListed(sprite) && _client.Bot.AllMonsters == null)
                 {
                     return true;
                 }

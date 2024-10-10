@@ -1029,10 +1029,10 @@ namespace Talos
                         {
                             client.NearbyNPC.TryAdd(name, creature);
                         }
-                        else if ((client.Bot.EnemyPage != null) && !client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
+                        else if ((client.Bot.AllMonsters != null) && !client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
                         {
                             Enemy enemy = new Enemy(creature.SpriteID);
-                            enemy.EnemyPage = client.Bot.EnemyPage;
+                            enemy.EnemyPage = client.Bot.AllMonsters;
                             client.Bot.UpdateEnemyList(enemy);
                         }
                         else if (client.ClientTab != null)
@@ -1053,13 +1053,15 @@ namespace Talos
                                 client.ClientTab.AddNearbyEnemy(creature);
                             }
                         }
+
+
                     }
                     count++;
                 }
             }
             catch
             {
-                client.RequestRefresh(false);
+                client.RequestRefresh(false);   
             }
 
             return true;
@@ -1468,7 +1470,7 @@ namespace Talos
                                 client.ClientTab.UpdateNearbyEnemyTable(creature.SpriteID);
                             }
 
-                            if (client.Bot.EnemyPage != null && client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
+                            if (client.Bot.AllMonsters != null && client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
                             {
                                 client.Bot.ClearEnemyLists(creature.SpriteID.ToString());
                             }

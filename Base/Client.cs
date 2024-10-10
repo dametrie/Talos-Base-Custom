@@ -152,6 +152,7 @@ namespace Talos.Base
 
 
         internal readonly object Lock = new object();
+        internal readonly object BashLock = new object();
 
         internal AutoResetEvent _walkSignal = new AutoResetEvent(false);
 
@@ -376,8 +377,9 @@ namespace Talos.Base
 
         internal bool IsSkulled => Player?._isSkulled == true && (EffectsBarHashSet.Contains((ushort)EffectsBar.Skull) || EffectsBarHashSet.Contains((ushort)EffectsBar.WormSkull));
 
-        public int Int32_1 { get; internal set; }
-        public object CastLock { get; internal set; }
+        public int CurrentWaypoint { get; internal set; }
+
+        public readonly object CastLock = new object();
 
         internal Client(Server server, Socket socket)
         {
@@ -814,7 +816,7 @@ namespace Talos.Base
 
         internal void UseExperienceGem(byte choice)
         {
-            Bot._reddingOtherPlayer = true;
+            Bot._dontWalk = true;
             if (!UseItem("Experience Gem"))
             {
                 ServerMessage(1, "You do not have any experience gems.");
@@ -848,7 +850,7 @@ namespace Talos.Base
             ReplyDialog(type, objID, pursuitID, (ushort)(dialogID + 1), 2);
             ReplyDialog(type, objID, pursuitID, dialogID);
             Bot._lastUsedGem = DateTime.UtcNow;
-            Bot._reddingOtherPlayer = false;
+            Bot._dontWalk = false;
         }
 
         private bool IsValidSpell(Client client, string spellName, Creature creature)
@@ -1250,7 +1252,7 @@ namespace Talos.Base
                 return false;
             return _serverLocation.DistanceFrom(sprite.Location) <= dist;
         }
-        private bool CheckWeaponCastLines(Spell spell, out byte castLines)
+        private bool UseOptimalStaff(Spell spell, out byte castLines)
         {
             bool swappingWeapons = false;
             castLines = spell.CastLines;
@@ -1742,7 +1744,7 @@ namespace Talos.Base
         {
             return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
                 !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
-                !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance);
+                !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && WithinRange(creature, distance);
         }
 
         internal List<Creature> GetAllNearbyMonsters(int distance = 12)
@@ -1953,7 +1955,7 @@ namespace Talos.Base
             return false;
         }
 
-        internal bool UseSpell(string spellName, Creature creature = null, bool staffSwitch = true, bool keepSpellAfterUse = true)
+        internal bool UseSpell(string spellName, Creature target = null, bool staffSwitch = true, bool wait = true)
         {
 
             if (Spellbook[spellName] == null)
@@ -1963,31 +1965,39 @@ namespace Talos.Base
                 return false;
             }
 
+            if (target != null)
+            {
+                int test = _clientLocation.DistanceFrom(target.Location);
+                ServerMessage((byte)ServerMessageType.TopRight, $"Casting on {target.ID}, {test} spaces");
+                SendBashingTarget(2, target.ID, $"[Target]");
+            }
+
+
             Spell spell = Spellbook[spellName];
             byte castLines = spell.CastLines;
 
             Console.WriteLine($"[UseSpell] Attempting to cast {spell.Name}, LastUsed: {spell.LastUsed}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}, Hash: {spell.GetHashCode()}");
 
-            lock (Lock)
+            lock (BashLock)
             {
 
-                if (spell == null || !CanUseSpell(spell, creature) || !IsValidSpell(this, spell.Name, creature) || ((spellName == "Hide" || spellName == "White Bat Form") && _server._stopCasting))
+                if (spell == null || !CanUseSpell(spell, target) || ((spellName == "Hide" || spellName == "White Bat Form") && _server._stopCasting))
                 {
-                    Console.WriteLine($"[UseSpell] Aborted casting {spellName} on Creature ID: {creature?.ID}. Reason: Validation failed.");
+                    Console.WriteLine($"[UseSpell] Aborted casting {spellName} on Creature ID: {target?.ID}. Reason: Validation failed.");
                     _isCasting = false;
                     return false;
                 }
 
                 if (staffSwitch)
                 {
-                    if (!CheckWeaponCastLines(spell, out castLines))
+                    if (!UseOptimalStaff(spell, out castLines))
                     {
                         //Console.WriteLine("Error in Client.cs UseSpell: staffSwitch was true but CheckWeaponCastLines returned false");
                         return false;
                     }
                 }
 
-                CreatureTarget = (creature ?? Player);
+                CreatureTarget = (target ?? Player);
                 if (ReadyToSpell(spell.Name))
                 {
                     var existingEntry = _spellHistory.FirstOrDefault(cts => cts.Creature.ID == CreatureTarget.ID && cts.Spell.Name == spell.Name);
@@ -1996,13 +2006,13 @@ namespace Talos.Base
                     {
                         if (existingEntry.CooldownEndTime > DateTime.UtcNow)
                         {
-                            //Console.WriteLine($"[Debug] Skipped adding {CreatureTarget.ID} to _creatureToSpellList due to cooldown.");
+                            Console.WriteLine($"[Debug] Skipped adding {CreatureTarget.ID} to _creatureToSpellList due to cooldown.");
                         }
                         else
                         {
                             // Update cooldown end time for re-casting
                             existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(1);
-                            //Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _creatureToSpellList.");
+                            Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _creatureToSpellList.");
                         }
                     }
                     else
@@ -2012,8 +2022,8 @@ namespace Talos.Base
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
                         _spellHistory.Add(newEntry);
-                        //Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {creature?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
-                        //Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
+                        Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
+                        Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
                     }
                 }
                 //else
@@ -2032,11 +2042,13 @@ namespace Talos.Base
                 ClientPacket clientPacket = new ClientPacket(15);
                 clientPacket.WriteByte(spell.Slot);
 
-                if (creature != null && (NearbyObjects.Contains(creature.ID) || creature is Player))
+                if (target != null && (NearbyObjects.Contains(target.ID) || target is Player))
                 {
-                    clientPacket.WriteInt32(creature.ID);
-                    clientPacket.WriteStruct(creature.Location);
+                    clientPacket.WriteInt32(target.ID);
+                    clientPacket.WriteStruct(target.Location);
                 }
+
+                
 
                 if (castLines > 0)
                 {
@@ -2046,7 +2058,7 @@ namespace Talos.Base
                         return false;
                     }
                     string[] chantArray = LoadSavedChants(spellName);
-                    lock (Lock)
+                    lock (CastLock)
                     {
                         _isCasting = true;
                         ClientPacket chantPacket = new ClientPacket(77);//begin chant
@@ -2067,17 +2079,17 @@ namespace Talos.Base
                                 DisplayChant(chantArray[i]);
                             }
                             DateTime utcNow = DateTime.UtcNow;
-                            Client client = (creature != null) ? _server.FindClientByName(creature.Name) : this;
+                            Client client = (target != null) ? _server.GetClient(target.Name) : this;
                             while (DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds < 1000.0)
                             {
-                                if (!IsValidSpell(client, spell.Name, creature))
+                                if (!IsValidSpell(client, spell.Name, target))
                                 {
                                     _isCasting = false;
                                     return false;
                                 }
                                 Thread.Sleep(10);
                             }
-                            if (!_isCasting || !CanUseSpell(spell, creature))
+                            if (!_isCasting || !CanUseSpell(spell, target))
                             {
                                 _isCasting = false;
                                 return false;
@@ -2114,19 +2126,19 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {creature?.ID}, Name: {creature?.Name}");
+                Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {target?.ID}, Name: {target?.Name}");
 
                 Enqueue(clientPacket);
                 _spellCounter++;
-                Bot._lastCast = DateTime.UtcNow;
+                Bot._spellTimer = DateTime.UtcNow;
                 spell.LastUsed = DateTime.UtcNow;
                 _isCasting = false;
-                _currentSpell = (keepSpellAfterUse ? spell : null);
+                _currentSpell = (wait ? spell : null);
                 if (spell.Name != "Gem Polishing" || spell.Name.Contains("Prayer"))
                 {
                     _currentSpell = spell;
                 }
-                return !keepSpellAfterUse || WaitForSpellChant();
+                return !wait || WaitForSpellChant();
             }
         }
 
@@ -2239,6 +2251,16 @@ namespace Talos.Base
             serverPacket.WriteUInt16(0);
             Enqueue(serverPacket);
         }
+
+        internal void SendBashingTarget(byte type, int id, string message)
+        {
+            ServerPacket serverPacket = new ServerPacket(13);
+            serverPacket.WriteByte(type);
+            serverPacket.WriteInt32(id);
+            serverPacket.WriteString8(message);
+            this.Enqueue((Packet) serverPacket);
+        }
+
 
         internal void RemoveObject(int objId)
         {
@@ -2779,9 +2801,11 @@ namespace Talos.Base
                     return false;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                //Console.WriteLine("***Exception in RouteFind. Refreshing.");
+                Console.WriteLine("***Exception in RouteFind. Refreshing.");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine("***");
                 RequestRefresh();
                 return false;
             }

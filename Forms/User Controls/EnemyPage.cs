@@ -162,7 +162,7 @@ namespace Talos.Forms
             }
             if (Enemy.ToString() == "all monsters")
             {
-                Client.Bot.EnemyPage = null;
+                Client.Bot.AllMonsters = null;
                 Client.ClientTab.monsterTabControl.TabPages.Add(Client.ClientTab.nearbyEnemyTab);
             }
             Parent.Dispose();
