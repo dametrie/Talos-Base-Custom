@@ -527,6 +527,25 @@ namespace Talos.Base
             return nearbyGroundItems;
         }
 
+        internal List<Player> GetNearbyPlayers()
+        {
+            List<Player> nearbyPlayers = new List<Player>();
+            if (Monitor.TryEnter(Server.SyncObj, 150))
+            {
+                try
+                {
+                    nearbyPlayers = NearbyPlayers.Values
+                        .Where(p => !string.IsNullOrEmpty(p.Name))
+                        .ToList();
+                }
+                finally
+                {
+                    Monitor.Exit(Server.SyncObj);
+                }
+            }
+            return nearbyPlayers;
+        }
+
         internal Player GetNearbyPlayer(string name)
         {
             if (Monitor.TryEnter(Server.SyncObj, 300))
@@ -2295,7 +2314,7 @@ namespace Talos.Base
         {
             _ = player.Location;
             ushort spriteID = player.SpriteID;
-            if (player == Player && InMonsterForm && !_deformNearStrangers)//Adam deform near starngers not working
+            if (player == Player && InMonsterForm)
             {
                 spriteID = _monsterFormID;
             }

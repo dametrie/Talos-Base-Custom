@@ -89,8 +89,8 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
-            this.manaBar = new Talos.Forms.UI.ResourceBar();
-            this.healthBar = new Talos.Forms.UI.ResourceBar();
+            this.manaBar = new Talos.Forms.UI.ResourceBar(nameof (manaBar));
+            this.healthBar = new Talos.Forms.UI.ResourceBar(nameof (healthBar));
             this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
@@ -6908,6 +6908,8 @@ namespace Talos.Forms
         internal NumericUpDown formNum;
         internal CheckBox formCbox;
         internal CheckBox unifiedGuildChatCbox;
+        internal CheckBox chkTavWallHacks;
+        internal CheckBox chkTavWallStranger;
         internal GroupBox mapFlagsGroup;
         internal CheckBox darknessCbox;
         internal CheckBox mapSnowCbox;
@@ -7129,7 +7131,6 @@ namespace Talos.Forms
         private Button button1;
         private System.Windows.Forms.Timer bonusCooldownTimer;
         internal Label currentAction;
-        private CheckBox deformCbox;
         private Button button2;
         private Button button3;
         internal CheckBox chkLastStepF5;
@@ -7140,5 +7141,6 @@ namespace Talos.Forms
         internal CheckBox lockstepCbox;
         internal CheckBox chkSpeedStrangers;
         internal NumericUpDown numLastStepTime;
+        internal CheckBox deformCbox;
     }
 }

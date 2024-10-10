@@ -8,21 +8,21 @@ using Talos.Structs;
 
 namespace Talos.Base
 {
-    internal delegate void TaskDelegate();
+    internal delegate void BotLoop();
     internal abstract class BotBase
     {
         internal Server Server { get; set; }
         internal Client Client { get; set; }
         internal List<Thread> BotThreadList { get; set; }
         internal List<Location> LocationList { get; set; }
-        internal List<TaskDelegate> TaskList { get; set; }
+        internal List<BotLoop> TaskList { get; set; }
         internal volatile bool _shouldThreadStop = false;
 
         internal BotBase()
         {
             BotThreadList = new List<Thread>();
             LocationList = new List<Location>();
-            TaskList = new List<TaskDelegate>();
+            TaskList = new List<BotLoop>();
         }
 
         internal BotBase(Client client, Server server) : this()
@@ -36,7 +36,7 @@ namespace Talos.Base
             BotThreadList.Clear();
             foreach (var task in TaskList)
             {
-                TaskDelegate taskDelegate = task;
+                BotLoop taskDelegate = task;
                 Thread thread = new Thread(() => taskDelegate());
                 BotThreadList.Add(thread);
                 thread.Start();
@@ -54,12 +54,12 @@ namespace Talos.Base
 
         }
 
-        internal void AddTask(TaskDelegate task)
+        internal void AddTask(BotLoop task)
         {
             TaskList.Add(task);
         }
 
-        internal void RemoveTask(TaskDelegate task) 
+        internal void RemoveTask(BotLoop task) 
         { 
             TaskList.Remove(task);
         }

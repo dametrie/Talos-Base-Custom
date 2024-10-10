@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -107,9 +108,58 @@ namespace Talos.Base
         {
             _client = client;
             _server = server;
-            AddTask(new TaskDelegate(BotLoop));
-            AddTask(new TaskDelegate(Sounds));
-            AddTask(new TaskDelegate(Walker));
+            AddTask(new BotLoop(BotLoop));
+            AddTask(new BotLoop(Sounds));
+            AddTask(new BotLoop(Walker));
+            AddTask(new BotLoop(Misc));
+        }
+
+        private void Misc()
+        {
+            while (!_shouldThreadStop)
+            {
+                TavalyWallHacks();
+                MonsterForm();
+            }
+
+        }
+
+        private void TavalyWallHacks()
+        {
+            if (Client.ClientTab.chkTavWallStranger.Checked && StrangerNear() && Client.ClientTab.chkTavWallHacks.Checked && !Client._map.IsWall(Client._serverLocation))
+            {
+                Client.ClientTab.chkTavWallHacks.Checked = false;
+                Client.RequestRefresh();
+            }
+            if (Client.ClientTab.chkTavWallStranger.Checked && !StrangerNear() && !Client.ClientTab.chkTavWallHacks.Checked)
+            {
+                Client.ClientTab.chkTavWallHacks.Checked = true;
+                Client.RequestRefresh();
+            }
+        }
+
+        private void MonsterForm()
+        {
+            if (Client.ClientTab.formCbox.Checked)
+            {
+                Console.WriteLine("Monster form is checked");
+                if (Client.ClientTab.deformCbox.Checked && StrangerNear())
+                {
+                    Console.WriteLine("Deform is checked and stranger is near");
+                    Client.ClientTab.SetMonsterForm(false, (ushort)1);
+                }
+                else if (!StrangerNear())
+                {
+                    Console.WriteLine("Stranger is no longer near, reverting back to monster form");
+                    Client.ClientTab.SetMonsterForm(true, (ushort)Client.ClientTab.formNum.Value);
+                }
+            }
+        }
+
+        internal bool StrangerNear()
+        {
+            var friends = Client.ClientTab.friendList.Items.OfType<string>();
+            return Client.GetNearbyPlayers().Any(user => !friends.Contains(user.Name, StringComparer.OrdinalIgnoreCase));
         }
 
         private void Walker()

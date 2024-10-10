@@ -875,7 +875,6 @@ namespace Talos.Forms
         {
             _client.InMonsterForm = (sender as CheckBox).Checked;
             _client.DisplayAisling(_client.Player);
-            _client.RequestRefresh(false);
         }
         private void formNum_ValueChanged(object sender, EventArgs e)
         {
@@ -918,13 +917,14 @@ namespace Talos.Forms
         }
 
 
-        internal void checkMonsterForm(bool isChecked, ushort monsterID)
+        internal void SetMonsterForm(bool isChecked, ushort monsterID)
         {
-            if (InvokeRequired) { BeginInvoke(new Action(() => { checkMonsterForm(isChecked, monsterID); })); return; }
+            if (InvokeRequired) { BeginInvoke(new Action(() => { SetMonsterForm(isChecked, monsterID); })); return; }
 
             formCbox.Checked = isChecked;
             formNum.Value = monsterID;
         }
+
         internal void ClearNearbyEnemies()
         {
             DateTime startTime = DateTime.UtcNow;

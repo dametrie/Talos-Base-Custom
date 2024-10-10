@@ -30,9 +30,6 @@ namespace Talos.Forms.UI
             barImage = Name.Equals("manaBar") ? Properties.Resources.mpBar : Properties.Resources.hpBar;
         }
 
-        public ResourceBar()
-        {
-        }
 
         protected virtual void OnPaintBackground(PaintEventArgs pevent)
         {
