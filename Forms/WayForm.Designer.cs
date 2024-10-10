@@ -90,6 +90,7 @@
             this.MoveDownBtn.TabIndex = 179;
             this.MoveDownBtn.Text = "Move Down";
             this.MoveDownBtn.UseVisualStyleBackColor = true;
+            this.MoveDownBtn.Click += new System.EventHandler(this.MoveDownBtn_Click);
             // 
             // MoveUpBtn
             // 
@@ -101,6 +102,7 @@
             this.MoveUpBtn.TabIndex = 178;
             this.MoveUpBtn.Text = "Move Up";
             this.MoveUpBtn.UseVisualStyleBackColor = true;
+            this.MoveUpBtn.Click += new System.EventHandler(this.MoveUpBtn_Click);
             // 
             // clearBtn
             // 
@@ -111,6 +113,7 @@
             this.clearBtn.TabIndex = 177;
             this.clearBtn.Text = "New";
             this.clearBtn.UseVisualStyleBackColor = true;
+            this.clearBtn.Click += new System.EventHandler(this.clearBtn_Click);
             // 
             // deleteBtn
             // 
@@ -121,6 +124,7 @@
             this.deleteBtn.TabIndex = 176;
             this.deleteBtn.Text = "Delete";
             this.deleteBtn.UseVisualStyleBackColor = true;
+            this.deleteBtn.Click += new System.EventHandler(this.deleteBtn_Click);
             // 
             // saveTBox
             // 
@@ -149,6 +153,7 @@
             this.loadBtn.TabIndex = 173;
             this.loadBtn.Text = "Load";
             this.loadBtn.UseVisualStyleBackColor = true;
+            this.loadBtn.Click += new System.EventHandler(this.loadBtn_Click);
             // 
             // saveBtn
             // 
@@ -159,6 +164,7 @@
             this.saveBtn.TabIndex = 172;
             this.saveBtn.Text = "Save";
             this.saveBtn.UseVisualStyleBackColor = true;
+            this.saveBtn.Click += new System.EventHandler(this.saveBtn_Click);
             // 
             // hideFormBtn
             // 
@@ -170,6 +176,7 @@
             this.hideFormBtn.TabIndex = 171;
             this.hideFormBtn.Text = "Done";
             this.hideFormBtn.UseVisualStyleBackColor = true;
+            this.hideFormBtn.Click += new System.EventHandler(this.hideFormBtn_Click);
             // 
             // condition4
             // 
@@ -355,6 +362,7 @@
             this.waypointsRemoveBtn.TabIndex = 158;
             this.waypointsRemoveBtn.Text = "Remove\r\nSelected";
             this.waypointsRemoveBtn.UseVisualStyleBackColor = true;
+            this.waypointsRemoveBtn.Click += new System.EventHandler(this.waypointsRemoveBtn_Click);
             // 
             // label34
             // 
@@ -555,6 +563,7 @@
             this.waypointsAddBtn.TabIndex = 144;
             this.waypointsAddBtn.Text = "Add Current\r\nPoint";
             this.waypointsAddBtn.UseVisualStyleBackColor = true;
+            this.waypointsAddBtn.Click += new System.EventHandler(this.waypointsAddBtn_Click);
             // 
             // waypointsLBox
             // 

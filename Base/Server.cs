@@ -99,6 +99,8 @@ namespace Talos
             }
         }
 
+
+
         internal Client GetClient(string clientName)
         {
             return Clients.FirstOrDefault(c => c.Name == clientName);

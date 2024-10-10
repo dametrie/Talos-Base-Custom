@@ -52,6 +52,7 @@ namespace Talos.Forms
         private Stopwatch _sessionAbilityStopWatch = new Stopwatch();
         private Stopwatch _sessionGoldStopWatch = new Stopwatch();
 
+
         internal DateTime _inventoryUpdateTime;
         internal DateTime _lastStatusUpdate;
 
@@ -99,6 +100,8 @@ namespace Talos.Forms
 			"Holy Gaea"
 		};
 
+        internal BindingList<string> _wayFormBindingList = new BindingList<string>();
+
 
         private readonly object _lock = new object();
 
@@ -107,11 +110,13 @@ namespace Talos.Forms
         internal EPFImage spellImageArchive;
         internal Palette256 palette256;
         internal bool _isBashing;
+        internal bool _isLoading;
 
         internal ClientTab(Client client)
         {
             _client = client;
             _client.ClientTab = this;
+            _waysForm = new WayForm(client);
             UIHelper.Initialize(_client);
             InitializeComponent();
 
@@ -2265,13 +2270,13 @@ namespace Talos.Forms
         {
             if (wayFormInstance == null || wayFormInstance.IsDisposed)
             {
-                wayFormInstance = new WayForm();
+                wayFormInstance = new WayForm(_client);
                 wayFormInstance.Show();
             }
             else
             {
                 // Bring the existing form to the front
-                wayFormInstance.BringToFront();
+                wayFormInstance.Show();
             }
         }
     }
