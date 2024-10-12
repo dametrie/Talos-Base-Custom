@@ -57,11 +57,11 @@ namespace Talos.Objects
             {
                 skill.Cooldown = cooldown;
                 skill.Ticks = ticks;
-                Console.WriteLine($"[UpdateSpellCooldown] Spell: {skill.Name}, Cooldown: {skill.Cooldown}, Ticks: {skill.Ticks}");
+                //Console.WriteLine($"[UpdateSkillCooldown] Spell: {skill.Name}, Cooldown: {skill.Cooldown}, Ticks: {skill.Ticks}");
             }
             else
             {
-                Console.WriteLine($"[UpdateSpellCooldown] Spell not found: {skillName}");
+                //Console.WriteLine($"[UpdateSkillCooldown] Skill not found: {skillName}");
             }
         }
 

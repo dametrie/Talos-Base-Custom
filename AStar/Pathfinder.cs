@@ -151,7 +151,7 @@ internal class Pathfinder
     internal Stack<Location> FindPath(Location start, Location end, bool avoidWarps = true)
     {
         InitializePathNodes(false, end, avoidWarps);
-        Console.WriteLine($"Starting pathfinding from {start} to {end}.");
+        //Console.WriteLine($"Starting pathfinding from {start} to {end}.");
 
         if (!_pathNodes[start.X, start.Y].IsOpen || !_pathNodes[end.X, end.Y].IsOpen)
         {

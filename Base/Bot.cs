@@ -8,6 +8,7 @@ using System.Media;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml.Linq;
 using Talos.Definitions;
 using Talos.Enumerations;
@@ -118,7 +119,7 @@ namespace Talos.Base
         {
             while (!_shouldThreadStop)
             {
-                TavalyWallHacks();
+                //TavalyWallHacks();
                 MonsterForm();
             }
 
@@ -142,15 +143,12 @@ namespace Talos.Base
         {
             if (Client.ClientTab.formCbox.Checked)
             {
-                Console.WriteLine("Monster form is checked");
                 if (Client.ClientTab.deformCbox.Checked && StrangerNear())
                 {
-                    Console.WriteLine("Deform is checked and stranger is near");
                     Client.ClientTab.SetMonsterForm(false, (ushort)1);
                 }
                 else if (!StrangerNear())
                 {
-                    Console.WriteLine("Stranger is no longer near, reverting back to monster form");
                     Client.ClientTab.SetMonsterForm(true, (ushort)Client.ClientTab.formNum.Value);
                 }
             }
@@ -463,6 +461,32 @@ namespace Talos.Base
             }
         }
 
+        //Added helper methods because was running into an issue where checkbox state wasn't
+        //being assessed correctly. Assumed it was a UI thread problem.
+        private bool GetCheckBoxChecked(CheckBox checkBox)
+        {
+            if (checkBox.InvokeRequired)
+            {
+                return (bool)checkBox.Invoke(new Func<bool>(() => checkBox.Checked));
+            }
+            else
+            {
+                return checkBox.Checked;
+            }
+        }
+
+        private decimal GetNumericUpDownValue(NumericUpDown numericUpDown)
+        {
+            if (numericUpDown.InvokeRequired)
+            {
+                return (decimal)numericUpDown.Invoke(new Func<decimal>(() => numericUpDown.Value));
+            }
+            else
+            {
+                return numericUpDown.Value;
+            }
+        }
+
         private void WayPointWalking(bool skip = false)
         {
             try
@@ -524,43 +548,45 @@ namespace Talos.Base
                                 Console.WriteLine("Filtered out dioned creatures");
                             }
 
-                            // Condition 1 - Slow down walking speed if certain creatures are nearby
-                            if (waysForm.condition1.Checked
-                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)waysForm.proximityUpDwn1.Value))
-                                    >= waysForm.mobSizeUpDwn1.Value
+
+                            // Condition 1
+                            if (GetCheckBoxChecked(waysForm.condition1)
+                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn1)))
+                                    >= GetNumericUpDownValue(waysForm.mobSizeUpDwn1)
                                 && !Client.ClientTab._isBashing)
                             {
-                                Client._walkSpeed = (double)waysForm.walkSlowUpDwn1.Value;
+                                Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn1);
                                 Console.WriteLine("Condition 1 met, adjusting walking speed.");
                             }
 
-                            // Condition 2 - Additional slowing based on proximity to creatures
-                            if (waysForm.condition2.Checked
-                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)waysForm.proximityUpDwn2.Value))
-                                    >= waysForm.mobSizeUpDwn2.Value
+                            // Condition 2
+                            if (GetCheckBoxChecked(waysForm.condition2)
+                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn2)))
+                                    >= GetNumericUpDownValue(waysForm.mobSizeUpDwn2)
                                 && !Client.ClientTab._isBashing)
                             {
-                                Client._walkSpeed = (double)waysForm.walkSlowUpDwn2.Value;
+                                Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn2);
                                 Console.WriteLine("Condition 2 met, adjusting walking speed.");
                             }
 
-                            // Condition 3 - Similar proximity-based speed adjustment
-                            if (waysForm.condition3.Checked
-                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)waysForm.proximityUpDwn3.Value))
-                                    >= waysForm.mobSizeUpDwn3.Value
+                            // Condition 3
+                            if (GetCheckBoxChecked(waysForm.condition3)
+                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn3)))
+                                    >= GetNumericUpDownValue(waysForm.mobSizeUpDwn3)
                                 && !Client.ClientTab._isBashing)
                             {
-                                Client._walkSpeed = (double)waysForm.walkSlowUpDwn3.Value;
+                                Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn3);
                                 Console.WriteLine("Condition 3 met, adjusting walking speed.");
                             }
 
-                            // Condition 4 - Stop if certain conditions are met, enabling defensive measures
-                            if (waysForm.condition4.Checked
-                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)waysForm.proximityUpDwn4.Value))
-                                    >= waysForm.mobSizeUpDwn4.Value)
+                            // Condition 4
+                            if (GetCheckBoxChecked(waysForm.condition4)
+                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn4)))
+                                    >= GetNumericUpDownValue(waysForm.mobSizeUpDwn4))
                             {
                                 Console.WriteLine("Condition 4 met, stopping movement and checking bubble conditions.");
                                 Client._stopped = true;
+
                                 if (BackTracking())
                                 {
                                     return;

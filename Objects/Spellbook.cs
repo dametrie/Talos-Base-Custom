@@ -43,11 +43,11 @@ namespace Talos.Objects
             {
                 spell.Cooldown = cooldown;
                 spell.Ticks = ticks;
-                Console.WriteLine($"[UpdateSpellCooldown] Spell: {spell.Name}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}");
+                //Console.WriteLine($"[UpdateSpellCooldown] Spell: {spell.Name}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}");
             }
             else
             {
-                Console.WriteLine($"[UpdateSpellCooldown] Spell not found: {spellName}");
+                //Console.WriteLine($"[UpdateSpellCooldown] Spell not found: {spellName}");
             }
         }
 

@@ -2862,14 +2862,14 @@ namespace Talos
             {
                 if (!client.EffectsBarHashSet.Contains(effect))
                 {
-                    Console.WriteLine("Adding effect: " + effect);
+                    //Console.WriteLine("Adding effect: " + effect);
                     client.EffectsBarHashSet.Add(effect);
-                    Console.WriteLine("total items in hashset: " + client.EffectsBarHashSet.Count);
+                    //Console.WriteLine("total items in hashset: " + client.EffectsBarHashSet.Count);
                 }
             }
             else if (client.EffectsBarHashSet.Contains(effect))
             {
-                Console.WriteLine("Removing effect: " + effect);
+                //Console.WriteLine("Removing effect: " + effect);
                 client.EffectsBarHashSet.Remove(effect);
                 if ((effect == 19) && !client.InArena)//bday or incapacitate //ADAM check this
                 {

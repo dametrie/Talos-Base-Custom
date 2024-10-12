@@ -26,17 +26,17 @@ namespace Talos.Objects
         {
             get
             {
-                Console.WriteLine($"[DEBUG] Checking CanUse for spell {Name}. Cooldown until: {Cooldown.AddSeconds(Ticks)}, Current Time: {DateTime.UtcNow}");
+                //Console.WriteLine($"[DEBUG] Checking CanUse for spell {Name}. Cooldown until: {Cooldown.AddSeconds(Ticks)}, Current Time: {DateTime.UtcNow}");
 
                 // Check if the cooldown has expired
                 if (DateTime.UtcNow >= Cooldown.AddSeconds(Ticks))
                 {
-                    Console.WriteLine("[DEBUG] Spell can be used. Cooldown period has passed.");
+                    //Console.WriteLine("[DEBUG] Spell can be used. Cooldown period has passed.");
                     return true;
                 }
                 else
                 {
-                    Console.WriteLine("[DEBUG] Spell cannot be used yet. Still within cooldown period.");
+                    //Console.WriteLine("[DEBUG] Spell cannot be used yet. Still within cooldown period.");
                     return false;
                 }
             }

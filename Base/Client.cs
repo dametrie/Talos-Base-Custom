@@ -1300,7 +1300,7 @@ namespace Talos.Base
                     }
 
                     RemoveShield();
-                    Console.WriteLine($"Equipping {bowName} to cast {spell.Name}");
+                    //Console.WriteLine($"Equipping {bowName} to cast {spell.Name}");
                     UseItem(bowName);
 
                     while (EquippedItems[1]?.Name.Equals(bowName, StringComparison.CurrentCultureIgnoreCase) != true)
@@ -1995,7 +1995,7 @@ namespace Talos.Base
             Spell spell = Spellbook[spellName];
             byte castLines = spell.CastLines;
 
-            Console.WriteLine($"[UseSpell] Attempting to cast {spell.Name}, LastUsed: {spell.LastUsed}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}, Hash: {spell.GetHashCode()}");
+            //Console.WriteLine($"[UseSpell] Attempting to cast {spell.Name}, LastUsed: {spell.LastUsed}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}, Hash: {spell.GetHashCode()}");
 
             lock (BashLock)
             {
@@ -2025,13 +2025,13 @@ namespace Talos.Base
                     {
                         if (existingEntry.CooldownEndTime > DateTime.UtcNow)
                         {
-                            Console.WriteLine($"[Debug] Skipped adding {CreatureTarget.ID} to _creatureToSpellList due to cooldown.");
+                            //Console.WriteLine($"[Debug] Skipped adding {CreatureTarget.ID} to _spellHistory due to cooldown.");
                         }
                         else
                         {
                             // Update cooldown end time for re-casting
                             existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(1);
-                            Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _creatureToSpellList.");
+                            //Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _spellHistory.");
                         }
                     }
                     else
@@ -2041,8 +2041,8 @@ namespace Talos.Base
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
                         _spellHistory.Add(newEntry);
-                        Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
-                        Console.WriteLine($"[Debug] Added to _creatureToSpellList: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
+                        //Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
+                        //Console.WriteLine($"[Debug] Added to _spellHistory: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
                     }
                 }
                 //else
@@ -2055,7 +2055,7 @@ namespace Talos.Base
                 {
                     ClientTab.Invoke((Action)delegate
                     {
-                        ClientTab.currentAction.Text = _action + "Casting " + spellName;//ADAM
+                        ClientTab.currentAction.Text = _action + "Casting " + spellName;
                     });
                 }
                 ClientPacket clientPacket = new ClientPacket(15);
@@ -2145,7 +2145,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {target?.ID}, Name: {target?.Name}");
+                //Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {target?.ID}, Name: {target?.Name}");
 
                 Enqueue(clientPacket);
                 _spellCounter++;
@@ -2427,7 +2427,7 @@ namespace Talos.Base
                 //Console.WriteLine($"Client location updated to: {_clientLocation}"); // Debugging: Log client location update
 
                 LastMoved = DateTime.UtcNow;
-                Console.WriteLine($"[WalkLastMoved set to: {LastMoved}"); // Debugging: Log LastMoved update
+                //Console.WriteLine($"[WalkLastMoved set to: {LastMoved}"); // Debugging: Log LastMoved update
 
                 ClientTab.Invoke((Action)delegate
                 {
@@ -2437,7 +2437,7 @@ namespace Talos.Base
             else
             {
                 _isWalking = false;
-                Console.WriteLine("Walk aborted due to conditions not met. _isWalking set to false."); // Debugging: Log abort and _isWalking update
+                //Console.WriteLine("Walk aborted due to conditions not met. _isWalking set to false."); // Debugging: Log abort and _isWalking update
                 Thread.Sleep(100); // Consider logging this delay for clarity if necessary
             }
         }
@@ -2456,13 +2456,13 @@ namespace Talos.Base
                     Console.WriteLine($"Stranger nearby or bot stop required, waiting...");
                     if (totalMilliseconds >= 420.0)
                     {
-                        Console.WriteLine("Elapsed time exceeds maximum wait time, proceeding with action.");
+                        //Console.WriteLine("Elapsed time exceeds maximum wait time, proceeding with action.");
                         break;
                     }
                 }
                 else if (!(totalMilliseconds < _walkSpeed))
                 {
-                    Console.WriteLine($"Proceeding with try walk. Value of totalMilliseconds: {totalMilliseconds}");
+                    //Console.WriteLine($"Proceeding with try walk. Value of totalMilliseconds: {totalMilliseconds}");
                     break;
                 }
                 Thread.Sleep(10);
@@ -2487,7 +2487,7 @@ namespace Talos.Base
             if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
                 int dist = _clientLocation.DistanceFrom(destination);
-                Console.WriteLine($"Current distance to destination: {dist}, Threshold: {distance}");
+                //Console.WriteLine($"Current distance to destination: {dist}, Threshold: {distance}");
 
                 //Adam - commented this out because we were ending up 2x the distance from the destination on follow
                 //Not sure if this is needed
@@ -2504,7 +2504,7 @@ namespace Talos.Base
                     {
                         if (_stuckCounter == 0)
                         {
-                            Console.WriteLine("Refreshing client due to timeout or refresh needed.");
+                            //Console.WriteLine("Refreshing client due to timeout or refresh needed.");
                             RequestRefresh();
                         }
                         _shouldRefresh = false;
@@ -2522,7 +2522,7 @@ namespace Talos.Base
 
                 if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
                 {
-                    Console.WriteLine("New destination or empty path stack. Calculating new path.");
+                    //Console.WriteLine("New destination or empty path stack. Calculating new path.");
                     _lastDestination = destination;
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
 
@@ -2535,7 +2535,7 @@ namespace Talos.Base
                     {
                         return false;
                     }
-                    Console.WriteLine("Location difference detected, requesting refresh.");
+                    //Console.WriteLine("Location difference detected, requesting refresh.");
                     RequestRefresh();
                     _shouldRefresh = false;
                     return false;
@@ -2548,7 +2548,7 @@ namespace Talos.Base
                 }
                 else
                 {
-                    Console.WriteLine($"Next step in path stack: {pathStack.Peek()}, Stack count: {pathStack.Count}");
+                    //Console.WriteLine($"Next step in path stack: {pathStack.Peek()}, Stack count: {pathStack.Count}");
                 }
 
 
@@ -2597,12 +2597,12 @@ namespace Talos.Base
 
                 if (nextPosition.DistanceFrom(_clientLocation) != 1)
                 {
-                    Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
+                    //Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
                     if (nextPosition.DistanceFrom(_clientLocation) > 2 && _shouldRefresh)
                     {
                         if (_stuckCounter == 0)
                         {
-                            Console.WriteLine("Refreshing client due to unexpected position distance.");
+                            //Console.WriteLine("Refreshing client due to unexpected position distance.");
                             RequestRefresh();
                         }
                         _shouldRefresh = false;
@@ -2619,14 +2619,14 @@ namespace Talos.Base
                         //Console.WriteLine($"Acquired lock and attempting to walk towards {directionToWalk}.");
                         if (CanWalk())
                         {
-                            Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
+                            //Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
                             Walk(directionToWalk);
                         }
                     }
                 }
                 else if (CanWalk())
                 {
-                    Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
+                    //Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
                     //Console.WriteLine($"Walking towards {directionToWalk} without lock.");
                     Walk(directionToWalk);
                 }
@@ -2806,7 +2806,7 @@ namespace Talos.Base
                     routeStack.Clear();
                     return false;
                 }
-                Console.WriteLine($"***About to call TryWalkLocation with distance value of: {distance}");
+                //Console.WriteLine($"***About to call TryWalkLocation with distance value of: {distance}");
                 if (!Pathfind(nextLocation, distance, shouldBlock, avoidWarps = true))
                 {
                     if (_map.Name.Contains("Threshold"))

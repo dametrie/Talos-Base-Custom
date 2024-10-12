@@ -143,6 +143,7 @@
             this.savedWaysLBox.Name = "savedWaysLBox";
             this.savedWaysLBox.Size = new System.Drawing.Size(141, 173);
             this.savedWaysLBox.TabIndex = 174;
+            this.savedWaysLBox.SelectedIndexChanged += new System.EventHandler(this.savedWaysLBox_SelectedIndexChanged);
             // 
             // loadBtn
             // 

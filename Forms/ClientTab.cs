@@ -24,6 +24,7 @@ using Talos.Capricorn.IO;
 using Talos.Properties;
 using Talos.PInvoke;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace Talos.Forms
 {
@@ -104,13 +105,15 @@ namespace Talos.Forms
 
 
         private readonly object _lock = new object();
-
+        private string profilePath;
         internal DATArchive setoaArchive;
         internal EPFImage skillImageArchive;
         internal EPFImage spellImageArchive;
         internal Palette256 palette256;
         internal bool _isBashing;
         internal bool _isLoading;
+        private string waypointsPath;
+        private List<string> waypointList;
 
         internal ClientTab(Client client)
         {
@@ -120,12 +123,15 @@ namespace Talos.Forms
             UIHelper.Initialize(_client);
             InitializeComponent();
 
+            _waysForm.savedWaysLBox.DataSource = _wayFormBindingList;
             worldObjectListBox.DataSource = client._worldObjectBindingList;
             creatureHashListBox.DataSource = client._creatureBindingList;
             strangerList.DataSource = client._strangerBindingList;
             friendList.DataSource = client._friendBindingList;
             trashList.DataSource = _trashToDrop;
 
+            profilePath = Settings.Default.DarkAgesPath.Replace("Darkages.exe", client.Name + "\\Talos");
+            waypointsPath = AppDomain.CurrentDomain.BaseDirectory + "waypoints";
             setoaArchive = DATArchive.FromFile(Settings.Default.DarkAgesPath.Replace("Darkages.exe", "setoa.dat"));
             spellImageArchive = EPFImage.FromArchive("spell001.epf", setoaArchive);
             skillImageArchive = EPFImage.FromArchive("skill001.epf", setoaArchive);
@@ -144,7 +150,60 @@ namespace Talos.Forms
             {
                 _client.CheckNetStat();
             });
+
+            
+            _client._spellTimer.Start();
+
+            if (!Directory.Exists(profilePath))
+            {
+                Directory.CreateDirectory(profilePath);
+            }
+            if (!Directory.Exists(waypointsPath))
+            {
+                Directory.CreateDirectory(waypointsPath);
+            }
+
         }
+
+        internal void HandleFiles()
+        {
+            string text = AppDomain.CurrentDomain.BaseDirectory + "\\inventory\\" + _client.Name.ToLower();
+            if (!Directory.Exists(text))
+            {
+                Directory.CreateDirectory(text);
+            }
+            else
+            {
+                try
+                {
+                    File.WriteAllLines(text + "\\inventory.txt", _client.Inventory.Select((Item item) => item.Name));
+                }
+                catch
+                {
+                }
+            }
+            if (profilePath == null)
+            {
+                Thread.Sleep(1000);
+            }
+            foreach (string item in Directory.GetFiles(profilePath, "*.xml").Select(Path.GetFileNameWithoutExtension))
+            {
+                List<string> list = waypointList;
+                if (list != null && !list.Contains(item))
+                {
+                    waypointList.Add(item);
+                }
+            }
+            foreach (string item2 in Directory.GetFiles(waypointsPath).Select(Path.GetFileName))
+            {
+                BindingList<string> bindingList = _wayFormBindingList;
+                if (bindingList != null && !bindingList.Contains(item2))
+                {
+                    UpdateBindingList(_wayFormBindingList, _waysForm.savedWaysLBox, item2);
+                }
+            }
+        }
+
 
         private void AddClientToFriends()
         {
@@ -2279,6 +2338,8 @@ namespace Talos.Forms
                 wayFormInstance.Show();
             }
         }
+
+        
     }
 }
 

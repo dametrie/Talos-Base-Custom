@@ -33,6 +33,10 @@ namespace Talos.Forms
             Client.Bot.ways.Clear();
             waypointsLBox.Items.Clear();
         }
+        private void savedWaysLBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            saveTBox.Text = savedWaysLBox.SelectedItem.ToString();
+        }
 
         private void loadBtn_Click(object sender, EventArgs e)
         {
