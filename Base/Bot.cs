@@ -142,15 +142,28 @@ namespace Talos.Base
 
         private void MonsterForm()
         {
+            bool strangerNear = StrangerNear();
+            bool deformChecked = Client.ClientTab.deformCbox.Checked;
+            ushort desiredFormNum = (ushort)Client.ClientTab.formNum.Value;
+
             if (Client.ClientTab.formCbox.Checked)
             {
-                if (Client.ClientTab.deformCbox.Checked && StrangerNear())
+                if (deformChecked && strangerNear)
                 {
-                    Client.ClientTab.SetMonsterForm(false, (ushort)1);
+                    // Only set if the state needs to change
+                    if (Client.ClientTab.formCbox.Checked)
+                    {
+                        Client.ClientTab.SetMonsterForm(false, desiredFormNum);
+                    }
                 }
-                else if (!StrangerNear())
+            }
+            else if (!Client.ClientTab.formCbox.Checked && deformChecked)
+            {
+                if (!strangerNear)
                 {
-                    Client.ClientTab.SetMonsterForm(true, (ushort)Client.ClientTab.formNum.Value);
+                   
+
+                    Client.ClientTab.SetMonsterForm(true, desiredFormNum);
                 }
             }
         }
