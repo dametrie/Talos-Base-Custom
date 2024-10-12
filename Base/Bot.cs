@@ -15,6 +15,7 @@ using Talos.Enumerations;
 using Talos.Extensions;
 using Talos.Forms;
 using Talos.Forms.UI;
+using Talos.Helper;
 using Talos.Maps;
 using Talos.Objects;
 using Talos.Properties;
@@ -465,12 +466,18 @@ namespace Talos.Base
         //being assessed correctly. Assumed it was a UI thread problem.
         private bool GetCheckBoxChecked(CheckBox checkBox)
         {
+            _client.ServerMessage((byte)ServerMessageType.TopRight, "GetCheckBoxChecked called");
+
             if (checkBox.InvokeRequired)
             {
+                _client.ServerMessage((byte)ServerMessageType.TopRight, "GetCheckBoxChecked Invoke called");
+                _client.ServerMessage((byte)ServerMessageType.TopRight, $"Value: {checkBox.Checked}");
                 return (bool)checkBox.Invoke(new Func<bool>(() => checkBox.Checked));
             }
             else
             {
+                _client.ServerMessage((byte)ServerMessageType.TopRight, "GetCheckBoxChecked called");
+                _client.ServerMessage((byte)ServerMessageType.TopRight, $"Value: {checkBox.Checked}");
                 return checkBox.Checked;
             }
         }
@@ -514,7 +521,7 @@ namespace Talos.Base
                     }
                     else
                     {
-                        WayForm waysForm = Client.ClientTab._waysForm;
+                        WayForm waysForm = Client.ClientTab._wayForm;
 
                         // Special door proximity condition
                         if (DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 2.5 &&

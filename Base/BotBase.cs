@@ -13,16 +13,18 @@ namespace Talos.Base
     {
         internal Server Server { get; set; }
         internal Client Client { get; set; }
-        internal List<Thread> BotThreadList { get; set; }
-        internal List<Location> LocationList { get; set; }
-        internal List<BotLoop> TaskList { get; set; }
+        internal List<Thread> BotThreads { get; set; }
+        internal List<Location> Waypoints { get; set; }
+        internal List<BotLoop> BotLoops { get; set; }
+
         internal volatile bool _shouldThreadStop = false;
+
 
         internal BotBase()
         {
-            BotThreadList = new List<Thread>();
-            LocationList = new List<Location>();
-            TaskList = new List<BotLoop>();
+            BotThreads = new List<Thread>();
+            Waypoints = new List<Location>();
+            BotLoops = new List<BotLoop>();
         }
 
         internal BotBase(Client client, Server server) : this()
@@ -33,12 +35,12 @@ namespace Talos.Base
         internal void Start()
         {
             _shouldThreadStop = false;
-            BotThreadList.Clear();
-            foreach (var task in TaskList)
+            BotThreads.Clear();
+            foreach (var botLoop in BotLoops)
             {
-                BotLoop taskDelegate = task;
+                BotLoop taskDelegate = botLoop;
                 Thread thread = new Thread(() => taskDelegate());
-                BotThreadList.Add(thread);
+                BotThreads.Add(thread);
                 thread.Start();
             }
         }
@@ -46,22 +48,22 @@ namespace Talos.Base
         internal void Stop()
         {
             _shouldThreadStop = true;
-            foreach (var thread in BotThreadList)
+            foreach (var thread in BotThreads)
             {
                 thread.Join(); //previously using Thread.Abort() which is not recommended... but maybe it would stop the bot faster?
             }
-            BotThreadList.Clear();
+            BotThreads.Clear();
 
         }
 
         internal void AddTask(BotLoop task)
         {
-            TaskList.Add(task);
+            BotLoops.Add(task);
         }
 
         internal void RemoveTask(BotLoop task) 
         { 
-            TaskList.Remove(task);
+            BotLoops.Remove(task);
         }
 
     }

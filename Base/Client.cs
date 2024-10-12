@@ -3517,7 +3517,7 @@ namespace Talos.Base
             catch
             {
             }
-
+            Thread.Sleep(500);
             //no longer connected
             _server._clientList.Remove(this);
             Thread.Sleep(100);

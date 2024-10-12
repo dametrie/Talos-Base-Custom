@@ -38,49 +38,52 @@ namespace Talos.Forms
             saveTBox.Text = savedWaysLBox.SelectedItem.ToString();
         }
 
-        private void loadBtn_Click(object sender, EventArgs e)
+        private async void loadBtn_Click(object sender, EventArgs e)
         {
             if (Monitor.TryEnter(Server.SyncObj, 2000))
             {
                 try
                 {
-                    Client.ClientTab.StopBot();
-                    Client.ClientTab._isLoading = true;
-                    string str = AppDomain.CurrentDomain.BaseDirectory + "waypoints\\";
-                    if (savedWaysLBox.SelectedItem != null && !string.IsNullOrEmpty(savedWaysLBox.SelectedItem.ToString()) && File.Exists(str + savedWaysLBox.SelectedItem.ToString()))
+                    await Task.Run(() =>
                     {
-                        List<string> list = File.ReadAllLines(str + savedWaysLBox.SelectedItem.ToString()).ToList();
-                        Match match = Regex.Match(list[0], "(True|False) (True|False) (True|False) (True|False) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+)");
-                        condition1.Checked = Convert.ToBoolean(match.Groups[1].Value);
-                        condition2.Checked = Convert.ToBoolean(match.Groups[2].Value);
-                        condition3.Checked = Convert.ToBoolean(match.Groups[3].Value);
-                        condition4.Checked = Convert.ToBoolean(match.Groups[4].Value);
-                        mobSizeUpDwn1.Value = Convert.ToDecimal(match.Groups[5].Value);
-                        mobSizeUpDwn2.Value = Convert.ToDecimal(match.Groups[6].Value);
-                        mobSizeUpDwn3.Value = Convert.ToDecimal(match.Groups[7].Value);
-                        mobSizeUpDwn4.Value = Convert.ToDecimal(match.Groups[8].Value);
-                        proximityUpDwn1.Value = Convert.ToDecimal(match.Groups[9].Value);
-                        proximityUpDwn2.Value = Convert.ToDecimal(match.Groups[10].Value);
-                        proximityUpDwn3.Value = Convert.ToDecimal(match.Groups[11].Value);
-                        proximityUpDwn4.Value = Convert.ToDecimal(match.Groups[12].Value);
-                        walkSlowUpDwn1.Value = Convert.ToDecimal(match.Groups[13].Value);
-                        walkSlowUpDwn2.Value = Convert.ToDecimal(match.Groups[14].Value);
-                        walkSlowUpDwn3.Value = Convert.ToDecimal(match.Groups[15].Value);
-                        distanceUpDwn.Value = Convert.ToDecimal(match.Groups[17].Value);
-                        waypointsLBox.Items.Clear();
-                        Client.Bot.ways.Clear();
-                        for (int i = 1; i < list.Count; i++)
+                        Client.ClientTab.StopBot();
+                        Client.ClientTab._isLoading = true;
+                        string str = AppDomain.CurrentDomain.BaseDirectory + "waypoints\\";
+                        if (savedWaysLBox.SelectedItem != null && !string.IsNullOrEmpty(savedWaysLBox.SelectedItem.ToString()) && File.Exists(str + savedWaysLBox.SelectedItem.ToString()))
                         {
-                            waypointsLBox.Items.Add(list[i]);
-                            Match match2 = Regex.Match(list[i], "(?:\\(([0-9]+),([0-9]+)\\)) ([a-zA-Z0-9' -]+): ([0-9]+)");
-                            Client.Bot.ways.Add(new Location(short.Parse(match2.Groups[4].Value), short.Parse(match2.Groups[1].Value), short.Parse(match2.Groups[2].Value)));
+                            List<string> list = File.ReadAllLines(str + savedWaysLBox.SelectedItem.ToString()).ToList();
+                            Match match = Regex.Match(list[0], "(True|False) (True|False) (True|False) (True|False) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+)");
+                            condition1.Checked = Convert.ToBoolean(match.Groups[1].Value);
+                            condition2.Checked = Convert.ToBoolean(match.Groups[2].Value);
+                            condition3.Checked = Convert.ToBoolean(match.Groups[3].Value);
+                            condition4.Checked = Convert.ToBoolean(match.Groups[4].Value);
+                            mobSizeUpDwn1.Value = Convert.ToDecimal(match.Groups[5].Value);
+                            mobSizeUpDwn2.Value = Convert.ToDecimal(match.Groups[6].Value);
+                            mobSizeUpDwn3.Value = Convert.ToDecimal(match.Groups[7].Value);
+                            mobSizeUpDwn4.Value = Convert.ToDecimal(match.Groups[8].Value);
+                            proximityUpDwn1.Value = Convert.ToDecimal(match.Groups[9].Value);
+                            proximityUpDwn2.Value = Convert.ToDecimal(match.Groups[10].Value);
+                            proximityUpDwn3.Value = Convert.ToDecimal(match.Groups[11].Value);
+                            proximityUpDwn4.Value = Convert.ToDecimal(match.Groups[12].Value);
+                            walkSlowUpDwn1.Value = Convert.ToDecimal(match.Groups[13].Value);
+                            walkSlowUpDwn2.Value = Convert.ToDecimal(match.Groups[14].Value);
+                            walkSlowUpDwn3.Value = Convert.ToDecimal(match.Groups[15].Value);
+                            distanceUpDwn.Value = Convert.ToDecimal(match.Groups[17].Value);
+                            waypointsLBox.Items.Clear();
+                            Client.Bot.ways.Clear();
+                            for (int i = 1; i < list.Count; i++)
+                            {
+                                waypointsLBox.Items.Add(list[i]);
+                                Match match2 = Regex.Match(list[i], "(?:\\(([0-9]+),([0-9]+)\\)) ([a-zA-Z0-9' -]+): ([0-9]+)");
+                                Client.Bot.ways.Add(new Location(short.Parse(match2.Groups[4].Value), short.Parse(match2.Groups[1].Value), short.Parse(match2.Groups[2].Value)));
+                            }
                         }
-                    }
-                    Client.ClientTab._isLoading = false;
-                    if (Client.ClientTab.startStrip.Text == "Stop")
-                    {
-                        Client.BotBase.Start();
-                    }
+                        Client.ClientTab._isLoading = false;
+                        if (Client.ClientTab.startStrip.Text == "Stop")
+                        {
+                            Client.BotBase.Start();
+                        }
+                    });
                 }
                 finally
                 {

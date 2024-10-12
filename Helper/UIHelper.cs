@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Talos.Base;
 
@@ -13,6 +14,11 @@ namespace Talos.Helper
         internal static void Initialize(Client client)
         {
             _client = client;
+        }
+
+        public static async Task<T> GetUIState<T>(Func<T> getStateFunc)
+        {
+            return await Task.Run(getStateFunc);
         }
 
         internal static void SetupComboBox(ComboBox comboBox, string[] spellNames, Control control1, Control control2 = null, Control control3 = null, Control control4 = null, bool partialMatch = false, string[] genericNames = null, Dictionary<string, string> abbreviations = null)

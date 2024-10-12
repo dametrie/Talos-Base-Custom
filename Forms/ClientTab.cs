@@ -39,7 +39,7 @@ namespace Talos.Forms
         private short textMap;
         private short textX;
         private short testY;
-        private WayForm wayFormInstance = null;
+        internal WayForm _wayForm = null;
 
         private uint _abilityExp;
         private uint _gold;
@@ -57,7 +57,6 @@ namespace Talos.Forms
         internal DateTime _inventoryUpdateTime;
         internal DateTime _lastStatusUpdate;
 
-        internal WayForm _waysForm;
 
         private List<string> _chatPanelList = new List<string>
         {
@@ -119,11 +118,11 @@ namespace Talos.Forms
         {
             _client = client;
             _client.ClientTab = this;
-            _waysForm = new WayForm(client);
+            _wayForm = new WayForm(_client);
             UIHelper.Initialize(_client);
             InitializeComponent();
 
-            _waysForm.savedWaysLBox.DataSource = _wayFormBindingList;
+            _wayForm.savedWaysLBox.DataSource = _wayFormBindingList;
             worldObjectListBox.DataSource = client._worldObjectBindingList;
             creatureHashListBox.DataSource = client._creatureBindingList;
             strangerList.DataSource = client._strangerBindingList;
@@ -199,7 +198,7 @@ namespace Talos.Forms
                 BindingList<string> bindingList = _wayFormBindingList;
                 if (bindingList != null && !bindingList.Contains(item2))
                 {
-                    UpdateBindingList(_wayFormBindingList, _waysForm.savedWaysLBox, item2);
+                    UpdateBindingList(_wayFormBindingList, _wayForm.savedWaysLBox, item2);
                 }
             }
         }
@@ -2327,15 +2326,15 @@ namespace Talos.Forms
 
         private void waypointsMenu_Click_1(object sender, EventArgs e)
         {
-            if (wayFormInstance == null || wayFormInstance.IsDisposed)
+            if (_wayForm == null || _wayForm.IsDisposed)
             {
-                wayFormInstance = new WayForm(_client);
-                wayFormInstance.Show();
+                _wayForm = new WayForm(_client);
+                _wayForm.Show();
             }
             else
             {
                 // Bring the existing form to the front
-                wayFormInstance.Show();
+                _wayForm.Show();
             }
         }
 
