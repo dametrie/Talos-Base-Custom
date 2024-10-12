@@ -115,7 +115,7 @@ namespace Talos.Maps
         {
             if (!IsWall(location))
             {
-                return !client.GetWorldObjects().Any(delegate (WorldObject worldEntity)
+                return !client.GetNearbyObjects().Any(delegate (WorldObject worldEntity)
                 {
                     Creature creature = worldEntity as Creature;
                     return creature != null && Location.Equals(creature.Location, location) && (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && creature != client.Player;

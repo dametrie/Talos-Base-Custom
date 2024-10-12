@@ -1646,8 +1646,8 @@ namespace Talos.Base
             }
             else
             {
-                Spell currentSpell = currentClient._currentSpell;
-                castLinesCountNullable = (currentSpell != null) ? new byte?(currentSpell.CastLines) : null;
+                Spell castedSpell = currentClient.CastedSpell;
+                castLinesCountNullable = (castedSpell != null) ? new byte?(castedSpell.CastLines) : null;
             }
 
             byte? castLinesCount = castLinesCountNullable;
@@ -1655,7 +1655,6 @@ namespace Talos.Base
 
             if (castLines.GetValueOrDefault() <= 0 & castLines != null)
             {
-                //Console.WriteLine("Sleeping for 10ms");
                 Thread.Sleep(330);
             }
         }
@@ -3468,7 +3467,7 @@ namespace Talos.Base
 
         private void ManageSpellCastingDelay()
         {
-            var spellCastLines = Client?._currentSpell?.CastLines ?? 0;
+            var spellCastLines = Client?.CastedSpell?.CastLines ?? 0;
             if (spellCastLines <= 0)
             {
                 //Thread.Sleep(10); // Adjust the sleep time as needed
@@ -3617,7 +3616,7 @@ namespace Talos.Base
                 if (!IsStrangerNearby())
                 {
                     var lootArea = new Structs.Rectangle(new Point(Client._serverLocation.X - 2, Client._serverLocation.Y - 2), new Point(5, 5));
-                    List<Objects.GroundItem> nearbyObjects = Client.GetNearbyObjects(4);
+                    List<Objects.GroundItem> nearbyObjects = Client.GetNearbyGroundItems(4);
 
                     if (nearbyObjects.Count > 0)
                     {

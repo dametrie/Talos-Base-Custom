@@ -149,7 +149,7 @@
     <Compile Include="Helper\ActiveMessageHandler.cs" />
     <Compile Include="Objects\Animation.cs" />
     <Compile Include="Objects\Bow.cs" />
-    <Compile Include="Objects\Caster.cs" />
+    <Compile Include="Objects\ProxySpell.cs" />
     <Compile Include="Objects\Creature.cs" />
     <Compile Include="Objects\SpellEntry.cs" />
     <Compile Include="Objects\Door.cs" />

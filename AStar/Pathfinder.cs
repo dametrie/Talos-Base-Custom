@@ -77,7 +77,7 @@ internal class Pathfinder
 
 
         // Handling dynamic obstacles
-        List<Location> obstacles = (from creature in _client.GetWorldObjects().OfType<Creature>()
+        List<Location> obstacles = (from creature in _client.GetNearbyObjects().OfType<Creature>()
                                     where (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && creature != _client.Player
                                     select creature.Location).ToList();
 

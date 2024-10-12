@@ -143,7 +143,7 @@ namespace Talos.Base
         internal int _identifier;
         internal int _stuckCounter;
         internal byte _comboScrollCounter;
-        internal Spell _currentSpell;
+        internal Spell CastedSpell { get; set; }
         internal System.Windows.Forms.Timer _spellTimer;
         internal Stack<Location> pathStack = new Stack<Location>();
         internal Stack<Location> routeStack = new Stack<Location>();
@@ -278,7 +278,7 @@ namespace Talos.Base
         internal ConcurrentDictionary<Location, Door> Doors { get; private set; } = new ConcurrentDictionary<Location, Door> { };
 
         internal HashSet<int> NearbyObjects { get; private set; } = new HashSet<int>();
-        internal HashSet<int> ObjectHashSet { get; private set; } = new HashSet<int>();
+        internal HashSet<int> NearbyGroundItems { get; private set; } = new HashSet<int>();
         internal HashSet<ushort> EffectsBarHashSet { get; set; } = new HashSet<ushort>();
         internal HashSet<ushort> SpellBar { get; set; } = new HashSet<ushort>();
         internal HashSet<string> AllyListHashSet { get; set; } = new HashSet<string> { };
@@ -335,7 +335,7 @@ namespace Talos.Base
         }
         internal bool UnifiedGuildChat { get; set; }
         internal Player Player { get; set; }
-        internal Creature CreatureTarget { get; set; }
+        internal Creature CastedTarget { get; set; }
         internal Nation Nation { get; set; }
 
         internal uint HealthPct
@@ -508,7 +508,7 @@ namespace Talos.Base
             {
                 try
                 {
-                    foreach (var objectId in ObjectHashSet)
+                    foreach (var objectId in NearbyGroundItems)
                     {
                         if (WorldObjects[objectId] is GroundItem groundItem
                             && this.WithinRange(groundItem, distance)
@@ -700,7 +700,7 @@ namespace Talos.Base
         }
 
 
-        internal List<GroundItem> GetNearbyObjects(int distance = 12)
+        internal List<GroundItem> GetNearbyGroundItems(int distance = 12) //Adam
         {
             if (!Monitor.TryEnter(Server.SyncObj, 1000))
             {
@@ -722,7 +722,7 @@ namespace Talos.Base
 
 
 
-        internal List<WorldObject> GetWorldObjects()
+        internal List<WorldObject> GetNearbyObjects() //Adam
         {
             var worldObjects = new List<WorldObject>();
 
@@ -751,7 +751,7 @@ namespace Talos.Base
             }
 
             // Gather all relevant creatures' locations within the same map to avoid repeated enumeration.
-            var creatureLocations = GetWorldObjects()
+            var creatureLocations = GetNearbyObjects()
                 .OfType<Creature>()
                 .Where(creature => (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && !creature.Location.Equals(location))
                 .Select(creature => creature.Location)
@@ -912,7 +912,7 @@ namespace Talos.Base
                     case 2476745328: // fas nadur
                     case 1149628551: // mor fas nadur
                     case 107956092: // ard fas nadur
-                        if (!CreatureTarget.IsFassed) return true;
+                        if (!CastedTarget.IsFassed) return true;
                         return false;
                     
                     case 2848971440: // beag cradh
@@ -922,14 +922,20 @@ namespace Talos.Base
                     case 1928539694: // Dark Seal
                     case 219207967: // Darker Seal
                     case 928817768: // Demise
-                        if (!CreatureTarget.IsCursed) return true;
+                        if (!CastedTarget.IsCursed)
+                        {
+                            CastedTarget.LastCursed = DateTime.UtcNow;
+                            CastedTarget.CurseDuration = 0.3;
+                            CastedTarget.Curse = spell;
+                            return true;
+                        }
                         return false;
 
                     case 2112563240: // beag naomh aite
                     case 291448073: // naomh aite
                     case 2761324515: // mor naomh aite
                     case 443271170: // ard naomh aite
-                        if (!CreatureTarget.IsAited) return true;
+                        if (!CastedTarget.IsAited) return true;
                         return false;
 
                     case 195270534: // Wake Scroll
@@ -945,11 +951,11 @@ namespace Talos.Base
 
                     case 810175405: // ao suain
                     case 894297607: // Leafhopper Chirp
-                        CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.MinValue;
+                        CastedTarget.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.MinValue;
                         return false;
 
                     case 1046347411: // suain
-                        if (CreatureTarget.IsSuained)
+                        if (CastedTarget.IsSuained)
                         {
                             Console.WriteLine("ReadyToSpell: Creature is already suained, returning false");
                             return false;
@@ -962,13 +968,13 @@ namespace Talos.Base
 
                     case 2030226177: // armachd
                         //Adam check this
-                        if (!CreatureTarget.HasArmachd) return true;
+                        if (!CastedTarget.HasArmachd) return true;
                         return false;
 
                     case 3219892635: // beag pramh
                     case 2647647615: // pramh
                     case 2592944103: // Mesmerize
-                        if (CreatureTarget.IsAsleep)
+                        if (CastedTarget.IsAsleep)
                         {
                             Console.WriteLine("ReadyToSpell: Creature is already asleep, returning false");
                             return false;
@@ -995,9 +1001,9 @@ namespace Talos.Base
 
                     case 2996522388: //ao puinsein
                         {
-                            CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
-                            CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
-                            CreatureTarget.SpellAnimationHistory[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
+                            CastedTarget.SpellAnimationHistory[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
+                            CastedTarget.SpellAnimationHistory[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
+                            CastedTarget.SpellAnimationHistory[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
                         }
                         return false;
 
@@ -1012,7 +1018,7 @@ namespace Talos.Base
                     case 3000206623: // Frost Arrow 9
                     case 2718832517: // Frost Arrow 10
                     case 2702054898: // Frost Arrow 11
-                        if (CreatureTarget.IsFrozen)
+                        if (CastedTarget.IsFrozen)
                         {
                             Console.WriteLine("ReadyToSpell: Creature is already asleep, returning false");
                             return false;
@@ -1034,7 +1040,7 @@ namespace Talos.Base
                     case 3252005060: // Cursed Tune 10
                     case 3268782679: // Cursed Tune 11
                     case 3285560298: // Cursed Tune 12
-                        if (CreatureTarget.HasCursedTunes)
+                        if (CastedTarget.HasCursedTunes)
                         {
                             Console.WriteLine("ReadyToSpell: Creature already has CT, returning false");
                             return false;
@@ -1175,7 +1181,7 @@ namespace Talos.Base
             DateTime utcNow = DateTime.UtcNow;
             while (true)
             {
-                if (_currentSpell != null)
+                if (CastedSpell != null)
                 {
                     if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 1.5))
                     {
@@ -1186,7 +1192,7 @@ namespace Talos.Base
                 }
                 return true;
             }
-            _currentSpell = null;
+            CastedSpell = null;
             return false;
         }
 
@@ -1721,7 +1727,7 @@ namespace Talos.Base
 
             try
             {
-                var validCreatures = GetWorldObjects().OfType<Creature>().Where(creature => IsValidCreature(creature, distance));
+                var validCreatures = GetNearbyObjects().OfType<Creature>().Where(creature => IsValidCreature(creature, distance));
                 creatureList.AddRange(validCreatures);
 
                 if (creatureList.Count == 0) return creatureList;
@@ -1773,7 +1779,7 @@ namespace Talos.Base
             {
                 try
                 {
-                    foreach (Creature creature in GetWorldObjects().OfType<Creature>())
+                    foreach (Creature creature in GetNearbyObjects().OfType<Creature>())
                     {
                         if (creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
                             !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
@@ -1988,7 +1994,7 @@ namespace Talos.Base
             {
                 int test = _clientLocation.DistanceFrom(target.Location);
                 ServerMessage((byte)ServerMessageType.TopRight, $"Casting on {target.ID}, {test} spaces");
-                SendBashingTarget(2, target.ID, $"[Target]");
+                DisplayTextOverTarget(2, target.ID, $"[Target]");
             }
 
 
@@ -2015,11 +2021,17 @@ namespace Talos.Base
                         return false;
                     }
                 }
+                
+                CastedTarget = (target ?? Player);
+                if (CastedTarget != null)
+                {
+                    ServerMessage((byte)ServerMessageType.AdminMessage, $"Casting on {CastedTarget.ID}, is cursed: {CastedTarget.IsCursed}");
+                }
+                Console.WriteLine($"Casting on {CastedTarget.ID}, hash: {CastedTarget.GetHashCode()}, is cursed: {CastedTarget.IsCursed}");
 
-                CreatureTarget = (target ?? Player);
                 if (ReadyToSpell(spell.Name))
                 {
-                    var existingEntry = _spellHistory.FirstOrDefault(cts => cts.Creature.ID == CreatureTarget.ID && cts.Spell.Name == spell.Name);
+                    var existingEntry = _spellHistory.FirstOrDefault(cts => cts.Creature.ID == CastedTarget.ID && cts.Spell.Name == spell.Name);
 
                     if (existingEntry != null)
                     {
@@ -2036,7 +2048,7 @@ namespace Talos.Base
                     }
                     else
                     {
-                        var newEntry = new SpellEntry(spell, CreatureTarget)
+                        var newEntry = new SpellEntry(spell, CastedTarget)
                         {
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
@@ -2051,7 +2063,7 @@ namespace Talos.Base
                 //}
 
 
-                if (_currentSpell != spell)
+                if (CastedSpell != spell)
                 {
                     ClientTab.Invoke((Action)delegate
                     {
@@ -2152,10 +2164,10 @@ namespace Talos.Base
                 Bot._spellTimer = DateTime.UtcNow;
                 spell.LastUsed = DateTime.UtcNow;
                 _isCasting = false;
-                _currentSpell = (wait ? spell : null);
+                CastedSpell = (wait ? spell : null);
                 if (spell.Name != "Gem Polishing" || spell.Name.Contains("Prayer"))
                 {
-                    _currentSpell = spell;
+                    CastedSpell = spell;
                 }
                 return !wait || WaitForSpellChant();
             }
@@ -2271,7 +2283,7 @@ namespace Talos.Base
             Enqueue(serverPacket);
         }
 
-        internal void SendBashingTarget(byte type, int id, string message)
+        internal void DisplayTextOverTarget(byte type, int id, string message)
         {
             ServerPacket serverPacket = new ServerPacket(13);
             serverPacket.WriteByte(type);
@@ -2484,7 +2496,7 @@ namespace Talos.Base
                 _isCasting = false;
             }
 
-            if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetWorldObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
+            if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetNearbyObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
                 int dist = _clientLocation.DistanceFrom(destination);
                 //Console.WriteLine($"Current distance to destination: {dist}, Threshold: {distance}");
@@ -2552,7 +2564,7 @@ namespace Talos.Base
                 }
 
 
-                List<Creature> nearbyCreatures = (from creature in GetWorldObjects().OfType<Creature>()
+                List<Creature> nearbyCreatures = (from creature in GetNearbyObjects().OfType<Creature>()
                                                   where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(_serverLocation) <= 11
                                                   select creature).ToList();
 
@@ -3162,7 +3174,7 @@ namespace Talos.Base
 
             lock (Server.SyncObj)
             {
-                foreach (var creature in GetWorldObjects().OfType<Creature>())
+                foreach (var creature in GetNearbyObjects().OfType<Creature>())
                 {
                     if ((creature.Type == CreatureType.Normal || creature.Type == CreatureType.WalkThrough)
                         && IsCreatureNearby(creature, distance)

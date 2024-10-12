@@ -5,10 +5,12 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Media;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -457,39 +459,39 @@ namespace Talos
             Spell spell = client.Spellbook[slot];
             if (spell != null)
             {
-                client._currentSpell = spell;
+                client.CastedSpell = spell;
                 if (clientPacket.Data.Length <= 2)
                 {
-                    client.CreatureTarget = null;
+                    client.CastedTarget = null;
                 }
                 else
                 {
                     try
                     {
-                        client.CreatureTarget = client.WorldObjects[(int)clientPacket.ReadUInt32()] as Creature;
+                        client.CastedTarget = client.WorldObjects[(int)clientPacket.ReadUInt32()] as Creature;
                     }
                     catch (KeyNotFoundException)
                     {
-                        client.CreatureTarget = client.Player;
+                        client.CastedTarget = client.Player;
                     }
                 }
-                if (!(spell is Caster))
+                if (!(spell is ProxySpell))
                 {
                     return true;
                 }
-                Caster caster = spell as Caster;
-                switch (caster.Type)
+                ProxySpell proxySpell = spell as ProxySpell;
+                switch (proxySpell.Type)
                 {
                     case 1:
-                        caster.SpellCastDelegate(client, 0, clientPacket.ReadString());
+                        proxySpell.OnUse(client, 0, clientPacket.ReadString());
                         break;
 
                     case 2:
-                        caster.SpellCastDelegate(client, clientPacket.ReadUInt32(), string.Empty);
+                        proxySpell.OnUse(client, clientPacket.ReadUInt32(), string.Empty);
                         break;
 
                     case 5:
-                        caster.SpellCastDelegate(client, 0, string.Empty);
+                        proxySpell.OnUse(client, 0, string.Empty);
                         break;
                     default:
                         break;
@@ -1002,8 +1004,8 @@ namespace Talos
                         if (!client.WorldObjects.ContainsKey(id))
                             client.WorldObjects.TryAdd(id, obj);
 
-                        if (!client.ObjectHashSet.Contains(id))
-                            client.ObjectHashSet.Add(id);
+                        if (!client.NearbyGroundItems.Contains(id))
+                            client.NearbyGroundItems.Add(id);
                     }
                     else // Is a creature
                     {
@@ -1019,10 +1021,10 @@ namespace Talos
                             name = serverPacket.ReadString8();
                         }
 
-                        var creature = new Creature(id, name, sprite, type, location, (Direction)direction);
+                        Creature creature = GetOrCreateCreature(client, id, name, sprite, type, location, (Direction)direction);
 
-                        if (!client.WorldObjects.ContainsKey(id))
-                            client.WorldObjects.TryAdd(id, creature);
+                        //if (!client.WorldObjects.ContainsKey(id))
+                        //    client.WorldObjects.AddOrUpdate(id, creature, (key, oldValue) => creature);
 
                         if (!client.NearbyObjects.Contains(id))
                             client.NearbyObjects.Add(id);
@@ -1402,86 +1404,96 @@ namespace Talos
             {
                 var worldObject = client.WorldObjects[id];
 
-                if (worldObject is GroundItem obj && obj.Exists)
+                if (worldObject is GroundItem obj && obj.IsItem)
                 {
                     client.WorldObjects.TryRemove(worldObject.ID, out _);
 
-                    if (client.ObjectHashSet.Contains(worldObject.ID))
+                    if (client.NearbyGroundItems.Contains(worldObject.ID))
                     {
-                        client.ObjectHashSet.Remove(worldObject.ID);
+                        client.NearbyGroundItems.Remove(worldObject.ID);
                     }
 
                 }
-                else if (!(worldObject is Creature) || worldObject is Player)
+                else if (worldObject is Player player)
                 {
-                    if (!(worldObject is Player))
+
+                    client.WorldObjects.TryRemove(worldObject.ID, out _);
+
+                    client.NearbyPlayers.TryRemove(player.Name, out _);
+                    client.NearbyGhosts.TryRemove(player.Name, out _);
+
+
+                    ClientTab clientTab = client.ClientTab;
+                    if (clientTab != null)
                     {
-                        client.WorldObjects.TryRemove(worldObject.ID, out _);
-                    }
+                        clientTab.UpdateStrangerList();
 
-                    if (worldObject is Player)
-                    {
-                        var player = worldObject as Player;
-                        client.NearbyPlayers.TryRemove(player.Name, out _);
-                        client.NearbyGhosts.TryRemove(player.Name, out _);
+                        TabPage selectedTab = clientTab.aislingTabControl.SelectedTab;
 
-
-                        ClientTab clientTab = client.ClientTab;
-                        if (clientTab != null)
+                        if (ReferenceEquals(selectedTab, clientTab.nearbyAllyTab) &&
+                            ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainAislingsTab))
                         {
-                            clientTab.UpdateStrangerList();
 
-                            TabPage selectedTab = clientTab.aislingTabControl.SelectedTab;
-
-                            if (ReferenceEquals(selectedTab, clientTab.nearbyAllyTab) &&
-                                ReferenceEquals(clientTab.clientTabControl.SelectedTab, clientTab.mainAislingsTab))
-                            {
-
-                                clientTab.UpdateNearbyAllyTable(player.Name);
-                            }
+                            clientTab.UpdateNearbyAllyTable(player.Name);
                         }
-
-
                     }
+
                 }
-                else //is a creature
+                else if (worldObject is Creature creature)
                 {
-                    var creature = worldObject as Creature;
+
                     if (creature.Type == CreatureType.Merchant && client.NearbyNPC.ContainsKey(creature.Name))
                     {
                         client.NearbyNPC.TryRemove(creature.Name, out _);
                     }
 
-                    if ((creature.HealthPercent == 0) || client._map.Name.Contains("Plamit"))
+                    // Check if the creature is dead
+                    if (creature.HealthPercent == 0)
                     {
+                        // Remove dead creatures immediately
+                        client.WorldObjects.TryRemove(creature.ID, out _);
+                        Console.WriteLine($"[RemoveVisibleObjects] Removed dead Creature ID {creature.ID}, Hash: {creature.GetHashCode()}");
+                    }
 
-                        if (!client._map.Name.Contains("Plamit") || (creature.Location.DistanceFrom(client._serverLocation) >= 10))
+                    if (client._map.Name.Contains("Plamit"))
+                    {
+                        if (creature.Location.DistanceFrom(client._serverLocation) >= 10)
                         {
                             client.WorldObjects.TryRemove(creature.ID, out _);
                             client.NearbyObjects.Remove(creature.ID);
                         }
+                    }
 
-                        if (!client.WorldObjects.Values.Any(worldObj =>
-                            worldObj is Creature && client.IsCreatureNearby(worldObj as VisibleObject, 12) &&
-                            (worldObj as Creature).SpriteID == creature.SpriteID))
+                    if (!client.WorldObjects.Values.Any(worldObj => worldObj is Creature &&
+                                  client.IsCreatureNearby(worldObj as VisibleObject, 12) &&
+                                  (worldObj as Creature).SpriteID == creature.SpriteID))
+                    {
+                        ClientTab clientTab = client.ClientTab;
+                        if (clientTab != null && clientTab.monsterTabControl.SelectedTab == clientTab.nearbyEnemyTab &&
+                            clientTab.clientTabControl.SelectedTab == clientTab.mainMonstersTab)
                         {
-                            ClientTab clientTab = client.ClientTab;
-                            if (clientTab != null && clientTab.monsterTabControl.SelectedTab == clientTab.nearbyEnemyTab &&
-                                clientTab.clientTabControl.SelectedTab == clientTab.mainMonstersTab)
-                            {
-                                client.ClientTab.UpdateNearbyEnemyTable(creature.SpriteID);
-                            }
-
-                            if (client.Bot.AllMonsters != null && client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
-                            {
-                                client.Bot.ClearEnemyLists(creature.SpriteID.ToString());
-                            }
+                            client.ClientTab.UpdateNearbyEnemyTable(creature.SpriteID);
                         }
+
+                        if (client.Bot.AllMonsters != null && client.Bot.IsEnemyAlreadyListed(creature.SpriteID))
+                        {
+                            client.Bot.ClearEnemyLists(creature.SpriteID.ToString());
+                        }
+
+
+                        // Mark the creature as inactive instead of removing
+                        creature.IsActive = false;
+                        creature.LastSeen = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        //Catch any other types here and remove them
+                        client.WorldObjects.TryRemove(id, out _);
                     }
                 }
-
-                client.WorldObjects.TryRemove(worldObject.ID, out _);
             }
+
+            CleanupInactiveCreatures(client);
 
             return true;
         }
@@ -3041,7 +3053,7 @@ namespace Talos
             {
                 if (client._spellHistory != null && client._spellHistory.Count > 0)
                 {
-                    Console.WriteLine($"[RemoveFirstCreatureToSpell] Creature ID: {client._spellHistory[0].Creature.ID}, Spellname: {client._spellHistory[0].Spell.Name}");
+                    Console.WriteLine($"[RemoveFirstCreatureToSpell] Creature ID: {client._spellHistory[0].Creature.ID}, Spellname: {client._spellHistory[0].Spell.Name}, Hash: {client._spellHistory[0].Spell.GetHashCode()}");
                     client._spellHistory.RemoveAt(0);
                 }
             }
@@ -3387,6 +3399,63 @@ namespace Talos
             }
 
             return player;
+        }
+
+        private Creature GetOrCreateCreature(Client client, int id, string name, ushort sprite, byte type, Location location, Direction direction)
+        {
+            Creature creature = null;
+
+            // Check if the creature exists in WorldObjects and is a Creature
+            if (client.WorldObjects.TryGetValue(id, out var worldObject) && worldObject is Creature existingCreature)
+            {
+                // Creature found in WorldObjects
+                creature = existingCreature;
+            }
+
+            // If creature wasn't found, create a new one
+            if (creature == null)
+            {
+                creature = new Creature(id, name, sprite, type, location, direction);
+                // Add the new creature to WorldObjects
+                client.WorldObjects[id] = creature;
+            }
+            else
+            {
+                // Update the existing creature's properties
+                creature.Location = location;
+                creature.Direction = direction;
+                creature.IsActive = true;
+                creature.LastSeen = DateTime.UtcNow;
+                if (!string.IsNullOrEmpty(name) && string.IsNullOrEmpty(creature.Name))
+                {
+                    creature.Name = name;
+                }
+            }
+
+            return creature;
+        }
+
+        private void CleanupInactiveCreatures(Client client)
+        {
+            try
+            {
+                foreach (var kvp in client.WorldObjects.ToList())
+                {
+                    if (kvp.Value is Creature creature && !creature.IsActive)
+                    {
+                        // Remove if the creature has been inactive for more than 5 minutes
+                        if ((DateTime.UtcNow - creature.LastSeen) > TimeSpan.FromMinutes(5))
+                        {
+                            client.WorldObjects.TryRemove(creature.ID, out _);
+                            Console.WriteLine($"[CleanupInactiveCreatures] Removed inactive Creature ID {creature.ID}.");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CleanupInactiveCreatures] Exception: {ex.Message}");
+            }
         }
     }
 }

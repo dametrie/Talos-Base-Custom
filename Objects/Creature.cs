@@ -15,6 +15,8 @@ namespace Talos.Objects
         internal int _hitCounter;
         internal DateTime _lastUpdate = DateTime.Now;
         internal ushort _animation;
+        public bool IsActive { get; set; } = true; // Default to active when created
+        public DateTime LastSeen { get; set; } = DateTime.UtcNow;
         internal Direction Direction { get; set; }
         internal DateTime LastCursed { get; set; }
         internal DateTime LastFassed { get; set; } 

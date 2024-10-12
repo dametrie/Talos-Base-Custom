@@ -4,12 +4,12 @@ namespace Talos.Objects
 {
     internal class GroundItem : VisibleObject
     {
-        internal bool Exists { get; private set; }
+        internal bool IsItem { get; private set; }
 
-        internal GroundItem(int id, ushort sprite, Location location, bool exists)
+        internal GroundItem(int id, ushort sprite, Location location, bool isItem)
             : base(id, string.Empty, sprite, location)
         {
-            Exists = exists;
+            IsItem = isItem;
             SpriteID = sprite;
         }
     }

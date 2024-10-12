@@ -8,25 +8,25 @@ using Talos.Base;
 namespace Talos.Objects
 {
     internal delegate void SpellCastDelegate(Client client, uint target, string args);
-    internal sealed class Caster : Spell
+    internal sealed class ProxySpell : Spell
     {
 
-        internal SpellCastDelegate SpellCastDelegate
+        internal SpellCastDelegate OnUse
         {
             get;
             private set;
         }
 
-        internal Caster(string string_2)
+        internal ProxySpell(string spellName)
         {
         }
 
-        internal Caster(byte type, string name, string prompt, SpellCastDelegate spellCastDelegate)
+        internal ProxySpell(byte type, string name, string prompt, SpellCastDelegate onUse)
         {
             Type = type;
             Name = name;
             Prompt = prompt;
-            SpellCastDelegate = spellCastDelegate;
+            OnUse = onUse;
         }
     }
 }
