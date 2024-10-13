@@ -516,9 +516,12 @@ namespace Talos.Forms
             this.largeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.expBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
+            this.mushroomBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
             this.autoMushroomCbox = new System.Windows.Forms.CheckBox();
             this.mushroomCombox = new System.Windows.Forms.ComboBox();
+            this.healthBar = new ResourceBar("healthBar");
+            this.manaBar = new ResourceBar("manaBar");
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();

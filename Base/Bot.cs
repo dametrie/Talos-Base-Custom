@@ -340,7 +340,7 @@ namespace Talos.Base
                             && DateTime.UtcNow.Subtract(Client.LastStep).TotalMilliseconds > 500.0
                             && DateTime.UtcNow.Subtract(Client.LastMoved).TotalMilliseconds > 500.0)
                         {
-                            Console.WriteLine("Bubble conditions met, checking for refresh.");
+                            //Console.WriteLine("Bubble conditions met, checking for refresh.");
                             if (Client._serverLocation != Client._clientLocation)
                             {
                                 Console.WriteLine("Client position differs from server, requesting refresh.");
@@ -350,7 +350,7 @@ namespace Talos.Base
                             else if (Client._map.Name.Contains("Lost Ruins") || Client._map.Name.Contains("Assassin Dungeon")
                                      || _nearbyValidCreatures.Any(c => Client._serverLocation.DistanceFrom(c.Location) <= 6))
                             {
-                                Console.WriteLine("Bubble confirmed for specific maps or valid creatures nearby.");
+                                //Console.WriteLine("Bubble confirmed for specific maps or valid creatures nearby.");
                                 Client._confirmBubble = true;
                             }
                         }
@@ -572,7 +572,7 @@ namespace Talos.Base
                                 && !Client.ClientTab._isBashing)
                             {
                                 Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn1);
-                                Console.WriteLine("Condition 1 met, adjusting walking speed.");
+                                //Console.WriteLine("Condition 1 met, adjusting walking speed.");
                             }
 
                             // Condition 2
@@ -582,7 +582,7 @@ namespace Talos.Base
                                 && !Client.ClientTab._isBashing)
                             {
                                 Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn2);
-                                Console.WriteLine("Condition 2 met, adjusting walking speed.");
+                                //Console.WriteLine("Condition 2 met, adjusting walking speed.");
                             }
 
                             // Condition 3
@@ -592,7 +592,7 @@ namespace Talos.Base
                                 && !Client.ClientTab._isBashing)
                             {
                                 Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn3);
-                                Console.WriteLine("Condition 3 met, adjusting walking speed.");
+                                //Console.WriteLine("Condition 3 met, adjusting walking speed.");
                             }
 
                             // Condition 4
@@ -600,7 +600,7 @@ namespace Talos.Base
                                 && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn4)))
                                     >= GetNumericUpDownValue(waysForm.mobSizeUpDwn4))
                             {
-                                Console.WriteLine("Condition 4 met, stopping movement and checking bubble conditions.");
+                                //Console.WriteLine("Condition 4 met, stopping movement and checking bubble conditions.");
                                 Client._stopped = true;
 
                                 if (BackTracking())

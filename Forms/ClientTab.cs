@@ -184,7 +184,7 @@ namespace Talos.Forms
             }
             if (profilePath == null)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
             }
             foreach (string item in Directory.GetFiles(profilePath, "*.xml").Select(Path.GetFileNameWithoutExtension))
             {

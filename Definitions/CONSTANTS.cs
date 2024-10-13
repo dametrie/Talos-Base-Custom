@@ -251,7 +251,8 @@ namespace Talos.Definitions
             "viveena",
             "ladieerror",
             "errorjr",
-            "and"
+            "and",
+            "yukii"
         };
 
         public static readonly IReadOnlyCollection<string> TRASH_ITEMS = new string[]

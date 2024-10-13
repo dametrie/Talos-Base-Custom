@@ -2014,9 +2014,9 @@ namespace Talos.Base
                 CastedTarget = (target ?? Player);
                 if (CastedTarget != null)
                 {
-                    ServerMessage((byte)ServerMessageType.AdminMessage, $"Casting on {CastedTarget.ID}, is cursed: {CastedTarget.IsCursed}");
+                    ServerMessage((byte)ServerMessageType.AdminMessage, $"Casting {spellName} on {CastedTarget.ID}, is cursed: {CastedTarget.IsCursed}");
                 }
-                Console.WriteLine($"[Casting] Creature ID: {CastedTarget.ID}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.LastCursed}, CurseDuration: {CastedTarget.CurseDuration}");
+                Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.LastCursed}, CurseDuration: {CastedTarget.CurseDuration}");
 
                 if (ReadyToSpell(spell.Name))
                 {
