@@ -35,7 +35,14 @@ namespace Talos.Forms
         }
         private void savedWaysLBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            saveTBox.Text = savedWaysLBox.SelectedItem.ToString();
+            if (savedWaysLBox.SelectedItem != null)
+            {
+                saveTBox.Text = savedWaysLBox.SelectedItem.ToString();
+            }
+            else
+            {
+                saveTBox.Text = string.Empty;
+            }
         }
 
         private async void loadBtn_Click(object sender, EventArgs e)
@@ -101,7 +108,7 @@ namespace Talos.Forms
                 {
                     File.Delete(text);
                 }
-                Client.ClientTab._wayFormBindingList.Remove(text);
+                Client.ClientTab._wayFormProfiles.Remove(text);
             }
             catch
             {
@@ -134,7 +141,7 @@ namespace Talos.Forms
             File.WriteAllLines(text + "\\" + saveTBox.Text, list2);
             if (!savedWaysLBox.Items.Contains(saveTBox.Text))
             {
-                Client.ClientTab._wayFormBindingList.Add(saveTBox.Text);
+                Client.ClientTab._wayFormProfiles.Add(saveTBox.Text);
             }
         }
 

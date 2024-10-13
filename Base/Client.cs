@@ -1265,12 +1265,7 @@ namespace Talos.Base
             DisplayAisling(player);
             DisplayEntityRequest(player.ID);
         }
-        internal bool IsCreatureNearby(VisibleObject sprite, int dist = 12)
-        {
-            if (!NearbyObjects.Contains(sprite.ID))
-                return false;
-            return _serverLocation.DistanceFrom(sprite.Location) <= dist;
-        }
+
         private bool UseOptimalStaff(Spell spell, out byte castLines)
         {
             bool swappingWeapons = false;
@@ -1777,7 +1772,7 @@ namespace Talos.Base
                     {
                         if (creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
                             !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
-                            !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && IsCreatureNearby(creature, distance)) ;
+                            !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && WithinRange(creature, distance)) ;
                         {
                             list.Add(creature);
                         }
@@ -1943,7 +1938,7 @@ namespace Talos.Base
                 {
                     Task.Run(() =>
                     {
-                        ClientTab.UpdateStrangerListAfterCharge();
+                        ClientTab.DelayedUpdateStrangerList();
                     });
                 }
                 ClientTab.Invoke((Action)delegate
@@ -2200,7 +2195,7 @@ namespace Talos.Base
                     _currentSkill = skillName;
                     if (skillName == "Charge")
                     {
-                        ThreadPool.QueueUserWorkItem(_ => ClientTab.UpdateStrangerListAfterCharge());
+                        ThreadPool.QueueUserWorkItem(_ => ClientTab.DelayedUpdateStrangerList());
                     }
                 }
                 Enqueue(clientPacket);
@@ -3171,7 +3166,7 @@ namespace Talos.Base
                 foreach (var creature in GetNearbyObjects().OfType<Creature>())
                 {
                     if ((creature.Type == CreatureType.Normal || creature.Type == CreatureType.WalkThrough)
-                        && IsCreatureNearby(creature, distance)
+                        && WithinRange(creature, distance)
                         && creature.SpriteID > 0 && creature.SpriteID <= 1000
                         && !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID)
                         && !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID)

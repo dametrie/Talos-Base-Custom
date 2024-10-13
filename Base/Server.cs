@@ -557,7 +557,7 @@ namespace Talos
             {
                 if (client.Inventory[slot].Name == "Sprint Potion")
                 {
-                    ThreadPool.QueueUserWorkItem(_ => client.ClientTab.UpdateStrangerListAfterCharge());
+                    ThreadPool.QueueUserWorkItem(_ => client.ClientTab.DelayedUpdateStrangerList());
                 }
             }
             catch (Exception ex)
@@ -721,7 +721,7 @@ namespace Talos
                 if (client._currentSkill == "Charge") //In the event the client is a monk thathas a "fake" skill named charge
                                                       //On their skill panel that is linked to sprint potion
                 {
-                    ThreadPool.QueueUserWorkItem(_ => client.ClientTab.UpdateStrangerListAfterCharge());
+                    ThreadPool.QueueUserWorkItem(_ => client.ClientTab.DelayedUpdateStrangerList());
 
                     if (client.Inventory.HasItem("Sprint Potion") && client.UseItem("Sprint Potion"))
                     {
@@ -1465,7 +1465,7 @@ namespace Talos
                     }
 
                     if (!client.WorldObjects.Values.Any(worldObj => worldObj is Creature &&
-                                  client.IsCreatureNearby(worldObj as VisibleObject, 12) &&
+                                  client.WithinRange(worldObj as VisibleObject, 12) &&
                                   (worldObj as Creature).SpriteID == creature.SpriteID))
                     {
                         ClientTab clientTab = client.ClientTab;
@@ -1773,6 +1773,7 @@ namespace Talos
             client.NearbyObjects.Clear();
             client.ClientTab.ClearNearbyEnemies();
             client.ClientTab.ClearNearbyAllies();
+            client.ClientTab.UpdateStrangerList();
 
             return true;
         }
@@ -2579,7 +2580,7 @@ namespace Talos
 
                 }
 
-                if (client.IsCreatureNearby(p, 12))
+                if (client.WithinRange(p, 12))
                 {
                     client.ClientTab.UpdateStrangerList();
                     client.DisplayAisling(p);
@@ -2994,6 +2995,8 @@ namespace Talos
 
             client.Pathfinder = new Pathfinder(client);
 
+            client.ClientTab.UpdateStrangerList();
+
             return true;
         }
 
@@ -3345,15 +3348,15 @@ namespace Talos
                             }
                         }
 
-                        if (DateTime.UtcNow.Subtract(client.ClientTab._inventoryUpdateTime).TotalSeconds > 60.0)
+                        if (DateTime.UtcNow.Subtract(client.ClientTab._lastUpdate).TotalSeconds > 60.0)
                         {
-                            client.ClientTab.UpdateInventoryAndWaypoints();
-                            client.ClientTab._inventoryUpdateTime = DateTime.UtcNow;
+                            client.ClientTab.HandleFiles();
+                            client.ClientTab._lastUpdate = DateTime.UtcNow;
                         }
 
                         if (DateTime.UtcNow.Subtract(client.ClientTab._lastStatusUpdate).TotalSeconds > 3.0 && !client.isStatusUpdated)
                         {
-                            client.ClientTab.UpdateClientStatus();
+                            client.ClientTab.AutoLoginHandlers();
                         }
                     }
                     catch

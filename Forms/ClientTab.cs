@@ -54,7 +54,7 @@ namespace Talos.Forms
         private Stopwatch _sessionGoldStopWatch = new Stopwatch();
 
 
-        internal DateTime _inventoryUpdateTime;
+        internal DateTime _lastUpdate;
         internal DateTime _lastStatusUpdate;
 
 
@@ -100,7 +100,7 @@ namespace Talos.Forms
 			"Holy Gaea"
 		};
 
-        internal BindingList<string> _wayFormBindingList = new BindingList<string>();
+        internal BindingList<string> _wayFormProfiles = new BindingList<string>();
 
 
         private readonly object _lock = new object();
@@ -113,6 +113,7 @@ namespace Talos.Forms
         internal bool _isLoading;
         private string waypointsPath;
         private List<string> waypointList;
+        private System.Windows.Forms.Timer mushroomBonusCooldownTimer;
 
         internal ClientTab(Client client)
         {
@@ -122,7 +123,7 @@ namespace Talos.Forms
             UIHelper.Initialize(_client);
             InitializeComponent();
 
-            _wayForm.savedWaysLBox.DataSource = _wayFormBindingList;
+            _wayForm.savedWaysLBox.DataSource = _wayFormProfiles;
             worldObjectListBox.DataSource = client._worldObjectBindingList;
             creatureHashListBox.DataSource = client._creatureBindingList;
             strangerList.DataSource = client._strangerBindingList;
@@ -193,12 +194,12 @@ namespace Talos.Forms
                     waypointList.Add(item);
                 }
             }
-            foreach (string item2 in Directory.GetFiles(waypointsPath).Select(Path.GetFileName))
+            foreach (string itemToAdd in Directory.GetFiles(waypointsPath).Select(Path.GetFileName))
             {
-                BindingList<string> bindingList = _wayFormBindingList;
-                if (bindingList != null && !bindingList.Contains(item2))
+                BindingList<string> bindingList = _wayFormProfiles;
+                if (bindingList != null && !bindingList.Contains(itemToAdd))
                 {
-                    UpdateBindingList(_wayFormBindingList, _wayForm.savedWaysLBox, item2);
+                    UpdateBindingList(_wayFormProfiles, _wayForm.savedWaysLBox, itemToAdd);
                 }
             }
         }
@@ -560,16 +561,28 @@ namespace Talos.Forms
 
         internal void UpdateBindingList(BindingList<string> bindingList, ListBox listBox, string name)
         {
-            if (!string.IsNullOrEmpty(name) && listBox != null)
+            if (listBox == null || string.IsNullOrEmpty(name))
+            {
+                return;
+            }
+
+            // Check if we're on the UI thread
+            if (listBox.InvokeRequired)
+            {
+                listBox.Invoke(new Action(() => UpdateBindingList(bindingList, listBox, name)));
+            }
+            else
             {
                 if (bindingList.Count != 0)
                 {
                     bindingList.Add(name);
-                    return;
                 }
-                listBox.DataSource = null;
-                bindingList.Add(name);
-                listBox.DataSource = bindingList;
+                else
+                {
+                    bindingList.Add(name);
+                    listBox.DataSource = null;
+                    listBox.DataSource = bindingList;
+                }
             }
         }
 
@@ -849,10 +862,10 @@ namespace Talos.Forms
         private void bonusCooldownTimer_Tick(object sender, EventArgs e)
         {
             // Calculate the total elapsed time since the last bonus was applied
-            TimeSpan elapsedTimeSinceLastBonus = DateTime.Now - _client.Bot._lastBonusAppliedTime;
+            TimeSpan elapsedTimeSinceLastBonus = DateTime.Now - _client.Bot._lastExpBonusAppliedTime;
 
             // Accumulate the total elapsed time with any previously stored elapsed time
-            TimeSpan totalElapsedTime = elapsedTimeSinceLastBonus + _client.Bot._bonusElapsedTime;
+            TimeSpan totalElapsedTime = elapsedTimeSinceLastBonus + _client.Bot._expBonusElapsedTime;
 
             // Update the label to show the total elapsed time in a readable format
             doublesLbl.Text = $"Time Elapsed: {totalElapsedTime.Hours}h {totalElapsedTime.Minutes}m {totalElapsedTime.Seconds}s";
@@ -1089,7 +1102,7 @@ namespace Talos.Forms
             _client._walkSpeed = walkSpeedSldr.Value;
         }
 
-        internal void UpdateStrangerListAfterCharge()
+        internal void DelayedUpdateStrangerList()
         {
             Thread.Sleep(1600);
             UpdateStrangerList();
@@ -1097,41 +1110,49 @@ namespace Talos.Forms
 
         internal void UpdateStrangerList()
         {
-            
-            lock (_lock)
+            if (Monitor.TryEnter(_lock, 150))
             {
-                bool isChargeSkillUsedRecently = _client.HasSkill("Charge") && (DateTime.UtcNow - _client.Skillbook["Charge"].LastUsed).TotalMilliseconds < 1500.0;
-                bool isSprintPotionUsedRecently = _client.HasItem("Sprint Potion") && (DateTime.UtcNow - _client.Inventory.HasItemReturnSlot("Sprint Potion").LastUsed).TotalMilliseconds < 1500.0;
-
-                if (!isChargeSkillUsedRecently && !isSprintPotionUsedRecently)
+                try
                 {
-                    HashSet<string> nearbyPlayers = new HashSet<string>(_client.GetNearbyPlayerList().Select(player => player.Name), StringComparer.CurrentCultureIgnoreCase);
-                    HashSet<string> nonStrangers = new HashSet<string>(_client.AllyListHashSet.Concat(_client._friendBindingList), StringComparer.CurrentCultureIgnoreCase);
+                    bool isChargeSkillUsedRecently = _client.HasSkill("Charge") && (DateTime.UtcNow - _client.Skillbook["Charge"].LastUsed).TotalMilliseconds < 1500.0;
+                    bool isSprintPotionUsedRecently = _client.HasItem("Sprint Potion") && (DateTime.UtcNow - _client.Inventory.HasItemReturnSlot("Sprint Potion").LastUsed).TotalMilliseconds < 1500.0;
 
-                    foreach (string name in new List<string>(_client._strangerBindingList))
+                    if (!isChargeSkillUsedRecently && !isSprintPotionUsedRecently)
                     {
-                        if (nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) || !nearbyPlayers.Contains(name, StringComparer.CurrentCultureIgnoreCase))
+                        HashSet<string> nearbyPlayers = new HashSet<string>(_client.GetNearbyPlayerList().Select(player => player.Name), StringComparer.CurrentCultureIgnoreCase);
+                        HashSet<string> nonStrangers = new HashSet<string>(_client.AllyListHashSet.Concat(_client._friendBindingList), StringComparer.CurrentCultureIgnoreCase);
+
+                        foreach (string name in new List<string>(_client._strangerBindingList))
                         {
-                            _client._strangerBindingList.Remove(name);
+                            if (nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) || !nearbyPlayers.Contains(name, StringComparer.CurrentCultureIgnoreCase))
+                            {
+                                _client._strangerBindingList.Remove(name);
+                            }
                         }
-                    }
-                    foreach (string name in nearbyPlayers)
-                    {
-                        if (!nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) && !_client._strangerBindingList.Contains(name, StringComparer.CurrentCultureIgnoreCase))
+                        foreach (string name in nearbyPlayers)
                         {
-                            UpdateBindingList(_client._strangerBindingList, strangerList, name);
+                            if (!nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) && !_client._strangerBindingList.Contains(name, StringComparer.CurrentCultureIgnoreCase))
+                            {
+                                UpdateBindingList(_client._strangerBindingList, strangerList, name);
+                            }
                         }
-                    }
-                    foreach (string name in new List<string>(_client._strangerBindingList))
-                    {
-                        if (!string.IsNullOrEmpty(name))
+                        foreach (string name in new List<string>(_client._strangerBindingList))
                         {
-                            _client.DictLastSeen[name] = DateTime.UtcNow;
+                            if (!string.IsNullOrEmpty(name))
+                            {
+                                _client.DictLastSeen[name] = DateTime.UtcNow;
+                            }
                         }
+                        _client.DictLastSeen = _client.DictLastSeen.OrderByDescending((KeyValuePair<string, DateTime> kvp) => kvp.Value).Take(5).ToDictionary((KeyValuePair<string, DateTime> kvp) => kvp.Key, (KeyValuePair<string, DateTime> kvp) => kvp.Value);
                     }
-                    _client.DictLastSeen = _client.DictLastSeen.OrderByDescending((KeyValuePair<string, DateTime> kvp) => kvp.Value).Take(5).ToDictionary((KeyValuePair<string, DateTime> kvp) => kvp.Key, (KeyValuePair<string, DateTime> kvp) => kvp.Value);
+                }
+                finally
+                {
+                    Monitor.Exit(_lock);
                 }
             }
+                
+
         }
 
         private void dojoRefreshBtn_Click(object sender, EventArgs e)
@@ -2001,7 +2022,6 @@ namespace Talos.Forms
 
         private void useDoubleBtn_Click(object sender, EventArgs e)
         {
-            // Mapping of combobox text to the item names
             var itemMappings = new Dictionary<string, string>
             {
                 { "Kruna 50%", "50 Percent EXP/AP Bonus" },
@@ -2011,40 +2031,110 @@ namespace Talos.Forms
                 { "Vday 100%", "VDay Bonus Exp-Ap" }
             };
 
-            // Check for special case where additional logic is needed
             if (doublesCombox.Text == "Xmas 100%")
             {
                 var itemText = _client.HasItem("Christmas Double Exp-Ap") ? "Christmas Double Exp-Ap" : "XMas Double Exp-Ap";
-                UseItem(itemText);
+                UseDouble(itemText);
             }
             else if (itemMappings.TryGetValue(doublesCombox.Text, out var itemText))
             {
-                UseItem(itemText);
+                UseDouble(itemText);
             }
 
-            UpdateBonusTimer();
+            UpdateExpBonusTimer();
         }
 
-        internal void UseItem(string itemText)
+        internal void UseDouble(string doubleName)
         {
-            if (!_client.UseItem(itemText))
+            if (!_client.UseItem(doubleName))
             {
-                _client.ServerMessage((byte)ServerMessageType.Whisper, $"You do not own any {itemText}.");
+                _client.ServerMessage((byte)ServerMessageType.Whisper, $"You do not own any {doubleName}.");
                 autoDoubleCbox.Checked = false;
             }
         }
 
-        internal void UpdateBonusTimer()
+        internal void CastMushroom()
         {
-            _client.Bot._lastBonusAppliedTime = DateTime.Now;
-            _client.Bot._bonusElapsedTime = _client.Bot._bonusElapsedTime;
-
-            if (!bonusCooldownTimer.Enabled)
+            var itemMappings = new Dictionary<string, string>
             {
-                bonusCooldownTimer.Enabled = true;
-                bonusCooldownTimer.Start();
+                { "Double", "Double Experience Mushroom" },
+                { "50 Percent", "50 Percent Experience Mushroom" },
+                { "Greatest", "Greatest Experience Mushroom" },
+                { "Greater", "Greater Experience Mushroom" },
+                { "Great", "Great Experience Mushroom" },
+                { "Experience Mushroom", "Experience Mushroom" }
+            };
+
+            if (mushroomCombox.Text == "Best Available")
+            {
+                var mushrooom = FindBestMushroomInInventory(_client);
+                UseMushroom(mushrooom);
+            }
+            else if (itemMappings.TryGetValue(mushroomCombox.Text, out var mushroom))
+            {
+                UseMushroom(mushroom);
+            }
+
+            UpdateMushroomBonusTimer();
+        }
+
+        internal void UseMushroom(string mushroomName)
+        {
+            if (!_client.UseItem(mushroomName))
+            {
+                _client.ServerMessage((byte)ServerMessageType.Whisper, $"You do not own any {mushroomName}.");
+                autoMushroomCbox.Checked = false;
             }
         }
+
+        internal string FindBestMushroomInInventory(Client client)
+        {
+            List<string> mushroomNames = new List<string>
+            {
+                "Double Experience Mushroom",
+                "50 Percent Experience Mushroom",
+                "Greatest Experience Mushroom",
+                "Greater Experience Mushroom",
+                "Great Experience Mushroom",
+                "Experience Mushroom"
+            };
+
+            foreach (string mushroomName in mushroomNames)
+            {
+                if (client.HasItem(mushroomName))
+                    return mushroomName;
+            }
+
+            return null;
+        }
+
+        internal void UpdateExpBonusTimer()
+        {
+            _client.Bot._lastExpBonusAppliedTime = DateTime.Now;
+            _client.Bot._expBonusElapsedTime = _client.Bot._expBonusElapsedTime;
+
+            if (!expBonusCooldownTimer.Enabled)
+            {
+                expBonusCooldownTimer.Enabled = true;
+                expBonusCooldownTimer.Start();
+            }
+        }
+
+        internal void UpdateMushroomBonusTimer()
+        {
+            _client.Bot._lastMushroomBonusAppliedTime = DateTime.Now;
+            _client.Bot._mushroomBonusElapsedTime = _client.Bot._mushroomBonusElapsedTime;
+
+            if (!mushroomBonusCooldownTimer.Enabled)
+            {
+                mushroomBonusCooldownTimer.Enabled = true;
+                mushroomBonusCooldownTimer.Start();
+            }
+        }
+
+
+
+
 
         internal void StopBot()
         {
@@ -2284,12 +2374,8 @@ namespace Talos.Forms
             _client.SetStatUpdateFlags(StatUpdateFlags.Secondary);
 
         }
-        internal void UpdateInventoryAndWaypoints()
-        {
-            //Adaml
-        }
 
-        internal void UpdateClientStatus()
+        internal void AutoLoginHandlers()
         {
             //Adam
         }
@@ -2338,7 +2424,61 @@ namespace Talos.Forms
             }
         }
 
-        
+        private void removeTrashBtn_Click(object sender, EventArgs e)
+        {
+            if (trashList.SelectedItem != null)
+            {
+                _trashToDrop.Remove(trashList.SelectedItem.ToString());
+            }
+        }
+
+        private void addTrashBtn_Click(object sender, EventArgs e)
+        {
+            if (!_trashToDrop.Contains(addTrashText.Text, StringComparer.CurrentCultureIgnoreCase))
+            {
+                UpdateBindingList(_trashToDrop, trashList, addTrashText.Text);
+                addTrashText.Text = "";
+            }
+        }
+
+        private void getSpriteBtn_Click(object sender, EventArgs e)
+        {
+            if (_client.Inventory[1] != null)
+            {
+                _client.ServerMessage(0, "Your " + _client.Inventory[1].Name + " has a Sprite ID of " + (_client.Inventory[1].Sprite - 32768) + ".");
+            }
+        }
+
+        private void removeOverrideBtn_Click(object sender, EventArgs e)
+        {
+            if (overrideList.SelectedItem != null)
+            {
+                overrideList.Items.Remove(overrideList.SelectedItem);
+            }
+        }
+
+        private void addOverrideBtn_Click(object sender, EventArgs e)
+        {
+            if (!overrideList.Items.Contains(overrideText.Text))
+            {
+                overrideList.Items.Add(overrideText.Text);
+                overrideText.Clear();
+            }
+        }
+
+        private void walkAllClientsBtn_Click(object sender, EventArgs e)
+        {
+            foreach (Client client in _client._server._clientList)
+            {
+                if (client != _client)
+                {
+                    client.ClientTab.walkMapCombox.Text = walkMapCombox.Text;
+                    client.ClientTab.walkSpeedSldr.Value = walkSpeedSldr.Value;
+                    client.ClientTab.walkSpeedSldr_Scroll(client.ClientTab.walkSpeedSldr, new EventArgs());
+                    client.ClientTab.walkBtn.Text = "Stop";
+                }
+            }
+        }
     }
 }
 

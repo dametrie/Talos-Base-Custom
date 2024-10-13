@@ -89,8 +89,6 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
-            this.manaBar = new Talos.Forms.UI.ResourceBar("manaBar");
-            this.healthBar = new Talos.Forms.UI.ResourceBar("healthbar");
             this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
@@ -517,8 +515,10 @@ namespace Talos.Forms
             this.smallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.largeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fullscreenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.bonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
+            this.expBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
+            this.autoMushroomCbox = new System.Windows.Forms.CheckBox();
+            this.mushroomCombox = new System.Windows.Forms.ComboBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -1113,6 +1113,8 @@ namespace Talos.Forms
             // 
             // coverEXPGrp
             // 
+            this.coverEXPGrp.Controls.Add(this.autoMushroomCbox);
+            this.coverEXPGrp.Controls.Add(this.mushroomCombox);
             this.coverEXPGrp.Controls.Add(this.expBoxedLbl);
             this.coverEXPGrp.Controls.Add(this.goldHourLbl);
             this.coverEXPGrp.Controls.Add(this.apHourLbl);
@@ -1129,7 +1131,7 @@ namespace Talos.Forms
             this.coverEXPGrp.Controls.Add(this.expSessionLbl);
             this.coverEXPGrp.Location = new System.Drawing.Point(635, 253);
             this.coverEXPGrp.Name = "coverEXPGrp";
-            this.coverEXPGrp.Size = new System.Drawing.Size(201, 209);
+            this.coverEXPGrp.Size = new System.Drawing.Size(201, 225);
             this.coverEXPGrp.TabIndex = 6;
             this.coverEXPGrp.TabStop = false;
             this.coverEXPGrp.Text = "EXP";
@@ -1170,19 +1172,18 @@ namespace Talos.Forms
             this.expGemsLbl.ForeColor = System.Drawing.Color.Black;
             this.expGemsLbl.Location = new System.Drawing.Point(6, 161);
             this.expGemsLbl.Name = "expGemsLbl";
-            this.expGemsLbl.Size = new System.Drawing.Size(37, 15);
+            this.expGemsLbl.Size = new System.Drawing.Size(0, 15);
             this.expGemsLbl.TabIndex = 25;
-            this.expGemsLbl.Text = "Gems";
             // 
             // doublesLbl
             // 
             this.doublesLbl.AutoSize = true;
             this.doublesLbl.ForeColor = System.Drawing.Color.Black;
-            this.doublesLbl.Location = new System.Drawing.Point(6, 111);
+            this.doublesLbl.Location = new System.Drawing.Point(5, 103);
             this.doublesLbl.Name = "doublesLbl";
-            this.doublesLbl.Size = new System.Drawing.Size(50, 15);
+            this.doublesLbl.Size = new System.Drawing.Size(140, 15);
             this.doublesLbl.TabIndex = 24;
-            this.doublesLbl.Text = "Doubles";
+            this.doublesLbl.Text = "Doubles and Mushrooms";
             // 
             // useGemBtn
             // 
@@ -1200,7 +1201,7 @@ namespace Talos.Forms
             // 
             this.useDoubleBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.useDoubleBtn.ForeColor = System.Drawing.Color.Black;
-            this.useDoubleBtn.Location = new System.Drawing.Point(158, 134);
+            this.useDoubleBtn.Location = new System.Drawing.Point(158, 122);
             this.useDoubleBtn.Name = "useDoubleBtn";
             this.useDoubleBtn.Size = new System.Drawing.Size(43, 23);
             this.useDoubleBtn.TabIndex = 22;
@@ -1212,7 +1213,7 @@ namespace Talos.Forms
             // 
             this.autoGemCbox.AutoSize = true;
             this.autoGemCbox.ForeColor = System.Drawing.Color.Black;
-            this.autoGemCbox.Location = new System.Drawing.Point(102, 181);
+            this.autoGemCbox.Location = new System.Drawing.Point(100, 182);
             this.autoGemCbox.Name = "autoGemCbox";
             this.autoGemCbox.Size = new System.Drawing.Size(52, 19);
             this.autoGemCbox.TabIndex = 21;
@@ -1223,7 +1224,7 @@ namespace Talos.Forms
             // 
             this.autoDoubleCbox.AutoSize = true;
             this.autoDoubleCbox.ForeColor = System.Drawing.Color.Black;
-            this.autoDoubleCbox.Location = new System.Drawing.Point(100, 137);
+            this.autoDoubleCbox.Location = new System.Drawing.Point(100, 126);
             this.autoDoubleCbox.Name = "autoDoubleCbox";
             this.autoDoubleCbox.Size = new System.Drawing.Size(52, 19);
             this.autoDoubleCbox.TabIndex = 18;
@@ -1266,7 +1267,7 @@ namespace Talos.Forms
             "Star 100%",
             "Kruna 100%",
             "Kruna 50%"});
-            this.doublesCombox.Location = new System.Drawing.Point(6, 135);
+            this.doublesCombox.Location = new System.Drawing.Point(6, 123);
             this.doublesCombox.Name = "doublesCombox";
             this.doublesCombox.Size = new System.Drawing.Size(88, 23);
             this.doublesCombox.TabIndex = 2;
@@ -1544,6 +1545,7 @@ namespace Talos.Forms
             this.getSpriteBtn.TabIndex = 19;
             this.getSpriteBtn.Text = "Grab Sprite (1st Slot)";
             this.getSpriteBtn.UseVisualStyleBackColor = true;
+            this.getSpriteBtn.Click += new System.EventHandler(this.getSpriteBtn_Click);
             // 
             // toggleOverrideCbox
             // 
@@ -1566,6 +1568,7 @@ namespace Talos.Forms
             this.removeOverrideBtn.TabIndex = 17;
             this.removeOverrideBtn.Text = "Remove Selected";
             this.removeOverrideBtn.UseVisualStyleBackColor = true;
+            this.removeOverrideBtn.Click += new System.EventHandler(this.removeOverrideBtn_Click);
             // 
             // addOverrideBtn
             // 
@@ -1577,6 +1580,7 @@ namespace Talos.Forms
             this.addOverrideBtn.TabIndex = 16;
             this.addOverrideBtn.Text = "Add Sprite";
             this.addOverrideBtn.UseVisualStyleBackColor = true;
+            this.addOverrideBtn.Click += new System.EventHandler(this.addOverrideBtn_Click);
             // 
             // overrideText
             // 
@@ -2196,6 +2200,7 @@ namespace Talos.Forms
             this.walkAllClientsBtn.TabIndex = 15;
             this.walkAllClientsBtn.Text = "SET FOR ALL CLIENTS";
             this.walkAllClientsBtn.UseVisualStyleBackColor = true;
+            this.walkAllClientsBtn.Click += new System.EventHandler(this.walkAllClientsBtn_Click);
             // 
             // walkBtn
             // 
@@ -2458,6 +2463,7 @@ namespace Talos.Forms
             this.removeTrashBtn.TabIndex = 16;
             this.removeTrashBtn.Text = "Remove Selected";
             this.removeTrashBtn.UseVisualStyleBackColor = true;
+            this.removeTrashBtn.Click += new System.EventHandler(this.removeTrashBtn_Click);
             // 
             // addTrashBtn
             // 
@@ -2469,6 +2475,7 @@ namespace Talos.Forms
             this.addTrashBtn.TabIndex = 15;
             this.addTrashBtn.Text = "Add Trash";
             this.addTrashBtn.UseVisualStyleBackColor = true;
+            this.addTrashBtn.Click += new System.EventHandler(this.addTrashBtn_Click);
             // 
             // pickupItemsCbox
             // 
@@ -6452,8 +6459,12 @@ namespace Talos.Forms
             // 
             // bonusCooldownTimer
             // 
-            this.bonusCooldownTimer.Interval = 1000;
-            this.bonusCooldownTimer.Tick += new System.EventHandler(this.bonusCooldownTimer_Tick);
+            this.expBonusCooldownTimer.Interval = 1000;
+            this.expBonusCooldownTimer.Tick += new System.EventHandler(this.bonusCooldownTimer_Tick);
+            // 
+            // mushroomCooldownTimer
+            // 
+            this.mushroomBonusCooldownTimer.Interval = 1000;
             // 
             // currentAction
             // 
@@ -6463,6 +6474,37 @@ namespace Talos.Forms
             this.currentAction.TabIndex = 6;
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // autoMushroomCBox
+            // 
+            this.autoMushroomCbox.AutoSize = true;
+            this.autoMushroomCbox.ForeColor = System.Drawing.Color.Black;
+            this.autoMushroomCbox.Location = new System.Drawing.Point(100, 155);
+            this.autoMushroomCbox.Name = "autoMushroomCBox";
+            this.autoMushroomCbox.Size = new System.Drawing.Size(52, 19);
+            this.autoMushroomCbox.TabIndex = 30;
+            this.autoMushroomCbox.Text = "Auto";
+            this.autoMushroomCbox.UseVisualStyleBackColor = true;
+            // 
+            // mushroomCombox
+            // 
+            this.mushroomCombox.ForeColor = System.Drawing.Color.Black;
+            this.mushroomCombox.FormattingEnabled = true;
+            this.mushroomCombox.Items.AddRange(new object[] {
+            "Best Available",
+            "Double",
+            "50 Percent",
+            "Greatest",
+            "Greater",
+            "Great",
+            "Experience Mushroom",
+            "",
+            ""});
+            this.mushroomCombox.Location = new System.Drawing.Point(6, 152);
+            this.mushroomCombox.Name = "mushroomCombox";
+            this.mushroomCombox.Size = new System.Drawing.Size(88, 23);
+            this.mushroomCombox.TabIndex = 29;
+            this.mushroomCombox.Text = "Best Available";
             // 
             // ClientTab
             // 
@@ -7129,7 +7171,7 @@ namespace Talos.Forms
         private Label label13;
         private Label label12;
         private Button button1;
-        private System.Windows.Forms.Timer bonusCooldownTimer;
+        private System.Windows.Forms.Timer expBonusCooldownTimer;
         internal Label currentAction;
         private Button button2;
         private Button button3;
@@ -7142,5 +7184,7 @@ namespace Talos.Forms
         internal CheckBox chkSpeedStrangers;
         internal NumericUpDown numLastStepTime;
         internal CheckBox deformCbox;
+        internal CheckBox autoMushroomCbox;
+        internal ComboBox mushroomCombox;
     }
 }

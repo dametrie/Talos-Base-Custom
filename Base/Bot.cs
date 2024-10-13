@@ -63,12 +63,12 @@ namespace Talos.Base
         internal DateTime _lastRefresh = DateTime.MinValue;
         internal DateTime _lastVineCast = DateTime.MinValue;
         internal DateTime _botChecks = DateTime.MinValue;
-        internal DateTime _lastBonusAppliedTime = DateTime.MinValue;
+        internal DateTime _lastExpBonusAppliedTime = DateTime.MinValue;
         internal DateTime _spellTimer = DateTime.MinValue;
         internal DateTime _lastUsedGem = DateTime.MinValue;
         private DateTime _lastUsedFungusBeetle = DateTime.MinValue;
         private DateTime _lastUsedBeetleAid = DateTime.MinValue;
-        internal TimeSpan _bonusElapsedTime = TimeSpan.Zero;
+        internal TimeSpan _expBonusElapsedTime = TimeSpan.Zero;
 
         internal List<Ally> _allyList = new List<Ally>();
         internal List<Enemy> _enemyList = new List<Enemy>();
@@ -98,6 +98,8 @@ namespace Talos.Base
         internal Point _doorPoint;
         private bool _together;
         private DateTime _followerTimer;
+        internal DateTime _lastMushroomBonusAppliedTime;
+        internal object _mushroomBonusElapsedTime;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -479,18 +481,12 @@ namespace Talos.Base
         //being assessed correctly. Assumed it was a UI thread problem.
         private bool GetCheckBoxChecked(CheckBox checkBox)
         {
-            _client.ServerMessage((byte)ServerMessageType.TopRight, "GetCheckBoxChecked called");
-
             if (checkBox.InvokeRequired)
             {
-                _client.ServerMessage((byte)ServerMessageType.TopRight, "GetCheckBoxChecked Invoke called");
-                _client.ServerMessage((byte)ServerMessageType.TopRight, $"Value: {checkBox.Checked}");
                 return (bool)checkBox.Invoke(new Func<bool>(() => checkBox.Checked));
             }
             else
             {
-                _client.ServerMessage((byte)ServerMessageType.TopRight, "GetCheckBoxChecked called");
-                _client.ServerMessage((byte)ServerMessageType.TopRight, $"Value: {checkBox.Checked}");
                 return checkBox.Checked;
             }
         }
@@ -1655,7 +1651,7 @@ namespace Talos.Base
 
             if (castLines.GetValueOrDefault() <= 0 & castLines != null)
             {
-                Thread.Sleep(400);
+                Thread.Sleep(330);
             }
         }
         private bool CastDefensiveSpells()
@@ -1825,15 +1821,43 @@ namespace Talos.Base
                 if (Client.ClientTab.doublesCombox.Text == "Xmas 100%")
                 {
                     var itemText = _client.HasItem("Christmas Double Exp-Ap") ? "Christmas Double Exp-Ap" : "XMas Double Exp-Ap";
-                    Client.ClientTab.UseItem(itemText);
+                    Client.ClientTab.UseDouble(itemText);
                 }
                 else if (itemMappings.TryGetValue(Client.ClientTab.doublesCombox.Text, out var itemText))
                 {
-                    Client.ClientTab.UseItem(itemText);
+                    Client.ClientTab.UseDouble(itemText);
                 }
 
-                Client.ClientTab.UpdateBonusTimer();
+                Client.ClientTab.UpdateExpBonusTimer();
             }
+
+            if (Client.ClientTab.autoMushroomCbox.Checked && !Client.HasEffect(EffectsBar.BonusMushroom) && Client._isRegistered && Client.CurrentMP > 100)
+            {
+                var itemMappings = new Dictionary<string, string>
+                {
+                    { "Double", "Double Experience Mushroom" },
+                    { "50 Percent", "50 Percent Experience Mushroom" },
+                    { "Greatest", "Greatest Experience Mushroom" },
+                    { "Greater", "Greater Experience Mushroom" },
+                    { "Great", "Great Experience Mushroom" },
+                    { "Experience Mushroom", "Experience Mushroom" }
+                };
+
+                if (Client.ClientTab.mushroomCombox.Text == "Best Available")
+                {
+                    var mushrooom = Client.ClientTab.FindBestMushroomInInventory(_client);
+                    Client.ClientTab.UseMushroom(mushrooom);
+                }
+                else if (itemMappings.TryGetValue(Client.ClientTab.mushroomCombox.Text, out var mushroom))
+                {
+                    Client.ClientTab.UseMushroom(mushroom);
+                }
+
+
+                Client.ClientTab.UpdateMushroomBonusTimer();
+            }
+
+
 
             if (Client.ClientTab.regenerationCbox.Checked && (!Client.HasEffect(EffectsBar.Regeneration) || !Client.HasEffect(EffectsBar.IncreasedRegeneration)))
             {
