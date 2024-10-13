@@ -1488,7 +1488,7 @@ namespace Talos
                     else
                     {
                         //Catch any other types here and remove them
-                        client.WorldObjects.TryRemove(id, out _);
+                        //client.WorldObjects.TryRemove(id, out _);
                     }
                 }
             }
@@ -3401,34 +3401,46 @@ namespace Talos
             return player;
         }
 
-        private Creature GetOrCreateCreature(Client client, int id, string name, ushort sprite, byte type, Location location, Direction direction)
+        internal Creature GetOrCreateCreature(Client client, int id, string name, ushort sprite, byte type, Location location, Direction direction)
         {
-            Creature creature = null;
+            Creature creature;
 
-            // Check if the creature exists in WorldObjects and is a Creature
-            if (client.WorldObjects.TryGetValue(id, out var worldObject) && worldObject is Creature existingCreature)
+            if (!client.WorldObjects.TryGetValue(id, out var worldObject))
             {
-                // Creature found in WorldObjects
-                creature = existingCreature;
-            }
-
-            // If creature wasn't found, create a new one
-            if (creature == null)
-            {
+                // Create a new creature
                 creature = new Creature(id, name, sprite, type, location, direction);
-                // Add the new creature to WorldObjects
-                client.WorldObjects[id] = creature;
+
+                creature.IsActive = true;
+                creature.LastSeen = DateTime.UtcNow;
+                creature.LastCursed = DateTime.MinValue; // Initialize to default
+                creature.CurseDuration = 0; // Initialize to default
+
+                client.WorldObjects.TryAdd(id, creature);
+                Console.WriteLine($"[GetOrCreateCreature] Created new Creature ID: {id}, HashCode: {creature.GetHashCode()}");
             }
             else
             {
-                // Update the existing creature's properties
-                creature.Location = location;
-                creature.Direction = direction;
-                creature.IsActive = true;
-                creature.LastSeen = DateTime.UtcNow;
-                if (!string.IsNullOrEmpty(name) && string.IsNullOrEmpty(creature.Name))
+                // Update the existing creature
+                creature = worldObject as Creature;
+                if (creature != null)
                 {
-                    creature.Name = name;
+                    // Before updating, log current state
+                    Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.LastCursed}, CurseDuration: {creature.CurseDuration}");
+
+                    // Update properties that may change
+                    creature.Location = location;
+                    creature.Direction = direction;
+                    creature.IsActive = true;
+                    creature.LastSeen = DateTime.UtcNow;
+
+                    // Only update name if it's empty
+                    if (string.IsNullOrEmpty(creature.Name) && !string.IsNullOrEmpty(name))
+                    {
+                        creature.Name = name;
+                    }
+
+                    // After updating, log current state
+                    Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.LastCursed}, CurseDuration: {creature.CurseDuration}");
                 }
             }
 

@@ -158,6 +158,7 @@ namespace Talos.Helper
                     _targetCreature.Curse = "ard cradh";
                     _targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
                     _targetCreature.LastCursed = DateTime.UtcNow;
+                    Console.WriteLine($"[AnimationHandler] curse duration set on Animation. Duration: {_targetCreature.CurseDuration}, LastCursed: {_targetCreature.LastCursed}");
                     break;
 
                 case (ushort)SpellAnimation.Demise:

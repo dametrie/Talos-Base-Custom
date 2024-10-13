@@ -724,17 +724,7 @@ namespace Talos.Base
 
         internal List<WorldObject> GetNearbyObjects() //Adam
         {
-            var worldObjects = new List<WorldObject>();
-
-            foreach (var item in NearbyObjects)
-            {
-                if (WorldObjects.TryGetValue(item, out var worldObject))
-                {
-                    worldObjects.Add(worldObject);
-                }
-            }
-
-            return worldObjects;
+            return WorldObjects.Values.Where(wo => NearbyObjects.Contains(wo.ID)).ToList();
         }
 
         internal bool WithinRange(VisibleObject obj, int range = 12)
@@ -924,9 +914,6 @@ namespace Talos.Base
                     case 928817768: // Demise
                         if (!CastedTarget.IsCursed)
                         {
-                            CastedTarget.LastCursed = DateTime.UtcNow;
-                            CastedTarget.CurseDuration = 0.3;
-                            CastedTarget.Curse = spell;
                             return true;
                         }
                         return false;
@@ -1212,14 +1199,17 @@ namespace Talos.Base
                         creature.CurseDuration = Spell.GetSpellDuration(curseName);
                         creature.LastCursed = DateTime.UtcNow;
                         creature.Curse = curseName;
+                        Console.WriteLine($"[UpdateCurseTargets] Updated existing creature in targetClient. Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, IsCursed: {creature.IsCursed}");
                     }
                     else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
                     {
-                        Creature newCreature = new Creature(originalCreature.ID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
-                        newCreature.CurseDuration = Spell.GetSpellDuration(curseName);
-                        newCreature.LastCursed = DateTime.UtcNow;
-                        newCreature.Curse = curseName;
-                        targetClient.WorldObjects[creatureID] = newCreature;
+                        Creature targetCreature = _server.GetOrCreateCreature(targetClient, creatureID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
+
+                        targetCreature.CurseDuration = Spell.GetSpellDuration(curseName);
+                        targetCreature.LastCursed = DateTime.UtcNow;
+                        targetCreature.Curse = curseName;
+                        Console.WriteLine($"[UpdateCurseTargets] Created and updated creature in targetClient. Creature ID: {targetCreature.ID}, {targetCreature.GetHashCode()}, IsCursed: {targetCreature.IsCursed}");
+
                     }
 
                     break;
@@ -1230,6 +1220,7 @@ namespace Talos.Base
                 Console.WriteLine($"An error occurred when trying to update curse targets: {ex.Message}");
             }
         }
+
 
         internal void UpdateFasTargets(Client invokingClient, int creatureID, double fasDuration)
         {
@@ -1246,13 +1237,16 @@ namespace Talos.Base
                     {
                         creature.FasDuration = fasDuration;
                         creature.LastFassed = DateTime.UtcNow;
+                        Console.WriteLine($"[UpdateFasTargets] Updated existing creature in targetClient. Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, IsFassed: {creature.IsFassed}");
+
                     }
                     else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
                     {
-                        Creature newCreature = new Creature(originalCreature.ID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
-                        newCreature.FasDuration = fasDuration;
-                        newCreature.LastFassed = DateTime.UtcNow;
-                        targetClient.WorldObjects[creatureID] = newCreature;
+                        Creature targetCreature = _server.GetOrCreateCreature(targetClient, creatureID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
+
+                        targetCreature.FasDuration = fasDuration;
+                        targetCreature.LastFassed = DateTime.UtcNow;
+                        Console.WriteLine($"[UpdateFasTargets] Created and updated creature in targetClient. Creature ID: {targetCreature.ID}, Hash: {targetCreature.GetHashCode()}, IsFassed: {targetCreature.IsFassed}");
                     }
 
                     break;
@@ -2027,7 +2021,7 @@ namespace Talos.Base
                 {
                     ServerMessage((byte)ServerMessageType.AdminMessage, $"Casting on {CastedTarget.ID}, is cursed: {CastedTarget.IsCursed}");
                 }
-                Console.WriteLine($"Casting on {CastedTarget.ID}, hash: {CastedTarget.GetHashCode()}, is cursed: {CastedTarget.IsCursed}");
+                Console.WriteLine($"[Casting] Creature ID: {CastedTarget.ID}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.LastCursed}, CurseDuration: {CastedTarget.CurseDuration}");
 
                 if (ReadyToSpell(spell.Name))
                 {

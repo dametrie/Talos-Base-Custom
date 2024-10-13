@@ -160,5 +160,6 @@ namespace Talos.Objects
             Curse = "";
             Dion = "";
         }
+
     }
 }

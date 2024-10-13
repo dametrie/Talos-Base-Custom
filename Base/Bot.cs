@@ -1655,7 +1655,7 @@ namespace Talos.Base
 
             if (castLines.GetValueOrDefault() <= 0 & castLines != null)
             {
-                Thread.Sleep(330);
+                Thread.Sleep(400);
             }
         }
         private bool CastDefensiveSpells()

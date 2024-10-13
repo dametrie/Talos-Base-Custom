@@ -892,6 +892,7 @@ namespace Talos.Helper
                     client._spellHistory[0].Creature.LastCursed = DateTime.UtcNow;
                     client._spellHistory[0].Creature.CurseDuration = Spell.GetSpellDuration(match.Groups[1].Value);
                     client._spellHistory[0].Creature.Curse = match.Groups[1].Value;
+                    Console.WriteLine($"[HandleCurseMessage] LastCursed Updated to {client._spellHistory[0].Creature?.LastCursed}");
                     client.UpdateCurseTargets(client, client._spellHistory[0].Creature.ID, match.Groups[1].Value);
                     client._server.RemoveFirstCreatureToSpell(client);
                 }
