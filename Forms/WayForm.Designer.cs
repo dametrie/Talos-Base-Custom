@@ -620,6 +620,7 @@
             this.Controls.Add(this.waypointProximityLbl);
             this.Controls.Add(this.waypointsAddBtn);
             this.Controls.Add(this.waypointsLBox);
+            this.DoubleBuffered = true;
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.ForeColor = System.Drawing.Color.Black;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;

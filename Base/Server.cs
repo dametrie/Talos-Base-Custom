@@ -3449,6 +3449,9 @@ namespace Talos
                 }
             }
 
+            // Apply any cached updates to the creature
+            CreatureStateHelper.ApplyCachedUpdates(client, id);
+
             return creature;
         }
 

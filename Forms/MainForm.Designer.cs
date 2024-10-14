@@ -107,15 +107,13 @@ namespace Talos
             this.Controls.Add(this.mapCacheMenuStrip);
             this.Controls.Add(this.clientTabControl);
             this.Controls.Add(this.menuStrip1);
+            this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = global::Talos.Properties.Resources.Talos;
             this.MainMenuStrip = this.mapCacheMenuStrip;
             this.MaximizeBox = false;
             this.Name = "MainForm";
             this.Text = "Talos";
-            
-            
-            
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

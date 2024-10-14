@@ -44,7 +44,7 @@
             this.nearbyEnemyAddBtn.TabIndex = 12;
             this.nearbyEnemyAddBtn.Text = "Add Creature";
             this.nearbyEnemyAddBtn.UseVisualStyleBackColor = true;
-            this.nearbyEnemyAddBtn.MouseClick += new System.Windows.Forms.MouseEventHandler(nearbyEnemyAddBtn_Click);
+            this.nearbyEnemyAddBtn.MouseClick += new System.Windows.Forms.MouseEventHandler(this.nearbyEnemyAddBtn_Click);
             // 
             // nearbyEnemySpriteLbl
             // 
@@ -75,6 +75,7 @@
             this.Controls.Add(this.nearbyEnemyAddBtn);
             this.Controls.Add(this.nearbyEnemySpriteLbl);
             this.Controls.Add(this.nearbyEnemyPicture);
+            this.DoubleBuffered = true;
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.Black;
             this.Name = "NearbyEnemy";

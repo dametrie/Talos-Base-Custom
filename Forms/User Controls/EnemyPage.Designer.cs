@@ -710,6 +710,7 @@
             this.Controls.Add(this.enemySpellsGrp);
             this.Controls.Add(this.enemyTargetGrp);
             this.Controls.Add(this.enemyAttackGrp);
+            this.DoubleBuffered = true;
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.Black;
             this.Name = "EnemyPage";

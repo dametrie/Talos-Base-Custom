@@ -47,7 +47,7 @@
             this.nearbyAllyAddBtn.ForeColor = System.Drawing.Color.Black;
             this.nearbyAllyAddBtn.Name = "nearbyAllyAddBtn";
             this.nearbyAllyAddBtn.UseVisualStyleBackColor = true;
-            this.nearbyAllyAddBtn.Click += new System.EventHandler(nearbyAllyAddBtn_Click);
+            this.nearbyAllyAddBtn.Click += new System.EventHandler(this.nearbyAllyAddBtn_Click);
             // 
             // NearbyAlly
             // 
@@ -56,11 +56,11 @@
             this.BackColor = System.Drawing.Color.White;
             this.Controls.Add(this.pictureCharacter);
             this.Controls.Add(this.nearbyAllyAddBtn);
+            this.DoubleBuffered = true;
             this.ForeColor = System.Drawing.Color.Black;
             this.Name = "NearbyAlly";
+            this.Load += new System.EventHandler(this.NearbyAlly_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureCharacter)).EndInit();
-
-            base.Load += new System.EventHandler(NearbyAlly_Load);
             this.ResumeLayout(false);
 
         }
