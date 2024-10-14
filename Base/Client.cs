@@ -1183,80 +1183,80 @@ namespace Talos.Base
             return false;
         }
 
-        internal void UpdateCurseTargets(Client invokingClient, int creatureID, string curseName)
-        {
-            if (!invokingClient._map.Name.Contains("Plamit"))
-            {
-                return;
-            }
+        //internal void UpdateCurseTargets(Client invokingClient, int creatureID, string curseName)
+        //{
+        //    if (!invokingClient._map.Name.Contains("Plamit"))
+        //    {
+        //        return;
+        //    }
 
-            try
-            {
-                foreach (Client targetClient in _server._clientList)
-                {
-                    if (targetClient.WorldObjects.TryGetValue(creatureID, out WorldObject worldObject) && worldObject is Creature creature)
-                    {
-                        creature.CurseDuration = Spell.GetSpellDuration(curseName);
-                        creature.LastCursed = DateTime.UtcNow;
-                        creature.Curse = curseName;
-                        Console.WriteLine($"[UpdateCurseTargets] Updated existing creature in targetClient. Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, IsCursed: {creature.IsCursed}");
-                    }
-                    else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
-                    {
-                        Creature targetCreature = _server.GetOrCreateCreature(targetClient, creatureID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
+        //    try
+        //    {
+        //        foreach (Client targetClient in _server._clientList)
+        //        {
+        //            if (targetClient.WorldObjects.TryGetValue(creatureID, out WorldObject worldObject) && worldObject is Creature creature)
+        //            {
+        //                creature.CurseDuration = Spell.GetSpellDuration(curseName);
+        //                creature.LastCursed = DateTime.UtcNow;
+        //                creature.Curse = curseName;
+        //                Console.WriteLine($"[UpdateCurseTargets] Updated existing creature in targetClient. Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, IsCursed: {creature.IsCursed}");
+        //            }
+        //            else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
+        //            {
+        //                Creature targetCreature = _server.GetOrCreateCreature(targetClient, creatureID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
 
-                        targetCreature.CurseDuration = Spell.GetSpellDuration(curseName);
-                        targetCreature.LastCursed = DateTime.UtcNow;
-                        targetCreature.Curse = curseName;
-                        Console.WriteLine($"[UpdateCurseTargets] Created and updated creature in targetClient. Creature ID: {targetCreature.ID}, {targetCreature.GetHashCode()}, IsCursed: {targetCreature.IsCursed}");
+        //                targetCreature.CurseDuration = Spell.GetSpellDuration(curseName);
+        //                targetCreature.LastCursed = DateTime.UtcNow;
+        //                targetCreature.Curse = curseName;
+        //                Console.WriteLine($"[UpdateCurseTargets] Created and updated creature in targetClient. Creature ID: {targetCreature.ID}, {targetCreature.GetHashCode()}, IsCursed: {targetCreature.IsCursed}");
 
-                    }
+        //            }
 
-                    break;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred when trying to update curse targets: {ex.Message}");
-            }
-        }
+        //            break;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"An error occurred when trying to update curse targets: {ex.Message}");
+        //    }
+        //}
 
 
-        internal void UpdateFasTargets(Client invokingClient, int creatureID, double fasDuration)
-        {
-            if (!invokingClient._map.Name.Contains("Plamit"))
-            {
-                return;
-            }
+        //internal void UpdateFasTargets(Client invokingClient, int creatureID, double fasDuration)
+        //{
+        //    if (!invokingClient._map.Name.Contains("Plamit"))
+        //    {
+        //        return;
+        //    }
 
-            try
-            {
-                foreach (Client targetClient in _server._clientList)
-                {
-                    if (targetClient.WorldObjects.TryGetValue(creatureID, out WorldObject worldObject) && worldObject is Creature creature)
-                    {
-                        creature.FasDuration = fasDuration;
-                        creature.LastFassed = DateTime.UtcNow;
-                        Console.WriteLine($"[UpdateFasTargets] Updated existing creature in targetClient. Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, IsFassed: {creature.IsFassed}");
+        //    try
+        //    {
+        //        foreach (Client targetClient in _server._clientList)
+        //        {
+        //            if (targetClient.WorldObjects.TryGetValue(creatureID, out WorldObject worldObject) && worldObject is Creature creature)
+        //            {
+        //                creature.FasDuration = fasDuration;
+        //                creature.LastFassed = DateTime.UtcNow;
+        //                Console.WriteLine($"[UpdateFasTargets] Updated existing creature in targetClient. Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, IsFassed: {creature.IsFassed}");
 
-                    }
-                    else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
-                    {
-                        Creature targetCreature = _server.GetOrCreateCreature(targetClient, creatureID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
+        //            }
+        //            else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
+        //            {
+        //                Creature targetCreature = _server.GetOrCreateCreature(targetClient, creatureID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
 
-                        targetCreature.FasDuration = fasDuration;
-                        targetCreature.LastFassed = DateTime.UtcNow;
-                        Console.WriteLine($"[UpdateFasTargets] Created and updated creature in targetClient. Creature ID: {targetCreature.ID}, Hash: {targetCreature.GetHashCode()}, IsFassed: {targetCreature.IsFassed}");
-                    }
+        //                targetCreature.FasDuration = fasDuration;
+        //                targetCreature.LastFassed = DateTime.UtcNow;
+        //                Console.WriteLine($"[UpdateFasTargets] Created and updated creature in targetClient. Creature ID: {targetCreature.ID}, Hash: {targetCreature.GetHashCode()}, IsFassed: {targetCreature.IsFassed}");
+        //            }
 
-                    break;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred when trying to update fas targets: {ex.Message}");
-            }
-        }
+        //            break;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"An error occurred when trying to update fas targets: {ex.Message}");
+        //    }
+        //}
         internal void SeeGhosts(Player player)
         {
             player.NakedPlayer();
@@ -1979,12 +1979,12 @@ namespace Talos.Base
                 return false;
             }
 
-            if (target != null)
-            {
-                int test = _clientLocation.DistanceFrom(target.Location);
-                ServerMessage((byte)ServerMessageType.TopRight, $"Casting on {target.ID}, {test} spaces");
-                DisplayTextOverTarget(2, target.ID, $"[Target]");
-            }
+            //if (target != null)
+            //{
+            //    int test = _clientLocation.DistanceFrom(target.Location);
+            //    ServerMessage((byte)ServerMessageType.TopRight, $"Casting on {target.ID}, {test} spaces");
+            //    DisplayTextOverTarget(2, target.ID, $"[Target]");
+            //}
 
 
             Spell spell = Spellbook[spellName];
@@ -2012,11 +2012,15 @@ namespace Talos.Base
                 }
                 
                 CastedTarget = (target ?? Player);
-                if (CastedTarget != null)
+
+                if (spellName.Contains("cradh"))
                 {
-                    ServerMessage((byte)ServerMessageType.AdminMessage, $"Casting {spellName} on {CastedTarget.ID}, is cursed: {CastedTarget.IsCursed}");
+                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.LastCursed}, CurseDuration: {CastedTarget.CurseDuration}");
                 }
-                Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.LastCursed}, CurseDuration: {CastedTarget.CurseDuration}");
+                if (spellName.Contains("fas"))
+                {
+                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.LastFassed}, FasDuration: {CastedTarget.FasDuration}");
+                }
 
                 if (ReadyToSpell(spell.Name))
                 {

@@ -198,11 +198,23 @@ namespace Talos.Helper
                     case "Demise":
                         if (creature != null)
                         {
-                            creature.Curse = spellName;
-                            creature.CurseDuration = Spell.GetSpellDuration(spellName);
-                            creature.LastCursed = DateTime.UtcNow;
-                            if (creature.ID != client.Player.ID)
-                                client.UpdateCurseTargets(client, creature.ID, spellName);//Adam check
+                            //creature.Curse = spellName;
+                            //creature.CurseDuration = Spell.GetSpellDuration(spellName);
+                            //creature.LastCursed = DateTime.UtcNow;
+                            //if (creature.ID != client.Player.ID)
+                            //    client.UpdateCurseTargets(client, creature.ID, spellName);
+
+                            double curseDuration = Spell.GetSpellDuration(spellName);
+
+                            var curseStateUpdates = new Dictionary<CreatureState, object> //Adam New
+                            {
+                                { CreatureState.IsCursed, true },
+                                { CreatureState.LastCursed, DateTime.UtcNow },
+                                { CreatureState.CurseName, spellName },
+                                { CreatureState.CurseDuration, curseDuration } // Duration in seconds
+                            };
+                            CreatureStateHelper.UpdateCreatureStates(client, creature.ID, curseStateUpdates);
+
                             Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}, Creature Name: {creature?.Name}, Hash: {creature.GetHashCode()}, LastCursed updated to {creature?.LastCursed}");
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
@@ -214,10 +226,22 @@ namespace Talos.Helper
                     case "ard fas nadur":
                         if (creature != null)
                         {
-                            creature.FasDuration = Spell.GetSpellDuration(spellName);
-                            creature.LastFassed = DateTime.UtcNow;
-                            if (creature.ID != client.Player.ID)
-                                client.UpdateFasTargets(client, creature.ID, creature.FasDuration);//Adam check
+                            //creature.FasDuration = Spell.GetSpellDuration(spellName);
+                            //creature.LastFassed = DateTime.UtcNow;
+                            //if (creature.ID != client.Player.ID)
+                            //    client.UpdateFasTargets(client, creature.ID, creature.FasDuration);
+
+                            double fasDuration = Spell.GetSpellDuration(spellName);
+
+                            var fasStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                            {
+                                { CreatureState.IsFassed, true },
+                                { CreatureState.LastFassed, DateTime.UtcNow },
+                                { CreatureState.FasName, spellName },
+                                { CreatureState.FasDuration, fasDuration } // Duration in seconds
+                            };
+                            CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
+
                             Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastFassed updated to {creature?.LastFassed}");
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
@@ -566,10 +590,30 @@ namespace Talos.Helper
 
                 if (client.CastedSpell != null && client.CastedSpell.Name.Contains("fas"))
                 {
-                    client._spellHistory[0].Creature.LastFassed = DateTime.UtcNow;
-                    client._spellHistory[0].Creature.FasDuration = Spell.GetSpellDuration(client.CastedSpell.Name);
-                    if (client._spellHistory[0].Creature.ID != client.Player.ID)
-                        client.UpdateFasTargets(client, client._spellHistory[0].Creature.ID, client._spellHistory[0].Creature.FasDuration);
+                    //client._spellHistory[0].Creature.LastFassed = DateTime.UtcNow;
+                    //client._spellHistory[0].Creature.FasDuration = Spell.GetSpellDuration(client.CastedSpell.Name);
+                    //if (client._spellHistory[0].Creature.ID != client.Player.ID)
+                    //    client.UpdateFasTargets(client, client._spellHistory[0].Creature.ID, client._spellHistory[0].Creature.FasDuration);
+                    Creature creature = client._spellHistory[0].Creature;
+                    string fasName = client.CastedSpell.ToString();
+
+                    Console.WriteLine($"[HandleAlreadyCastMessage] Received 'You already cast' message for {fasName} on Creature ID: {client._spellHistory[0].Creature?.ID}, Hash: {client._spellHistory[0].Creature?.GetHashCode()} Updating LastFassed.");
+
+                    double fasDuration = Spell.GetSpellDuration(fasName);
+
+                    var fasStateUpdates = new Dictionary<CreatureState, object>
+                    {
+                        { CreatureState.IsFassed, true },
+                        { CreatureState.LastFassed, DateTime.UtcNow },
+                        { CreatureState.FasDuration, fasDuration },
+                        { CreatureState.FasName, fasName },
+                    };
+
+                    // Update the creature's state across all clients
+                    CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
+
+                    Console.WriteLine($"[HandleAlreadyCastMessage] Fas state updated for Creature ID: {creature.ID}");
+
                     client.CastedSpell = null;
                 }
                 if (client.CastedSpell != null && client.CastedSpell.Name.Contains("pramh"))
@@ -709,13 +753,34 @@ namespace Talos.Helper
             if (message == "normal nature.")
             {
                 client.EffectsBarHashSet.Remove((ushort)EffectsBar.FasNadur);
-                client.Player.FasDuration = 0.0;
+
+
+                var fasStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                {
+                    { CreatureState.IsFassed, false },
+                    { CreatureState.LastFassed, DateTime.MinValue },
+                    { CreatureState.FasName, string.Empty },//if we login and have fas there is no way to know the duration so we assume it is max
+                    { CreatureState.FasDuration, 0.0 } // Duration in seconds
+                };
+
+                CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, fasStateUpdates);
             }               
             else
             {
                 client.EffectsBarHashSet.Add((ushort)EffectsBar.FasNadur);
-                client.Player.LastFassed = DateTime.UtcNow;
-                client.Player.FasDuration = Spell.GetSpellDuration("mor fas nadur");//if we login and have fas there is no way to know the duration so we assume it is max
+
+                double fasDuration = Spell.GetSpellDuration("mor fas nadur");
+
+                var fasStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                {
+                    { CreatureState.IsFassed, true },
+                    { CreatureState.LastFassed, DateTime.UtcNow },
+                    { CreatureState.FasName, "mor fas nadur" },//if we login and have fas there is no way to know the duration so we assume it is max
+                    { CreatureState.FasDuration, fasDuration } // Duration in seconds
+                };
+
+                CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, fasStateUpdates);
+
             }             
         }
 
@@ -723,9 +788,17 @@ namespace Talos.Helper
         {
             lock (_lock)
             {
-                client.Player.Curse = message;
-                client.Player.CurseDuration = Spell.GetSpellDuration(message);
-                client.Player.LastCursed = DateTime.UtcNow;
+                double curseDuration = Spell.GetSpellDuration(message);
+
+                var fasStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                {
+                    { CreatureState.IsCursed, true },
+                    { CreatureState.LastCursed, DateTime.UtcNow },
+                    { CreatureState.CurseName, message },
+                    { CreatureState.CurseDuration, curseDuration } // Duration in seconds
+                };
+
+                CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, fasStateUpdates);
             }
         }
 
@@ -733,9 +806,18 @@ namespace Talos.Helper
         {
             lock (_lock)
             {
-                client.Player.Curse = "";
-                client.Player.CurseDuration = 0.0;
-                client.Player.LastCursed = DateTime.MinValue;
+
+
+                var fasStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                {
+                    { CreatureState.IsCursed, false },
+                    { CreatureState.LastCursed, DateTime.MinValue },
+                    { CreatureState.CurseName, String.Empty },
+                    { CreatureState.CurseDuration, 0.0 } // Duration in seconds
+                };
+
+                CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, fasStateUpdates);
+
                 Console.WriteLine($"[HandleCurseEndMessage] Curse ended Player ID: {client.Player.ID} on {client.Player.Name}, Hash: {client.Player.GetHashCode()}. Curse: {client.Player.Curse}, CurseDuration: {client.Player.CurseDuration}, Last Cursed: {client.Player.LastCursed}");
             }
 
@@ -881,19 +963,40 @@ namespace Talos.Helper
             else
                 client.EffectsBarHashSet.Add((ushort)EffectsBar.PreventAffliction);
         }
+
         private void HandleCurseMessage(Client client, Match match)
         {
             if (client.CastedSpell != null)
             {
                 if ((client._spellHistory.Count > 0) && (client._spellHistory[0].Creature != null))
                 {
+
+                    Creature creature = client._spellHistory[0].Creature;
+                    string curseName = match.Groups[1].Value;
+
                     Console.WriteLine($"[HandleCurseMessage] Received 'another curse afflicts thee' message for {match.Groups[1].Value} on Creature ID: {client._spellHistory[0].Creature?.ID}, Hash: {client._spellHistory[0].Creature?.GetHashCode()} Updating LastCursed.");
 
-                    client._spellHistory[0].Creature.LastCursed = DateTime.UtcNow;
-                    client._spellHistory[0].Creature.CurseDuration = Spell.GetSpellDuration(match.Groups[1].Value);
-                    client._spellHistory[0].Creature.Curse = match.Groups[1].Value;
-                    Console.WriteLine($"[HandleCurseMessage] LastCursed Updated to {client._spellHistory[0].Creature?.LastCursed}");
-                    client.UpdateCurseTargets(client, client._spellHistory[0].Creature.ID, match.Groups[1].Value);
+                    double curseDuration = Spell.GetSpellDuration(curseName);
+
+                    var curseStateUpdates = new Dictionary<CreatureState, object>
+                    {
+                        { CreatureState.IsCursed, true },
+                        { CreatureState.LastCursed, DateTime.UtcNow },
+                        { CreatureState.CurseDuration, curseDuration },
+                        { CreatureState.CurseName, curseName },
+                    };
+
+                    // Update the creature's state across all clients
+                    CreatureStateHelper.UpdateCreatureStates(client, creature.ID, curseStateUpdates);
+
+                    Console.WriteLine($"[HandleCurseMessage] Curse state updated for Creature ID: {creature.ID}");
+
+                    //client._spellHistory[0].Creature.LastCursed = DateTime.UtcNow;
+                    //client._spellHistory[0].Creature.CurseDuration = Spell.GetSpellDuration(match.Groups[1].Value);
+                    //client._spellHistory[0].Creature.Curse = match.Groups[1].Value;
+                    //Console.WriteLine($"[HandleCurseMessage] LastCursed Updated to {client._spellHistory[0].Creature?.LastCursed}");
+                    //client.UpdateCurseTargets(client, client._spellHistory[0].Creature.ID, match.Groups[1].Value);
+
                     client._server.RemoveFirstCreatureToSpell(client);
                 }
                 client.CastedSpell = null;

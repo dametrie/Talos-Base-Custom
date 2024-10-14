@@ -4,6 +4,57 @@
 
 namespace Talos.Enumerations
 {
+    public enum CreatureState
+    {
+        // Boolean states
+        IsCursed,
+        IsFassed,
+        IsAited,
+        IsDioned,
+        IsFrozen,
+        HasCursedTunes,
+        HasRegen,
+        HasIncreasedRegen,
+        HasArmachd,
+        IsAsleep,
+        IsSuained,
+        IsPoisoned,
+
+        // Timestamps
+        LastCursed,
+        LastFassed,
+        LastAited,
+        LastDioned,
+        LastFrostArrow,
+        LastCursedTune,
+        LastRegen,
+        LastIncreasedRegen,
+        LastArmachd,
+        LastPramhed,
+        LastSuained,
+
+        // Durations
+        CurseDuration,
+        FasDuration,
+        AiteDuration,
+        DionDuration,
+        FrostArrowDuration,
+        CursedTuneDuration,
+        RegenDuration,
+        IncreasedRegenDuration,
+        ArmachdDuration,
+        PramhDuration,
+        SuainDuration,
+
+        // Strings
+        CurseName,
+        FasName,
+        AiteName,
+        DionName,
+        RegenName,
+        PramhName
+    }
+
     public enum CreatureType : byte
     {
         Normal = 0,

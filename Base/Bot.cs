@@ -1937,7 +1937,7 @@ namespace Talos.Base
                 {
 
                     Client.UseSpell("ao suain" + player.Curse, player, _autoStaffSwitch, true);
-                    Console.WriteLine($"[DispellAllySuain] Player {player.Name}, Hash: {player.GetHashCode()}. IsCursed: {player.IsSuained}");
+                    Console.WriteLine($"[DispellAllySuain] Player {player.Name}, Hash: {player.GetHashCode()}. IsSuained: {player.IsSuained}");
 
                     return false;
                      
@@ -1950,7 +1950,7 @@ namespace Talos.Base
         {
             if (IsAlly(ally, out player, out client))
             {
-                Console.WriteLine($"[TryGetSuainedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} is cursed: {player.IsSuained}");
+                Console.WriteLine($"[TryGetSuainedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} IsSuained: {player.IsSuained}");
                 return player.IsSuained;
             }
             return false;

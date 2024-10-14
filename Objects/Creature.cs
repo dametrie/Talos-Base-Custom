@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Talos.Enumerations;
 using Talos.Maps;
@@ -8,6 +9,8 @@ namespace Talos.Objects
 {
     internal class Creature : VisibleObject
     {
+        private readonly ConcurrentDictionary<CreatureState, object> _states;
+
         private byte _health;
         private string _dion;
         internal bool _canPND;
@@ -18,6 +21,11 @@ namespace Talos.Objects
         public bool IsActive { get; set; } = true; // Default to active when created
         public DateTime LastSeen { get; set; } = DateTime.UtcNow;
         internal Direction Direction { get; set; }
+
+        //
+        //
+        //
+        // Adam work on removing these variables and changing their existing implementations to use CreatureState
         internal DateTime LastCursed { get; set; }
         internal DateTime LastFassed { get; set; } 
         internal DateTime LastAited { get; set; }
@@ -41,10 +49,16 @@ namespace Talos.Objects
         internal double RegenDuration { get; set; }
         internal double IncreasedRegenDuration { get; set; }
         internal double ArmachdDuration { get; set; }
+        internal string Curse { get; set; }
+        //
+        //
+        //
+        // 
+
         internal Dictionary<ushort, DateTime> SpellAnimationHistory { get; set; }
         internal Dictionary<ushort, DateTime> SourceAnimationHistory { get; set; }
         internal CreatureType Type { get; set; }
-        internal string Curse { get; set; }
+
         internal string Dion
         {
             get => _dion;
@@ -62,23 +76,12 @@ namespace Talos.Objects
         }
 
         internal bool IsDioned => DateTime.UtcNow.Subtract(LastDioned).TotalSeconds < DionDuration;
-        internal bool IsCursed => DateTime.UtcNow.Subtract(LastCursed).TotalSeconds < CurseDuration;
-        internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;
         internal bool IsAited => DateTime.UtcNow.Subtract(LastAited).TotalSeconds < AiteDuration;
-        
         internal bool IsFrozen => DateTime.UtcNow.Subtract(LastFrostArrow).TotalSeconds < FrostArrowDuration;
         internal bool HasCursedTunes => DateTime.UtcNow.Subtract(LastCursedTune).TotalSeconds < CursedTuneDuration;
         internal bool HasRegen => DateTime.UtcNow.Subtract(LastRegen).TotalSeconds < RegenDuration;
         internal bool HasIncreasedRegen => DateTime.UtcNow.Subtract(LastIncreasedRegen).TotalSeconds < IncreasedRegenDuration;
         internal bool HasArmachd => DateTime.UtcNow.Subtract(LastArmachd).TotalSeconds < ArmachdDuration;
-
-        // This implementation of IsAsleep is correct. However, it assumes that the sleep is not broken by any other action.
-        // That is, if sleep is broken it will still wait until the original sleep duration has passed.
-        // internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
-
-        // Similar problems with IsSuained. It assumes that the suain is not broken by any other action.
-        // internal bool IsSuained => DateTime.UtcNow.Subtract(LastSuained).TotalSeconds < SuainDuration;
-
         internal bool IsAsleep
         {
             get
@@ -143,6 +146,66 @@ namespace Talos.Objects
             }
         }
 
+        //internal bool IsCursed => DateTime.UtcNow.Subtract(LastCursed).TotalSeconds < CurseDuration;
+        //internal bool IsFassed => DateTime.UtcNow.Subtract(LastFassed).TotalSeconds < FasDuration;
+
+
+        //New methods using CreatureState
+        internal bool IsCursed
+        {
+            get
+            {
+                bool isCursed = GetState<bool>(CreatureState.IsCursed);
+                DateTime lastCursed = GetState<DateTime>(CreatureState.LastCursed);
+                double duration = GetState<double>(CreatureState.CurseDuration);
+
+                if (isCursed && (DateTime.UtcNow - lastCursed).TotalSeconds < duration)
+                {
+                    return true;
+                }
+                else
+                {
+                    // Automatically reset the state if expired
+                    SetState(CreatureState.IsCursed, false);
+                    SetState(CreatureState.CurseName, string.Empty);
+                    return false;
+                }
+            }
+        }
+
+
+
+        internal bool IsFassed
+        {
+            get
+            {
+                bool isFassed = GetState<bool>(CreatureState.IsFassed);
+                DateTime lastFassed = GetState<DateTime>(CreatureState.LastFassed);
+                double duration = GetState<double>(CreatureState.FasDuration);
+
+                if (isFassed && (DateTime.UtcNow - lastFassed).TotalSeconds < duration)
+                {
+                    return true;
+                }
+                else
+                {
+                    SetState(CreatureState.IsFassed, false);
+                    SetState(CreatureState.FasName, string.Empty); // Reset the curse name
+                    return false;
+                }
+            }
+        }
+
+
+
+        // This implementation of IsAsleep is correct. However, it assumes that the sleep is not broken by any other action.
+        // That is, if sleep is broken it will still wait until the original sleep duration has passed.
+        // internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
+
+        // Similar problems with IsSuained. It assumes that the suain is not broken by any other action.
+        // internal bool IsSuained => DateTime.UtcNow.Subtract(LastSuained).TotalSeconds < SuainDuration;
+
+
         internal Creature(int id, string name, ushort sprite, byte type, Location location, Direction direction)
             : base(id, name, sprite, location)
         {
@@ -157,8 +220,81 @@ namespace Talos.Objects
             LastAited = DateTime.MinValue;
             LastDioned = DateTime.MinValue;
             LastArmachd = DateTime.MinValue;
-            Curse = "";
-            Dion = "";
+            Curse = string.Empty;
+            Dion = string.Empty;
+
+            _states = new ConcurrentDictionary<CreatureState, object>();
+
+            InitializeDefaultStates();
+        }
+
+        private void InitializeDefaultStates()
+        {
+            // Boolean states
+            _states[CreatureState.IsCursed] = false;
+            _states[CreatureState.IsFassed] = false;
+            _states[CreatureState.IsAited] = false;
+            _states[CreatureState.IsDioned] = false;
+            _states[CreatureState.IsFrozen] = false;
+            _states[CreatureState.HasCursedTunes] = false;
+            _states[CreatureState.HasRegen] = false;
+            _states[CreatureState.HasIncreasedRegen] = false;
+            _states[CreatureState.HasArmachd] = false;
+            _states[CreatureState.IsAsleep] = false;
+            _states[CreatureState.IsSuained] = false;
+            _states[CreatureState.IsPoisoned] = false;
+
+            // Timestamps
+            DateTime minDateTime = DateTime.MinValue;
+            _states[CreatureState.LastCursed] = minDateTime;
+            _states[CreatureState.LastFassed] = minDateTime;
+            _states[CreatureState.LastAited] = minDateTime;
+            _states[CreatureState.LastDioned] = minDateTime;
+            _states[CreatureState.LastFrostArrow] = minDateTime;
+            _states[CreatureState.LastCursedTune] = minDateTime;
+            _states[CreatureState.LastRegen] = minDateTime;
+            _states[CreatureState.LastIncreasedRegen] = minDateTime;
+            _states[CreatureState.LastArmachd] = minDateTime;
+            _states[CreatureState.LastPramhed] = minDateTime;
+            _states[CreatureState.LastSuained] = minDateTime;
+
+            // Durations
+            double zeroDuration = 0.0;
+            _states[CreatureState.CurseDuration] = zeroDuration;
+            _states[CreatureState.FasDuration] = zeroDuration;
+            _states[CreatureState.AiteDuration] = zeroDuration;
+            _states[CreatureState.DionDuration] = zeroDuration;
+            _states[CreatureState.FrostArrowDuration] = zeroDuration;
+            _states[CreatureState.CursedTuneDuration] = zeroDuration;
+            _states[CreatureState.RegenDuration] = zeroDuration;
+            _states[CreatureState.IncreasedRegenDuration] = zeroDuration;
+            _states[CreatureState.ArmachdDuration] = zeroDuration;
+            _states[CreatureState.PramhDuration] = zeroDuration;
+            _states[CreatureState.SuainDuration] = zeroDuration;
+
+            _states[CreatureState.CurseName] = string.Empty;
+            _states[CreatureState.FasName] = string.Empty;
+            _states[CreatureState.AiteName] = string.Empty;
+            _states[CreatureState.DionName] = string.Empty;
+            _states[CreatureState.RegenName] = string.Empty;
+            _states[CreatureState.PramhName] = string.Empty;
+
+
+        }
+
+        // Methods to set and get state values
+        public void SetState(CreatureState state, object value)
+        {
+            _states[state] = value;
+        }
+
+        public T GetState<T>(CreatureState state)
+        {
+            if (_states.TryGetValue(state, out object value) && value is T typedValue)
+            {
+                return typedValue;
+            }
+            return default(T);
         }
 
     }

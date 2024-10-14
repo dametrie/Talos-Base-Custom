@@ -3413,12 +3413,8 @@ namespace Talos
                 // Create a new creature
                 creature = new Creature(id, name, sprite, type, location, direction);
 
-                creature.IsActive = true;
-                creature.LastSeen = DateTime.UtcNow;
-                creature.LastCursed = DateTime.MinValue; // Initialize to default
-                creature.CurseDuration = 0; // Initialize to default
-
                 client.WorldObjects.TryAdd(id, creature);
+
                 Console.WriteLine($"[GetOrCreateCreature] Created new Creature ID: {id}, HashCode: {creature.GetHashCode()}");
             }
             else
@@ -3428,7 +3424,7 @@ namespace Talos
                 if (creature != null)
                 {
                     // Before updating, log current state
-                    Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.LastCursed}, CurseDuration: {creature.CurseDuration}");
+                    Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.LastCursed}, CurseDuration: {creature.CurseDuration}, IsFassed: {creature.IsFassed}, LastFassed: {creature.LastFassed}, FasDuration: {creature.FasDuration}");
 
                     // Update properties that may change
                     creature.Location = location;
@@ -3443,7 +3439,7 @@ namespace Talos
                     }
 
                     // After updating, log current state
-                    Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.LastCursed}, CurseDuration: {creature.CurseDuration}");
+                    Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.LastCursed}, CurseDuration: {creature.CurseDuration}, IsFassed: {creature.IsFassed}, LastFassed: {creature.LastFassed}, FasDuration: {creature.FasDuration}");
                 }
             }
 
