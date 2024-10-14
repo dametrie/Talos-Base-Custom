@@ -1880,7 +1880,7 @@ namespace Talos.Base
                     {
                         if (player.Name.Equals(currentAlly.Name, StringComparison.OrdinalIgnoreCase) && player != Client.Player && currentAlly.AllyPage.dbRegenCbox.Checked)
                         {
-                            Client client = Client._server.FindClientByName(currentAlly.Name);
+                            Client client = Client._server.GetClient(currentAlly.Name);
                             if (client != null)
                             {
                                 if (!client.HasEffect(EffectsBar.IncreasedRegeneration) && Client.UseSpell("Increased Regeneration", client.Player, _autoStaffSwitch, true))
@@ -2033,7 +2033,7 @@ namespace Talos.Base
                 {
                     foreach (Player player in _nearbyAllies)
                     {
-                        Client client = _server.FindClientByName(player.Name);
+                        Client client = _server.GetClient(player.Name);
                         if (client != null)
                         {
                             client.ClearEffect(EffectsBar.Pramh);
@@ -2050,7 +2050,7 @@ namespace Talos.Base
         {
             if (!player.IsAsleep)
             {
-                Client client = _server.FindClientByName(player.Name);
+                Client client = _server.GetClient(player.Name);
                 return client != null && client.HasEffect(EffectsBar.Pramh);
             }
             return true;
@@ -2385,7 +2385,7 @@ namespace Talos.Base
                 return false;
             }
 
-            client = Server.FindClientByName(ally.Name);
+            client = Server.GetClient(ally.Name);
 
             if (client != null && client != Client)
             {
@@ -2412,7 +2412,7 @@ namespace Talos.Base
                     {
                         Ally ally = ReturnAllyList().FirstOrDefault(a => a.Name == player.Name);
                         AllyPage allyPage = ally?.AllyPage;
-                        Client client = Server.FindClientByName(player.Name);
+                        Client client = Server.GetClient(player.Name);
 
                         if (client == null) continue;
 
@@ -3336,7 +3336,7 @@ namespace Talos.Base
             try
             {
                 List<Client> nearbyClients = Client.GetNearbyPlayerList()
-                    .Select(player => Server.FindClientByName(player?.Name))
+                    .Select(player => Server.GetClient(player?.Name))
                     .Where(client => client != null)
                     .ToList();
 

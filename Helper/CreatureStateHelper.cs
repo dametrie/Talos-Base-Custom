@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Talos.Base;
 using Talos.Enumerations;
 using Talos.Objects;
@@ -9,7 +11,11 @@ namespace Talos.Helper
     public static class CreatureStateHelper
     {
         // Cache to store state updates for creatures not yet visible to clients
-        private static Dictionary<int, Dictionary<CreatureState, object>> _pendingUpdates = new Dictionary<int, Dictionary<CreatureState, object>>();
+        private static readonly ConcurrentDictionary<int, Dictionary<CreatureState, (object Value, DateTime Timestamp)>> _pendingUpdates
+            = new ConcurrentDictionary<int, Dictionary<CreatureState, (object Value, DateTime Timestamp)>>();
+
+        // Cached updates are considered stale after 5 minutes
+        private const int UpdateExpiryMinutes = 5;
 
         // Method to update multiple creature states across all clients
         internal static void UpdateCreatureStates(Client castingClient, int creatureID, Dictionary<CreatureState, object> stateUpdates)
@@ -20,7 +26,7 @@ namespace Talos.Helper
             {
                 if (client.WorldObjects.TryGetValue(creatureID, out var worldObject) && worldObject is Creature creature)
                 {
-                    // Creature is visible to this client, apply updates directly
+                    // Apply the updates to the creature's state
                     foreach (var stateUpdate in stateUpdates)
                     {
                         creature.SetState(stateUpdate.Key, stateUpdate.Value);
@@ -30,13 +36,12 @@ namespace Talos.Helper
                 }
                 else
                 {
-                    // Creature not visible, cache the state updates
+                    // If the creature isn't found, store the update for later
                     CachePendingUpdates(creatureID, stateUpdates);
                 }
             }
         }
 
-        // Method to update a single creature state across all clients
         internal static void UpdateCreatureState(Client castingClient, int creatureID, CreatureState state, object value)
         {
             IEnumerable<Client> allClients = castingClient._server.Clients;
@@ -45,65 +50,94 @@ namespace Talos.Helper
             {
                 if (client.WorldObjects.TryGetValue(creatureID, out var worldObject) && worldObject is Creature creature)
                 {
-                    // Creature is visible to this client, apply the single state update
                     creature.SetState(state, value);
                     Console.WriteLine($"[CreatureStateHelper] Updated single state {state} for Creature ID: {creatureID}");
                 }
                 else
                 {
-                    // Creature not visible, cache the single state update
+                    // If the creature isn't found, store the single state update for later
                     CachePendingUpdate(creatureID, state, value);
                 }
             }
         }
 
-        // Cache method for multiple state updates
+        // Helper method to cache multiple state updates for creatures not currently in view
         private static void CachePendingUpdates(int creatureID, Dictionary<CreatureState, object> stateUpdates)
         {
-            if (!_pendingUpdates.ContainsKey(creatureID))
+            var updatesWithTimestamp = new Dictionary<CreatureState, (object Value, DateTime Timestamp)>();
+
+            foreach (var stateUpdate in stateUpdates)
             {
-                _pendingUpdates[creatureID] = new Dictionary<CreatureState, object>();
+                updatesWithTimestamp[stateUpdate.Key] = (stateUpdate.Value, DateTime.UtcNow);
             }
 
-            foreach (var update in stateUpdates)
+            _pendingUpdates.AddOrUpdate(creatureID, updatesWithTimestamp, (key, oldUpdates) =>
             {
-                _pendingUpdates[creatureID][update.Key] = update.Value;
-            }
+                foreach (var update in updatesWithTimestamp)
+                {
+                    oldUpdates[update.Key] = update.Value;
+                }
+                return oldUpdates;
+            });
 
-            Console.WriteLine($"[CreatureStateHelper] Cached state updates for Creature ID: {creatureID}");
+            Console.WriteLine($"[CreatureStateHelper] Cached updates for Creature ID: {creatureID}");
         }
 
-        // Cache method for a single state update
+        // Helper method to cache a single state update
         private static void CachePendingUpdate(int creatureID, CreatureState state, object value)
         {
-            if (!_pendingUpdates.ContainsKey(creatureID))
-            {
-                _pendingUpdates[creatureID] = new Dictionary<CreatureState, object>();
-            }
+            var update = new Dictionary<CreatureState, (object Value, DateTime Timestamp)>
+        {
+            { state, (value, DateTime.UtcNow) }
+        };
 
-            _pendingUpdates[creatureID][state] = value;
-            Console.WriteLine($"[CreatureStateHelper] Cached single state {state} for Creature ID: {creatureID}");
+            _pendingUpdates.AddOrUpdate(creatureID, update, (key, oldUpdates) =>
+            {
+                oldUpdates[state] = (value, DateTime.UtcNow);
+                return oldUpdates;
+            });
+
+            Console.WriteLine($"[CreatureStateHelper] Cached single update for Creature ID: {creatureID}, State: {state}");
         }
 
-        // Method to apply cached updates when a creature becomes visible to a client
-        internal static void ApplyCachedUpdates(Client client, int creatureID)
+        // Method to apply cached updates when the creature becomes visible again
+        internal static void ApplyCachedUpdates(Client client, Creature creature)
         {
-            if (_pendingUpdates.TryGetValue(creatureID, out var cachedUpdates))
+            if (_pendingUpdates.TryGetValue(creature.ID, out var cachedUpdates))
             {
-                if (client.WorldObjects.TryGetValue(creatureID, out var worldObject) && worldObject is Creature creature)
+                foreach (var stateUpdate in cachedUpdates)
                 {
-                    // Apply the cached updates to the creature
-                    foreach (var update in cachedUpdates)
-                    {
-                        creature.SetState(update.Key, update.Value);
-                    }
+                    creature.SetState(stateUpdate.Key, stateUpdate.Value.Value);
+                }
 
-                    // Remove the entry from the cache after applying the updates
-                    _pendingUpdates.Remove(creatureID);
-                    Console.WriteLine($"[CreatureStateHelper] Applied cached updates for Creature ID: {creatureID}");
+                // Remove cached updates after applying them
+                _pendingUpdates.TryRemove(creature.ID, out _);
+
+                Console.WriteLine($"[CreatureStateHelper] Applied cached updates for Creature ID: {creature.ID}, Creature Name: {creature.Name}");
+            }
+        }
+
+        // Method to clean up old cached updates
+        internal static void CleanupOldCachedUpdates()
+        {
+            DateTime now = DateTime.UtcNow;
+
+            foreach (var entry in _pendingUpdates.ToList())  // Convert to list to avoid enumeration issues
+            {
+                var creatureID = entry.Key;
+                var stateUpdates = entry.Value;
+
+                // Check if any state updates are older than the expiry time
+                bool isStale = stateUpdates.All(update => (now - update.Value.Timestamp).TotalMinutes > UpdateExpiryMinutes);
+
+                if (isStale)
+                {
+                    _pendingUpdates.TryRemove(creatureID, out _);
+                    Console.WriteLine($"[CreatureStateHelper] Removed stale cached updates for Creature ID: {creatureID}");
                 }
             }
         }
     }
+
 
 }

@@ -103,52 +103,6 @@ namespace Talos
 
 
 
-        internal Client GetClient(string clientName)
-        {
-            return Clients.FirstOrDefault(c => c.Name == clientName);
-        }
-
-        internal List<Client> GetFollowChain(Client leader)
-        {
-            List<Client> followChain = new List<Client>();
-            bool hasFollowers = false;
-
-            try
-            {
-                int count;
-                do
-                {
-                    count = followChain.Count;
-
-                    foreach (var client in this.Clients)
-                    {
-                        if (client.ClientTab != null
-                            && !client.Name.Contains("[")
-                            && client.ClientTab.followCbox.Checked
-                            && !followChain.Contains(client))
-                        {
-                            // Check if this client follows the leader or any client in the follow chain
-                            bool isFollower = hasFollowers
-                                ? followChain.Any(x => client.ClientTab.followText.Text.Equals(x.ClientTab.followText.Text, StringComparison.OrdinalIgnoreCase))
-                                : client.ClientTab.followText.Text.Equals(leader.Name, StringComparison.OrdinalIgnoreCase);
-
-                            if (isFollower)
-                            {
-                                followChain.Add(client);
-                                hasFollowers = true;
-                            }
-                        }
-                    }
-                }
-                while (count != followChain.Count); // Continue until no new followers are added
-            }
-            catch
-            {
-                return new List<Client>(); // Return an empty list if any error occurs
-            }
-
-            return followChain;
-        }
 
 
         internal Server(MainForm mainForm)
@@ -163,6 +117,11 @@ namespace Talos
             MessageHandlers();
             Initialize(2610);
             LoadMapCache();
+
+            var timer = new System.Threading.Timer((e) =>
+            {
+                CreatureStateHelper.CleanupOldCachedUpdates();
+            }, null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
         }
 
         #region networking
@@ -2781,7 +2740,7 @@ namespace Talos
             {
                 foreach (string name in client.AllyListHashSet)
                 {
-                    if (((client.Bot.AllyPage == null) || (FindClientByName(name) == null)) && client.Bot.IsAllyAlreadyListed(name))
+                    if (((client.Bot.AllyPage == null) || (GetClient(name) == null)) && client.Bot.IsAllyAlreadyListed(name))
                     {
                         client.Bot.RemoveAlly(name);
                     }
@@ -3051,6 +3010,133 @@ namespace Talos
         }
         #endregion
 
+        private Player GetOrCreatePlayer(Client client, int id, string name, Location location, Direction direction)
+        {
+            Player player = null;
+            string clientName = "";
+            if (client.Player != null)
+            {
+                clientName = client.Player.Name;
+            }
+            // Check if the player exists in WorldObjects and is a Player
+            if (client.WorldObjects.TryGetValue(id, out var worldObject) && worldObject is Player existingPlayer)
+            {
+                //Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player found in WorldObjects: {existingPlayer.Name}, Hash: {existingPlayer.GetHashCode()}");
+                player = existingPlayer;
+            }
+
+
+            // If player wasn't found, create a new one
+            if (player == null)
+            {
+                player = new Player(id, name, location, direction);
+                //Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player not found in WorldObjects, creating new player: {player.Name}, Hash: {player.GetHashCode()}");
+            }
+            else
+            {
+                // Update the existing player's properties
+                player.Location = location;
+                player.Direction = direction;
+                if (!string.IsNullOrEmpty(name) && string.IsNullOrEmpty(player.Name))
+                {
+                    player.Name = name;
+                }
+            }
+
+            return player;
+        }
+
+        internal Creature GetOrCreateCreature(Client client, int id, string name, ushort sprite, byte type, Location location, Direction direction)
+        {
+            Creature creature;
+
+            if (!client.WorldObjects.TryGetValue(id, out var worldObject))
+            {
+                // Create a new creature
+                creature = new Creature(id, name, sprite, type, location, direction);
+
+                client.WorldObjects.TryAdd(id, creature);
+
+                Console.WriteLine($"[GetOrCreateCreature] Created new Creature ID: {id}, HashCode: {creature.GetHashCode()}");
+            }
+            else
+            {
+                // Update the existing creature
+                creature = worldObject as Creature;
+                if (creature != null)
+                {
+                    // Before updating, log current state
+                    Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
+
+                    // Update properties that may change
+                    creature.Location = location;
+                    creature.Direction = direction;
+                    creature.IsActive = true;
+                    creature.LastSeen = DateTime.UtcNow;
+
+                    // Only update name if it's empty
+                    if (string.IsNullOrEmpty(creature.Name) && !string.IsNullOrEmpty(name))
+                    {
+                        creature.Name = name;
+                    }
+
+                    // After updating, log current state
+                    Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
+                }
+            }
+
+            // Apply any cached updates to the creature
+            CreatureStateHelper.ApplyCachedUpdates(client, creature);
+
+            return creature;
+        }
+
+        internal Client GetClient(string clientName)
+        {
+            return Clients.FirstOrDefault(c => c.Name.Equals(clientName, StringComparison.CurrentCultureIgnoreCase));
+        }
+
+        internal List<Client> GetFollowChain(Client leader)
+        {
+            List<Client> followChain = new List<Client>();
+            bool hasFollowers = false;
+
+            try
+            {
+                int count;
+                do
+                {
+                    count = followChain.Count;
+
+                    foreach (var client in this.Clients)
+                    {
+                        if (client.ClientTab != null
+                            && !client.Name.Contains("[")
+                            && client.ClientTab.followCbox.Checked
+                            && !followChain.Contains(client))
+                        {
+                            // Check if this client follows the leader or any client in the follow chain
+                            bool isFollower = hasFollowers
+                                ? followChain.Any(x => client.ClientTab.followText.Text.Equals(x.ClientTab.followText.Text, StringComparison.OrdinalIgnoreCase))
+                                : client.ClientTab.followText.Text.Equals(leader.Name, StringComparison.OrdinalIgnoreCase);
+
+                            if (isFollower)
+                            {
+                                followChain.Add(client);
+                                hasFollowers = true;
+                            }
+                        }
+                    }
+                }
+                while (count != followChain.Count); // Continue until no new followers are added
+            }
+            catch
+            {
+                return new List<Client>(); // Return an empty list if any error occurs
+            }
+
+            return followChain;
+        }
         internal void RemoveFirstCreatureToSpell(Client client)
         {
             lock (SyncObj)
@@ -3062,8 +3148,6 @@ namespace Talos
                 }
             }
         }
-
-
         internal void SetDugon(Client client, string dugonLevel)
         {
             Dictionary<string, Dugon> dugonMappings = new Dictionary<string, Dugon>
@@ -3111,7 +3195,6 @@ namespace Talos
 
             client.SetTemuairClass(temuairClass);
         }
-
         internal void SetMedeniaClass(Client client, string className)
         {
             Dictionary<string, MedeniaClass> classMappings = new Dictionary<string, MedeniaClass>
@@ -3134,7 +3217,6 @@ namespace Talos
 
             client.SetMedeniaClass(medeniaClass);
         }
-
         internal void SetPreviousClass(Client client, string className)
         {
             Dictionary<string, PreviousClass> classMappings = new Dictionary<string, PreviousClass>
@@ -3158,7 +3240,6 @@ namespace Talos
 
             client.SetPreviousClass(previousClass);
         }
-
 
         /// <summary>
         /// Function to load the map cache from the resources maps.dat
@@ -3252,19 +3333,7 @@ namespace Talos
             binaryReader.Close();
             return true;
         }
-
-        internal Client FindClientByName(string name)
-        {
-            try
-            {
-                return _clientList.FirstOrDefault(client => client.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
+     
         internal void ResetBuffsOnAoSith(Client client, int creatureId, bool strangerNearby = false)
         {
             if (strangerNearby)
@@ -3316,8 +3385,6 @@ namespace Talos
                 client.Bot._recentlyAoSithed = true;
             }
         }
-
-
 
         private void AutomaticActions()
         {
@@ -3372,87 +3439,6 @@ namespace Talos
                 }
                 Thread.Sleep(5000); // Sleep for 5 seconds
             }
-        }
-
-        private Player GetOrCreatePlayer(Client client, int id, string name, Location location, Direction direction)
-        {
-            Player player = null;
-            string clientName = "";
-            if (client.Player != null)
-            {
-                clientName = client.Player.Name;
-            }
-            // Check if the player exists in WorldObjects and is a Player
-            if (client.WorldObjects.TryGetValue(id, out var worldObject) && worldObject is Player existingPlayer)
-            {
-                //Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player found in WorldObjects: {existingPlayer.Name}, Hash: {existingPlayer.GetHashCode()}");
-                player = existingPlayer;
-            }
-
-
-            // If player wasn't found, create a new one
-            if (player == null)
-            {
-                player = new Player(id, name, location, direction);
-                //Console.WriteLine($"[GetOrCreatePlayer] CLIENT: {clientName} *** Player not found in WorldObjects, creating new player: {player.Name}, Hash: {player.GetHashCode()}");
-            }
-            else
-            {
-                // Update the existing player's properties
-                player.Location = location;
-                player.Direction = direction;
-                if (!string.IsNullOrEmpty(name) && string.IsNullOrEmpty(player.Name))
-                {
-                    player.Name = name;
-                }
-            }
-
-            return player;
-        }
-
-        internal Creature GetOrCreateCreature(Client client, int id, string name, ushort sprite, byte type, Location location, Direction direction)
-        {
-            Creature creature;
-
-            if (!client.WorldObjects.TryGetValue(id, out var worldObject))
-            {
-                // Create a new creature
-                creature = new Creature(id, name, sprite, type, location, direction);
-
-                client.WorldObjects.TryAdd(id, creature);
-
-                Console.WriteLine($"[GetOrCreateCreature] Created new Creature ID: {id}, HashCode: {creature.GetHashCode()}");
-            }
-            else
-            {
-                // Update the existing creature
-                creature = worldObject as Creature;
-                if (creature != null)
-                {
-                    // Before updating, log current state
-                    Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
-
-                    // Update properties that may change
-                    creature.Location = location;
-                    creature.Direction = direction;
-                    creature.IsActive = true;
-                    creature.LastSeen = DateTime.UtcNow;
-
-                    // Only update name if it's empty
-                    if (string.IsNullOrEmpty(creature.Name) && !string.IsNullOrEmpty(name))
-                    {
-                        creature.Name = name;
-                    }
-
-                    // After updating, log current state
-                    Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
-                }
-            }
-
-            // Apply any cached updates to the creature
-            CreatureStateHelper.ApplyCachedUpdates(client, id);
-
-            return creature;
         }
 
         private void CleanupInactiveCreatures(Client client)

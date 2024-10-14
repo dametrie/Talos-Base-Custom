@@ -1576,7 +1576,7 @@ namespace Talos.Forms
         {
             foreach (string name in _client.AllyListHashSet)
             {
-                if (_client.Bot.AllyPage == null || _client._server.FindClientByName(name) == null)
+                if (_client.Bot.AllyPage == null || _client._server.GetClient(name) == null)
                 {
                     if (_client.Bot.IsAllyAlreadyListed(name))
                     {
@@ -1613,7 +1613,7 @@ namespace Talos.Forms
             aislingTabControl.TabPages.Add(tabPage);
             foreach (string name in _client.AllyListHashSet)
             {
-                if (_client.Bot.AllyPage == null || _client._server.FindClientByName(name) == null)
+                if (_client.Bot.AllyPage == null || _client._server.GetClient(name) == null)
                 {
                     if (_client.Bot.IsAllyAlreadyListed(name))
                     {
