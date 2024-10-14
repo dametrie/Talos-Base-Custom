@@ -26,5 +26,18 @@ namespace Talos.Helper
                 }
             }
         }
+
+        internal static void UpdateCreatureState(Client castingClient, int creatureID, CreatureState state, object value)
+        {
+            IEnumerable<Client> allClients = castingClient._server.Clients;
+            foreach (var client in allClients)
+            {
+                if (client.WorldObjects.TryGetValue(creatureID, out var worldObject) && worldObject is Creature creature)
+                {
+                    creature.SetState(state, value);
+                    Console.WriteLine($"[CreatureStateHelper] Updated single state {state} for Creature ID: {creatureID}");
+                }
+            }
+        }
     }
 }

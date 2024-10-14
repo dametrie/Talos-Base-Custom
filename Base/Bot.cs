@@ -372,7 +372,7 @@ namespace Talos.Base
                 return false;
             }
 
-            if (DateTime.UtcNow.Subtract(leader.LastStep).TotalSeconds > 5.0
+            if (DateTime.UtcNow.Subtract(leader.GetState<DateTime>(CreatureState.LastStep)).TotalSeconds > 5.0
                 && leader.Location.MapID == Client._map.MapID
                 && (DateTime.UtcNow.Subtract(_lastEXP).TotalSeconds > 5.0
                 || DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 10.0))
@@ -1936,7 +1936,7 @@ namespace Talos.Base
                 if (isDispelSuainChecked && TryGetSuainedAlly(ally, out Player player, out Client client))
                 {
 
-                    Client.UseSpell("ao suain" + player.Curse, player, _autoStaffSwitch, true);
+                    Client.UseSpell("ao suain", player, _autoStaffSwitch, true);
                     Console.WriteLine($"[DispellAllySuain] Player {player.Name}, Hash: {player.GetHashCode()}. IsSuained: {player.IsSuained}");
 
                     return false;
@@ -2112,7 +2112,7 @@ namespace Talos.Base
         {
             bool isAiteChecked = Client.ClientTab.aiteCbox.Checked;
             bool isPlayerAited = Client.Player.IsAited;
-            double aiteDuration = Client.Player.AiteDuration;
+            double aiteDuration = Client.Player.GetState<double>(CreatureState.AiteDuration);
             string aiteSpell = Client.ClientTab.aiteCombox.Text;
 
             if (isAiteChecked && !Client.HasEffect(EffectsBar.NaomhAite) && (!isPlayerAited || aiteDuration != 2.0))
@@ -2187,7 +2187,7 @@ namespace Talos.Base
         {
             bool isFasChecked = Client.ClientTab.fasCbox.Checked;
             bool isPlayerFassed = Client.Player.IsFassed;
-            double fasDuration = Client.Player.FasDuration;
+            double fasDuration = Client.Player.GetState<double>(CreatureState.FasDuration);
             string fasSpell = Client.ClientTab.fasCombox.Text;
 
             if (isFasChecked && !Client.HasEffect(EffectsBar.FasNadur) && (!isPlayerFassed || fasDuration != 2.0))
@@ -2340,14 +2340,21 @@ namespace Talos.Base
                 {
 
                     var cursesToDispel = new HashSet<string> { "cradh", "mor cradh", "ard cradh" };
+                    var curseName = player.GetState<string>(CreatureState.CurseName);
+                    var curseDuration = player.GetState<double>(CreatureState.CurseDuration);
 
-                    if (cursesToDispel.Contains(player.Curse))
+                    if (cursesToDispel.Contains(curseName))
                     {
-                        Client.UseSpell("ao " + player.Curse, player, _autoStaffSwitch, true);
+                        Client.UseSpell("ao " + curseName, player, _autoStaffSwitch, true);
 
-                        player.CurseDuration = 0.0;
-                        player.Curse = "";
-                        Console.WriteLine($"[DispellAllyCurse] Curse data reset on {player.Name}, Hash: {player.GetHashCode()}. Curse: {player.Curse}, CurseDuration: {player.CurseDuration}, IsCursed: {player.IsCursed}");
+                        var stateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.CurseDuration, 0.0 },
+                            { CreatureState.CurseName, string.Empty }
+                        };
+                        CreatureStateHelper.UpdateCreatureStates(client, player.ID, stateUpdates);
+
+                        Console.WriteLine($"[DispellAllyCurse] Curse data reset on {player.Name}, Hash: {player.GetHashCode()}. Curse: {curseName}, CurseDuration: {curseDuration}, IsCursed: {player.IsCursed}");
                         
                         return false;
 
@@ -3795,7 +3802,7 @@ namespace Talos.Base
 
             static internal bool CanCastPND(Creature creature)
             {
-                return creature._canPND;
+                return creature.CanPND;
             }
 
 

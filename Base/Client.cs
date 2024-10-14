@@ -2015,11 +2015,11 @@ namespace Talos.Base
 
                 if (spellName.Contains("cradh"))
                 {
-                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.LastCursed}, CurseDuration: {CastedTarget.CurseDuration}");
+                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {CastedTarget.GetState<double>(CreatureState.CurseDuration)}");
                 }
                 if (spellName.Contains("fas"))
                 {
-                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.LastFassed}, FasDuration: {CastedTarget.FasDuration}");
+                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {CastedTarget.GetState<double>(CreatureState.FasDuration)}");
                 }
 
                 if (ReadyToSpell(spell.Name))

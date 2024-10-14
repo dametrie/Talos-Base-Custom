@@ -1422,7 +1422,7 @@ namespace Talos.Forms
 
 
 
-        private void startStrip_Click_1(object sender, EventArgs e)
+        private async void startStrip_Click_1(object sender, EventArgs e)
         {
             if (startStrip.Text == "Start")
             {
@@ -1434,7 +1434,13 @@ namespace Talos.Forms
                     _client.BotBase.Server = _client._server;
                     _client.CurrentWaypoint = 0;
                 }
-                _client.BotBase.Start();
+
+                // asynchronously to avoid freezing the UI?
+                await Task.Run(() =>
+                {
+                    _client.BotBase.Start();
+                });
+
                 if (!_client.ClientTab.safeScreenCbox.Checked)
                 {
                     _client.ServerMessage((byte)ServerMessageType.OrangeBar1, "Bot Started");
@@ -1443,7 +1449,12 @@ namespace Talos.Forms
             else if (startStrip.Text == "Stop")
             {
                 startStrip.Text = "Start";
-                _client.BotBase.Stop();
+
+                await Task.Run(() =>
+                {
+                    _client.BotBase.Stop();
+                });
+
                 if (!_client.ClientTab.safeScreenCbox.Checked)
                 {
                     _client.ServerMessage((byte)ServerMessageType.OrangeBar1, "Bot Stopped");

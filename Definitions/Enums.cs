@@ -32,19 +32,22 @@ namespace Talos.Enumerations
         LastArmachd,
         LastPramhed,
         LastSuained,
+        LastStep,
+        
 
         // Durations
         CurseDuration,
         FasDuration,
         AiteDuration,
         DionDuration,
+        PramhDuration,
+        SuainDuration,
         FrostArrowDuration,
         CursedTuneDuration,
         RegenDuration,
         IncreasedRegenDuration,
         ArmachdDuration,
-        PramhDuration,
-        SuainDuration,
+
 
         // Strings
         CurseName,

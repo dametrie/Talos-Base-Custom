@@ -1331,7 +1331,8 @@ namespace Talos
             {
                 creature.Location = location;
                 creature.Direction = direction;
-                creature.LastStep = DateTime.UtcNow;
+                CreatureStateHelper.UpdateCreatureState(client, id, CreatureState.LastStep, DateTime.UtcNow);
+                
                 //Console.WriteLine("[ConfirmCreatureWalk] Creature ID: " + creature.ID);
                 //Console.WriteLine("[ConfirmCreatureWalk] Direction facing: " + creature.Direction);
                 //Console.WriteLine("[ConfirmCreatureWalk] Last moved: " + creature.LastWalked);
@@ -3294,11 +3295,16 @@ namespace Talos
                 Thread.Sleep(3000);
             }
 
-            creature.Curse = "";
-            creature.CurseDuration = 0.0;
-            creature.FasDuration = 0.0;
-            creature.AiteDuration = 0.0;
-            creature.DionDuration = 0.0;
+            var stateUpdates = new Dictionary<CreatureState, object>
+            {
+                {CreatureState.CurseName, string.Empty },
+                {CreatureState.CurseDuration, 0.0 },
+                {CreatureState.FasDuration, 0.0 },
+                {CreatureState.AiteDuration, 0.0 },
+                {CreatureState.DionDuration, 0.0 }
+            };
+
+            CreatureStateHelper.UpdateCreatureStates(client, creature.ID, stateUpdates);
 
             if (creature.SpellAnimationHistory.ContainsKey(20))
             {
@@ -3424,7 +3430,7 @@ namespace Talos
                 if (creature != null)
                 {
                     // Before updating, log current state
-                    Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.LastCursed}, CurseDuration: {creature.CurseDuration}, IsFassed: {creature.IsFassed}, LastFassed: {creature.LastFassed}, FasDuration: {creature.FasDuration}");
+                    Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
 
                     // Update properties that may change
                     creature.Location = location;
@@ -3439,7 +3445,7 @@ namespace Talos
                     }
 
                     // After updating, log current state
-                    Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.LastCursed}, CurseDuration: {creature.CurseDuration}, IsFassed: {creature.IsFassed}, LastFassed: {creature.LastFassed}, FasDuration: {creature.FasDuration}");
+                    Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
                 }
             }
 

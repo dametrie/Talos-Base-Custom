@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using Talos.Base;
 using Talos.Definitions;
 using Talos.Enumerations;
@@ -46,54 +43,104 @@ namespace Talos.Helper
                 case (ushort)SpellAnimation.PerfectDefense:
                     if (_targetCreature is Player)
                     {
-                        _targetCreature.LastDioned = DateTime.UtcNow;
-                        _targetCreature.Dion = "Perfect Defense";
-                        _targetCreature.DionDuration = Spell.GetSpellDuration(_targetCreature.Dion);
+                        var dionStateUpdates = new Dictionary<CreatureState, object> 
+                        {
+                            { CreatureState.IsDioned, true },
+                            { CreatureState.LastDioned, DateTime.UtcNow },
+                            { CreatureState.DionName, "Perfect Defense" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("Perfect Defense") }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
+
                     }
                     break;
+
                 case (ushort)SpellAnimation.Dion:
                     if (_targetID == _sourceID && _targetID != _client.PlayerID && !_server._clientList.Any(c => c.PlayerID == _targetID))
                     {
-                        _targetCreature.LastDioned = DateTime.UtcNow;
-                        _targetCreature.Dion = "mor dion";
-                        _targetCreature.DionDuration = Spell.GetSpellDuration(_targetCreature.Dion);
+                        var dionStateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.IsDioned, true },
+                            { CreatureState.LastDioned, DateTime.UtcNow },
+                            { CreatureState.DionName, "Dion" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("Dion") }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
                     }
                     break;
+
                 case (ushort)SpellAnimation.WingsOfProtection:
                     if (_targetID == _sourceID)
                     {
-                        _targetCreature.LastDioned = DateTime.UtcNow;
-                        _targetCreature.Dion = "Wings of Protection";
-                        _targetCreature.DionDuration = Spell.GetSpellDuration(_targetCreature.Dion);
+                        var dionStateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.IsDioned, true },
+                            { CreatureState.LastDioned, DateTime.UtcNow },
+                            { CreatureState.DionName, "Wings of Protection" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("Wings of Protection") }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
                     }
                     break;
+
                 case (ushort)SpellAnimation.IronSkin:
                     if (_targetID == _sourceID)
                     {
-                        _targetCreature.LastDioned = DateTime.UtcNow;
-                        _targetCreature.Dion = "Iron Skin";
-                        _targetCreature.DionDuration = Spell.GetSpellDuration(_targetCreature.Dion);
+                        var dionStateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.IsDioned, true },
+                            { CreatureState.LastDioned, DateTime.UtcNow },
+                            { CreatureState.DionName, "Iron Skin" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("Iron Skin") }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
+
                     }
                     break;
+
                 case (ushort)SpellAnimation.MorDionComhla:
                     if (_targetID != _sourceID)
                     {
-                        _targetCreature.LastDioned = DateTime.UtcNow;
-                        _targetCreature.Dion = "mor dion comlha";
-                        _targetCreature.DionDuration = Spell.GetSpellDuration(_targetCreature.Dion);
+                        var dionStateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.IsDioned, true },
+                            { CreatureState.LastDioned, DateTime.UtcNow },
+                            { CreatureState.DionName, "Mor Dion Comhla" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("Mor Dion Comhla") }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
                     }
                     break;
 
                 case (ushort)SpellAnimation.Aite:
-                    if ((_sourceID != _client.Player.ID) || _client._spellHistory.Count <= 0) //we didn't cast it or our creature to spell list is empty
+                    if ((_sourceID != _client.Player.ID) || _client._spellHistory.Count <= 0) 
                     {
-                        _targetCreature.AiteDuration = Spell.GetSpellDuration("ard naomh aite");
-                        _targetCreature.LastAited = DateTime.UtcNow;
+                        var aiteStateUpdates = new Dictionary<CreatureState, object> 
+                        {
+                            { CreatureState.IsAited, true },
+                            { CreatureState.LastAited, DateTime.UtcNow },
+                            { CreatureState.AiteName, "ard naomh aite" },
+                            { CreatureState.AiteDuration, Spell.GetSpellDuration("ard naomh aite") } //we didn't cast it or our creature to spell list is empty
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, aiteStateUpdates);
                     }
                     else
                     {
-                        _targetCreature.AiteDuration = Spell.GetSpellDuration(_client._spellHistory[0].Spell.Name);
-                        _targetCreature.LastAited = DateTime.UtcNow;
+                        var aiteStateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.IsAited, true },
+                            { CreatureState.LastAited, DateTime.UtcNow },
+                            { CreatureState.AiteName, _client._spellHistory[0].Spell.Name },
+                            { CreatureState.AiteDuration, Spell.GetSpellDuration(_client._spellHistory[0].Spell.Name) }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, aiteStateUpdates);
                     }
                     break;
 
@@ -163,63 +210,124 @@ namespace Talos.Helper
 
                 case (ushort)SpellAnimation.BeagCradh:
                 case (ushort)SpellAnimation.BlueCloud:
-                    _targetCreature.Curse = "beag cradh";
-                    _targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
-                    _targetCreature.LastCursed = DateTime.UtcNow;
+
+                    double bcDuration = Spell.GetSpellDuration("beag cradh");
+
+                    var bcStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    {
+                        { CreatureState.IsCursed, true },
+                        { CreatureState.LastCursed, DateTime.UtcNow },
+                        { CreatureState.CurseName, "beag cradh" },
+                        { CreatureState.CurseDuration, bcDuration } // Duration in seconds
+                    };
+
+                    CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, bcStateUpdates);
+                    
                     break;
 
                 case (ushort)SpellAnimation.Cradh:
                 case (ushort)SpellAnimation.OrangeCloud:
-                    _targetCreature.Curse = "cradh";
-                    _targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
-                    _targetCreature.LastCursed = DateTime.UtcNow;
+
+                    double cDuration = Spell.GetSpellDuration("cradh");
+
+                    var cStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    {
+                        { CreatureState.IsCursed, true },
+                        { CreatureState.LastCursed, DateTime.UtcNow },
+                        { CreatureState.CurseName, "cradh" },
+                        { CreatureState.CurseDuration, cDuration } // Duration in seconds
+                    };
+
+                    CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, cStateUpdates);
+
                     break;
 
                 case (ushort)SpellAnimation.MorCradh:
                 case (ushort)SpellAnimation.BlackCloud:
-                    _targetCreature.Curse = "mor cradh";
-                    _targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
-                    _targetCreature.LastCursed = DateTime.UtcNow;
+
+                    double mcDuration = Spell.GetSpellDuration("mor cradh");
+
+                    var mcStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    {
+                        { CreatureState.IsCursed, true },
+                        { CreatureState.LastCursed, DateTime.UtcNow },
+                        { CreatureState.CurseName, "mor cradh" },
+                        { CreatureState.CurseDuration, mcDuration } // Duration in seconds
+                    };
+
+                    CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, mcStateUpdates);
+
                     break;
 
                 case (ushort)SpellAnimation.ArdCradh:
                 case (ushort)SpellAnimation.RedCloud:
 
+                    double acDuration = Spell.GetSpellDuration("ard cradh");
 
-                    double curseDuration = Spell.GetSpellDuration("ard cradh");
-
-                    var curseStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    var acStateUpdates = new Dictionary<CreatureState, object> //Adam new
                     {
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
                         { CreatureState.CurseName, "ard cradh" },
-                        { CreatureState.CurseDuration, curseDuration } // Duration in seconds
+                        { CreatureState.CurseDuration, acDuration } // Duration in seconds
                     };
 
-                    CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, curseStateUpdates);
+                    CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, acStateUpdates);
 
                     //_targetCreature.Curse = "ard cradh";
                     //_targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
                     //_targetCreature.LastCursed = DateTime.UtcNow;
                     
-                    Console.WriteLine($"[AnimationHandler] curse duration set on Animation. Duration: {_targetCreature.CurseDuration}, LastCursed: {_targetCreature.LastCursed}");
+                    Console.WriteLine($"[AnimationHandler] curse duration set on Animation. Duration: {_targetCreature.GetState<double>(CreatureState.CurseDuration)}, LastCursed: {_targetCreature.GetState<double>(CreatureState.LastCursed)}");
                     
                     break;
 
                 case (ushort)SpellAnimation.Demise:
-                    _targetCreature.Curse = "Demise";
-                    _targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
-                    _targetCreature.LastCursed = DateTime.UtcNow;
+
+                    double demiseDuration = Spell.GetSpellDuration("Demise");
+
+                    var demiseStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    {
+                        { CreatureState.IsCursed, true },
+                        { CreatureState.LastCursed, DateTime.UtcNow },
+                        { CreatureState.CurseName, "Demise" },
+                        { CreatureState.CurseDuration, demiseDuration } // Duration in seconds
+                    };
+
+                    CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, demiseStateUpdates);
+
                     break;
 
                 case (ushort)SpellAnimation.DarkerSeal:
-                    _targetCreature.Curse = "Darker Seal";
+
+                    double darkerSealDuration = Spell.GetSpellDuration("Darker Seal");
+
+                    var darkerSealStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    {
+                        { CreatureState.IsCursed, true },
+                        { CreatureState.LastCursed, DateTime.UtcNow },
+                        { CreatureState.CurseName, "Darker Seal" },
+                        { CreatureState.CurseDuration, darkerSealDuration } // Duration in seconds
+                    };
+
+                    CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, darkerSealStateUpdates);
+
                     break;
 
                 case (ushort)SpellAnimation.DarkSeal:
-                    _targetCreature.Curse = "Dark Seal";
-                    _targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
-                    _targetCreature.LastCursed = DateTime.UtcNow;
+
+                    double darkSealDuration = Spell.GetSpellDuration("Dark Seal");
+
+                    var darkSealStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    {
+                        { CreatureState.IsCursed, true },
+                        { CreatureState.LastCursed, DateTime.UtcNow },
+                        { CreatureState.CurseName, "Dark Seal" },
+                        { CreatureState.CurseDuration, darkSealDuration } // Duration in seconds
+                    };
+
+                    CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, darkSealStateUpdates);
+
                     break;
 
                 case (ushort)SpellAnimation.AssassinStrike:
