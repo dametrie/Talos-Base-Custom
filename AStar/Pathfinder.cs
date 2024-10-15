@@ -135,6 +135,7 @@ internal class Pathfinder
                 //Print the name of each node and whether it is blocked
                 //Console.WriteLine($"Node at ({x},{y}) is " + (currentNode.IsOpen ? "Open" : "Blocked"));
                 currentNode.IsVisited = false;
+                currentNode.ParentNode = null;
                 currentNode.IsInOpenSet = false;
                 currentNode.GCost = 0;
                 currentNode.FCost = 0;
@@ -238,14 +239,14 @@ internal class Pathfinder
 
         while (node != null)
         {
-            // Check if we have already visited this node to detect cycles.
-            if (visitedLocations.Contains(node.Location))
-            {
-                Console.WriteLine($"Cycle detected at location {node.Location}. Breaking out of loop.");
-                break;
-            }
+            //// Check if we have already visited this node to detect cycles.
+            //if (visitedLocations.Contains(node.Location))
+            //{
+            //    Console.WriteLine($"Cycle detected at location {node.Location}. Breaking out of loop.");
+            //    break;
+            //}
 
-            visitedLocations.Add(node.Location);
+            //visitedLocations.Add(node.Location);
             path.Push(node.Location);
             node = node.ParentNode;
         }

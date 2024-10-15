@@ -121,7 +121,7 @@ namespace Talos.Base
         internal bool _inventoryFull;
         internal bool _shouldEquipBow;
         internal bool _trainingGroundsMember;
-        private bool _shouldRefresh;
+        private bool _hasWalked;
         internal bool _cancelPressed;
         internal bool _acceptPressed;
         internal bool _exchangeOpen;
@@ -281,7 +281,7 @@ namespace Talos.Base
         internal HashSet<int> NearbyGroundItems { get; private set; } = new HashSet<int>();
         internal HashSet<ushort> EffectsBarHashSet { get; set; } = new HashSet<ushort>();
         internal HashSet<ushort> SpellBar { get; set; } = new HashSet<ushort>();
-        internal HashSet<string> AllyListHashSet { get; set; } = new HashSet<string> { };
+        internal HashSet<string> GroupedPlayers { get; set; } = new HashSet<string> { };
 
         internal static HashSet<string> AoSuainHashSet = new HashSet<string>(new string[3]
         {
@@ -291,6 +291,7 @@ namespace Talos.Base
         }, StringComparer.CurrentCultureIgnoreCase);
         internal bool _stopped;
         internal short _previousMapID;
+        internal uint _exchangeID;
 
         internal Pathfinder Pathfinder { get; set; }
         internal RouteFinder RouteFinder { get; set; }
@@ -526,7 +527,40 @@ namespace Talos.Base
 
             return nearbyGroundItems;
         }
-
+        internal List<GroundItem> GetNearbyGroundItems(int distance = 12) //Adam
+        {
+            if (!Monitor.TryEnter(Server.SyncObj, 1000))
+            {
+                return new List<GroundItem>();
+            }
+            try
+            {
+                return WorldObjects.Values
+                    .OfType<GroundItem>()
+                    .Where(obj => obj.GetType() == typeof(Objects.GroundItem))
+                    .Where(obj => _serverLocation.DistanceFrom(obj.Location) <= distance)
+                    .ToList();
+            }
+            finally
+            {
+                Monitor.Exit(Server.SyncObj);
+            }
+        }
+        internal Player GetNearbyPlayer(string name)
+        {
+            if (Monitor.TryEnter(Server.SyncObj, 300))
+            {
+                try
+                {
+                    return (!NearbyPlayers.ContainsKey(name)) ? null : NearbyPlayers[name];
+                }
+                finally
+                {
+                    Monitor.Exit(Server.SyncObj);
+                }
+            }
+            return null;
+        }
         internal List<Player> GetNearbyPlayers()
         {
             List<Player> nearbyPlayers = new List<Player>();
@@ -545,21 +579,23 @@ namespace Talos.Base
             }
             return nearbyPlayers;
         }
-
-        internal Player GetNearbyPlayer(string name)
+        internal List<Player> GetNearbyAllies()
         {
-            if (Monitor.TryEnter(Server.SyncObj, 300))
+
+            if (!Monitor.TryEnter(Server.SyncObj, 1000))
             {
-                try
-                {
-                    return (!NearbyPlayers.ContainsKey(name)) ? null : NearbyPlayers[name];
-                }
-                finally
-                {
-                    Monitor.Exit(Server.SyncObj);
-                }
+                return new List<Player>();
             }
-            return null;
+            try
+            {
+                return NearbyPlayers.Values
+                    .Where(player => GroupedPlayers.Contains(player.Name))
+                    .ToList();
+            }
+            finally
+            {
+                Monitor.Exit(Server.SyncObj);
+            }
         }
 
         internal Creature GetNearyByNPC(string name)
@@ -660,65 +696,12 @@ namespace Talos.Base
         {
             return RouteFind(new Location(mapID, 0, 0), 0, true);
         }
-
-        internal List<Player> GetNearbyPlayerList()
-        {
-            if (!Monitor.TryEnter(Server.SyncObj, 1000))
-            {
-                return new List<Player>();
-            }
-            try
-            {
-                return NearbyPlayers.Values
-                    .Where(player => !string.IsNullOrEmpty(player.Name))
-                    .ToList();
-            }
-            finally
-            {
-                Monitor.Exit(Server.SyncObj);
-            }
-        }
-          
+         
         
-        internal List<Player> GetNearbyAllies()
-        {
-
-            if (!Monitor.TryEnter(Server.SyncObj, 1000))
-            {
-                return new List<Player>();
-            }
-            try
-            {
-                return NearbyPlayers.Values
-                    .Where(player => AllyListHashSet.Contains(player.Name))
-                    .ToList();
-            }
-            finally
-            {
-                Monitor.Exit(Server.SyncObj);
-            }
-        }
 
 
-        internal List<GroundItem> GetNearbyGroundItems(int distance = 12) //Adam
-        {
-            if (!Monitor.TryEnter(Server.SyncObj, 1000))
-            {
-                return new List<GroundItem>();
-            }
-            try
-            {
-                return WorldObjects.Values
-                    .OfType<GroundItem>()
-                    .Where(obj => obj.GetType() == typeof(Objects.GroundItem))
-                    .Where(obj => _serverLocation.DistanceFrom(obj.Location) <= distance)
-                    .ToList();
-            }
-            finally
-            {
-                Monitor.Exit(Server.SyncObj);
-            }
-        }
+
+     
 
 
 
@@ -912,10 +895,7 @@ namespace Talos.Base
                     case 1928539694: // Dark Seal
                     case 219207967: // Darker Seal
                     case 928817768: // Demise
-                        if (!CastedTarget.IsCursed)
-                        {
-                            return true;
-                        }
+                        if (!CastedTarget.IsCursed) return true;
                         return false;
 
                     case 2112563240: // beag naomh aite
@@ -1115,7 +1095,7 @@ namespace Talos.Base
                 switch (spellName)
                 {
                     case "suain":
-                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()}, Currently Suained: {creature.IsSuained}");
+                        //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()}, Currently Suained: {creature.IsSuained}");
                         return creature.IsSuained;
                     case "beag cradh":
                     case "cradh":
@@ -1124,7 +1104,7 @@ namespace Talos.Base
                     case "Dark Seal":
                     case "Darker Seal":
                     case "Demise":
-                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()} Currently Cursed: {creature.IsCursed}");
+                        //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()} Currently Cursed: {creature.IsCursed}");
                         return creature.IsCursed;
 
                     case "Frost Arrow 1":
@@ -1141,7 +1121,7 @@ namespace Talos.Base
                     case "beag pramh":
                     case "pramh":
                     case "Mesmerize":
-                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, Currently Asleep: {creature.IsAsleep}");
+                        //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, Currently Asleep: {creature.IsAsleep}");
                         return creature.IsAsleep;
                     case "fas spiorad":
                         return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;
@@ -1149,7 +1129,7 @@ namespace Talos.Base
                     case "fas nadur":
                     case "mor fas nadur":
                     case "ard fas nadur":
-                        Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Fassed: {creature.IsFassed}");
+                        //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Fassed: {creature.IsFassed}");
                         return creature.IsFassed;
                     case "ao suain":
                         return creature.IsSuained;
@@ -1997,7 +1977,7 @@ namespace Talos.Base
 
                 if (spell == null || !CanUseSpell(spell, target) || ((spellName == "Hide" || spellName == "White Bat Form") && _server._stopCasting))
                 {
-                    Console.WriteLine($"[UseSpell] Aborted casting {spellName} on Creature ID: {target?.ID}. Reason: Validation failed.");
+                    //Console.WriteLine($"[UseSpell] Aborted casting {spellName} on Creature ID: {target?.ID}. Reason: Validation failed.");
                     _isCasting = false;
                     return false;
                 }
@@ -2013,14 +1993,14 @@ namespace Talos.Base
                 
                 CastedTarget = (target ?? Player);
 
-                if (spellName.Contains("cradh"))
-                {
-                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {CastedTarget.GetState<double>(CreatureState.CurseDuration)}");
-                }
-                if (spellName.Contains("fas"))
-                {
-                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {CastedTarget.GetState<double>(CreatureState.FasDuration)}");
-                }
+                //if (spellName.Contains("cradh"))
+                //{
+                //    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {CastedTarget.GetState<double>(CreatureState.CurseDuration)}");
+                //}
+                //if (spellName.Contains("fas"))
+                //{
+                //    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {CastedTarget.GetState<double>(CreatureState.FasDuration)}");
+                //}
 
                 if (ReadyToSpell(spell.Name))
                 {
@@ -2150,7 +2130,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                //Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {target?.ID}, Name: {target?.Name}");
+                Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {target?.ID}, Name: {target?.Name}");
 
                 Enqueue(clientPacket);
                 _spellCounter++;
@@ -2408,7 +2388,7 @@ namespace Talos.Base
                     Turn(dir);
                 }
 
-                _shouldRefresh = true;
+                _hasWalked = true;
                 //Console.WriteLine("shouldRefresh set to true"); // Debugging: Log shouldRefresh update
 
 
@@ -2480,7 +2460,7 @@ namespace Talos.Base
 
             if (PlayersWithNoName.Count > 0 || _isCasting)
             {
-                Console.WriteLine($"Cannot walk because PlayersWithNoName count is {PlayersWithNoName.Count} or is casting {_isCasting}");
+                //Console.WriteLine($"Cannot walk because PlayersWithNoName count is {PlayersWithNoName.Count} or is casting {_isCasting}");
                 if (!_isWalking)
                 {
                     Console.WriteLine("Not currently walking.");
@@ -2489,7 +2469,7 @@ namespace Talos.Base
                 _isCasting = false;
             }
 
-            if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetNearbyObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_shouldRefresh && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
+            if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetNearbyObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_hasWalked && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
             {
                 int dist = _clientLocation.DistanceFrom(destination);
                 //Console.WriteLine($"Current distance to destination: {dist}, Threshold: {distance}");
@@ -2505,14 +2485,14 @@ namespace Talos.Base
 
                 if (Equals(_clientLocation, destination))
                 {
-                    if (_shouldRefresh || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
+                    if (_hasWalked || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
                     {
                         if (_stuckCounter == 0)
                         {
                             //Console.WriteLine("Refreshing client due to timeout or refresh needed.");
                             RequestRefresh();
                         }
-                        _shouldRefresh = false;
+                        _hasWalked = false;
                     }
                     return true;
                 }
@@ -2522,6 +2502,7 @@ namespace Talos.Base
                 if (Equals(_clientLocation, destination))
                 {
                     Console.WriteLine("Destination reached.");
+                    RequestRefresh();
                     return true;
                 }
 
@@ -2533,7 +2514,7 @@ namespace Talos.Base
 
                 }
 
-                if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _shouldRefresh)
+                if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _hasWalked)
                 {
                     pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidWarps);
                     if (pathStack.Count == 0)
@@ -2542,13 +2523,14 @@ namespace Talos.Base
                     }
                     //Console.WriteLine("Location difference detected, requesting refresh.");
                     RequestRefresh();
-                    _shouldRefresh = false;
+                    _hasWalked = false;
                     return false;
                 }
 
                 if (pathStack.Count == 0)
                 {
                     Console.WriteLine("Path stack is empty, no further movement possible.");
+                    RequestRefresh();
                     return false;
                 }
                 else
@@ -2603,14 +2585,14 @@ namespace Talos.Base
                 if (nextPosition.DistanceFrom(_clientLocation) != 1)
                 {
                     //Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
-                    if (nextPosition.DistanceFrom(_clientLocation) > 2 && _shouldRefresh)
+                    if (nextPosition.DistanceFrom(_clientLocation) > 2 && _hasWalked)
                     {
                         if (_stuckCounter == 0)
                         {
                             //Console.WriteLine("Refreshing client due to unexpected position distance.");
                             RequestRefresh();
                         }
-                        _shouldRefresh = false;
+                        _hasWalked = false;
                     }
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
                     return false;
@@ -2647,7 +2629,7 @@ namespace Talos.Base
 
             Console.WriteLine("Conditions not met for walking, requesting client refresh.");
             RequestRefresh();
-            _shouldRefresh = false;
+            _hasWalked = false;
             return false;
         }
         private bool CanWalk()

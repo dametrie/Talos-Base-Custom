@@ -144,30 +144,34 @@ namespace Talos.Base
 
         private void MonsterForm()
         {
-            bool strangerNear = StrangerNear();
-            bool deformChecked = Client.ClientTab.deformCbox.Checked;
-            ushort desiredFormNum = (ushort)Client.ClientTab.formNum.Value;
-
-            if (Client.ClientTab.formCbox.Checked)
+            if (Client != null)
             {
-                if (deformChecked && strangerNear)
+                bool strangerNear = StrangerNear();
+                bool deformChecked = Client.ClientTab.deformCbox.Checked;
+                ushort desiredFormNum = (ushort)Client.ClientTab.formNum.Value;
+
+                if (Client.ClientTab.formCbox.Checked)
                 {
-                    // Only set if the state needs to change
-                    if (Client.ClientTab.formCbox.Checked)
+                    if (deformChecked && strangerNear)
                     {
-                        Client.ClientTab.SetMonsterForm(false, desiredFormNum);
+                        // Only set if the state needs to change
+                        if (Client.ClientTab.formCbox.Checked)
+                        {
+                            Client.ClientTab.SetMonsterForm(false, desiredFormNum);
+                        }
+                    }
+                }
+                else if (!Client.ClientTab.formCbox.Checked && deformChecked)
+                {
+                    if (!strangerNear)
+                    {
+
+
+                        Client.ClientTab.SetMonsterForm(true, desiredFormNum);
                     }
                 }
             }
-            else if (!Client.ClientTab.formCbox.Checked && deformChecked)
-            {
-                if (!strangerNear)
-                {
-                   
-
-                    Client.ClientTab.SetMonsterForm(true, desiredFormNum);
-                }
-            }
+           
         }
 
         internal bool StrangerNear()
@@ -201,7 +205,7 @@ namespace Talos.Base
 
             while (!_shouldThreadStop)
             {
-                _nearbyPlayers = Client.GetNearbyPlayerList();
+                _nearbyPlayers = Client.GetNearbyPlayers();
                 _nearbyValidCreatures = Client.GetNearbyValidCreatures(12);
                 var shouldWalk = !_dontWalk &&
                     (!Client.ClientTab.rangerStopCbox.Checked || !_shouldBotStop);
@@ -231,6 +235,7 @@ namespace Talos.Base
             }
             else if (Client.ClientTab.walkBtn.Text == "Stop")
             {
+                RefreshLastStep();
 
                 if (comboBoxText == "SW Lure")
                 {
@@ -264,6 +269,7 @@ namespace Talos.Base
 
         }
 
+
         private void FollowWalking(string playerName)
         {
             try
@@ -276,6 +282,12 @@ namespace Talos.Base
                 Client botClient = _server.GetClient(playerName);
                 Player leader = botClient?.Player ?? Client.WorldObjects.Values.OfType<Player>()
                     .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
+
+                if (_client != null && (_client.ClientTab._isBashing || !_client._stopped))
+                {
+                    RefreshLastStep();
+                }
+
 
                 if (leader == null)
                 {
@@ -315,7 +327,7 @@ namespace Talos.Base
                         {
                             if (distance > followDistance)
                             {
-                                Console.WriteLine("Initiating route find in lockstep mode.");
+                                //Console.WriteLine($"[Lockstep Mode] Distance ({distance}) exceeds follow distance ({followDistance}). Initiating route find.");
                                 Client._confirmBubble = false;
                                 Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                     && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -324,7 +336,7 @@ namespace Talos.Base
                         }
                         else if (distance > followDistance)
                         {
-                            Console.WriteLine($"Distance greater than follow threshold: {distance}. Recalculating path.");
+                            //Console.WriteLine($"[Non-Lockstep Mode] Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
                             Client._confirmBubble = false;
                             Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                 && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -467,15 +479,17 @@ namespace Talos.Base
             Thread.Sleep(2500);
         }
 
-        private void RefresLastStep(Client client, Player player)
+        private void RefreshLastStep()
         {
-            Point point = player.Location.Point;
-            int value = point.Distance(Client._clientLocation.Point);
-            if (client != null && (client.ClientTab._isBashing || !client._stopped) && DateTime.UtcNow.Subtract(Client.LastStep).TotalSeconds > (double)Client.ClientTab.numLastStepTime.Value)
+            bool lastStepF5 = Client.ClientTab.chkLastStepF5.Checked;
+            bool exceededStepTime = DateTime.UtcNow.Subtract(Client.LastStep).TotalSeconds > (double)Client.ClientTab.numLastStepTime.Value;
+            
+            if (lastStepF5 && exceededStepTime)
             {
                 Client.RequestRefresh(true);
             }
         }
+
 
         //Added helper methods because was running into an issue where checkbox state wasn't
         //being assessed correctly. Assumed it was a UI thread problem.
@@ -1407,7 +1421,7 @@ namespace Talos.Base
         {
             if (!Settings.Default.paranoiaMode)
             {
-                return Client.GetNearbyPlayerList().Any(new Func<Player, bool>(RangerListContains));
+                return Client.GetNearbyPlayers().Any(new Func<Player, bool>(RangerListContains));
             }
             return IsStrangerNearby();
         }
@@ -1425,8 +1439,10 @@ namespace Talos.Base
         {
             _nearbyAllies = Client.GetNearbyAllies();
             _nearbyValidCreatures = Client.GetNearbyValidCreatures(11);
-            var nearbyPlayers = Client.GetNearbyPlayerList();
-            _playersExistingOver250ms = nearbyPlayers?.Where(Delegates.HasPlayerExistedForOver250ms).ToList() ?? new List<Player>();
+            var nearbyPlayers = Client.GetNearbyPlayers();
+            _playersExistingOver250ms = nearbyPlayers?
+                .Where(p => (DateTime.UtcNow - p.Creation).TotalMilliseconds > 250)
+                .ToList();
             _playersNeedingRed.Clear();
         }
         private void HandleSkullStatus()
@@ -1501,7 +1517,7 @@ namespace Talos.Base
             if (_playersExistingOver250ms.Any(Delegates.PlayerIsSkulled))
             {
                 _playersExistingOver250ms.RemoveAll(Delegates.PlayerIsSkulled);
-                foreach (Player player in Client.GetNearbyPlayerList().Where(IsSkulledFriendOrGroupMember))
+                foreach (Player player in Client.GetNearbyPlayers().Where(IsSkulledFriendOrGroupMember))
                 {
                     _playersNeedingRed.Add(player);
                 }
@@ -1556,7 +1572,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                else if (player == null || !Client.GetNearbyPlayerList().Contains(player) || player.HealthPercent > 30 || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds > 5.0)
+                else if (player == null || !Client.GetNearbyPlayers().Contains(player) || player.HealthPercent > 30 || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds > 5.0)
                 {
                     player = null;
                     _dontWalk = false;
@@ -1937,7 +1953,7 @@ namespace Talos.Base
                 {
 
                     Client.UseSpell("ao suain", player, _autoStaffSwitch, true);
-                    Console.WriteLine($"[DispellAllySuain] Player {player.Name}, Hash: {player.GetHashCode()}. IsSuained: {player.IsSuained}");
+                    //Console.WriteLine($"[DispellAllySuain] Player {player.Name}, Hash: {player.GetHashCode()}. IsSuained: {player.IsSuained}");
 
                     return false;
                      
@@ -1950,7 +1966,7 @@ namespace Talos.Base
         {
             if (IsAlly(ally, out player, out client))
             {
-                Console.WriteLine($"[TryGetSuainedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} IsSuained: {player.IsSuained}");
+                //Console.WriteLine($"[TryGetSuainedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} IsSuained: {player.IsSuained}");
                 return player.IsSuained;
             }
             return false;
@@ -2354,7 +2370,7 @@ namespace Talos.Base
                         };
                         CreatureStateHelper.UpdateCreatureStates(client, player.ID, stateUpdates);
 
-                        Console.WriteLine($"[DispellAllyCurse] Curse data reset on {player.Name}, Hash: {player.GetHashCode()}. Curse: {curseName}, CurseDuration: {curseDuration}, IsCursed: {player.IsCursed}");
+                        //Console.WriteLine($"[DispellAllyCurse] Curse data reset on {player.Name}, Hash: {player.GetHashCode()}. Curse: {curseName}, CurseDuration: {curseDuration}, IsCursed: {player.IsCursed}");
                         
                         return false;
 
@@ -2369,7 +2385,7 @@ namespace Talos.Base
 
             if (IsAlly(ally, out player, out client))
             {
-                Console.WriteLine($"[TryGetCursedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} is cursed: {player.IsCursed}");
+                //Console.WriteLine($"[TryGetCursedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} is cursed: {player.IsCursed}");
                 return player.IsCursed;
             }
             return false;
@@ -2406,7 +2422,7 @@ namespace Talos.Base
 
             while (loopPercentThreshold <= 100 && !_needFasSpiorad)
             {
-                foreach (Player player in Client.GetNearbyPlayerList())
+                foreach (Player player in Client.GetNearbyPlayers())
                 {
                     if (IsAllyAlreadyListed(player.Name) || player == Client.Player)
                     {
@@ -2438,7 +2454,7 @@ namespace Talos.Base
                             }
                         }
 
-                        if (!Client.GetNearbyPlayerList().Any(player => ShouldExcludePlayer(player)) || player == Client.Player || healSpell.Contains("comlha"))
+                        if (!Client.GetNearbyPlayers().Any(player => ShouldExcludePlayer(player)) || player == Client.Player || healSpell.Contains("comlha"))
                         {
                             
                             int healAtPercent = (int)((player == Client.Player) ? Client.ClientTab.healPctNum.Value : allyPage.dbIocNumPct.Value);
@@ -3335,7 +3351,7 @@ namespace Talos.Base
             int result;
             try
             {
-                List<Client> nearbyClients = Client.GetNearbyPlayerList()
+                List<Client> nearbyClients = Client.GetNearbyPlayers()
                     .Select(player => Server.GetClient(player?.Name))
                     .Where(client => client != null)
                     .ToList();
@@ -3616,7 +3632,7 @@ namespace Talos.Base
 
         internal bool IsStrangerNearby()
         {
-            return _client.GetNearbyPlayerList().Any(player => IsNotInFriendList(player));
+            return _client.GetNearbyPlayers().Any(player => IsNotInFriendList(player));
         }
 
         private bool IsNotInFriendList(Player player)

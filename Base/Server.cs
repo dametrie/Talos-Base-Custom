@@ -84,6 +84,10 @@ namespace Talos
         internal ConcurrentDictionary<string, CharacterState> ClientStateList {  get; set; } = new ConcurrentDictionary<string, CharacterState>();
         internal List<Client> _clients = new List<Client>();
         internal bool _toggleWalk;
+        private string _exchangeName;
+        private string _exchangeItem;
+        private string _exchangeCancel;
+        private string _exchangeAccept;
 
         public static object SyncObj { get; internal set; } = new object();
 
@@ -2738,7 +2742,7 @@ namespace Talos
         {
             if (client.Bot.AllyPage != null)
             {
-                foreach (string name in client.AllyListHashSet)
+                foreach (string name in client.GroupedPlayers)
                 {
                     if (((client.Bot.AllyPage == null) || (GetClient(name) == null)) && client.Bot.IsAllyAlreadyListed(name))
                     {
@@ -2789,7 +2793,7 @@ namespace Talos
                 string legendMarkText = serverPacket.ReadString8();
             }
             client.Nation = (Nation)((byte)nation);
-            client.AllyListHashSet.Clear();
+            client.GroupedPlayers.Clear();
             if (str.StartsWith("Group members"))
             {
                 char[] separator = new char[] { '\n' };
@@ -2800,7 +2804,7 @@ namespace Talos
                         string item = str7.Substring(2);
                         if (item != client.Name)
                         {
-                            client.AllyListHashSet.Add(item);
+                            client.GroupedPlayers.Add(item);
                         }
                     }
                 }
@@ -2920,6 +2924,31 @@ namespace Talos
 
         private bool ServerMessage_0x42_Exchange(Client client, ServerPacket serverPacket)
         {
+            byte type = serverPacket.ReadByte();
+
+            switch ((ExchangeType)type)
+            {
+                case ExchangeType.BeginTrade:
+                    HandleBeginTrade(client, serverPacket);
+                    break;
+
+                case ExchangeType.AddStackable:
+                    HandleAddStackable(client, serverPacket);
+                    break;
+
+                case ExchangeType.AddGold:
+                    HandleAddGold(client, serverPacket);
+                    break;
+
+                case ExchangeType.Cancel:
+                    HandleCancelExchange(client, serverPacket);
+                    break;
+
+                case ExchangeType.Accept:
+                    HandleAcceptExchange(client, serverPacket);
+                    break;
+            }
+
             return true;
         }
 
@@ -3010,6 +3039,89 @@ namespace Talos
         }
         #endregion
 
+        private void HandleBeginTrade(Client client, ServerPacket serverPacket)
+        {
+            client.Bot._dontCast = true;
+            client.Bot._dontWalk = true;
+            client._exchangeOpen = true;
+
+            uint id = serverPacket.ReadUInt32();
+            client._exchangeID = id;
+            _exchangeName = serverPacket.ReadString8();
+
+            client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"An exchange has started with {_exchangeName}!");
+        }
+
+        private void HandleAddStackable(Client client, ServerPacket serverPacket)
+        {
+            client._exchangeOpen = true;
+
+            byte toOrFrom = serverPacket.ReadByte();
+            serverPacket.ReadByte();
+            serverPacket.ReadUInt16();
+            serverPacket.ReadByte();
+
+            _exchangeItem = serverPacket.ReadString8();
+
+            if (toOrFrom == 0)
+            {
+                client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"You offer {_exchangeItem} to {_exchangeName}.");
+            }
+            else
+            {
+                client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"{_exchangeName} offers you {_exchangeItem}");
+            }
+        }
+
+        private void HandleAddGold(Client client, ServerPacket serverPacket)
+        {
+            byte toOrFrom = serverPacket.ReadByte();
+            uint amount = serverPacket.ReadUInt32();
+
+            if (toOrFrom == 0)
+            {
+                client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"You offer {amount} gold to {_exchangeName}.");
+            }
+            else
+            {
+                client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"{_exchangeName} offers you {amount} gold.");
+            }
+        }
+
+        private void HandleCancelExchange(Client client, ServerPacket serverPacket)
+        {
+            client.Bot._dontCast = false;
+            client.Bot._dontWalk = false;
+
+            ThreadPool.QueueUserWorkItem(_ => client.ResetExchangeVars());
+
+            byte toOrFrom = serverPacket.ReadByte();
+
+            if (toOrFrom == 0)
+            {
+                client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"Exchange cancelled by you.");
+            }
+            else
+            {
+                client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"Exchange cancelled by {_exchangeName}.");
+            }
+
+            _exchangeCancel = serverPacket.ReadString8();
+        }
+
+        private void HandleAcceptExchange(Client client, ServerPacket serverPacket)
+        {
+            client.Bot._dontCast = false;
+            client.Bot._dontWalk = false;
+
+            ThreadPool.QueueUserWorkItem(_ => client.ResetExchangeVars());
+
+            byte toOrFrom = serverPacket.ReadByte();
+
+            client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"Exchange accepted!");
+
+            _exchangeAccept = serverPacket.ReadString8();
+        }
         private Player GetOrCreatePlayer(Client client, int id, string name, Location location, Direction direction)
         {
             Player player = null;
@@ -3057,7 +3169,7 @@ namespace Talos
 
                 client.WorldObjects.TryAdd(id, creature);
 
-                Console.WriteLine($"[GetOrCreateCreature] Created new Creature ID: {id}, HashCode: {creature.GetHashCode()}");
+                //Console.WriteLine($"[GetOrCreateCreature] Created new Creature ID: {id}, HashCode: {creature.GetHashCode()}");
             }
             else
             {
@@ -3066,7 +3178,7 @@ namespace Talos
                 if (creature != null)
                 {
                     // Before updating, log current state
-                    Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
+                    //Console.WriteLine($"[GetOrCreateCreature] Before Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
 
                     // Update properties that may change
                     creature.Location = location;
@@ -3081,7 +3193,7 @@ namespace Talos
                     }
 
                     // After updating, log current state
-                    Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
+                    //Console.WriteLine($"[GetOrCreateCreature] After Update - Creature ID: {id}, IsCursed: {creature.IsCursed}, LastCursed: {creature.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {creature.GetState<double>(CreatureState.CurseDuration)}, IsFassed: {creature.IsFassed}, LastFassed: {creature.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {creature.GetState<double>(CreatureState.FasDuration)}");
                 }
             }
 
@@ -3143,7 +3255,7 @@ namespace Talos
             {
                 if (client._spellHistory != null && client._spellHistory.Count > 0)
                 {
-                    Console.WriteLine($"[RemoveFirstCreatureToSpell] Creature ID: {client._spellHistory[0].Creature.ID}, Spellname: {client._spellHistory[0].Spell.Name}, Hash: {client._spellHistory[0].Spell.GetHashCode()}");
+                    //Console.WriteLine($"[RemoveFirstCreatureToSpell] Creature ID: {client._spellHistory[0].Creature.ID}, Spellname: {client._spellHistory[0].Spell.Name}, Hash: {client._spellHistory[0].Spell.GetHashCode()}");
                     client._spellHistory.RemoveAt(0);
                 }
             }

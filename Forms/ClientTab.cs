@@ -1119,8 +1119,8 @@ namespace Talos.Forms
 
                     if (!isChargeSkillUsedRecently && !isSprintPotionUsedRecently)
                     {
-                        HashSet<string> nearbyPlayers = new HashSet<string>(_client.GetNearbyPlayerList().Select(player => player.Name), StringComparer.CurrentCultureIgnoreCase);
-                        HashSet<string> nonStrangers = new HashSet<string>(_client.AllyListHashSet.Concat(_client._friendBindingList), StringComparer.CurrentCultureIgnoreCase);
+                        HashSet<string> nearbyPlayers = new HashSet<string>(_client.GetNearbyPlayers().Select(player => player.Name), StringComparer.CurrentCultureIgnoreCase);
+                        HashSet<string> nonStrangers = new HashSet<string>(_client.GroupedPlayers.Concat(_client._friendBindingList), StringComparer.CurrentCultureIgnoreCase);
 
                         foreach (string name in new List<string>(_client._strangerBindingList))
                         {
@@ -1354,7 +1354,7 @@ namespace Talos.Forms
         internal void UpdateGroupList()
         {
             groupList.DataSource = null;
-            _client._groupBindingList = new BindingList<string>(_client.AllyListHashSet.ToList());
+            _client._groupBindingList = new BindingList<string>(_client.GroupedPlayers.ToList());
             groupList.DataSource = _client._groupBindingList;
         }
 
@@ -1529,7 +1529,7 @@ namespace Talos.Forms
         {
             foreach (Client client in _client._server._clientList)
             {
-                if (!_client.AllyListHashSet.Contains(client.Name) && _client != client)
+                if (!_client.GroupedPlayers.Contains(client.Name) && _client != client)
                 {
                     _client.RequestGroup(client.Name);
                 }
@@ -1574,7 +1574,7 @@ namespace Talos.Forms
 
         internal void RemoveAllyPage()
         {
-            foreach (string name in _client.AllyListHashSet)
+            foreach (string name in _client.GroupedPlayers)
             {
                 if (_client.Bot.AllyPage == null || _client._server.GetClient(name) == null)
                 {
@@ -1611,7 +1611,7 @@ namespace Talos.Forms
             TabPage tabPage = new TabPage("group");
             tabPage.Controls.Add(_client.Bot.AllyPage);
             aislingTabControl.TabPages.Add(tabPage);
-            foreach (string name in _client.AllyListHashSet)
+            foreach (string name in _client.GroupedPlayers)
             {
                 if (_client.Bot.AllyPage == null || _client._server.GetClient(name) == null)
                 {
@@ -2307,7 +2307,7 @@ namespace Talos.Forms
             {
                 _client.DisableCheats(Cheats.SeeHidden);
             }
-            foreach (Player player in _client.GetNearbyPlayerList())
+            foreach (Player player in _client.GetNearbyPlayers())
             {
                 _client.DisplayAisling(player);
             }

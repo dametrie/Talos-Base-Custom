@@ -682,9 +682,9 @@ namespace Talos.Helper
                     //if (client._spellHistory[0].Creature.ID != client.Player.ID)
                     //    client.UpdateFasTargets(client, client._spellHistory[0].Creature.ID, client._spellHistory[0].Creature.FasDuration);
                     Creature creature = client._spellHistory[0].Creature;
-                    string fasName = client.CastedSpell.ToString();
+                    string fasName = client.CastedSpell.Name;
 
-                    Console.WriteLine($"[HandleAlreadyCastMessage] Received 'You already cast' message for {fasName} on Creature ID: {client._spellHistory[0].Creature?.ID}, Hash: {client._spellHistory[0].Creature?.GetHashCode()} Updating LastFassed.");
+                    //Console.WriteLine($"[HandleAlreadyCastMessage] Received 'You already cast' message for {fasName} on Creature ID: {client._spellHistory[0].Creature?.ID}, Hash: {client._spellHistory[0].Creature?.GetHashCode()} Updating LastFassed.");
 
                     double fasDuration = Spell.GetSpellDuration(fasName);
 
@@ -699,7 +699,7 @@ namespace Talos.Helper
                     // Update the creature's state across all clients
                     CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
 
-                    Console.WriteLine($"[HandleAlreadyCastMessage] Fas state updated for Creature ID: {creature.ID}");
+                    //Console.WriteLine($"[HandleAlreadyCastMessage] Fas state updated for Creature ID: {creature.ID}");
 
                     client.CastedSpell = null;
                 }
@@ -1004,7 +1004,7 @@ namespace Talos.Helper
         {
             if (message == "Group disbanded.")
             {
-                client.AllyListHashSet.Clear();
+                client.GroupedPlayers.Clear();
                 client.ClientTab.UpdateGroupList();
                 client.ClientTab.UpdateStrangerList();
             }

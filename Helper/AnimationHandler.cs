@@ -278,7 +278,7 @@ namespace Talos.Helper
                     //_targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
                     //_targetCreature.LastCursed = DateTime.UtcNow;
                     
-                    Console.WriteLine($"[AnimationHandler] curse duration set on Animation. Duration: {_targetCreature.GetState<double>(CreatureState.CurseDuration)}, LastCursed: {_targetCreature.GetState<double>(CreatureState.LastCursed)}");
+                    Console.WriteLine($"[AnimationHandler] curse duration set on Animation. Duration: {_targetCreature.GetState<double>(CreatureState.CurseDuration)}, LastCursed: {_targetCreature.GetState<DateTime>(CreatureState.LastCursed)}");
                     
                     break;
 
