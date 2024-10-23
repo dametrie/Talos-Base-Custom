@@ -248,7 +248,7 @@ namespace Talos.Helper
 
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
 
-                            Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastFassed updated to {creature?.GetState<DateTime>(CreatureState.LastFassed)}");
+                            //Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastFassed updated to {creature?.GetState<DateTime>(CreatureState.LastFassed)}");
                             client._server.RemoveFirstCreatureToSpell(client);
                         }
                         break;

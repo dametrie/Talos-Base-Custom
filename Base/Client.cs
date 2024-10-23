@@ -147,7 +147,7 @@ namespace Talos.Base
         internal System.Windows.Forms.Timer _spellTimer;
         internal Stack<Location> pathStack = new Stack<Location>();
         internal Stack<Location> routeStack = new Stack<Location>();
-  
+
 
 
 
@@ -696,12 +696,12 @@ namespace Talos.Base
         {
             return RouteFind(new Location(mapID, 0, 0), 0, true);
         }
-         
-        
 
 
 
-     
+
+
+
 
 
 
@@ -887,7 +887,7 @@ namespace Talos.Base
                     case 107956092: // ard fas nadur
                         if (!CastedTarget.IsFassed) return true;
                         return false;
-                    
+
                     case 2848971440: // beag cradh
                     case 1154413499: // cradh
                     case 1281358573: // mor cradh
@@ -946,8 +946,8 @@ namespace Talos.Base
                             Console.WriteLine("ReadyToSpell: Creature is already asleep, returning false");
                             return false;
                         }
-                        else 
-                        { 
+                        else
+                        {
                             Console.WriteLine("ReadyToSpell: Creature is not asleep, can cast Pramh, returning true");
                             return true;
                         }
@@ -1141,7 +1141,7 @@ namespace Talos.Base
                     default:
                         return false;
                 }
-            } 
+            }
         }
         internal bool WaitForSpellChant()
         {
@@ -1246,6 +1246,18 @@ namespace Talos.Base
             DisplayEntityRequest(player.ID);
         }
 
+        private void UpdateClientActionText(string text)
+        {
+            if (ClientTab.InvokeRequired)
+            {
+                ClientTab.Invoke((Action)(() => ClientTab.currentAction.Text = text));
+            }
+            else
+            {
+                ClientTab.currentAction.Text = text;
+            }
+        }
+
         private bool UseOptimalStaff(Spell spell, out byte castLines)
         {
             bool swappingWeapons = false;
@@ -1278,17 +1290,17 @@ namespace Talos.Base
                     //Console.WriteLine($"Equipping {bowName} to cast {spell.Name}");
                     UseItem(bowName);
 
-                    while (EquippedItems[1]?.Name.Equals(bowName, StringComparison.CurrentCultureIgnoreCase) != true)
+                    while (EquippedItems[1]?.Name?.Equals(bowName, StringComparison.CurrentCultureIgnoreCase) != true)
                     {
-                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
+                        double elapsedSeconds = DateTime.UtcNow.Subtract(utcNow).TotalSeconds;
+
+                        if (elapsedSeconds <= 2.0)
                         {
-                            ClientTab.Invoke((Action)delegate
-                            {
-                                ClientTab.currentAction.Text = _action + "Swapping to " + bestBow.Name;
-                            });
-                            //Thread.Sleep(5);
+                            UpdateClientActionText($"{_action} Swapping to {bestBow.Name}");
+                            // Thread.Sleep(5);
                             continue;
                         }
+
                         return false;
                     }
                 }
@@ -1329,15 +1341,17 @@ namespace Talos.Base
 
                     while (Spellbook[spell.Name]?.CastLines != staff.CastLines[spell.Name])
                     {
-                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
+                        double elapsedSeconds = DateTime.UtcNow.Subtract(utcNow).TotalSeconds;
+
+                        // Ensure the swap operation doesn't exceed 2 seconds
+                        if (elapsedSeconds <= 2.0)
                         {
-                            ClientTab.Invoke((Action)delegate
-                            {
-                                ClientTab.currentAction.Text = _action + "Swapping to " + staff.Name;//Adam
-                            });
-                            //Thread.Sleep(5);
+                            UpdateClientActionText($"{_action} Swapping to {staff.Name}");
+
+                            // Thread.Sleep(5);
                             continue;
                         }
+
                         return false;
                     }
 
@@ -1921,10 +1935,8 @@ namespace Talos.Base
                         ClientTab.DelayedUpdateStrangerList();
                     });
                 }
-                ClientTab.Invoke((Action)delegate
-                {
-                    ClientTab.currentAction.Text = _action + "Using " + itemName;
-                });
+
+                UpdateClientActionText($"{_action} Using {itemName}");
                 ReadyToSpell(itemName);
                 Enqueue(clientPacket);
                 if (itemName == "Two Move Combo")
@@ -1990,7 +2002,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                
+
                 CastedTarget = (target ?? Player);
 
                 //if (spellName.Contains("cradh"))
@@ -2032,17 +2044,15 @@ namespace Talos.Base
                 }
                 //else
                 //{
-                    //return false;
+                //return false;
                 //}
 
 
                 if (CastedSpell != spell)
                 {
-                    ClientTab.Invoke((Action)delegate
-                    {
-                        ClientTab.currentAction.Text = _action + "Casting " + spellName;
-                    });
+                    UpdateClientActionText($"{_action} Casting {spellName}");
                 }
+
                 ClientPacket clientPacket = new ClientPacket(15);
                 clientPacket.WriteByte(spell.Slot);
 
@@ -2052,7 +2062,7 @@ namespace Talos.Base
                     clientPacket.WriteStruct(target.Location);
                 }
 
-                
+
 
                 if (castLines > 0)
                 {
@@ -2130,7 +2140,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {target?.ID}, Name: {target?.Name}");
+                //Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {target?.ID}, Name: {target?.Name}");
 
                 Enqueue(clientPacket);
                 _spellCounter++;
@@ -2262,7 +2272,7 @@ namespace Talos.Base
             serverPacket.WriteByte(type);
             serverPacket.WriteInt32(id);
             serverPacket.WriteString8(message);
-            this.Enqueue((Packet) serverPacket);
+            this.Enqueue((Packet)serverPacket);
         }
 
 
@@ -2372,7 +2382,7 @@ namespace Talos.Base
 
             //Console.WriteLine($"Attempting to walk in direction: {dir}"); // Log the direction
 
-            if (Dialog == null || !_server._stopWalking || dir != Direction.Invalid || _isRefreshing ==1)
+            if (Dialog == null || !_server._stopWalking || dir != Direction.Invalid || _isRefreshing == 1)
             {
                 _walkCallCount++;
                 //Console.WriteLine($"Walk method called {walkCallCount} times");
@@ -2414,10 +2424,7 @@ namespace Talos.Base
                 LastMoved = DateTime.UtcNow;
                 //Console.WriteLine($"[WalkLastMoved set to: {LastMoved}"); // Debugging: Log LastMoved update
 
-                ClientTab.Invoke((Action)delegate
-                {
-                    ClientTab.currentAction.Text = _action + "Walking " + dir;
-                });
+                UpdateClientActionText($"{_action} Walking {dir}");
             }
             else
             {
@@ -2705,13 +2712,13 @@ namespace Talos.Base
                 }
 
                 Location nextLocation = routeStack.Peek();
-                
+
                 //if (routeStack.Count != 1)
                 //{
-                    //Console.WriteLine("***routeStack.Count != 1");
+                //Console.WriteLine("***routeStack.Count != 1");
                 //    distance = 0;
                 //}
-                
+
                 if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
                 {
                     //Console.WriteLine("***routeStack.Count > 1 & nextLocaiton = _serverLocation");
@@ -2842,7 +2849,7 @@ namespace Talos.Base
                     (short)(targetLocation.Y + dy[i])
                 );
 
-          
+
                 //Console.WriteLine($"Checking cardinal direction location: {potentialLocation}");
 
                 // Check if the location is valid and walkable
@@ -2934,7 +2941,7 @@ namespace Talos.Base
                         ClickNPCDialog(creature, "Express Ship", true);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
- 
+
                         if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
                         {
                             _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
@@ -2989,7 +2996,7 @@ namespace Talos.Base
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
- 
+
                         if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
                         {
                             _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
@@ -3363,129 +3370,207 @@ namespace Talos.Base
         private void ClientLoop()
         {
             Thread.GetDomain().UnhandledException += Program.ExceptionHandler;
+
             while (_connected)
             {
-                //Console.WriteLine("Connected");
-                lock (_sendQueue)
-                {
-                    while (_sendQueue.Count > 0)
-                    {
-                        Packet packet = _sendQueue.Dequeue();
-                        ClientPacket? clientPacket = packet as ClientPacket;
-                        ClientPacket? clientPacketToLog = clientPacket?.Copy();
-                        Socket socket;
-                        if (clientPacket != null)
-                        {
-                            //Console.WriteLine(clientPacket.ToString());
-                            if (clientPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
-                                ClientTab.LogPackets(clientPacketToLog);
-                            if (clientPacket.IsDialog)
-                            {
-                                clientPacket.EncryptDialog();
-                            }
-                            if (clientPacket.Opcode == 98)
-                            {
-                                _serverOrdinal = clientPacket.Sequence;
-                            }
-                            if (clientPacket.ShouldEncrypt)
-                            {
-                                clientPacket.Sequence = _serverOrdinal++;
-                                clientPacket.Encrypt(_crypto);
-                            }
-                            socket = _serverSocket;
-                        }
-                        else
-                        {
-                            ServerPacket? serverPacket = packet as ServerPacket;
-                            ServerPacket? serverPacketToLog = serverPacket?.Copy();
-                            //Console.WriteLine(serverPacket.ToString());
-                            if (serverPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
-                                ClientTab.LogPackets(serverPacketToLog);
-                            if (serverPacket.ShouldEncrypt)
-                            {
-                                serverPacket.Sequence = _clientOrdinal++;
-                                serverPacket.Encrypt(_crypto);
-                            }
-                            socket = _clientSocket;
-                        }
-                        byte[] array = packet.CreatePacket();
-                        try
-                        {
-                            socket.BeginSend(array, 0, array.Length, SocketFlags.None, EndSend, socket);
-                        }
-                        catch (Exception ex)
-                        {
-                            string text = AppDomain.CurrentDomain.BaseDirectory + "CrashLogs\\";
-                            if (!Directory.Exists(text))
-                            {
-                                Directory.CreateDirectory(text);
-                            }
-                            text = text + DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log";
-                            File.WriteAllText(text, ex.ToString());
-                        }
-                    }
-                }
-                lock (_receiveQueue)
-                {
-                    while (_receiveQueue.Count > 0)
-                    {
-                        Packet packet = _receiveQueue.Dequeue();
-                        if (packet.ShouldEncrypt)
-                        {
-                            packet.Decrypt(_crypto);
-                        }
-                        bool flag = true;
-                        ClientPacket? clientPacket = packet as ClientPacket;
-                        if (clientPacket != null)
-                        {
-                            if (clientPacket.IsDialog)
-                            {
-                                clientPacket.DecryptDialog();
-                            }
-                            ClientMessageHandler clientHandle = _server.ClientMessage[clientPacket.Opcode];
-                            if (clientHandle != null)
-                            {
-                                lock (Server.SyncObj)
-                                {
-                                    try
-                                    {
-                                        flag = clientHandle(this, clientPacket);
-                                    }
-                                    catch
-                                    {
-                                        flag = false;
-                                    }
-                                }
-                            }
-                        }
-                        else if (packet is ServerPacket)
-                        {
-                            ServerPacket? serverPacket = packet as ServerPacket;
-                            ServerMessageHandler serverHandle = _server.ServerMessage[serverPacket.Opcode];
-                            if (serverHandle != null)
-                            {
-                                lock (Server.SyncObj)
-                                {
-                                    try
-                                    {
-                                        flag = serverHandle(this, (ServerPacket)packet);
-                                    }
-                                    catch
-                                    {
-                                        flag = false;
-                                    }
-
-                                }
-                            }
-                        }
-                        if (flag)
-                        {
-                            Enqueue(packet);
-                        }
-                    }
-                }
+                ProcessSendQueue();
+                ProcessReceiveQueue();
                 Thread.Sleep(5);
             }
+
+            HandleDisconnect();
+            RestoreWindow();
+            CleanupClient();
+        }
+
+        private void ProcessSendQueue()
+        {
+            lock (_sendQueue)
+            {
+                while (_sendQueue.Count > 0)
+                {
+                    Packet packet = _sendQueue.Dequeue();
+                    HandlePacketSending(packet);
+                }
+            }
+        }
+
+        private void HandlePacketSending(Packet packet)
+        {
+            Socket socket;
+            byte[] array;
+
+            if (packet is ClientPacket clientPacket)
+            {
+                LogClientPacket(clientPacket);
+                PrepareClientPacketForSending(clientPacket);
+                socket = _serverSocket;
+            }
+            else if (packet is ServerPacket serverPacket)
+            {
+                LogServerPacket(serverPacket);
+                PrepareServerPacketForSending(serverPacket);
+                socket = _clientSocket;
+            }
+            else
+            {
+                return;
+            }
+
+            array = packet.CreatePacket();
+
+            try
+            {
+                socket.BeginSend(array, 0, array.Length, SocketFlags.None, EndSend, socket);
+            }
+            catch (Exception ex)
+            {
+                LogException(ex);
+            }
+        }
+
+        private void PrepareClientPacketForSending(ClientPacket clientPacket)
+        {
+            if (clientPacket.IsDialog) clientPacket.EncryptDialog();
+            if (clientPacket.Opcode == 98) _serverOrdinal = clientPacket.Sequence;
+            if (clientPacket.ShouldEncrypt)
+            {
+                clientPacket.Sequence = _serverOrdinal++;
+                clientPacket.Encrypt(_crypto);
+            }
+        }
+
+        private void PrepareServerPacketForSending(ServerPacket serverPacket)
+        {
+            if (serverPacket.ShouldEncrypt)
+            {
+                serverPacket.Sequence = _clientOrdinal++;
+                serverPacket.Encrypt(_crypto);
+            }
+        }
+
+        private void LogClientPacket(ClientPacket clientPacket)
+        {
+            ClientPacket? clientPacketToLog = clientPacket.Copy();
+            if (clientPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
+            {
+                ClientTab.LogPackets(clientPacketToLog);
+            }
+        }
+
+        private void LogServerPacket(ServerPacket serverPacket)
+        {
+            ServerPacket? serverPacketToLog = serverPacket.Copy();
+            if (serverPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
+            {
+                ClientTab.LogPackets(serverPacketToLog);
+            }
+        }
+
+        private void LogException(Exception ex)
+        {
+            string logDirectory = AppDomain.CurrentDomain.BaseDirectory + "CrashLogs\\";
+            if (!Directory.Exists(logDirectory))
+            {
+                Directory.CreateDirectory(logDirectory);
+            }
+            string logPath = logDirectory + DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log";
+            File.WriteAllText(logPath, ex.ToString());
+        }
+
+        private void ProcessReceiveQueue()
+        {
+            lock (_receiveQueue)
+            {
+                while (_receiveQueue.Count > 0)
+                {
+                    Packet packet = _receiveQueue.Dequeue();
+                    HandlePacketReceiving(packet);
+                }
+            }
+        }
+
+        private void HandlePacketReceiving(Packet packet)
+        {
+            if (packet.ShouldEncrypt) packet.Decrypt(_crypto);
+            bool shouldEnqueue = true;
+
+            if (packet is ClientPacket clientPacket)
+            {
+                shouldEnqueue = HandleClientPacket(clientPacket);
+            }
+            else if (packet is ServerPacket serverPacket)
+            {
+                shouldEnqueue = HandleServerPacket(serverPacket);
+            }
+
+            if (shouldEnqueue)
+            {
+                Enqueue(packet);
+            }
+        }
+
+        private bool HandleClientPacket(ClientPacket clientPacket)
+        {
+            if (clientPacket.IsDialog) clientPacket.DecryptDialog();
+
+            ClientMessageHandler clientHandler = _server.ClientMessage[clientPacket.Opcode];
+            return TryHandleClientPacket(clientHandler, clientPacket);
+        }
+
+        private bool HandleServerPacket(ServerPacket serverPacket)
+        {
+            ServerMessageHandler serverHandler = _server.ServerMessage[serverPacket.Opcode];
+            return TryHandleServerPacket(serverHandler, serverPacket);
+        }
+
+        private bool TryHandleClientPacket(ClientMessageHandler handler, ClientPacket packet)
+        {
+            bool result = true;
+
+            if (handler != null)
+            {
+                lock (Server.SyncObj)
+                {
+                    try
+                    {
+                        result = handler(this, packet);
+                    }
+                    catch
+                    {
+                        result = false;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private bool TryHandleServerPacket(ServerMessageHandler handler, ServerPacket packet)
+        {
+            bool result = true;
+
+            if (handler != null)
+            {
+                lock (Server.SyncObj)
+                {
+                    try
+                    {
+                        result = handler(this, packet);
+                    }
+                    catch
+                    {
+                        result = false;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+
+        private void HandleDisconnect()
+        {
             try
             {
                 _clientSocket.Disconnect(false);
@@ -3494,7 +3579,10 @@ namespace Talos.Base
             catch
             {
             }
+        }
 
+        private void RestoreWindow()
+        {
             try
             {
                 NativeMethods.SetForegroundWindow((int)hWnd);
@@ -3504,13 +3592,16 @@ namespace Talos.Base
             catch
             {
             }
+        }
+
+        private void CleanupClient()
+        {
             Thread.Sleep(500);
-            //no longer connected
             _server._clientList.Remove(this);
             Thread.Sleep(100);
             _server._mainForm.RemoveClient(this);
-
         }
+
 
         internal bool FlashWindowEx(IntPtr hWnd)
         {
@@ -3526,29 +3617,17 @@ namespace Talos.Base
         {
             try
             {
-                string netStatData = "";
-                if (int.TryParse(_clientSocket.RemoteEndPoint.ToString().Replace("127.0.0.1:", ""), out int result))
+                if (TryGetPortFromRemoteEndPoint(_clientSocket.RemoteEndPoint.ToString(), out int port))
                 {
-                    Process process = new Process();
-                    process.StartInfo.FileName = "cmd.exe";
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.StartInfo.Arguments = "/c netstat -a -n -o";
-                    process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
-                    {
-                        netStatData += e.Data;
-                    };
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    process.WaitForExit();
-                    if (int.TryParse(Regex.Match(netStatData, "TCP\\s+127.0.0.1:" + result + "\\s+127.0.0.1:2610\\s+ESTABLISHED\\s+([0-9]+)").Groups[1].Value, out int procID))
+                    string netStatData = GetNetStatData();
+
+                    if (TryGetProcessIdForPort(netStatData, port, out int procID))
                     {
                         processId = procID;
+                        hWnd = Process.GetProcessById(processId).MainWindowHandle;
+
+                        NativeMethods.SetWindowText(hWnd, Name);
                     }
-                    hWnd = Process.GetProcessById(processId).MainWindowHandle;
-                    NativeMethods.SetWindowText(Process.GetProcessById(procID).MainWindowHandle, Name);
-                    process.Dispose();
                 }
             }
             catch
@@ -3556,6 +3635,54 @@ namespace Talos.Base
                 DisconnectWait();
             }
         }
+
+        private bool TryGetPortFromRemoteEndPoint(string remoteEndPoint, out int port)
+        {
+            return int.TryParse(remoteEndPoint.Replace("127.0.0.1:", ""), out port);
+        }
+
+        private string GetNetStatData()
+        {
+            string netStatData = string.Empty;
+
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = "cmd.exe";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.Arguments = "/c netstat -a -n -o";
+                process.OutputDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        netStatData += e.Data + Environment.NewLine;
+                    }
+                };
+
+                process.Start();
+                process.BeginOutputReadLine();
+                process.WaitForExit();
+            }
+
+            return netStatData;
+        }
+
+        private bool TryGetProcessIdForPort(string netStatData, int port, out int processId)
+        {
+            processId = 0;
+            string pattern = $@"TCP\s+127.0.0.1:{port}\s+127.0.0.1:2610\s+ESTABLISHED\s+([0-9]+)";
+
+            var match = Regex.Match(netStatData, pattern);
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int procID))
+            {
+                processId = procID;
+                return true;
+            }
+
+            return false;
+        }
+
 
         /// <summary>
         /// Asynchronously finalizes the sending of a packet.

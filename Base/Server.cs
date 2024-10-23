@@ -1416,7 +1416,7 @@ namespace Talos
                     {
                         // Remove dead creatures immediately
                         client.WorldObjects.TryRemove(creature.ID, out _);
-                        Console.WriteLine($"[RemoveVisibleObjects] Removed dead Creature ID {creature.ID}, Hash: {creature.GetHashCode()}");
+                        //Console.WriteLine($"[RemoveVisibleObjects] Removed dead Creature ID {creature.ID}, Hash: {creature.GetHashCode()}");
                     }
 
                     if (client._map.Name.Contains("Plamit"))

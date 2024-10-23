@@ -1677,7 +1677,10 @@ namespace Talos.Base
             BubbleBlock();
             Heal();
             DispellAllySuain();
+            DispellPlayerCurse();
+            BeagCradh();
             DispellAllyCurse();
+            BeagCradhAllies();
             AoPoison();
             Dion();
             Aite();
@@ -1688,8 +1691,8 @@ namespace Talos.Base
             DragonScale();
             Armachd();
             ArmachdAllies();
-            BeagCradh();
-            BeagCradhAllies();
+
+
             CastPlayerBuffs(); //Deireas Faileas, Monk Forms, Asgall, Perfect Defense,
                                //Aegis Spehre, ao beag suain, Muscle Stim, Nerve Stim, Mist, Mana Ward
                                //Vanish Elixir, Regens, Mantid Scent
@@ -2085,40 +2088,17 @@ namespace Talos.Base
             bool isFungusExtractChecked = Client.ClientTab.fungusExtractCbox.Checked;
             bool shouldUseFungusExtract = DateTime.UtcNow.Subtract(_lastUsedFungusBeetle).TotalSeconds > 1.0;
 
-            //Ao allies
-            foreach (Ally ally in ReturnAllyList())
+            // Process allies for Ao poison dispel
+            if (!AoPoisonForAllies(shouldUseFungusExtract))
             {
-                bool isAoAllyChecked = ally.AllyPage.dispelPoisonCbox.Checked;
-
-                if (isAoAllyChecked && IsAlly(ally, out Player player, out Client client) &&
-                    client.HasEffect(EffectsBar.Poison) && player.IsPoisoned && shouldUseFungusExtract)
-                {
-                    if (Client._isRegistered && Client.HasItem("Fungus Beetle Extract"))
-                    {
-                        for (int j = 0; j < 6; j++)
-                        {
-                            Client.UseItem("Fungus Beetle Extract");
-                        }
-                        _lastUsedFungusBeetle = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        Client.UseSpell("ao puinsein", player, _autoStaffSwitch, false);
-                        return false;
-                    }
-                }
+                return false;
             }
 
-            //Ao self
             if (isAoPoisonChecked && Client.HasEffect(EffectsBar.Poison) && isPlayerPoisoned)
             {
                 if (isFungusExtractChecked && Client._isRegistered)
                 {
-                    for (int j = 0; j < 6; j++)
-                    {
-                        Client.UseItem("Fungus Beetle Extract");
-                    }
-                    _lastUsedFungusBeetle = DateTime.UtcNow;
+                    UseFungusBeetleExtract();
                 }
                 else
                 {
@@ -2128,6 +2108,38 @@ namespace Talos.Base
             }
 
             return true;
+        }
+
+        private bool AoPoisonForAllies(bool shouldUseFungusExtract)
+        {
+            foreach (Ally ally in ReturnAllyList())
+            {
+                if (ally.AllyPage.dispelPoisonCbox.Checked && IsAlly(ally, out Player player, out Client client))
+                {
+                    if (client.HasEffect(EffectsBar.Poison) && player.IsPoisoned && shouldUseFungusExtract)
+                    {
+                        if (Client._isRegistered && Client.HasItem("Fungus Beetle Extract"))
+                        {
+                            UseFungusBeetleExtract();
+                        }
+                        else
+                        {
+                            Client.UseSpell("ao puinsein", player, _autoStaffSwitch, false);
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private void UseFungusBeetleExtract()
+        {
+            for (int j = 0; j < 6; j++)
+            {
+                Client.UseItem("Fungus Beetle Extract");
+            }
+            _lastUsedFungusBeetle = DateTime.UtcNow;
         }
 
         private bool Aite()
@@ -2150,25 +2162,25 @@ namespace Talos.Base
         {
             foreach (Ally ally in ReturnAllyList())
             {
-                bool isAiteChecked = ally.AllyPage.dbAiteCbox.Checked;
-                string aiteSpell = ally.AllyPage.dbAiteCombox.Text;
-
-                if (!isAiteChecked || !IsAlly(ally, out Player player, out Client client))
+                // Check if the Aite spell is enabled for the ally and get the spell name
+                if (!ally.AllyPage.dbAiteCbox.Checked || string.IsNullOrEmpty(ally.AllyPage.dbAiteCombox.Text))
                 {
                     continue;
                 }
 
-                if (client == null || client.HasEffect(EffectsBar.NaomhAite))
+                // Ensure the ally is valid and retrieve the player and client
+                if (!IsAlly(ally, out Player player, out Client client) || client == null || player == null)
                 {
                     continue;
                 }
 
-                if (player == null || player == client.Player || player.IsAited)
+                // Skip if the client already has aite or the player is the client itself
+                if (client.HasEffect(EffectsBar.NaomhAite) || player == client.Player || player.IsAited)
                 {
                     continue;
                 }
 
-                Client.UseSpell(aiteSpell, player, _autoStaffSwitch, false);
+                Client.UseSpell(ally.AllyPage.dbAiteCombox.Text, player, _autoStaffSwitch, false);
                 return false;
             }
 
@@ -2177,28 +2189,27 @@ namespace Talos.Base
 
         private bool FasAllies()
         {
-
             foreach (Ally ally in ReturnAllyList())
             {
-                bool isFasChecked = ally.AllyPage.dbFasCbox.Checked;
-                string fasSpell = ally.AllyPage.dbFasCombox.Text;
-
-                if (!isFasChecked || !IsAlly(ally, out Player player, out Client client))
+                // Check if the Fas spell is enabled for the ally and get the spell name
+                if (!ally.AllyPage.dbFasCbox.Checked || string.IsNullOrEmpty(ally.AllyPage.dbFasCombox.Text))
                 {
                     continue;
                 }
 
-                if (client == null || client.HasEffect(EffectsBar.FasNadur))
+                // Ensure the ally is valid and retrieve the player and client
+                if (!IsAlly(ally, out Player player, out Client client) || client == null || player == null)
                 {
                     continue;
                 }
 
-                if (player == null || player == client.Player || player.IsAited)
+                // Skip if the client already has fas or the player is the client itself
+                if (client.HasEffect(EffectsBar.FasNadur) || player == client.Player || player.IsFassed)
                 {
                     continue;
                 }
 
-                Client.UseSpell(fasSpell, player, _autoStaffSwitch, false);
+                Client.UseSpell(ally.AllyPage.dbFasCombox.Text, player, _autoStaffSwitch, false);
                 return false;
             }
 
@@ -2231,7 +2242,7 @@ namespace Talos.Base
                 {
                     RecentlyUsedDragonScale = true;
 
-                    Console.WriteLine("[DragonScale] Using Dragon's Scale");
+                    //Console.WriteLine("[DragonScale] Using Dragon's Scale");
 
                     Client.UseItem("Dragon's Scale");
 
@@ -2251,7 +2262,7 @@ namespace Talos.Base
 
             if (!isDionChecked || Client.HasEffect(EffectsBar.Dion))
             {
-                return false; // Exit early if Dion is not checked or effect already exists
+                return false;
             }
 
             string dionWhen = Client.ClientTab.dionWhenCombox.Text;
@@ -2352,6 +2363,33 @@ namespace Talos.Base
             }
         }
 
+        private bool DispellPlayerCurse()
+        {
+            Player player = Client.Player;
+
+            var cursesToDispel = new HashSet<string> { "cradh", "mor cradh", "ard cradh" };
+
+            var curseName = player.GetState<string>(CreatureState.CurseName);
+            var curseDuration = player.GetState<double>(CreatureState.CurseDuration);
+
+            if (cursesToDispel.Contains(curseName))
+            {
+                Client.UseSpell("ao " + curseName, player, _autoStaffSwitch, true);
+
+                var stateUpdates = new Dictionary<CreatureState, object>
+                {
+                    { CreatureState.CurseDuration, 0.0 },
+                    { CreatureState.CurseName, string.Empty }
+                };
+                CreatureStateHelper.UpdateCreatureStates(Client, player.ID, stateUpdates);
+
+                // Console.WriteLine($"[DispellPlayerCurse] Curse '{curseName}' dispelled from {player.Name}. Resetting curse data.");
+
+                return true;
+            }
+
+            return false;
+        }
         private bool DispellAllyCurse()
         {
             foreach (Ally ally in ReturnAllyList())
@@ -2711,7 +2749,7 @@ namespace Talos.Base
         {
             if (AllMonsters.ignoreCbox.Checked)
             {
-                _nearbyValidCreatures.RemoveAll(CreaturesToIgnore);
+                _nearbyValidCreatures.RemoveAll(creature => AllMonsters.ignoreLbox.Items.Contains(creature.SpriteID.ToString()));
             }
 
             List<Creature> priorityCreatures = new List<Creature>();
@@ -2877,7 +2915,7 @@ namespace Talos.Base
             {
                 if (!creatureList.Contains(creature))
                 {
-                    creature = creatureList.OrderBy(DistanceFromClientLocation).FirstOrDefault();
+                    creature = creatureList.OrderBy(c => c.Location.DistanceFrom(Client._clientLocation)).FirstOrDefault();
                 }
                 if (creature == null)
                 {
@@ -2907,7 +2945,7 @@ namespace Talos.Base
                 {
                     Creature creatureTarget = _nearbyValidCreatures
                         .Where(c => c.CanPND)
-                        .OrderBy(DistanceFromClientLocation)
+                        .OrderBy(c => c.Location.DistanceFrom(Client._clientLocation))
                         .FirstOrDefault();
 
                     if (creatureTarget != null)
@@ -3052,12 +3090,12 @@ namespace Talos.Base
 
         private bool SpellOneAtATime(EnemyPage enemyPage, List<Creature> creatureList)
         {
-            foreach (var creature in creatureList.OrderBy(c => DistanceFromClientLocation(c)))
+            foreach (var creature in creatureList.OrderBy(c => c.Location.DistanceFrom(Client._clientLocation)))
             {
 
                 if (!creatureList.Contains(this.creature))
                 {
-                    this.creature = creatureList.OrderBy(new Func<Creature, int>(DistanceFromClientLocation)).FirstOrDefault<Creature>();
+                    this.creature = creatureList.OrderBy(c => c.Location.DistanceFrom(Client._clientLocation)).FirstOrDefault<Creature>();
                 }
                 if (creature == null)
                 {
@@ -3159,48 +3197,55 @@ namespace Talos.Base
         private bool ExecuteDebuffStrategy(EnemyPage enemyPage, List<Creature> creatureList)
         {
             List<Creature> eligibleCreatures = creatureList.Where(c => !c.IsFassed || !c.IsCursed).ToList();
-            if (eligibleCreatures != null && eligibleCreatures.Any() && (enemyPage.spellsFasCbox.Checked || enemyPage.spellsCurseCbox.Checked))
+
+            if (eligibleCreatures.Any() && (enemyPage.spellsFasCbox.Checked || enemyPage.spellsCurseCbox.Checked))
             {
                 if (enemyPage.fasFirstRbtn.Checked)
                 {
-                    if (enemyPage.spellsFasCbox.Checked)
-                    {
-                        if (CastFasIfApplicable(enemyPage, eligibleCreatures))
-                        {
-                            _dontBash = true;
-                            return true;
-                        }
-                    }
-                    if (enemyPage.spellsCurseCbox.Checked)
-                    {
-                        if (CastCurseIfApplicable(enemyPage, eligibleCreatures))
-                        {
-                            _dontBash = true;
-                            return true;
-                        }
-                    }
+                    return ExecuteFasFirstStrategy(enemyPage, eligibleCreatures);
                 }
                 else if (enemyPage.curseFirstRbtn.Checked)
                 {
-                    if (enemyPage.spellsCurseCbox.Checked)
-                    {
-                        if (CastCurseIfApplicable(enemyPage, eligibleCreatures))
-                        {
-                            _dontBash = true;
-                            return true;
-                        }
-                    }
-                    if (enemyPage.spellsFasCbox.Checked)
-                    {
-                        if (CastFasIfApplicable(enemyPage, eligibleCreatures))
-                        {
-                            _dontBash = true;
-                            return true;
-                        }
-                    }
-
+                    return ExecuteCurseFirstStrategy(enemyPage, eligibleCreatures);
                 }
             }
+
+            return false;
+        }
+
+        private bool ExecuteFasFirstStrategy(EnemyPage enemyPage, List<Creature> eligibleCreatures)
+        {
+            // Try casting Fas first, then Curse if applicable
+            if (enemyPage.spellsFasCbox.Checked && CastFasIfApplicable(enemyPage, eligibleCreatures))
+            {
+                _dontBash = true;
+                return true;
+            }
+
+            if (enemyPage.spellsCurseCbox.Checked && CastCurseIfApplicable(enemyPage, eligibleCreatures))
+            {
+                _dontBash = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ExecuteCurseFirstStrategy(EnemyPage enemyPage, List<Creature> eligibleCreatures)
+        {
+            // Try casting Curse first, then Fas if applicable
+            if (enemyPage.spellsCurseCbox.Checked && CastCurseIfApplicable(enemyPage, eligibleCreatures))
+            {
+                _dontBash = true;
+                return true;
+            }
+
+            if (enemyPage.spellsFasCbox.Checked && CastFasIfApplicable(enemyPage, eligibleCreatures))
+            {
+                _dontBash = true;
+                return true;
+            }
+
             return false;
         }
 
@@ -3217,7 +3262,7 @@ namespace Talos.Base
 
                 // Select the nearest eligible creature if specified, otherwise select any eligible creature
                 Creature targetCreature = enemyPage.NearestFirstCbx.Checked
-                    ? eligibleCreatures.OrderBy(new Func<Creature, int>(DistanceFromServerLocation)).FirstOrDefault()
+                    ? eligibleCreatures.OrderBy(creature => creature.Location.DistanceFrom(Client._serverLocation)).FirstOrDefault()
                     : eligibleCreatures.FirstOrDefault();
 
                 // If a target is found and casting curses is enabled, cast the curse spell
@@ -3247,7 +3292,7 @@ namespace Talos.Base
 
                 // Select the nearest eligible creature if specified, otherwise select any eligible creature
                 Creature targetCreature = enemyPage.NearestFirstCbx.Checked
-                    ? eligibleCreatures.OrderBy(new Func<Creature, int>(DistanceFromServerLocation)).FirstOrDefault()
+                    ? eligibleCreatures.OrderBy(creature => creature.Location.DistanceFrom(Client._serverLocation)).FirstOrDefault()
                     : eligibleCreatures.FirstOrDefault();
 
                 // If a target is found and casting the 'fas' spell is enabled, cast the spell
@@ -3261,7 +3306,7 @@ namespace Talos.Base
 
                 return false; // No action was taken
             }
-          
+
         }
 
         private Creature SelectAttackTarget(EnemyPage enemyPage, List<Creature> creatureList, string spellName = "")
@@ -3304,7 +3349,7 @@ namespace Talos.Base
             else
             {
                 // Select the nearest creature from the attack list
-                return attackList.OrderBy(c => DistanceFromServerLocation(c)).FirstOrDefault();
+                return attackList.OrderBy(c => c.Location.DistanceFrom(Client._serverLocation)).FirstOrDefault();
             }
         }
 
@@ -3569,21 +3614,6 @@ namespace Talos.Base
             return creatureListIn.Where(creature =>
                 isSuainSelected ? !creature.IsSuained : !creature.IsAsleep || enemyPage.spellsControlCombox.Text != "suain"
             ).ToList();
-        }
-
-        private bool CreaturesToIgnore(Creature creature)
-        {
-            return AllMonsters.ignoreLbox.Items.Contains(creature.SpriteID.ToString());
-        }
-
-        private int DistanceFromServerLocation(Creature creature)
-        {
-            return creature.Location.DistanceFrom(Client._serverLocation);
-        }
-
-        private int DistanceFromClientLocation(Creature creature)
-        {
-            return creature.Location.DistanceFrom(Client._clientLocation);
         }
 
         private void AoSuain()
