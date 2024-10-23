@@ -25,6 +25,8 @@ using Talos.Properties;
 using Talos.PInvoke;
 using System.Threading.Tasks;
 using System.IO;
+using System.Xml.Serialization;
+using System.Xml;
 
 namespace Talos.Forms
 {
@@ -36,6 +38,7 @@ namespace Talos.Forms
         private string textMaptext = string.Empty;
         private string textXtext = string.Empty;
         private string textYtext = string.Empty;
+        private string LastLoadedProfile = string.Empty;
         private short textMap;
         private short textX;
         private short testY;
@@ -57,6 +60,7 @@ namespace Talos.Forms
         internal DateTime _lastUpdate;
         internal DateTime _lastStatusUpdate;
 
+        internal List<string> botProfiles = new List<string>();
 
         private List<string> _chatPanelList = new List<string>
         {
@@ -112,7 +116,6 @@ namespace Talos.Forms
         internal bool _isBashing;
         internal bool _isLoading;
         private string waypointsPath;
-        private List<string> waypointList;
         private System.Windows.Forms.Timer mushroomBonusCooldownTimer;
 
         internal ClientTab(Client client)
@@ -188,10 +191,10 @@ namespace Talos.Forms
             }
             foreach (string item in Directory.GetFiles(profilePath, "*.xml").Select(Path.GetFileNameWithoutExtension))
             {
-                List<string> list = waypointList;
+                List<string> list = botProfiles;
                 if (list != null && !list.Contains(item))
                 {
-                    waypointList.Add(item);
+                    botProfiles.Add(item);
                 }
             }
             foreach (string itemToAdd in Directory.GetFiles(waypointsPath).Select(Path.GetFileName))
@@ -559,32 +562,32 @@ namespace Talos.Forms
         }
 
 
-        internal void UpdateBindingList(BindingList<string> bindingList, ListBox listBox, string name)
-        {
-            if (listBox == null || string.IsNullOrEmpty(name))
+            internal void UpdateBindingList(BindingList<string> bindingList, ListBox listBox, string name)
             {
-                return;
-            }
-
-            // Check if we're on the UI thread
-            if (listBox.InvokeRequired)
-            {
-                listBox.Invoke(new Action(() => UpdateBindingList(bindingList, listBox, name)));
-            }
-            else
-            {
-                if (bindingList.Count != 0)
+                if (listBox == null || string.IsNullOrEmpty(name))
                 {
-                    bindingList.Add(name);
+                    return;
+                }
+
+                // Check if we're on the UI thread
+                if (listBox.InvokeRequired)
+                {
+                    listBox.Invoke(new Action(() => UpdateBindingList(bindingList, listBox, name)));
                 }
                 else
                 {
-                    bindingList.Add(name);
-                    listBox.DataSource = null;
-                    listBox.DataSource = bindingList;
+                    if (bindingList.Count != 0)
+                    {
+                        bindingList.Add(name);
+                    }
+                    else
+                    {
+                        bindingList.Add(name);
+                        listBox.DataSource = null;
+                        listBox.DataSource = bindingList;
+                    }
                 }
             }
-        }
 
         internal void AddMessageToChatPanel(System.Drawing.Color color, string message)
         {
@@ -1741,6 +1744,564 @@ namespace Talos.Forms
             return false;
         }
 
+        private void SaveProfile(string savePath)
+        {
+            if (string.IsNullOrEmpty(savePath))
+            {
+                return;
+            }
+
+            // Ensure savePath does not contain invalid characters
+            if (Regex.Match(savePath, "[\\/\\*\\\"\\[\\]\\\\\\:\\?\\|\\<\\>\\.]").Success)
+            {
+                MessageDialog.Show(_client._server._mainForm, "Cannot use characters /*\"[]\\:?|<>.");
+                return;
+            }
+
+            // Build the directory path for the profile
+            string profileDirectory = Settings.Default.DarkAgesPath.Replace("Darkages.exe", _client.Name + "\\Talos\\");
+            if (!Directory.Exists(profileDirectory))
+            {
+                Directory.CreateDirectory(profileDirectory);
+            }
+
+            // Create the full profile path (including filename)
+            string profilePath = Path.Combine(profileDirectory, savePath + ".xml");
+
+            // Create an instance of FormStateHelper and populate it with the form's control values
+            FormStateHelper formState = new FormStateHelper
+            {
+                // ComboBox List items (lines)
+                Combo1ListItems = new List<string>(combo1List.Lines),
+                Combo2ListItems = new List<string>(combo2List.Lines),
+                Combo3ListItems = new List<string>(combo3List.Lines),
+                Combo4ListItems = new List<string>(combo4List.Lines),
+
+                // Button text
+                Combo1BtnText = combo1Btn.Text,
+                Combo2BtnText = combo2Btn.Text,
+                Combo3BtnText = combo3Btn.Text,
+                Combo4BtnText = combo4Btn.Text,
+
+                // CheckBox states
+                DontCbox1Checked = dontCbox1.Checked,
+                DontCBox2Checked = dontCBox2.Checked,
+                DontCBox3Checked = dontCBox3.Checked,
+                DontCBox4Checked = dontCBox4.Checked,
+
+                DoublesComboxText = doublesCombox.Text,
+                AutoDoubleCboxChecked = autoDoubleCbox.Checked,
+                ExpGemsComboxText = expGemsCombox.Text,
+                AutoGemCboxChecked = autoGemCbox.Checked,
+                AutoStaffCboxChecked = autoStaffCbox.Checked,
+                HideLinesCboxChecked = hideLinesCbox.Checked,
+                FormCboxChecked = formCbox.Checked,
+                OptionsSkullCboxChecked = optionsSkullCbox.Checked,
+                OptionsSkullSurrboxChecked = optionsSkullSurrbox.Checked,
+                OneLineWalkCboxChecked = oneLineWalkCbox.Checked,
+                DionCboxChecked = dionCbox.Checked,
+                HealCboxChecked = healCbox.Checked,
+                DeireasFaileasCboxChecked = deireasFaileasCbox.Checked,
+                AoSithCboxChecked = aoSithCbox.Checked,
+                AlertStrangerCboxChecked = alertStrangerCbox.Checked,
+                AlertRangerCboxChecked = alertRangerCbox.Checked,
+                AlertDuraCboxChecked = alertDuraCbox.Checked,
+                AlertSkulledCboxChecked = alertSkulledCbox.Checked,
+                AlertEXPCboxChecked = alertEXPCbox.Checked,
+                AlertItemCapCboxChecked = alertItemCapCbox.Checked,
+                AiteCboxChecked = aiteCbox.Checked,
+                FasCboxChecked = fasCbox.Checked,
+                DisenchanterCboxChecked = disenchanterCbox.Checked,
+                WakeScrollCboxChecked = wakeScrollCbox.Checked,
+                HideCboxChecked = hideCbox.Checked,
+                DruidFormCboxChecked = druidFormCbox.Checked,
+                MistCboxChecked = mistCbox.Checked,
+                ArmachdCboxChecked = armachdCbox.Checked,
+                FasSpioradCboxChecked = fasSpioradCbox.Checked,
+                BeagCradhCboxChecked = beagCradhCbox.Checked,
+                AegisSphereCboxChecked = aegisSphereCbox.Checked,
+                DragonScaleCboxChecked = dragonScaleCbox.Checked,
+                ManaWardCboxChecked = manaWardCbox.Checked,
+                RegenerationCboxChecked = regenerationCbox.Checked,
+                PerfectDefenseCboxChecked = perfectDefenseCbox.Checked,
+                DragonsFireCboxChecked = dragonsFireCbox.Checked,
+                AsgallCboxChecked = asgallCbox.Checked,
+                MuscleStimulantCboxChecked = muscleStimulantCbox.Checked,
+                NerveStimulantCboxChecked = nerveStimulantCbox.Checked,
+                MonsterCallCboxChecked = monsterCallCbox.Checked,
+                VanishingElixirCboxChecked = vanishingElixirCbox.Checked,
+                VineyardCboxChecked = vineyardCbox.Checked,
+                AutoRedCboxChecked = autoRedCbox.Checked,
+                FungusExtractCboxChecked = fungusExtractCbox.Checked,
+                MantidScentCboxChecked = mantidScentCbox.Checked,
+                AoSuainCboxChecked = aoSuainCbox.Checked,
+                AoCurseCboxChecked = aoCurseCbox.Checked,
+                AoPoisonCboxChecked = aoPoisonCbox.Checked,
+                FollowCboxChecked = followCbox.Checked,
+                BubbleBlockCboxChecked = bubbleBlockCbox.Checked,
+                SpamBubbleCboxChecked = spamBubbleCbox.Checked,
+                RangerStopCboxChecked = rangerStopCbox.Checked,
+                PickupGoldCboxChecked = pickupGoldCbox.Checked,
+                PickupItemsCboxChecked = pickupItemsCbox.Checked,
+                DropTrashCboxChecked = dropTrashCbox.Checked,
+                NoBlindCboxChecked = noBlindCbox.Checked,
+                MapZoomCboxChecked = mapZoomCbox.Checked,
+                SeeHiddenCboxChecked = seeHiddenCbox.Checked,
+                GhostHackCboxChecked = ghostHackCbox.Checked,
+                IgnoreCollisionCboxChecked = ignoreCollisionCbox.Checked,
+                HideForegroundCboxChecked = hideForegroundCbox.Checked,
+                MapFlagsEnableCboxChecked = mapFlagsEnableCbox.Checked,
+                MapSnowCboxChecked = mapSnowCbox.Checked,
+                MapTabsCboxChecked = mapTabsCbox.Checked,
+                MapSnowTileCboxChecked = mapSnowTileCbox.Checked,
+                UnifiedGuildChatCboxChecked = unifiedGuildChatCbox.Checked,
+                ToggleOverrideCboxChecked = toggleOverrideCbox.Checked,
+                SafeFSCboxChecked = safeFSCbox.Checked,
+                EquipmentRepairCboxChecked = equipmentrepairCbox.Checked,
+                RangerLogCboxChecked = rangerLogCbox.Checked,
+                //GMLogCBoxChecked = gmLogCBox.Checked,
+                //ChkGMSoundsChecked = chkGMSounds.Checked,
+                DeformCBoxChecked = deformCbox.Checked,
+                //ChkTavWallHacksChecked = chkTavWallHacks.Checked,
+                //ChkTavWallStrangerChecked = chkTavWallStranger.Checked,
+                ChkLastStepF5Checked = chkLastStepF5.Checked,
+                //ChkAltLoginChecked = chkAltLogin.Checked,
+                ChkSpeedStrangersChecked = chkSpeedStrangers.Checked,
+                LockstepCboxChecked = lockstepCbox.Checked,
+                ChkWaitForFasChecked = chkWaitForFas.Checked,
+                ChkWaitForCradhChecked = chkWaitForCradh.Checked,
+                ChkFrostStrikeChecked = chkFrostStrike.Checked,
+                ChkUseSkillsFromRangeChecked = chkUseSkillsFromRange.Checked,
+                ChargeToTargetCbxChecked = ChargeToTargetCbx.Checked,
+                AssistBasherChkChecked = assistBasherChk.Checked,
+
+                // TextBox values
+                FasSpioradText = fasSpioradText.Text,
+                VineText = vineText.Text,
+                LeadBasherTxt = leadBasherTxt.Text,
+
+                // NumericUpDown values
+                FormNumValue = formNum.Value,
+                DionPctNumValue = dionPctNum.Value,
+                HealPctNumValue = healPctNum.Value,
+                OverrideDistanceNumValue = overrideDistanceNum.Value,
+                NumAssitantStrayValue = numAssitantStray.Value,
+                //NumCrasherHealthValue = numCrasherHealth.Value,
+                //NumExHealValue = numExHeal.Value,
+                //NumBashSkillDelayValue = numBashSkillDelay.Value,
+                //NumSkillIntValue = numSkillInt.Value,
+                //PingCompensationNum1Value = pingCompensationNum1.Value,
+                //MonsterWalkIntervalNum1Value = monsterWalkIntervalNum1.Value,
+                //AtkRangeNumValue = atkRangeNum.Value,
+                //EngageRangeNumValue = engageRangeNum.Value,
+                FollowDistanceNumValue = followDistanceNum.Value,
+                WalkSpeedSldrValue = walkSpeedSldr.Value,
+                NumLastStepTimeValue = numLastStepTime.Value,
+                NumPFCounterValue = numPFCounter.Value,
+
+                // ListBox items
+                TrashList = new List<string>(_trashToDrop),
+                OverrideList = new List<string>(overrideList.Items.Cast<string>()),
+
+                // ComboBox text
+                DionComboxText = dionCombox.Text,
+                DionWhenComboxText = dionWhenCombox.Text,
+                AiteComboxText = aiteCombox.Text,
+                HealComboxText = healCombox.Text,
+                FasComboxText = fasCombox.Text,
+                VineComboxText = vineCombox.Text,
+            };
+
+            // Now serialize the FormStateHelper object to XML and save it to the file
+            XmlSerializer serializer = new XmlSerializer(typeof(FormStateHelper));
+            using (FileStream fileStream = File.Create(profilePath))
+            {
+                XmlWriterSettings settings = new XmlWriterSettings
+                {
+                    Indent = true, // Makes the XML file more human-readable
+                    NewLineOnAttributes = true
+                };
+
+                using (XmlWriter xmlWriter = XmlWriter.Create(fileStream, settings))
+                {
+                    serializer.Serialize(xmlWriter, formState);
+                }
+            }
+
+            // Optionally add the saved profile to a list of profiles
+            if (!botProfiles.Contains(savePath, StringComparer.CurrentCultureIgnoreCase))
+            {
+                botProfiles.Add(savePath);
+            }
+
+            // Store the last loaded profile (optional)
+            LastLoadedProfile = savePath;
+        }
+
+        internal async Task LoadProfileAsync(string profilePath)
+        {
+            await Task.Run(async () =>
+            {
+                if (string.IsNullOrEmpty(profilePath))
+                {
+                    return;
+                }
+
+                // Locking mechanism to prevent concurrent loading
+                while (true)
+                {
+                    lock (this)
+                    {
+                        if (!_isLoading)
+                        {
+                            _isLoading = true; // Prevent multiple loads at the same time
+                            break;
+                        }
+                    }
+                    await Task.Delay(100); // Delay to avoid CPU overutilization
+                }
+
+                try
+                {
+                    // Set the last loaded profile
+                    LastLoadedProfile = profilePath;
+
+                    // Clear any existing options (implementation depending on your form)
+                    ClearOptions(); // Assuming this clears current settings
+
+                    // Load and deserialize the profile asynchronously
+                    string profileFullPath = Path.Combine(Settings.Default.DataPath, _client.Name, "Talos", profilePath + ".xml");
+
+                    if (!File.Exists(profileFullPath))
+                    {
+                        _client.ServerMessage(0, "Profile does not exist.");
+                        return;
+                    }
+
+                    FormStateHelper formState;
+
+                    // Asynchronously load the XML file
+                    using (FileStream fileStream = File.OpenRead(profileFullPath))
+                    {
+                        XmlSerializer serializer = new XmlSerializer(typeof(FormStateHelper));
+                        formState = (FormStateHelper)serializer.Deserialize(fileStream);
+                    }
+
+                    // Update UI controls asynchronously
+                    await Task.Run(() =>
+                    {
+                        this.Invoke((Action)(() =>
+                        {
+
+                            // Apply the deserialized values to the form's controls
+                            // ComboBox List items (lines)
+                            combo1List.Lines = formState.Combo1ListItems.ToArray();
+                            combo2List.Lines = formState.Combo2ListItems.ToArray();
+                            combo3List.Lines = formState.Combo3ListItems.ToArray();
+                            combo4List.Lines = formState.Combo4ListItems.ToArray();
+
+                            // Button text
+                            combo1Btn.Text = formState.Combo1BtnText;
+                            combo2Btn.Text = formState.Combo2BtnText;
+                            combo3Btn.Text = formState.Combo3BtnText;
+                            combo4Btn.Text = formState.Combo4BtnText;
+
+                            // CheckBox states
+                            dontCbox1.Checked = formState.DontCbox1Checked;
+                            dontCBox2.Checked = formState.DontCBox2Checked;
+                            dontCBox3.Checked = formState.DontCBox3Checked;
+                            dontCBox4.Checked = formState.DontCBox4Checked;
+
+                            doublesCombox.Text = formState.DoublesComboxText;
+                            autoDoubleCbox.Checked = formState.AutoDoubleCboxChecked;
+                            expGemsCombox.Text = formState.ExpGemsComboxText;
+                            autoGemCbox.Checked = formState.AutoGemCboxChecked;
+                            autoStaffCbox.Checked = formState.AutoStaffCboxChecked;
+                            hideLinesCbox.Checked = formState.HideLinesCboxChecked;
+                            formCbox.Checked = formState.FormCboxChecked;
+                            optionsSkullCbox.Checked = formState.OptionsSkullCboxChecked;
+                            optionsSkullSurrbox.Checked = formState.OptionsSkullSurrboxChecked;
+                            oneLineWalkCbox.Checked = formState.OneLineWalkCboxChecked;
+                            dionCbox.Checked = formState.DionCboxChecked;
+                            healCbox.Checked = formState.HealCboxChecked;
+                            deireasFaileasCbox.Checked = formState.DeireasFaileasCboxChecked;
+                            aoSithCbox.Checked = formState.AoSithCboxChecked;
+                            alertStrangerCbox.Checked = formState.AlertStrangerCboxChecked;
+                            alertRangerCbox.Checked = formState.AlertRangerCboxChecked;
+                            alertDuraCbox.Checked = formState.AlertDuraCboxChecked;
+                            alertSkulledCbox.Checked = formState.AlertSkulledCboxChecked;
+                            alertEXPCbox.Checked = formState.AlertEXPCboxChecked;
+                            alertItemCapCbox.Checked = formState.AlertItemCapCboxChecked;
+                            aiteCbox.Checked = formState.AiteCboxChecked;
+                            fasCbox.Checked = formState.FasCboxChecked;
+                            disenchanterCbox.Checked = formState.DisenchanterCboxChecked;
+                            wakeScrollCbox.Checked = formState.WakeScrollCboxChecked;
+                            hideCbox.Checked = formState.HideCboxChecked;
+                            druidFormCbox.Checked = formState.DruidFormCboxChecked;
+                            mistCbox.Checked = formState.MistCboxChecked;
+                            armachdCbox.Checked = formState.ArmachdCboxChecked;
+                            fasSpioradCbox.Checked = formState.FasSpioradCboxChecked;
+                            beagCradhCbox.Checked = formState.BeagCradhCboxChecked;
+                            aegisSphereCbox.Checked = formState.AegisSphereCboxChecked;
+                            dragonScaleCbox.Checked = formState.DragonScaleCboxChecked;
+                            manaWardCbox.Checked = formState.ManaWardCboxChecked;
+                            regenerationCbox.Checked = formState.RegenerationCboxChecked;
+                            perfectDefenseCbox.Checked = formState.PerfectDefenseCboxChecked;
+                            dragonsFireCbox.Checked = formState.DragonsFireCboxChecked;
+                            asgallCbox.Checked = formState.AsgallCboxChecked;
+                            muscleStimulantCbox.Checked = formState.MuscleStimulantCboxChecked;
+                            nerveStimulantCbox.Checked = formState.NerveStimulantCboxChecked;
+                            monsterCallCbox.Checked = formState.MonsterCallCboxChecked;
+                            vanishingElixirCbox.Checked = formState.VanishingElixirCboxChecked;
+                            vineyardCbox.Checked = formState.VineyardCboxChecked;
+                            autoRedCbox.Checked = formState.AutoRedCboxChecked;
+                            fungusExtractCbox.Checked = formState.FungusExtractCboxChecked;
+                            mantidScentCbox.Checked = formState.MantidScentCboxChecked;
+                            aoSuainCbox.Checked = formState.AoSuainCboxChecked;
+                            aoCurseCbox.Checked = formState.AoCurseCboxChecked;
+                            aoPoisonCbox.Checked = formState.AoPoisonCboxChecked;
+                            followCbox.Checked = formState.FollowCboxChecked;
+                            bubbleBlockCbox.Checked = formState.BubbleBlockCboxChecked;
+                            spamBubbleCbox.Checked = formState.SpamBubbleCboxChecked;
+                            rangerStopCbox.Checked = formState.RangerStopCboxChecked;
+                            pickupGoldCbox.Checked = formState.PickupGoldCboxChecked;
+                            pickupItemsCbox.Checked = formState.PickupItemsCboxChecked;
+                            dropTrashCbox.Checked = formState.DropTrashCboxChecked;
+                            noBlindCbox.Checked = formState.NoBlindCboxChecked;
+                            mapZoomCbox.Checked = formState.MapZoomCboxChecked;
+                            seeHiddenCbox.Checked = formState.SeeHiddenCboxChecked;
+                            ghostHackCbox.Checked = formState.GhostHackCboxChecked;
+                            ignoreCollisionCbox.Checked = formState.IgnoreCollisionCboxChecked;
+                            hideForegroundCbox.Checked = formState.HideForegroundCboxChecked;
+                            mapFlagsEnableCbox.Checked = formState.MapFlagsEnableCboxChecked;
+                            mapSnowCbox.Checked = formState.MapSnowCboxChecked;
+                            mapTabsCbox.Checked = formState.MapTabsCboxChecked;
+                            mapSnowTileCbox.Checked = formState.MapSnowTileCboxChecked;
+                            unifiedGuildChatCbox.Checked = formState.UnifiedGuildChatCboxChecked;
+                            toggleOverrideCbox.Checked = formState.ToggleOverrideCboxChecked;
+                            safeFSCbox.Checked = formState.SafeFSCboxChecked;
+                            equipmentrepairCbox.Checked = formState.EquipmentRepairCboxChecked;
+                            rangerLogCbox.Checked = formState.RangerLogCboxChecked;
+                            deformCbox.Checked = formState.DeformCBoxChecked;
+                            //chkTavWallHacks.Checked = formState.ChkTavWallHacksChecked;
+                            //chkTavWallStranger.Checked = formState.ChkTavWallStrangerChecked;
+                            chkLastStepF5.Checked = formState.ChkLastStepF5Checked;
+                            chkSpeedStrangers.Checked = formState.ChkSpeedStrangersChecked;
+                            lockstepCbox.Checked = formState.LockstepCboxChecked;
+                            chkWaitForFas.Checked = formState.ChkWaitForFasChecked;
+                            chkWaitForCradh.Checked = formState.ChkWaitForCradhChecked;
+                            chkFrostStrike.Checked = formState.ChkFrostStrikeChecked;
+                            chkUseSkillsFromRange.Checked = formState.ChkUseSkillsFromRangeChecked;
+                            ChargeToTargetCbx.Checked = formState.ChargeToTargetCbxChecked;
+                            assistBasherChk.Checked = formState.AssistBasherChkChecked;
+
+                            // TextBox values
+                            fasSpioradText.Text = formState.FasSpioradText;
+                            vineText.Text = formState.VineText;
+                            leadBasherTxt.Text = formState.LeadBasherTxt;
+
+                            // NumericUpDown values
+                            formNum.Value = formState.FormNumValue;
+                            dionPctNum.Value = formState.DionPctNumValue;
+                            healPctNum.Value = formState.HealPctNumValue;
+                            overrideDistanceNum.Value = formState.OverrideDistanceNumValue;
+                            numAssitantStray.Value = formState.NumAssitantStrayValue;
+                            followDistanceNum.Value = formState.FollowDistanceNumValue;
+                            walkSpeedSldr.Value = (int)formState.WalkSpeedSldrValue;
+                            numLastStepTime.Value = formState.NumLastStepTimeValue;
+                            numPFCounter.Value = formState.NumPFCounterValue;
+
+                            // ListBox items
+                            _trashToDrop.Clear();
+                            foreach (string item in formState.TrashList)
+                            {
+                                UpdateBindingList(_trashToDrop, trashList, item);
+                            }
+                            overrideList.Items.Clear();
+                            foreach (string item in formState.OverrideList)
+                            {
+                                overrideList.Items.Add(item);
+                            }
+
+                            // ComboBox text
+                            dionCombox.Text = formState.DionComboxText;
+                            dionWhenCombox.Text = formState.DionWhenComboxText;
+                            aiteCombox.Text = formState.AiteComboxText;
+                            healCombox.Text = formState.HealComboxText;
+                            fasCombox.Text = formState.FasComboxText;
+                            vineCombox.Text = formState.VineComboxText;
+
+                            // Commented out sections for future implementation (as per SaveProfile)
+                            // GMLogCBoxChecked = formState.GMLogCBoxChecked;
+                            // ChkGMSoundsChecked = formState.ChkGMSoundsChecked;
+                            // NumCrasherHealthValue = formState.NumCrasherHealthValue;
+                            // NumExHealValue = formState.NumExHealValue;
+                            // NumBashSkillDelayValue = formState.NumBashSkillDelayValue;
+                            // NumSkillIntValue = formState.NumSkillIntValue;
+                            // PingCompensationNum1Value = formState.PingCompensationNum1Value;
+                            // MonsterWalkIntervalNum1Value = formState.MonsterWalkIntervalNum1Value;
+                            // AtkRangeNumValue = formState.AtkRangeNumValue;
+                            // EngageRangeNumValue = formState.EngageRangeNumValue;
+                        }));
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // Handle exceptions (e.g., file access issues, deserialization errors)
+                    _client.ServerMessage(0, $"Error loading profile: {ex.Message}");
+                }
+                finally
+                {
+                    lock (this)
+                    {
+                        _isLoading = false; // Reset the loading flag
+                    }
+                }
+            });
+        }
+
+        private void loadStrip_Enter(object sender, EventArgs e)
+        {
+            while (loadStrip.DropDownItems.Count > 0)
+            {
+                loadStrip.DropDownItems[0].Dispose();
+            }
+            foreach (string item in botProfiles)
+            {
+                loadStrip.DropDownItems.Add(new ToolStripMenuItem(item, null, LoadMenuItem_Click, item));
+            }
+            loadStrip.DropDownClosed += deleteStrip_DropDownClosed;
+        }
+        private async void LoadMenuItem_Click(object sender, EventArgs e)
+        {
+            string profileName = (sender as ToolStripMenuItem)?.Text;
+
+            if (!string.IsNullOrEmpty(profileName))
+            {
+                await LoadProfileAsync(profileName);
+            }
+        }
+        internal void deleteStrip_DropDownClosed(object sender, EventArgs e)
+        {
+            (sender as ToolStripDropDownItem).DropDown.Close();
+        }
+        internal void ClearOptions()
+        {
+            // Preserve states
+            bool toggleDmuChecked = toggleDmuCbox.Checked;
+            bool toggleGenderChecked = toggleGenderCbox.Checked;
+
+            // Clear controls recursively
+            ClearAllControls(this.Controls);
+
+            // Restore specific states
+            toggleDmuCbox.Checked = toggleDmuChecked;
+            toggleGenderCbox.Checked = toggleGenderChecked;
+            ResetSpecificOptions();
+        }
+
+        private void ClearAllControls(Control.ControlCollection controls)
+        {
+            foreach (Control control in controls)
+            {
+                if (control is CheckBox checkBox)
+                {
+                    checkBox.Checked = false;
+                }
+                else if (control is ComboBox comboBox)
+                {
+                    if (comboBox.Items.Count > 0)
+                        comboBox.Text = comboBox.Items[0].ToString();
+                    else
+                        comboBox.Text = string.Empty;
+                }
+                else if (control.Controls.Count > 0)
+                {
+                    // Recursively clear child controls
+                    ClearAllControls(control.Controls);
+                }
+            }
+        }
+
+        private void ResetSpecificOptions()
+        {
+            rangerStopCbox.Checked = false;
+            renameCombox.Text = "Select Staff Type";
+            autoStaffCbox.Checked = true;
+            seeHiddenCbox.Checked = true;
+            noBlindCbox.Checked = true;
+            alertRangerCbox.Checked = true;
+
+            // Reset trash list with BindingList
+            ResetTrashList();
+
+            // Reset form-specific controls
+            formNum.Value = 1M;
+            followDistanceNum.Value = 1M;
+            walkSpeedSldr.Value = 150;
+            dionPctNum.Value = 80M;
+            healPctNum.Value = 80M;
+            fasSpioradText.Text = "5000";
+            walkBtn.Text = "Walk";
+            btnBashing.Text = "Start Bashing";
+            //btnBashingNew.Text = "Start Bashing";
+
+            // Clear combo lists
+            combo1List.Clear();
+            combo2List.Clear();
+            combo3List.Clear();
+            combo4List.Clear();
+
+            _client._walkSpeed = 150.0;
+
+            // Clear ally and enemy pages
+            ClearAllyAndEnemyPages();
+        }
+
+        private void ResetTrashList()
+        {
+            trashList.DataSource = null; // Clear the current binding
+
+            BindingList<string> bindingList = new BindingList<string>
+            {
+                "fior sal", "fior creag", "fior srad", "fior athar", "Purple Potion",
+                "Blue Potion", "Light Belt", "Passion Flower", "Gold Jade Necklace",
+                "Bone Necklace", "Amber Necklace", "Half Talisman", "Iron Greaves",
+                "Goblin Helmet", "Cordovan Boots", "Shagreen Boots", "Magma Boots",
+                "Hy-brasyl Bracer", "Hy-brasyl Gauntlet", "Hy-brasyl Belt", "Magus Apollo",
+                "Holy Apollo", "Magus Diana", "Holy Diana", "Magus Gaea", "Holy Gaea"
+            };
+
+            _trashToDrop = bindingList;
+            trashList.DataSource = _trashToDrop;
+        }
+
+        private void ClearAllyAndEnemyPages()
+        {
+            // Clear ally pages
+            foreach (TabPage tabPage in aislingTabControl.TabPages)
+            {
+                if (tabPage != selfTab && tabPage.Controls.OfType<AllyPage>().Any())
+                {
+                    var allyPage = tabPage.Controls.OfType<AllyPage>().First();
+                    allyPage.allyRemoveBtn_Click(this, EventArgs.Empty);
+                }
+            }
+
+            // Clear enemy pages
+            foreach (TabPage tabPage in monsterTabControl.TabPages)
+            {
+                if (tabPage != nearbyEnemyTab && tabPage.Controls.OfType<EnemyPage>().Any())
+                {
+                    var enemyPage = tabPage.Controls.OfType<EnemyPage>().First();
+                    enemyPage.enemyRemoveBtn_Click(this, EventArgs.Empty);
+                }
+            }
+        }
+
+
+
+
         private void addMonsterText_Enter(object sender, EventArgs e)
         {
 
@@ -1823,12 +2384,55 @@ namespace Talos.Forms
 
         private void deleteStrip_MouseEnter(object sender, EventArgs e)
         {
+            while (deleteStrip.DropDownItems.Count > 0)
+            {
+                deleteStrip.DropDownItems[0].Dispose();
+            }
+            foreach (string item in botProfiles)
+            {
+                deleteStrip.DropDownItems.Add(new ToolStripMenuItem(item, null, deleteMenuItem_Click, item));
+            }
+            deleteStrip.DropDownClosed += deleteStrip_DropDownClosed;
+        }
 
+        private void deleteMenuItem_Click(object sender, EventArgs e)
+        {
+            string text = (sender as ToolStripMenuItem).Text;
+            if (MessageDialog.Show(_client._server._mainForm, "ARE YOU SURE YOU WANT TO DELETE " + text + "?") == DialogResult.OK)
+            {
+                DeleteProfile(text);
+            }
+        }
+        private void DeleteProfile(string filename)
+        {
+            try
+            {
+                string path = Settings.Default.DarkAgesPath.Replace("Darkages.exe", _client.Name + "\\Talos\\" + filename + ".xml");
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+                if (botProfiles.Contains(filename, StringComparer.CurrentCultureIgnoreCase))
+                {
+                    botProfiles.Remove(filename);
+                }
+            }
+            catch
+            {
+            }
         }
 
         private void saveStrip_Click(object sender, EventArgs e)
         {
-
+            string input = string.Empty;
+            if (!string.IsNullOrEmpty(LastLoadedProfile) && MessageDialog.Show(_client._server._mainForm, "Save this profile as " + LastLoadedProfile + "?") == DialogResult.OK)
+            {
+                SaveProfile(LastLoadedProfile);
+            }
+            else if (InputDialog.Show(this, "Please enter a name for your new profile to be saved as.", out input) == DialogResult.OK)
+            {
+                SaveProfile(input);
+            }
         }
 
         private void loadStrip_MouseEnter(object sender, EventArgs e)
@@ -1836,10 +2440,7 @@ namespace Talos.Forms
 
         }
 
-        private void clearStrip_Click(object sender, EventArgs e)
-        {
-
-        }
+        private void clearStrip_Click(object sender, EventArgs e) => ClearOptions();    
 
         private void startStrip_Click(object sender, EventArgs e)
         {

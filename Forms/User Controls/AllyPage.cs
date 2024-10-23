@@ -90,7 +90,7 @@ namespace Talos.Forms
             radioButton.Enabled = _client.Spellbook[spellName] != null;
         }
 
-        private void allyRemoveBtn_Click(object sender, EventArgs e)
+        internal void allyRemoveBtn_Click(object sender, EventArgs e)
         {
             foreach (Ally ally in new List<Ally>(_client.Bot.ReturnAllyList()))
             {

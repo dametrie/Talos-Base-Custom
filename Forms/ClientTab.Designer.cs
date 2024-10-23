@@ -6391,6 +6391,8 @@ namespace Talos.Forms
             this.clearStrip.Padding = new System.Windows.Forms.Padding(0);
             this.clearStrip.Size = new System.Drawing.Size(38, 24);
             this.clearStrip.Text = "Clear";
+            this.clearStrip.Click += new System.EventHandler(this.clearStrip_Click);
+
             // 
             // loadStrip
             // 
@@ -6399,18 +6401,24 @@ namespace Talos.Forms
             this.loadStrip.Padding = new System.Windows.Forms.Padding(0);
             this.loadStrip.Size = new System.Drawing.Size(37, 24);
             this.loadStrip.Text = "Load";
+            this.loadStrip.MouseEnter += new EventHandler(loadStrip_Enter);
             // 
             // saveStrip
             // 
             this.saveStrip.Name = "saveStrip";
             this.saveStrip.Size = new System.Drawing.Size(43, 24);
             this.saveStrip.Text = "Save";
+            saveStrip.Click += new EventHandler(saveStrip_Click);
+
+
             // 
             // deleteStrip
             // 
             this.deleteStrip.Name = "deleteStrip";
             this.deleteStrip.Size = new System.Drawing.Size(52, 24);
             this.deleteStrip.Text = "Delete";
+            this.deleteStrip.MouseEnter += new System.EventHandler(this.deleteStrip_MouseEnter);
+
             // 
             // waypointsMenu
             // 

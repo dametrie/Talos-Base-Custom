@@ -81,6 +81,12 @@
     <Compile Include="Definitions\Enums.cs" />
     <Compile Include="Definitions\Flags.cs" />
     <Compile Include="Extensions\EnumerableExtensions.cs" />
+    <Compile Include="Forms\InputDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\InputDialog.Designer.cs">
+      <DependentUpon>InputDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\User Controls\AllyPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -139,6 +145,7 @@
     </Compile>
     <Compile Include="Helper\AnimationHandler.cs" />
     <Compile Include="Helper\CreatureStateHelper.cs" />
+    <Compile Include="Helper\FormStateHelper.cs" />
     <Compile Include="Helper\UIHelper.cs" />
     <Compile Include="Maps\Map.cs" />
     <Compile Include="Maps\Warp.cs" />
@@ -181,6 +188,9 @@
     <Compile Include="Structs\Rectangle.cs" />
     <Compile Include="Structs\Tile.cs" />
     <Compile Include="Utility\Utility.cs" />
+    <EmbeddedResource Include="Forms\InputDialog.resx">
+      <DependentUpon>InputDialog.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\User Controls\AllyPage.resx">
       <DependentUpon>AllyPage.cs</DependentUpon>
     </EmbeddedResource>
