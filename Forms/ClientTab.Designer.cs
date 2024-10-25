@@ -36,6 +36,8 @@ namespace Talos.Forms
         /// </summary>
         private void InitializeComponent()
         {
+            this.healthBar = new ResourceBar("healthBar");
+            this.manaBar = new ResourceBar("manaBar");
             this.components = new System.ComponentModel.Container();
             this.clientTabControl = new System.Windows.Forms.TabControl();
             this.mainCoverTab = new System.Windows.Forms.TabPage();
@@ -75,6 +77,8 @@ namespace Talos.Forms
             this.addMonsterBtn = new System.Windows.Forms.Button();
             this.addAllMonstersBtn = new System.Windows.Forms.Button();
             this.coverEXPGrp = new System.Windows.Forms.GroupBox();
+            this.autoMushroomCbox = new System.Windows.Forms.CheckBox();
+            this.mushroomCombox = new System.Windows.Forms.ComboBox();
             this.expBoxedLbl = new System.Windows.Forms.Label();
             this.goldHourLbl = new System.Windows.Forms.Label();
             this.apHourLbl = new System.Windows.Forms.Label();
@@ -518,10 +522,6 @@ namespace Talos.Forms
             this.expBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.mushroomBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
-            this.autoMushroomCbox = new System.Windows.Forms.CheckBox();
-            this.mushroomCombox = new System.Windows.Forms.ComboBox();
-            this.healthBar = new ResourceBar("healthBar");
-            this.manaBar = new ResourceBar("manaBar");
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -671,8 +671,6 @@ namespace Talos.Forms
             this.mainCoverTab.Controls.Add(this.groupGroup);
             this.mainCoverTab.Controls.Add(this.addEnemyGroup);
             this.mainCoverTab.Controls.Add(this.coverEXPGrp);
-            this.mainCoverTab.Controls.Add(this.manaBar);
-            this.mainCoverTab.Controls.Add(this.healthBar);
             this.mainCoverTab.Controls.Add(this.chatPanel);
             this.mainCoverTab.ForeColor = System.Drawing.Color.Black;
             this.mainCoverTab.Location = new System.Drawing.Point(4, 24);
@@ -808,7 +806,7 @@ namespace Talos.Forms
             this.friendList.Location = new System.Drawing.Point(6, 18);
             this.friendList.Name = "friendList";
             this.friendList.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.friendList.Size = new System.Drawing.Size(90, 214);
+            this.friendList.Size = new System.Drawing.Size(90, 199);
             this.friendList.Sorted = true;
             this.friendList.TabIndex = 0;
             // 
@@ -881,7 +879,7 @@ namespace Talos.Forms
             this.strangerList.Location = new System.Drawing.Point(6, 18);
             this.strangerList.Name = "strangerList";
             this.strangerList.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.strangerList.Size = new System.Drawing.Size(90, 214);
+            this.strangerList.Size = new System.Drawing.Size(90, 199);
             this.strangerList.TabIndex = 0;
             // 
             // groupGroup
@@ -941,7 +939,7 @@ namespace Talos.Forms
             this.groupList.Location = new System.Drawing.Point(6, 18);
             this.groupList.Name = "groupList";
             this.groupList.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.groupList.Size = new System.Drawing.Size(90, 214);
+            this.groupList.Size = new System.Drawing.Size(90, 199);
             this.groupList.Sorted = true;
             this.groupList.TabIndex = 0;
             // 
@@ -1139,6 +1137,37 @@ namespace Talos.Forms
             this.coverEXPGrp.TabStop = false;
             this.coverEXPGrp.Text = "EXP";
             // 
+            // autoMushroomCbox
+            // 
+            this.autoMushroomCbox.AutoSize = true;
+            this.autoMushroomCbox.ForeColor = System.Drawing.Color.Black;
+            this.autoMushroomCbox.Location = new System.Drawing.Point(100, 155);
+            this.autoMushroomCbox.Name = "autoMushroomCbox";
+            this.autoMushroomCbox.Size = new System.Drawing.Size(52, 19);
+            this.autoMushroomCbox.TabIndex = 30;
+            this.autoMushroomCbox.Text = "Auto";
+            this.autoMushroomCbox.UseVisualStyleBackColor = true;
+            // 
+            // mushroomCombox
+            // 
+            this.mushroomCombox.ForeColor = System.Drawing.Color.Black;
+            this.mushroomCombox.FormattingEnabled = true;
+            this.mushroomCombox.Items.AddRange(new object[] {
+            "Best Available",
+            "Double",
+            "50 Percent",
+            "Greatest",
+            "Greater",
+            "Great",
+            "Experience Mushroom",
+            "",
+            ""});
+            this.mushroomCombox.Location = new System.Drawing.Point(6, 152);
+            this.mushroomCombox.Name = "mushroomCombox";
+            this.mushroomCombox.Size = new System.Drawing.Size(88, 23);
+            this.mushroomCombox.TabIndex = 29;
+            this.mushroomCombox.Text = "Best Available";
+            // 
             // expBoxedLbl
             // 
             this.expBoxedLbl.ForeColor = System.Drawing.Color.Black;
@@ -1295,28 +1324,6 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // manaBar
-            // 
-            this.manaBar.BackColor = System.Drawing.Color.White;
-            this.manaBar.ForeColor = System.Drawing.Color.MidnightBlue;
-            this.manaBar.Location = new System.Drawing.Point(65, 282);
-            this.manaBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.manaBar.Name = "manaBar";
-            this.manaBar.Size = new System.Drawing.Size(50, 196);
-            this.manaBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.manaBar.TabIndex = 15;
-            // 
-            // healthBar
-            // 
-            this.healthBar.BackColor = System.Drawing.Color.White;
-            this.healthBar.ForeColor = System.Drawing.Color.Crimson;
-            this.healthBar.Location = new System.Drawing.Point(6, 282);
-            this.healthBar.MaximumSize = new System.Drawing.Size(50, 196);
-            this.healthBar.Name = "healthBar";
-            this.healthBar.Size = new System.Drawing.Size(50, 196);
-            this.healthBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.healthBar.TabIndex = 14;
             // 
             // chatPanel
             // 
@@ -2570,7 +2577,7 @@ namespace Talos.Forms
             this.trashList.Location = new System.Drawing.Point(6, 40);
             this.trashList.Name = "trashList";
             this.trashList.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.trashList.Size = new System.Drawing.Size(120, 184);
+            this.trashList.Size = new System.Drawing.Size(120, 169);
             this.trashList.Sorted = true;
             this.trashList.TabIndex = 0;
             // 
@@ -4463,7 +4470,7 @@ namespace Talos.Forms
             "Wolf\'s Teeth"});
             this.listOfItems.Location = new System.Drawing.Point(87, 30);
             this.listOfItems.Name = "listOfItems";
-            this.listOfItems.Size = new System.Drawing.Size(125, 184);
+            this.listOfItems.Size = new System.Drawing.Size(125, 169);
             this.listOfItems.TabIndex = 160;
             // 
             // btnLoadItemList
@@ -4483,7 +4490,7 @@ namespace Talos.Forms
             this.listToFind.ItemHeight = 15;
             this.listToFind.Location = new System.Drawing.Point(266, 30);
             this.listToFind.Name = "listToFind";
-            this.listToFind.Size = new System.Drawing.Size(142, 184);
+            this.listToFind.Size = new System.Drawing.Size(142, 169);
             this.listToFind.TabIndex = 133;
             // 
             // btnItemFinder
@@ -6056,6 +6063,7 @@ namespace Talos.Forms
             // 
             // packetStrip
             // 
+            this.packetStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.packetStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.packetStripLbl,
             this.toggleLogSendBtn,
@@ -6359,6 +6367,7 @@ namespace Talos.Forms
             // 
             this.menuStrip.BackColor = System.Drawing.Color.White;
             this.menuStrip.GripMargin = new System.Windows.Forms.Padding(0);
+            this.menuStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.startStrip,
             this.clearStrip,
@@ -6392,7 +6401,6 @@ namespace Talos.Forms
             this.clearStrip.Size = new System.Drawing.Size(38, 24);
             this.clearStrip.Text = "Clear";
             this.clearStrip.Click += new System.EventHandler(this.clearStrip_Click);
-
             // 
             // loadStrip
             // 
@@ -6401,16 +6409,14 @@ namespace Talos.Forms
             this.loadStrip.Padding = new System.Windows.Forms.Padding(0);
             this.loadStrip.Size = new System.Drawing.Size(37, 24);
             this.loadStrip.Text = "Load";
-            this.loadStrip.MouseEnter += new EventHandler(loadStrip_Enter);
+            this.loadStrip.MouseEnter += new System.EventHandler(this.loadStrip_Enter);
             // 
             // saveStrip
             // 
             this.saveStrip.Name = "saveStrip";
             this.saveStrip.Size = new System.Drawing.Size(43, 24);
             this.saveStrip.Text = "Save";
-            saveStrip.Click += new EventHandler(saveStrip_Click);
-
-
+            this.saveStrip.Click += new System.EventHandler(this.saveStrip_Click);
             // 
             // deleteStrip
             // 
@@ -6418,7 +6424,6 @@ namespace Talos.Forms
             this.deleteStrip.Size = new System.Drawing.Size(52, 24);
             this.deleteStrip.Text = "Delete";
             this.deleteStrip.MouseEnter += new System.EventHandler(this.deleteStrip_MouseEnter);
-
             // 
             // waypointsMenu
             // 
@@ -6468,12 +6473,12 @@ namespace Talos.Forms
             this.fullscreenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.fullscreenToolStripMenuItem.Text = "Fullscreen";
             // 
-            // bonusCooldownTimer
+            // expBonusCooldownTimer
             // 
             this.expBonusCooldownTimer.Interval = 1000;
             this.expBonusCooldownTimer.Tick += new System.EventHandler(this.bonusCooldownTimer_Tick);
             // 
-            // mushroomCooldownTimer
+            // mushroomBonusCooldownTimer
             // 
             this.mushroomBonusCooldownTimer.Interval = 1000;
             // 
@@ -6485,37 +6490,6 @@ namespace Talos.Forms
             this.currentAction.TabIndex = 6;
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // autoMushroomCBox
-            // 
-            this.autoMushroomCbox.AutoSize = true;
-            this.autoMushroomCbox.ForeColor = System.Drawing.Color.Black;
-            this.autoMushroomCbox.Location = new System.Drawing.Point(100, 155);
-            this.autoMushroomCbox.Name = "autoMushroomCBox";
-            this.autoMushroomCbox.Size = new System.Drawing.Size(52, 19);
-            this.autoMushroomCbox.TabIndex = 30;
-            this.autoMushroomCbox.Text = "Auto";
-            this.autoMushroomCbox.UseVisualStyleBackColor = true;
-            // 
-            // mushroomCombox
-            // 
-            this.mushroomCombox.ForeColor = System.Drawing.Color.Black;
-            this.mushroomCombox.FormattingEnabled = true;
-            this.mushroomCombox.Items.AddRange(new object[] {
-            "Best Available",
-            "Double",
-            "50 Percent",
-            "Greatest",
-            "Greater",
-            "Great",
-            "Experience Mushroom",
-            "",
-            ""});
-            this.mushroomCombox.Location = new System.Drawing.Point(6, 152);
-            this.mushroomCombox.Name = "mushroomCombox";
-            this.mushroomCombox.Size = new System.Drawing.Size(88, 23);
-            this.mushroomCombox.TabIndex = 29;
-            this.mushroomCombox.Text = "Best Available";
             // 
             // ClientTab
             // 

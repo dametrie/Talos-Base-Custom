@@ -1198,7 +1198,7 @@ namespace Talos.Forms
             {
                 AddAllyPage(name);
                 addAislingText.Clear();
-                if (MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+                if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
                 {
                     aislingTabControl.SelectTab(aislingTabControl.TabPages.IndexOfKey(name));
                     clientTabControl.SelectTab(1);
@@ -1600,7 +1600,7 @@ namespace Talos.Forms
 
         private void addGroupBtn_Click(object sender, EventArgs e)
         {
-            if (_client.Bot.AllyPage != null)
+            if (!_isLoading && _client.Bot.AllyPage != null)
             {
                 MessageDialog.Show(_client._server._mainForm, "You are already targeting the group.");
                 return;
@@ -1630,7 +1630,7 @@ namespace Talos.Forms
                     _client.Bot.UpdateAllyList(ally);
                 }
             }
-            if (MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 aislingTabControl.SelectTab(tabPage);
                 clientTabControl.SelectTab(1);
@@ -1639,7 +1639,7 @@ namespace Talos.Forms
 
         private void addAltsBtn_Click(object sender, EventArgs e)
         {
-            if (_client.Bot.AllyPage != null)
+            if (!_isLoading && _client.Bot.AllyPage != null)
             {
                 MessageDialog.Show(_client._server._mainForm, "You already targeting alts.");
                 return;
@@ -1662,7 +1662,7 @@ namespace Talos.Forms
                 };
                 _client.Bot.UpdateAllyList(ally);
             }
-            if (MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 aislingTabControl.SelectTab(tabPage);
                 clientTabControl.SelectTab(1);
@@ -1671,7 +1671,7 @@ namespace Talos.Forms
 
         private void addAllMonstersBtn_Click(object sender, EventArgs e)
         {
-            if (_client.Bot.AllMonsters != null)
+            if (!_isLoading && _client.Bot.AllMonsters != null)
             {
                 MessageDialog.Show(_client._server._mainForm, "Enemy already in list");
                 return;
@@ -1705,7 +1705,7 @@ namespace Talos.Forms
                     _client.Bot.UpdateEnemyList(enemy);
                 }
             }
-            if ( MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 clientTabControl.SelectTab(2);
                 monsterTabControl.SelectTab(tabPage);
@@ -1719,7 +1719,7 @@ namespace Talos.Forms
             {
                 AddEnemyPage(result);
                 addMonsterText.Clear();
-                if (MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+                if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
                 {
                     monsterTabControl.SelectTab(monsterTabControl.TabPages.IndexOfKey(result.ToString()));
                     clientTabControl.SelectTab(2);
@@ -1771,146 +1771,220 @@ namespace Talos.Forms
             // Create an instance of FormStateHelper and populate it with the form's control values
             FormStateHelper formState = new FormStateHelper
             {
-                // ComboBox List items (lines)
-                Combo1ListItems = new List<string>(combo1List.Lines),
-                Combo2ListItems = new List<string>(combo2List.Lines),
-                Combo3ListItems = new List<string>(combo3List.Lines),
-                Combo4ListItems = new List<string>(combo4List.Lines),
+                // ComboBox page
+                ComboBoxPage = new ComboBoxPageState
+                {
+                    Combo1ListItems = new List<string>(combo1List.Lines),
+                    Combo2ListItems = new List<string>(combo2List.Lines),
+                    Combo3ListItems = new List<string>(combo3List.Lines),
+                    Combo4ListItems = new List<string>(combo4List.Lines),
+                    Combo1BtnText = combo1Btn.Text,
+                    Combo2BtnText = combo2Btn.Text,
+                    Combo3BtnText = combo3Btn.Text,
+                    Combo4BtnText = combo4Btn.Text,
+                    DontCbox1Checked = dontCbox1.Checked,
+                    DontCBox2Checked = dontCBox2.Checked,
+                    DontCBox3Checked = dontCBox3.Checked,
+                    DontCBox4Checked = dontCBox4.Checked
+                },
 
-                // Button text
-                Combo1BtnText = combo1Btn.Text,
-                Combo2BtnText = combo2Btn.Text,
-                Combo3BtnText = combo3Btn.Text,
-                Combo4BtnText = combo4Btn.Text,
+                // Aisling page
+                AislingPage = new AislingPageState
+                {
+                    DoublesComboxText = doublesCombox.Text,
+                    AutoDoubleCboxChecked = autoDoubleCbox.Checked,
+                    ExpGemsComboxText = expGemsCombox.Text,
+                    AutoGemCboxChecked = autoGemCbox.Checked,
+                    AutoStaffCboxChecked = autoStaffCbox.Checked,
+                    HideLinesCboxChecked = hideLinesCbox.Checked,
+                    DionComboxText = dionCombox.Text,
+                    DionWhenComboxText = dionWhenCombox.Text,
+                    AiteComboxText = aiteCombox.Text,
+                    HealComboxText = healCombox.Text,
+                    FasComboxText = fasCombox.Text,
+                    VineComboxText = vineCombox.Text,
+                    OptionsSkullCboxChecked = optionsSkullCbox.Checked,
+                    OptionsSkullSurrboxChecked = optionsSkullSurrbox.Checked,
+                    OneLineWalkCboxChecked = oneLineWalkCbox.Checked,
+                    DionCboxChecked = dionCbox.Checked,
+                    HealCboxChecked = healCbox.Checked,
+                    DeireasFaileasCboxChecked = deireasFaileasCbox.Checked,
+                    AoSithCboxChecked = aoSithCbox.Checked,
+                    AlertStrangerCboxChecked = alertStrangerCbox.Checked,
+                    AlertRangerCboxChecked = alertRangerCbox.Checked,
+                    AlertDuraCboxChecked = alertDuraCbox.Checked,
+                    AlertSkulledCboxChecked = alertSkulledCbox.Checked,
+                    AlertEXPCboxChecked = alertEXPCbox.Checked,
+                    AlertItemCapCboxChecked = alertItemCapCbox.Checked,
+                    AiteCboxChecked = aiteCbox.Checked,
+                    FasCboxChecked = fasCbox.Checked,
+                    DisenchanterCboxChecked = disenchanterCbox.Checked,
+                    WakeScrollCboxChecked = wakeScrollCbox.Checked,
+                    HideCboxChecked = hideCbox.Checked,
+                    DruidFormCboxChecked = druidFormCbox.Checked,
+                    MistCboxChecked = mistCbox.Checked,
+                    ArmachdCboxChecked = armachdCbox.Checked,
+                    FasSpioradCboxChecked = fasSpioradCbox.Checked,
+                    BeagCradhCboxChecked = beagCradhCbox.Checked,
+                    AegisSphereCboxChecked = aegisSphereCbox.Checked,
+                    DragonScaleCboxChecked = dragonScaleCbox.Checked,
+                    ManaWardCboxChecked = manaWardCbox.Checked,
+                    RegenerationCboxChecked = regenerationCbox.Checked,
+                    PerfectDefenseCboxChecked = perfectDefenseCbox.Checked,
+                    DragonsFireCboxChecked = dragonsFireCbox.Checked,
+                    AsgallCboxChecked = asgallCbox.Checked,
+                    MuscleStimulantCboxChecked = muscleStimulantCbox.Checked,
+                    NerveStimulantCboxChecked = nerveStimulantCbox.Checked,
+                    MonsterCallCboxChecked = monsterCallCbox.Checked,
+                    VanishingElixirCboxChecked = vanishingElixirCbox.Checked,
+                    VineyardCboxChecked = vineyardCbox.Checked,
+                    AutoRedCboxChecked = autoRedCbox.Checked,
+                    FungusExtractCboxChecked = fungusExtractCbox.Checked,
+                    MantidScentCboxChecked = mantidScentCbox.Checked,
+                    AoSuainCboxChecked = aoSuainCbox.Checked,
+                    AoCurseCboxChecked = aoCurseCbox.Checked,
+                    AoPoisonCboxChecked = aoPoisonCbox.Checked,
+                    FollowCboxChecked = followCbox.Checked,
+                    BubbleBlockCboxChecked = bubbleBlockCbox.Checked,
+                    SpamBubbleCboxChecked = spamBubbleCbox.Checked,
+                    RangerStopCboxChecked = rangerStopCbox.Checked,
+                    PickupGoldCboxChecked = pickupGoldCbox.Checked,
+                    PickupItemsCboxChecked = pickupItemsCbox.Checked,
+                    DropTrashCboxChecked = dropTrashCbox.Checked,
+                    TrashList = new List<string>(_trashToDrop),
+                    OverrideList = new List<string>(overrideList.Items.Cast<string>()),
+                    SafeFSCboxChecked = safeFSCbox.Checked,
+                    EquipmentRepairCboxChecked = equipmentrepairCbox.Checked,
+                    RangerLogCboxChecked = rangerLogCbox.Checked,
+                    ChkLastStepF5Checked = chkLastStepF5.Checked,
+                    DionPctNumValue = dionPctNum.Value,
+                    HealPctNumValue = healPctNum.Value,
+                    ChkSpeedStrangersChecked = chkSpeedStrangers.Checked,
+                    LockstepCboxChecked = lockstepCbox.Checked,
+                    FollowDistanceNumValue = followDistanceNum.Value,
+                    WalkSpeedSldrValue = walkSpeedSldr.Value,
+                    NumLastStepTimeValue = numLastStepTime.Value,
+                    WalkSpeedTlbl = walkSpeedLbl.Text,
+                    FasSpioradText = fasSpioradText.Text,
+                    VineText = vineText.Text,
+                    //GMLogCBoxChecked = gmLogCBox.Checked,
+                    //ChkGMSoundsChecked = chkGMSounds.Checked,
+                    //ChkAltLoginChecked = chkAltLogin.Checked,
+                },
 
-                // CheckBox states
-                DontCbox1Checked = dontCbox1.Checked,
-                DontCBox2Checked = dontCBox2.Checked,
-                DontCBox3Checked = dontCBox3.Checked,
-                DontCBox4Checked = dontCBox4.Checked,
+                // Tools page
+                ToolsPage = new ToolsPageState
+                {
+                    FormCboxChecked = formCbox.Checked,
+                    FormNumValue = formNum.Value,
+                    NoBlindCboxChecked = noBlindCbox.Checked,
+                    MapZoomCboxChecked = mapZoomCbox.Checked,
+                    SeeHiddenCboxChecked = seeHiddenCbox.Checked,
+                    GhostHackCboxChecked = ghostHackCbox.Checked,
+                    IgnoreCollisionCboxChecked = ignoreCollisionCbox.Checked,
+                    HideForegroundCboxChecked = hideForegroundCbox.Checked,
+                    MapFlagsEnableCboxChecked = mapFlagsEnableCbox.Checked,
+                    MapSnowCboxChecked = mapSnowCbox.Checked,
+                    MapTabsCboxChecked = mapTabsCbox.Checked,
+                    MapSnowTileCboxChecked = mapSnowTileCbox.Checked,
+                    UnifiedGuildChatCboxChecked = unifiedGuildChatCbox.Checked,
+                    ToggleOverrideCboxChecked = toggleOverrideCbox.Checked,
+                    DeformCBoxChecked = deformCbox.Checked
+                },
 
-                DoublesComboxText = doublesCombox.Text,
-                AutoDoubleCboxChecked = autoDoubleCbox.Checked,
-                ExpGemsComboxText = expGemsCombox.Text,
-                AutoGemCboxChecked = autoGemCbox.Checked,
-                AutoStaffCboxChecked = autoStaffCbox.Checked,
-                HideLinesCboxChecked = hideLinesCbox.Checked,
-                FormCboxChecked = formCbox.Checked,
-                OptionsSkullCboxChecked = optionsSkullCbox.Checked,
-                OptionsSkullSurrboxChecked = optionsSkullSurrbox.Checked,
-                OneLineWalkCboxChecked = oneLineWalkCbox.Checked,
-                DionCboxChecked = dionCbox.Checked,
-                HealCboxChecked = healCbox.Checked,
-                DeireasFaileasCboxChecked = deireasFaileasCbox.Checked,
-                AoSithCboxChecked = aoSithCbox.Checked,
-                AlertStrangerCboxChecked = alertStrangerCbox.Checked,
-                AlertRangerCboxChecked = alertRangerCbox.Checked,
-                AlertDuraCboxChecked = alertDuraCbox.Checked,
-                AlertSkulledCboxChecked = alertSkulledCbox.Checked,
-                AlertEXPCboxChecked = alertEXPCbox.Checked,
-                AlertItemCapCboxChecked = alertItemCapCbox.Checked,
-                AiteCboxChecked = aiteCbox.Checked,
-                FasCboxChecked = fasCbox.Checked,
-                DisenchanterCboxChecked = disenchanterCbox.Checked,
-                WakeScrollCboxChecked = wakeScrollCbox.Checked,
-                HideCboxChecked = hideCbox.Checked,
-                DruidFormCboxChecked = druidFormCbox.Checked,
-                MistCboxChecked = mistCbox.Checked,
-                ArmachdCboxChecked = armachdCbox.Checked,
-                FasSpioradCboxChecked = fasSpioradCbox.Checked,
-                BeagCradhCboxChecked = beagCradhCbox.Checked,
-                AegisSphereCboxChecked = aegisSphereCbox.Checked,
-                DragonScaleCboxChecked = dragonScaleCbox.Checked,
-                ManaWardCboxChecked = manaWardCbox.Checked,
-                RegenerationCboxChecked = regenerationCbox.Checked,
-                PerfectDefenseCboxChecked = perfectDefenseCbox.Checked,
-                DragonsFireCboxChecked = dragonsFireCbox.Checked,
-                AsgallCboxChecked = asgallCbox.Checked,
-                MuscleStimulantCboxChecked = muscleStimulantCbox.Checked,
-                NerveStimulantCboxChecked = nerveStimulantCbox.Checked,
-                MonsterCallCboxChecked = monsterCallCbox.Checked,
-                VanishingElixirCboxChecked = vanishingElixirCbox.Checked,
-                VineyardCboxChecked = vineyardCbox.Checked,
-                AutoRedCboxChecked = autoRedCbox.Checked,
-                FungusExtractCboxChecked = fungusExtractCbox.Checked,
-                MantidScentCboxChecked = mantidScentCbox.Checked,
-                AoSuainCboxChecked = aoSuainCbox.Checked,
-                AoCurseCboxChecked = aoCurseCbox.Checked,
-                AoPoisonCboxChecked = aoPoisonCbox.Checked,
-                FollowCboxChecked = followCbox.Checked,
-                BubbleBlockCboxChecked = bubbleBlockCbox.Checked,
-                SpamBubbleCboxChecked = spamBubbleCbox.Checked,
-                RangerStopCboxChecked = rangerStopCbox.Checked,
-                PickupGoldCboxChecked = pickupGoldCbox.Checked,
-                PickupItemsCboxChecked = pickupItemsCbox.Checked,
-                DropTrashCboxChecked = dropTrashCbox.Checked,
-                NoBlindCboxChecked = noBlindCbox.Checked,
-                MapZoomCboxChecked = mapZoomCbox.Checked,
-                SeeHiddenCboxChecked = seeHiddenCbox.Checked,
-                GhostHackCboxChecked = ghostHackCbox.Checked,
-                IgnoreCollisionCboxChecked = ignoreCollisionCbox.Checked,
-                HideForegroundCboxChecked = hideForegroundCbox.Checked,
-                MapFlagsEnableCboxChecked = mapFlagsEnableCbox.Checked,
-                MapSnowCboxChecked = mapSnowCbox.Checked,
-                MapTabsCboxChecked = mapTabsCbox.Checked,
-                MapSnowTileCboxChecked = mapSnowTileCbox.Checked,
-                UnifiedGuildChatCboxChecked = unifiedGuildChatCbox.Checked,
-                ToggleOverrideCboxChecked = toggleOverrideCbox.Checked,
-                SafeFSCboxChecked = safeFSCbox.Checked,
-                EquipmentRepairCboxChecked = equipmentrepairCbox.Checked,
-                RangerLogCboxChecked = rangerLogCbox.Checked,
-                //GMLogCBoxChecked = gmLogCBox.Checked,
-                //ChkGMSoundsChecked = chkGMSounds.Checked,
-                DeformCBoxChecked = deformCbox.Checked,
-                //ChkTavWallHacksChecked = chkTavWallHacks.Checked,
-                //ChkTavWallStrangerChecked = chkTavWallStranger.Checked,
-                ChkLastStepF5Checked = chkLastStepF5.Checked,
-                //ChkAltLoginChecked = chkAltLogin.Checked,
-                ChkSpeedStrangersChecked = chkSpeedStrangers.Checked,
-                LockstepCboxChecked = lockstepCbox.Checked,
-                ChkWaitForFasChecked = chkWaitForFas.Checked,
-                ChkWaitForCradhChecked = chkWaitForCradh.Checked,
-                ChkFrostStrikeChecked = chkFrostStrike.Checked,
-                ChkUseSkillsFromRangeChecked = chkUseSkillsFromRange.Checked,
-                ChargeToTargetCbxChecked = ChargeToTargetCbx.Checked,
-                AssistBasherChkChecked = assistBasherChk.Checked,
-
-                // TextBox values
-                FasSpioradText = fasSpioradText.Text,
-                VineText = vineText.Text,
-                LeadBasherTxt = leadBasherTxt.Text,
-
-                // NumericUpDown values
-                FormNumValue = formNum.Value,
-                DionPctNumValue = dionPctNum.Value,
-                HealPctNumValue = healPctNum.Value,
-                OverrideDistanceNumValue = overrideDistanceNum.Value,
-                NumAssitantStrayValue = numAssitantStray.Value,
-                //NumCrasherHealthValue = numCrasherHealth.Value,
-                //NumExHealValue = numExHeal.Value,
-                //NumBashSkillDelayValue = numBashSkillDelay.Value,
-                //NumSkillIntValue = numSkillInt.Value,
-                //PingCompensationNum1Value = pingCompensationNum1.Value,
-                //MonsterWalkIntervalNum1Value = monsterWalkIntervalNum1.Value,
-                //AtkRangeNumValue = atkRangeNum.Value,
-                //EngageRangeNumValue = engageRangeNum.Value,
-                FollowDistanceNumValue = followDistanceNum.Value,
-                WalkSpeedSldrValue = walkSpeedSldr.Value,
-                NumLastStepTimeValue = numLastStepTime.Value,
-                NumPFCounterValue = numPFCounter.Value,
-
-                // ListBox items
-                TrashList = new List<string>(_trashToDrop),
-                OverrideList = new List<string>(overrideList.Items.Cast<string>()),
-
-                // ComboBox text
-                DionComboxText = dionCombox.Text,
-                DionWhenComboxText = dionWhenCombox.Text,
-                AiteComboxText = aiteCombox.Text,
-                HealComboxText = healCombox.Text,
-                FasComboxText = fasCombox.Text,
-                VineComboxText = vineCombox.Text,
+                // Bashing Page
+                BashingPage = new BashingPageState
+                {
+                    ChkWaitForFasChecked = chkWaitForFas.Checked,
+                    ChkWaitForCradhChecked = chkWaitForCradh.Checked,
+                    ChkFrostStrikeChecked = chkFrostStrike.Checked,
+                    ChkUseSkillsFromRangeChecked = chkUseSkillsFromRange.Checked,
+                    ChargeToTargetCbxChecked = ChargeToTargetCbx.Checked,
+                    AssistBasherChkChecked = assistBasherChk.Checked,
+                    OverrideDistanceNumValue = overrideDistanceNum.Value,
+                    NumAssitantStrayValue = numAssitantStray.Value,
+                    NumPFCounterValue = numPFCounter.Value,
+                    LeadBasherTxt = leadBasherTxt.Text
+                    //NumCrasherHealthValue = numCrasherHealth.Value,
+                    //NumExHealValue = numExHeal.Value,
+                    //NumBashSkillDelayValue = numBashSkillDelay.Value,
+                    //NumSkillIntValue = numSkillInt.Value,
+                    //PingCompensationNum1Value = pingCompensationNum1.Value,
+                    //MonsterWalkIntervalNum1Value = monsterWalkIntervalNum1.Value,
+                    //AtkRangeNumValue = atkRangeNum.Value,
+                    //EngageRangeNumValue = engageRangeNum.Value,
+                    //ChkTavWallHacksChecked = chkTavWallHacks.Checked,
+                    //ChkTavWallStrangerChecked = chkTavWallStranger.Checked,
+                }
             };
+
+            // Save each AllyPage and EnemyPage
+            foreach (TabPage tabPage in aislingTabControl.TabPages)
+            {
+                if (tabPage.Controls.OfType<AllyPage>().FirstOrDefault() is AllyPage allyPage 
+                    && tabPage.Name != "selfTab" && tabPage.Name != "nearbyAllyTab")
+                {
+                    formState.AllyPages.Add(new AllyPageState
+                    {
+                        AllyPageName = tabPage.Text,
+                        DbAiteCboxChecked = allyPage.dbAiteCbox.Checked,
+                        DbAiteComboxText = allyPage.dbAiteCombox.Text,
+                        DbFasCboxChecked = allyPage.dbFasCbox.Checked,
+                        DbFasComboxText = allyPage.dbFasCombox.Text,
+                        DbIocCboxChecked = allyPage.dbIocCbox.Checked,
+                        DbIocComboxText = allyPage.dbIocCombox.Text,
+                        DbIocNumPctValue = allyPage.dbIocNumPct.Value,
+                        DbArmachdCboxChecked = allyPage.dbArmachdCbox.Checked,
+                        DbBCCboxChecked = allyPage.dbBCCbox.Checked,
+                        DbRegenCboxChecked = allyPage.dbRegenCbox.Checked,
+                        DispelSuainCboxChecked = allyPage.dispelSuainCbox.Checked,
+                        DispelCurseCboxChecked = allyPage.dispelCurseCbox.Checked,
+                        DispelPoisonCboxChecked = allyPage.dispelPoisonCbox.Checked,
+                        MiscLyliacCboxChecked = allyPage.miscLyliacCbox.Checked,
+                        MiscLyliacTboxText = allyPage.miscLyliacTbox.Text,
+                        AllyNormalRbtnChecked = allyPage.allyNormalRbtn.Checked,
+                        AllyMDCRbtnChecked = allyPage.allyMDCRbtn.Checked,
+                        AllyMDCSpamRbtnChecked = allyPage.allyMDCSpamRbtn.Checked,
+                        AllyMICSpamRbtnChecked = allyPage.allyMICSpamRbtn.Checked
+                    });
+                }
+            }
+
+            foreach (TabPage tabPage in monsterTabControl.TabPages)
+            {
+                if (tabPage.Controls.OfType<EnemyPage>().FirstOrDefault() is EnemyPage enemyPage
+                    && tabPage.Name != "nearbyEnemyTab")
+                {
+                    formState.EnemyPages.Add(new EnemyPageState
+                    {
+                        EnemyPageName = tabPage.Text,
+                        SpellsCurseCboxChecked = enemyPage.spellsCurseCbox.Checked,
+                        SpellsCurseComboxText = enemyPage.spellsCurseCombox.Text,
+                        SpellsFasCboxChecked = enemyPage.spellsFasCbox.Checked,
+                        SpellsFasComboxText = enemyPage.spellsFasCombox.Text,
+                        SpellsControlCboxChecked = enemyPage.spellsControlCbox.Checked,
+                        SpellsControlComboxText = enemyPage.spellsControlCombox.Text,
+                        TargetCboxChecked = enemyPage.targetCbox.Checked,
+                        TargetComboxText = enemyPage.targetCombox.Text,
+                        TargetCursedCboxChecked = enemyPage.targetCursedCbox.Checked,
+                        TargetFassedCboxChecked = enemyPage.targetFassedCbox.Checked,
+                        AttackCboxOneChecked = enemyPage.attackCboxOne.Checked,
+                        AttackComboxOneText = enemyPage.attackComboxOne.Text,
+                        AttackCboxTwoChecked = enemyPage.attackCboxTwo.Checked,
+                        AttackComboxTwoText = enemyPage.attackComboxTwo.Text,
+                        SpellFirstRbtnChecked = enemyPage.spellFirstRbtn.Checked,
+                        PramhFirstRbtnChecked = enemyPage.pramhFirstRbtn.Checked,
+                        CurseFirstRbtnChecked = enemyPage.curseFirstRbtn.Checked,
+                        FasFirstRbtnChecked = enemyPage.fasFirstRbtn.Checked,
+                        SpellAllRbtnChecked = enemyPage.spellAllRbtn.Checked,
+                        SpellOneRbtnChecked = enemyPage.spellOneRbtn.Checked,
+                        PriorityCboxChecked = enemyPage.priorityCbox.Checked,
+                        PriorityOnlyCboxChecked = enemyPage.priorityOnlyCbox.Checked,
+                        PriorityList = enemyPage.priorityLbox.Items.Cast<string>().ToList(),
+                        ExpectedHitsNumValue = enemyPage.expectedHitsNum.Value
+                    });
+                }
+            }
 
             // Now serialize the FormStateHelper object to XML and save it to the file
             XmlSerializer serializer = new XmlSerializer(typeof(FormStateHelper));
@@ -1966,8 +2040,8 @@ namespace Talos.Forms
                     // Set the last loaded profile
                     LastLoadedProfile = profilePath;
 
-                    // Clear any existing options (implementation depending on your form)
-                    ClearOptions(); // Assuming this clears current settings
+                    // Clear any existing options
+                    ClearOptions();
 
                     // Load and deserialize the profile asynchronously
                     string profileFullPath = Path.Combine(Settings.Default.DataPath, _client.Name, "Talos", profilePath + ".xml");
@@ -1993,155 +2067,252 @@ namespace Talos.Forms
                         this.Invoke((Action)(() =>
                         {
 
-                            // Apply the deserialized values to the form's controls
-                            // ComboBox List items (lines)
-                            combo1List.Lines = formState.Combo1ListItems.ToArray();
-                            combo2List.Lines = formState.Combo2ListItems.ToArray();
-                            combo3List.Lines = formState.Combo3ListItems.ToArray();
-                            combo4List.Lines = formState.Combo4ListItems.ToArray();
+                            // Apply saved AllyPages
+                            foreach (var allyState in formState.AllyPages)
+                            {
+                                addAislingText.Text = allyState.AllyPageName;
 
-                            // Button text
-                            combo1Btn.Text = formState.Combo1BtnText;
-                            combo2Btn.Text = formState.Combo2BtnText;
-                            combo3Btn.Text = formState.Combo3BtnText;
-                            combo4Btn.Text = formState.Combo4BtnText;
+                                // Add the ally tab based on its name
+                                if (allyState.AllyPageName == "group")
+                                {
+                                    addGroupBtn_Click(null, EventArgs.Empty);
+                                }
+                                else if (allyState.AllyPageName == "alts")
+                                {
+                                    addAltsBtn_Click(null, EventArgs.Empty);
+                                }
+                                else
+                                {
+                                    addAislingBtn_Click(null, EventArgs.Empty);
+                                }
 
-                            // CheckBox states
-                            dontCbox1.Checked = formState.DontCbox1Checked;
-                            dontCBox2.Checked = formState.DontCBox2Checked;
-                            dontCBox3.Checked = formState.DontCBox3Checked;
-                            dontCBox4.Checked = formState.DontCBox4Checked;
+                                // Find the newly added AllyPage tab and apply the saved state
+                                foreach (TabPage tabPage in aislingTabControl.TabPages)
+                                {
+                                    if (tabPage.Text == allyState.AllyPageName)
+                                    {
+                                        var allyPage = tabPage.Controls.OfType<AllyPage>().FirstOrDefault();
+                                        if (allyPage != null)
+                                        {
+                                            // Apply the AllyPageState values
+                                            allyPage.dbAiteCbox.Checked = allyState.DbAiteCboxChecked;
+                                            allyPage.dbAiteCombox.Text = allyState.DbAiteComboxText;
+                                            allyPage.dbFasCbox.Checked = allyState.DbFasCboxChecked;
+                                            allyPage.dbFasCombox.Text = allyState.DbFasComboxText;
+                                            allyPage.dbIocCbox.Checked = allyState.DbIocCboxChecked;
+                                            allyPage.dbIocCombox.Text = allyState.DbIocComboxText;
+                                            allyPage.dbIocNumPct.Value = allyState.DbIocNumPctValue;
+                                            allyPage.miscLyliacTbox.Text = allyState.MiscLyliacTboxText;
 
-                            doublesCombox.Text = formState.DoublesComboxText;
-                            autoDoubleCbox.Checked = formState.AutoDoubleCboxChecked;
-                            expGemsCombox.Text = formState.ExpGemsComboxText;
-                            autoGemCbox.Checked = formState.AutoGemCboxChecked;
-                            autoStaffCbox.Checked = formState.AutoStaffCboxChecked;
-                            hideLinesCbox.Checked = formState.HideLinesCboxChecked;
-                            formCbox.Checked = formState.FormCboxChecked;
-                            optionsSkullCbox.Checked = formState.OptionsSkullCboxChecked;
-                            optionsSkullSurrbox.Checked = formState.OptionsSkullSurrboxChecked;
-                            oneLineWalkCbox.Checked = formState.OneLineWalkCboxChecked;
-                            dionCbox.Checked = formState.DionCboxChecked;
-                            healCbox.Checked = formState.HealCboxChecked;
-                            deireasFaileasCbox.Checked = formState.DeireasFaileasCboxChecked;
-                            aoSithCbox.Checked = formState.AoSithCboxChecked;
-                            alertStrangerCbox.Checked = formState.AlertStrangerCboxChecked;
-                            alertRangerCbox.Checked = formState.AlertRangerCboxChecked;
-                            alertDuraCbox.Checked = formState.AlertDuraCboxChecked;
-                            alertSkulledCbox.Checked = formState.AlertSkulledCboxChecked;
-                            alertEXPCbox.Checked = formState.AlertEXPCboxChecked;
-                            alertItemCapCbox.Checked = formState.AlertItemCapCboxChecked;
-                            aiteCbox.Checked = formState.AiteCboxChecked;
-                            fasCbox.Checked = formState.FasCboxChecked;
-                            disenchanterCbox.Checked = formState.DisenchanterCboxChecked;
-                            wakeScrollCbox.Checked = formState.WakeScrollCboxChecked;
-                            hideCbox.Checked = formState.HideCboxChecked;
-                            druidFormCbox.Checked = formState.DruidFormCboxChecked;
-                            mistCbox.Checked = formState.MistCboxChecked;
-                            armachdCbox.Checked = formState.ArmachdCboxChecked;
-                            fasSpioradCbox.Checked = formState.FasSpioradCboxChecked;
-                            beagCradhCbox.Checked = formState.BeagCradhCboxChecked;
-                            aegisSphereCbox.Checked = formState.AegisSphereCboxChecked;
-                            dragonScaleCbox.Checked = formState.DragonScaleCboxChecked;
-                            manaWardCbox.Checked = formState.ManaWardCboxChecked;
-                            regenerationCbox.Checked = formState.RegenerationCboxChecked;
-                            perfectDefenseCbox.Checked = formState.PerfectDefenseCboxChecked;
-                            dragonsFireCbox.Checked = formState.DragonsFireCboxChecked;
-                            asgallCbox.Checked = formState.AsgallCboxChecked;
-                            muscleStimulantCbox.Checked = formState.MuscleStimulantCboxChecked;
-                            nerveStimulantCbox.Checked = formState.NerveStimulantCboxChecked;
-                            monsterCallCbox.Checked = formState.MonsterCallCboxChecked;
-                            vanishingElixirCbox.Checked = formState.VanishingElixirCboxChecked;
-                            vineyardCbox.Checked = formState.VineyardCboxChecked;
-                            autoRedCbox.Checked = formState.AutoRedCboxChecked;
-                            fungusExtractCbox.Checked = formState.FungusExtractCboxChecked;
-                            mantidScentCbox.Checked = formState.MantidScentCboxChecked;
-                            aoSuainCbox.Checked = formState.AoSuainCboxChecked;
-                            aoCurseCbox.Checked = formState.AoCurseCboxChecked;
-                            aoPoisonCbox.Checked = formState.AoPoisonCboxChecked;
-                            followCbox.Checked = formState.FollowCboxChecked;
-                            bubbleBlockCbox.Checked = formState.BubbleBlockCboxChecked;
-                            spamBubbleCbox.Checked = formState.SpamBubbleCboxChecked;
-                            rangerStopCbox.Checked = formState.RangerStopCboxChecked;
-                            pickupGoldCbox.Checked = formState.PickupGoldCboxChecked;
-                            pickupItemsCbox.Checked = formState.PickupItemsCboxChecked;
-                            dropTrashCbox.Checked = formState.DropTrashCboxChecked;
-                            noBlindCbox.Checked = formState.NoBlindCboxChecked;
-                            mapZoomCbox.Checked = formState.MapZoomCboxChecked;
-                            seeHiddenCbox.Checked = formState.SeeHiddenCboxChecked;
-                            ghostHackCbox.Checked = formState.GhostHackCboxChecked;
-                            ignoreCollisionCbox.Checked = formState.IgnoreCollisionCboxChecked;
-                            hideForegroundCbox.Checked = formState.HideForegroundCboxChecked;
-                            mapFlagsEnableCbox.Checked = formState.MapFlagsEnableCboxChecked;
-                            mapSnowCbox.Checked = formState.MapSnowCboxChecked;
-                            mapTabsCbox.Checked = formState.MapTabsCboxChecked;
-                            mapSnowTileCbox.Checked = formState.MapSnowTileCboxChecked;
-                            unifiedGuildChatCbox.Checked = formState.UnifiedGuildChatCboxChecked;
-                            toggleOverrideCbox.Checked = formState.ToggleOverrideCboxChecked;
-                            safeFSCbox.Checked = formState.SafeFSCboxChecked;
-                            equipmentrepairCbox.Checked = formState.EquipmentRepairCboxChecked;
-                            rangerLogCbox.Checked = formState.RangerLogCboxChecked;
-                            deformCbox.Checked = formState.DeformCBoxChecked;
-                            //chkTavWallHacks.Checked = formState.ChkTavWallHacksChecked;
-                            //chkTavWallStranger.Checked = formState.ChkTavWallStrangerChecked;
-                            chkLastStepF5.Checked = formState.ChkLastStepF5Checked;
-                            chkSpeedStrangers.Checked = formState.ChkSpeedStrangersChecked;
-                            lockstepCbox.Checked = formState.LockstepCboxChecked;
-                            chkWaitForFas.Checked = formState.ChkWaitForFasChecked;
-                            chkWaitForCradh.Checked = formState.ChkWaitForCradhChecked;
-                            chkFrostStrike.Checked = formState.ChkFrostStrikeChecked;
-                            chkUseSkillsFromRange.Checked = formState.ChkUseSkillsFromRangeChecked;
-                            ChargeToTargetCbx.Checked = formState.ChargeToTargetCbxChecked;
-                            assistBasherChk.Checked = formState.AssistBasherChkChecked;
+                                            // Apply RadioButton states
+                                            allyPage.allyMICSpamRbtn.Checked = allyState.AllyMICSpamRbtnChecked;
+                                            allyPage.allyMDCSpamRbtn.Checked = allyState.AllyMDCSpamRbtnChecked;
+                                            allyPage.allyMDCRbtn.Checked = allyState.AllyMDCRbtnChecked;
+                                            allyPage.allyNormalRbtn.Checked = allyState.AllyNormalRbtnChecked;
 
-                            // TextBox values
-                            fasSpioradText.Text = formState.FasSpioradText;
-                            vineText.Text = formState.VineText;
-                            leadBasherTxt.Text = formState.LeadBasherTxt;
+                                            // Apply other CheckBox states
+                                            allyPage.dispelCurseCbox.Checked = allyState.DispelCurseCboxChecked;
+                                            allyPage.dispelSuainCbox.Checked = allyState.DispelSuainCboxChecked;
+                                            allyPage.dispelPoisonCbox.Checked = allyState.DispelPoisonCboxChecked;
+                                        }
+                                    }
+                                }
+                            }
 
-                            // NumericUpDown values
-                            formNum.Value = formState.FormNumValue;
-                            dionPctNum.Value = formState.DionPctNumValue;
-                            healPctNum.Value = formState.HealPctNumValue;
-                            overrideDistanceNum.Value = formState.OverrideDistanceNumValue;
-                            numAssitantStray.Value = formState.NumAssitantStrayValue;
-                            followDistanceNum.Value = formState.FollowDistanceNumValue;
-                            walkSpeedSldr.Value = (int)formState.WalkSpeedSldrValue;
-                            numLastStepTime.Value = formState.NumLastStepTimeValue;
-                            numPFCounter.Value = formState.NumPFCounterValue;
+                            // Apply saved EnemyPages
+                            foreach (var enemyState in formState.EnemyPages)
+                            {
+                                addMonsterText.Text = enemyState.EnemyPageName;
+
+                                // Add the enemy tab based on its name
+                                if (enemyState.EnemyPageName == "all monsters")
+                                {
+                                    addAllMonstersBtn_Click(null, EventArgs.Empty);
+                                }
+                                else
+                                {
+                                    addMonsterBtn_Click(null, EventArgs.Empty);
+                                }
+
+                                // Find the newly added EnemyPage tab and apply the saved state
+                                foreach (TabPage tabPage in monsterTabControl.TabPages)
+                                {
+                                    if (tabPage.Text == enemyState.EnemyPageName)
+                                    {
+                                        var enemyPage = tabPage.Controls.OfType<EnemyPage>().FirstOrDefault();
+                                        if (enemyPage != null)
+                                        {
+                                            // Apply CheckBox values
+                                            enemyPage.spellsCurseCbox.Checked = enemyState.SpellsCurseCboxChecked;
+                                            enemyPage.spellsFasCbox.Checked = enemyState.SpellsFasCboxChecked;
+                                            enemyPage.spellsControlCbox.Checked = enemyState.SpellsControlCboxChecked;
+                                            enemyPage.targetCbox.Checked = enemyState.TargetCboxChecked;
+                                            enemyPage.targetCursedCbox.Checked = enemyState.TargetCursedCboxChecked;
+                                            enemyPage.targetFassedCbox.Checked = enemyState.TargetFassedCboxChecked;
+                                            enemyPage.attackCboxOne.Checked = enemyState.AttackCboxOneChecked;
+                                            enemyPage.attackCboxTwo.Checked = enemyState.AttackCboxTwoChecked;
+                                            enemyPage.mpndSilenced.Checked = enemyState.MpndSilencedChecked;
+                                            enemyPage.mspgSilenced.Checked = enemyState.MspgSilencedChecked;
+                                            enemyPage.mpndDioned.Checked = enemyState.MpndDionedChecked;
+                                            enemyPage.mspgPct.Checked = enemyState.MspgPctChecked;
+                                            enemyPage.NearestFirstCbx.Checked = enemyState.NearestFirstCbxChecked;
+
+                                            // Apply ComboBox values
+                                            enemyPage.spellsCurseCombox.Text = enemyState.SpellsCurseComboxText;
+                                            enemyPage.spellsFasCombox.Text = enemyState.SpellsFasComboxText;
+                                            enemyPage.spellsControlCombox.Text = enemyState.SpellsControlComboxText;
+                                            enemyPage.targetCombox.Text = enemyState.TargetComboxText;
+                                            enemyPage.attackComboxOne.Text = enemyState.AttackComboxOneText;
+                                            enemyPage.attackComboxTwo.Text = enemyState.AttackComboxTwoText;
+
+                                            // Apply NumericUpDown values
+                                            enemyPage.expectedHitsNum.Value = enemyState.ExpectedHitsNumValue;
+
+                                            // Apply ListBox items for priority
+                                            enemyPage.priorityLbox.Items.Clear();
+                                            foreach (var item in enemyState.PriorityLboxItems)
+                                            {
+                                                enemyPage.priorityLbox.Items.Add(item);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+
+                            // ComboBoxPage controls
+                            combo1List.Lines = formState.ComboBoxPage.Combo1ListItems.ToArray();
+                            combo2List.Lines = formState.ComboBoxPage.Combo2ListItems.ToArray();
+                            combo3List.Lines = formState.ComboBoxPage.Combo3ListItems.ToArray();
+                            combo4List.Lines = formState.ComboBoxPage.Combo4ListItems.ToArray();
+
+                            combo1Btn.Text = formState.ComboBoxPage.Combo1BtnText;
+                            combo2Btn.Text = formState.ComboBoxPage.Combo2BtnText;
+                            combo3Btn.Text = formState.ComboBoxPage.Combo3BtnText;
+                            combo4Btn.Text = formState.ComboBoxPage.Combo4BtnText;
+
+                            dontCbox1.Checked = formState.ComboBoxPage.DontCbox1Checked;
+                            dontCBox2.Checked = formState.ComboBoxPage.DontCBox2Checked;
+                            dontCBox3.Checked = formState.ComboBoxPage.DontCBox3Checked;
+                            dontCBox4.Checked = formState.ComboBoxPage.DontCBox4Checked;
+
+                            // AislingPage controls
+                            doublesCombox.Text = formState.AislingPage.DoublesComboxText;
+                            autoDoubleCbox.Checked = formState.AislingPage.AutoDoubleCboxChecked;
+                            expGemsCombox.Text = formState.AislingPage.ExpGemsComboxText;
+                            autoGemCbox.Checked = formState.AislingPage.AutoGemCboxChecked;
+                            autoStaffCbox.Checked = formState.AislingPage.AutoStaffCboxChecked;
+                            hideLinesCbox.Checked = formState.AislingPage.HideLinesCboxChecked;
+
+                            dionCombox.Text = formState.AislingPage.DionComboxText;
+                            dionWhenCombox.Text = formState.AislingPage.DionWhenComboxText;
+                            aiteCombox.Text = formState.AislingPage.AiteComboxText;
+                            healCombox.Text = formState.AislingPage.HealComboxText;
+                            fasCombox.Text = formState.AislingPage.FasComboxText;
+                            vineCombox.Text = formState.AislingPage.VineComboxText;
+
+                            optionsSkullCbox.Checked = formState.AislingPage.OptionsSkullCboxChecked;
+                            optionsSkullSurrbox.Checked = formState.AislingPage.OptionsSkullSurrboxChecked;
+                            oneLineWalkCbox.Checked = formState.AislingPage.OneLineWalkCboxChecked;
+                            dionCbox.Checked = formState.AislingPage.DionCboxChecked;
+                            healCbox.Checked = formState.AislingPage.HealCboxChecked;
+                            deireasFaileasCbox.Checked = formState.AislingPage.DeireasFaileasCboxChecked;
+                            aoSithCbox.Checked = formState.AislingPage.AoSithCboxChecked;
+                            alertStrangerCbox.Checked = formState.AislingPage.AlertStrangerCboxChecked;
+                            alertRangerCbox.Checked = formState.AislingPage.AlertRangerCboxChecked;
+                            alertDuraCbox.Checked = formState.AislingPage.AlertDuraCboxChecked;
+                            alertSkulledCbox.Checked = formState.AislingPage.AlertSkulledCboxChecked;
+                            alertEXPCbox.Checked = formState.AislingPage.AlertEXPCboxChecked;
+                            alertItemCapCbox.Checked = formState.AislingPage.AlertItemCapCboxChecked;
+                            aiteCbox.Checked = formState.AislingPage.AiteCboxChecked;
+                            fasCbox.Checked = formState.AislingPage.FasCboxChecked;
+                            disenchanterCbox.Checked = formState.AislingPage.DisenchanterCboxChecked;
+                            wakeScrollCbox.Checked = formState.AislingPage.WakeScrollCboxChecked;
+                            hideCbox.Checked = formState.AislingPage.HideCboxChecked;
+                            druidFormCbox.Checked = formState.AislingPage.DruidFormCboxChecked;
+                            mistCbox.Checked = formState.AislingPage.MistCboxChecked;
+                            armachdCbox.Checked = formState.AislingPage.ArmachdCboxChecked;
+                            fasSpioradCbox.Checked = formState.AislingPage.FasSpioradCboxChecked;
+                            beagCradhCbox.Checked = formState.AislingPage.BeagCradhCboxChecked;
+                            aegisSphereCbox.Checked = formState.AislingPage.AegisSphereCboxChecked;
+                            dragonScaleCbox.Checked = formState.AislingPage.DragonScaleCboxChecked;
+                            manaWardCbox.Checked = formState.AislingPage.ManaWardCboxChecked;
+                            regenerationCbox.Checked = formState.AislingPage.RegenerationCboxChecked;
+                            perfectDefenseCbox.Checked = formState.AislingPage.PerfectDefenseCboxChecked;
+                            dragonsFireCbox.Checked = formState.AislingPage.DragonsFireCboxChecked;
+                            asgallCbox.Checked = formState.AislingPage.AsgallCboxChecked;
+                            muscleStimulantCbox.Checked = formState.AislingPage.MuscleStimulantCboxChecked;
+                            nerveStimulantCbox.Checked = formState.AislingPage.NerveStimulantCboxChecked;
+                            monsterCallCbox.Checked = formState.AislingPage.MonsterCallCboxChecked;
+                            vanishingElixirCbox.Checked = formState.AislingPage.VanishingElixirCboxChecked;
+                            vineyardCbox.Checked = formState.AislingPage.VineyardCboxChecked;
+                            autoRedCbox.Checked = formState.AislingPage.AutoRedCboxChecked;
+                            fungusExtractCbox.Checked = formState.AislingPage.FungusExtractCboxChecked;
+                            mantidScentCbox.Checked = formState.AislingPage.MantidScentCboxChecked;
+                            aoSuainCbox.Checked = formState.AislingPage.AoSuainCboxChecked;
+                            aoCurseCbox.Checked = formState.AislingPage.AoCurseCboxChecked;
+                            aoPoisonCbox.Checked = formState.AislingPage.AoPoisonCboxChecked;
+                            followCbox.Checked = formState.AislingPage.FollowCboxChecked;
+                            bubbleBlockCbox.Checked = formState.AislingPage.BubbleBlockCboxChecked;
+                            spamBubbleCbox.Checked = formState.AislingPage.SpamBubbleCboxChecked;
+                            rangerStopCbox.Checked = formState.AislingPage.RangerStopCboxChecked;
+                            pickupGoldCbox.Checked = formState.AislingPage.PickupGoldCboxChecked;
+                            pickupItemsCbox.Checked = formState.AislingPage.PickupItemsCboxChecked;
+                            dropTrashCbox.Checked = formState.AislingPage.DropTrashCboxChecked;
+                            //GMLogCBoxChecked = formState.AislingPage.gmLogCBox.Checked,
+                            //ChkGMSoundsChecked = formState.AislingPage.chkGMSounds.Checked,
+                            //ChkAltLoginChecked = formState.AislingPage.chkAltLogin.Checked,
 
                             // ListBox items
                             _trashToDrop.Clear();
-                            foreach (string item in formState.TrashList)
+                            foreach (string item in formState.AislingPage.TrashList)
                             {
                                 UpdateBindingList(_trashToDrop, trashList, item);
                             }
                             overrideList.Items.Clear();
-                            foreach (string item in formState.OverrideList)
+                            foreach (string item in formState.AislingPage.OverrideList)
                             {
                                 overrideList.Items.Add(item);
                             }
 
-                            // ComboBox text
-                            dionCombox.Text = formState.DionComboxText;
-                            dionWhenCombox.Text = formState.DionWhenComboxText;
-                            aiteCombox.Text = formState.AiteComboxText;
-                            healCombox.Text = formState.HealComboxText;
-                            fasCombox.Text = formState.FasComboxText;
-                            vineCombox.Text = formState.VineComboxText;
+                            // ToolsPage controls
+                            formCbox.Checked = formState.ToolsPage.FormCboxChecked;
+                            formNum.Value = formState.ToolsPage.FormNumValue;
+                            noBlindCbox.Checked = formState.ToolsPage.NoBlindCboxChecked;
+                            mapZoomCbox.Checked = formState.ToolsPage.MapZoomCboxChecked;
+                            seeHiddenCbox.Checked = formState.ToolsPage.SeeHiddenCboxChecked;
+                            ghostHackCbox.Checked = formState.ToolsPage.GhostHackCboxChecked;
+                            ignoreCollisionCbox.Checked = formState.ToolsPage.IgnoreCollisionCboxChecked;
+                            hideForegroundCbox.Checked = formState.ToolsPage.HideForegroundCboxChecked;
+                            mapFlagsEnableCbox.Checked = formState.ToolsPage.MapFlagsEnableCboxChecked;
+                            mapSnowCbox.Checked = formState.ToolsPage.MapSnowCboxChecked;
+                            mapTabsCbox.Checked = formState.ToolsPage.MapTabsCboxChecked;
+                            mapSnowTileCbox.Checked = formState.ToolsPage.MapSnowTileCboxChecked;
+                            unifiedGuildChatCbox.Checked = formState.ToolsPage.UnifiedGuildChatCboxChecked;
+                            toggleOverrideCbox.Checked = formState.ToolsPage.ToggleOverrideCboxChecked;
+                            deformCbox.Checked = formState.ToolsPage.DeformCBoxChecked;
 
-                            // Commented out sections for future implementation (as per SaveProfile)
-                            // GMLogCBoxChecked = formState.GMLogCBoxChecked;
-                            // ChkGMSoundsChecked = formState.ChkGMSoundsChecked;
-                            // NumCrasherHealthValue = formState.NumCrasherHealthValue;
-                            // NumExHealValue = formState.NumExHealValue;
-                            // NumBashSkillDelayValue = formState.NumBashSkillDelayValue;
-                            // NumSkillIntValue = formState.NumSkillIntValue;
-                            // PingCompensationNum1Value = formState.PingCompensationNum1Value;
-                            // MonsterWalkIntervalNum1Value = formState.MonsterWalkIntervalNum1Value;
-                            // AtkRangeNumValue = formState.AtkRangeNumValue;
-                            // EngageRangeNumValue = formState.EngageRangeNumValue;
+                            // BashingPage controls
+                            chkWaitForFas.Checked = formState.BashingPage.ChkWaitForFasChecked;
+                            chkWaitForCradh.Checked = formState.BashingPage.ChkWaitForCradhChecked;
+                            chkFrostStrike.Checked = formState.BashingPage.ChkFrostStrikeChecked;
+                            chkUseSkillsFromRange.Checked = formState.BashingPage.ChkUseSkillsFromRangeChecked;
+                            ChargeToTargetCbx.Checked = formState.BashingPage.ChargeToTargetCbxChecked;
+                            assistBasherChk.Checked = formState.BashingPage.AssistBasherChkChecked;
+                            overrideDistanceNum.Value = formState.BashingPage.OverrideDistanceNumValue;
+                            numAssitantStray.Value = formState.BashingPage.NumAssitantStrayValue;
+                            numPFCounter.Value = formState.BashingPage.NumPFCounterValue;
+                            leadBasherTxt.Text = formState.BashingPage.LeadBasherTxt;
+                            //NumCrasherHealthValue = formState.BashingPage.numCrasherHealth.Value,
+                            //NumExHealValue = formState.BashingPage.numExHeal.Value,
+                            //NumBashSkillDelayValue = formState.BashingPage.numBashSkillDelay.Value,
+                            //NumSkillIntValue = formState.BashingPage.numSkillInt.Value,
+                            //PingCompensationNum1Value = formState.BashingPage.pingCompensationNum1.Value,
+                            //MonsterWalkIntervalNum1Value = formState.BashingPage.monsterWalkIntervalNum1.Value,
+                            //AtkRangeNumValue = formState.BashingPage.atkRangeNum.Value,
+                            //EngageRangeNumValue = formState.BashingPage.engageRangeNum.Value,
+                            //ChkTavWallHacksChecked = formState.BashingPage.chkTavWallHacks.Checked,
+                            //ChkTavWallStrangerChecked = formState.BashingPage.chkTavWallStranger.Checked,
                         }));
                     });
                 }
@@ -2159,6 +2330,7 @@ namespace Talos.Forms
                 }
             });
         }
+
 
         private void loadStrip_Enter(object sender, EventArgs e)
         {

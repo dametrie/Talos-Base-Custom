@@ -3,22 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Talos.Forms;
 
 namespace Talos.Helper
 {
+    [Serializable]
     public class FormStateHelper
     {
-        // CheckBox states
-        public bool DontCbox1Checked { get; set; }
-        public bool DontCBox2Checked { get; set; }
-        public bool DontCBox3Checked { get; set; }
-        public bool DontCBox4Checked { get; set; }
-        public bool AutoDoubleCboxChecked { get; set; }
-        public bool AutoGemCboxChecked { get; set; }
 
-        public bool AutoStaffCboxChecked { get; set; }  
+        public AislingPageState AislingPage { get; set; }
+
+        public BashingPageState BashingPage { get; set; }
+        public ToolsPageState ToolsPage { get; set; }
+        public ComboBoxPageState ComboBoxPage { get; set; }
+
+        public List<AllyPageState> AllyPages { get; set; } = new List<AllyPageState>();
+        public List<EnemyPageState> EnemyPages { get; set; } = new List<EnemyPageState>();
+    }
+
+    [Serializable]
+    public class AislingPageState
+    {
+        // ComboBox and CheckBox values
+        public string DoublesComboxText { get; set; }
+        public bool AutoDoubleCboxChecked { get; set; }
+        public string ExpGemsComboxText { get; set; }
+        public bool AutoGemCboxChecked { get; set; }
+        public bool AutoStaffCboxChecked { get; set; }
         public bool HideLinesCboxChecked { get; set; }
-        public bool FormCboxChecked { get; set; }
+
+        public string DionComboxText { get; set; }
+        public string DionWhenComboxText { get; set; }
+        public string AiteComboxText { get; set; }
+        public string HealComboxText { get; set; }
+        public string FasComboxText { get; set; }
+        public string VineComboxText { get; set; }
+
         public bool OptionsSkullCboxChecked { get; set; }
         public bool OptionsSkullSurrboxChecked { get; set; }
         public bool OneLineWalkCboxChecked { get; set; }
@@ -26,12 +46,16 @@ namespace Talos.Helper
         public bool HealCboxChecked { get; set; }
         public bool DeireasFaileasCboxChecked { get; set; }
         public bool AoSithCboxChecked { get; set; }
+
+        // Alert-related CheckBoxes
         public bool AlertStrangerCboxChecked { get; set; }
         public bool AlertRangerCboxChecked { get; set; }
         public bool AlertDuraCboxChecked { get; set; }
         public bool AlertSkulledCboxChecked { get; set; }
         public bool AlertEXPCboxChecked { get; set; }
         public bool AlertItemCapCboxChecked { get; set; }
+
+        // Other CheckBox states
         public bool AiteCboxChecked { get; set; }
         public bool FasCboxChecked { get; set; }
         public bool DisenchanterCboxChecked { get; set; }
@@ -67,6 +91,55 @@ namespace Talos.Helper
         public bool PickupGoldCboxChecked { get; set; }
         public bool PickupItemsCboxChecked { get; set; }
         public bool DropTrashCboxChecked { get; set; }
+
+        // Lists
+        public List<string> TrashList { get; set; }
+        public List<string> OverrideList { get; set; }
+
+        // Numeric values
+        public decimal DionPctNumValue { get; set; }
+        public decimal HealPctNumValue { get; set; }
+
+        // TextBox values
+        public string FasSpioradText { get; set; }
+        public string VineText { get; set; }
+        public bool ChkSpeedStrangersChecked { get;  set; }
+        public bool SafeFSCboxChecked { get;  set; }
+        public bool EquipmentRepairCboxChecked { get;  set; }
+        public bool RangerLogCboxChecked { get;  set; }
+        public bool ChkLastStepF5Checked { get;  set; }
+        public bool LockstepCboxChecked { get;  set; }
+        public decimal FollowDistanceNumValue { get;  set; }
+        public int WalkSpeedSldrValue { get;  set; }
+        public decimal NumLastStepTimeValue { get;  set; }
+        public string WalkSpeedTlbl { get;  set; }
+    }
+
+    [Serializable]
+    public class BashingPageState
+    {
+        public bool ChkWaitForFasChecked { get; set; }
+        public bool ChkWaitForCradhChecked { get; set; }
+        public bool ChkFrostStrikeChecked { get; set; }
+        public bool ChkUseSkillsFromRangeChecked { get; set; }
+        public bool ChargeToTargetCbxChecked { get; set; }
+        public bool AssistBasherChkChecked { get; set; }
+
+        // NumericUpDown values
+        public decimal OverrideDistanceNumValue { get; set; }
+        public decimal NumAssitantStrayValue { get; set; }
+        public decimal NumPFCounterValue { get; set; }
+
+        // TextBox values
+        public string LeadBasherTxt { get; set; }
+    }
+
+    [Serializable]
+    public class ToolsPageState
+    {
+        public bool FormCboxChecked { get; set; }
+        public decimal FormNumValue { get; set; }
+
         public bool NoBlindCboxChecked { get; set; }
         public bool MapZoomCboxChecked { get; set; }
         public bool SeeHiddenCboxChecked { get; set; }
@@ -79,107 +152,94 @@ namespace Talos.Helper
         public bool MapSnowTileCboxChecked { get; set; }
         public bool UnifiedGuildChatCboxChecked { get; set; }
         public bool ToggleOverrideCboxChecked { get; set; }
-        public bool SafeFSCboxChecked { get; set; }
-        public bool EquipmentRepairCboxChecked { get; set; }
-        public bool RangerLogCboxChecked { get; set; }
-        public bool GMLogCBoxChecked { get; set; }
-        public bool ChkGMSoundsChecked { get; set; }
         public bool DeformCBoxChecked { get; set; }
-        public bool ChkTavWallHacksChecked { get; set; }
-        public bool ChkTavWallStrangerChecked { get; set; }
-        public bool ChkLastStepF5Checked { get; set; }
-        public bool ChkAltLoginChecked { get; set; }
-        public bool ChkSpeedStrangersChecked { get; set; }
-        public bool LockstepCboxChecked { get; set; }
-        public bool ChkWaitForFasChecked { get; set; }
-        public bool ChkWaitForCradhChecked { get; set; }
-        public bool ChkFrostStrikeChecked { get; set; }
-        public bool ChkUseSkillsFromRangeChecked { get; set; }
-        public bool ChargeToTargetCbxChecked { get; set; }
-        public bool AssistBasherChkChecked { get; set; }
-        public bool RadioLeaderTargetChecked { get; set; }
-        public bool RadioAssitantStrayChecked { get; set; }
-        public bool ChkCrasherChecked { get; set; }
-        public bool ChkCrasherAboveHPChecked { get; set; }
-        public bool ChkCrasherOnlyAsgallChecked { get; set; }
-        public bool Protect1CbxChecked { get; set; }
-        public bool Protect2CbxChecked { get; set; }
-        public bool ChkAutoRepairBashChecked { get; set; }
-        public bool ChkBashAssailsChecked { get; set; }
-        public bool ChkRandomWaypointsChecked { get; set; }
-        public bool ChkBashDionChecked { get; set; }
-        public bool ChkExkuranumChecked { get; set; }
-        public bool ChkNoCastOffenseChecked { get; set; }
-        public bool ChkBashAsgallChecked { get; set; }
+    }
 
-        // TextBox values
-        public string LeadBasherTxt { get; set; }
-        public string FasSpioradText { get; set; }
-        public string SafeFSTbox { get; set; }
-        public string MushroomComboxText { get; set; }
-        public string ExpGemsComboxText { get; set; }
-        public string DionComboxText { get; set; }
-        public string DionWhenComboxText { get; set; }
-        public string AiteComboxText { get; set; }
-        public string HealComboxText { get; set; }
-        public string AlertItemCapText { get; set; }
-
-        public string AutoGroupList { get; set; }
-        public string VineComboxText { get; set; }
-        public string VineText { get; set; }
-        public string FasComboxText { get; set; }
-
-        public string PriorityList { get; set; }
-        public string Protected1Tbx { get; set; }
-        public string Protected2Tbx { get; set; }
-
-        // NumericUpDown values
-        public decimal FormNumValue { get; set; }
-        public decimal DionPctNumValue { get; set; }
-        public decimal HealPctNumValue { get; set; }
-        public decimal OverrideDistanceNumValue { get; set; }
-        public decimal NumAssitantStrayValue { get; set; }
-        public decimal NumCrasherHealthValue { get; set; }
-        public decimal NumExHealValue { get; set; }
-        public decimal NumBashSkillDelayValue { get; set; }
-        public decimal NumSkillIntValue { get; set; }
-        public decimal PingCompensationNum1Value { get; set; }
-        public decimal MonsterWalkIntervalNum1Value { get; set; }
-        public decimal AtkRangeNumValue { get; set; }
-        public decimal EngageRangeNumValue { get; set; }
-        public decimal FollowDistanceNumValue { get; set; }
-        public decimal WalkSpeedSldrValue { get; set; }
-        public decimal NumLastStepTimeValue { get; set; }
-        public decimal NumPFCounterValue { get; set; }
+    [Serializable]
+    public class ComboBoxPageState
+    {
+        // ComboBox List items (lines)
+        public List<string> Combo1ListItems { get; set; }
+        public List<string> Combo2ListItems { get; set; }
+        public List<string> Combo3ListItems { get; set; }
+        public List<string> Combo4ListItems { get; set; }
 
         // Button text
         public string Combo1BtnText { get; set; }
         public string Combo2BtnText { get; set; }
         public string Combo3BtnText { get; set; }
         public string Combo4BtnText { get; set; }
-        public string BtnBashingText { get; set; }
-        public string BtnBashingNewText { get; set; }
 
-        // ComboBox values
-
-        public string DoublesComboxText { get; set; }
-        public string AutoDoubleCboxText { get; set; }
-        public string AutoMushroomCBoxText { get; set; }
-        public string AutoGemCboxText { get; set; }
-        public string PriorityCboxText { get; set; }
-        public string PriorityOnlyCboxText { get; set; }
-        public string MapSnowCboxText { get; set; }
-        public string MapTabsCboxText { get; set; }
-        public string MapFlagsEnableCboxText { get; set; }
-        public string AutoRedCboxText { get; set; }
-
-        // Listbox items
-        public List<string> Combo1ListItems { get; set; }
-        public List<string> Combo2ListItems { get; set; }
-        public List<string> Combo3ListItems { get; set; }
-        public List<string> Combo4ListItems { get; set; }
-        public List<string> TrashList { get; set; }
-        public List<string> OverrideList { get; set; }
+        // CheckBox states
+        public bool DontCbox1Checked { get; set; }
+        public bool DontCBox2Checked { get; set; }
+        public bool DontCBox3Checked { get; set; }
+        public bool DontCBox4Checked { get; set; }
     }
+
+
+    [Serializable]
+    public class AllyPageState
+    {
+        public string MiscLyliacTboxText { get; set; }
+        public bool MiscLyliacCboxChecked { get; set; }
+        public bool DispelCurseCboxChecked { get; set; }
+        public bool DispelSuainCboxChecked { get; set; }
+        public bool DispelPoisonCboxChecked { get; set; }
+        public bool DbAiteCboxChecked { get; set; }
+        public decimal DbIocNumPctValue { get; set; }
+        public bool DbRegenCboxChecked { get; set; }
+        public bool DbBCCboxChecked { get; set; }
+        public bool DbArmachdCboxChecked { get; set; }
+        public string DbIocComboxText { get; set; }
+        public bool DbIocCboxChecked { get; set; }
+        public string DbFasComboxText { get; set; }
+        public bool DbFasCboxChecked { get; set; }
+        public string DbAiteComboxText { get; set; }
+        public bool AllyMICSpamRbtnChecked { get; set; }
+        public bool AllyMDCSpamRbtnChecked { get; set; }
+        public bool AllyMDCRbtnChecked { get; set; }
+        public bool AllyNormalRbtnChecked { get; set; }
+        public string AllyPageName { get; set; }
+    }
+
+    [Serializable]
+    public class EnemyPageState
+    {
+        public string AttackComboxTwoText { get; set; }
+        public bool PriorityOnlyCboxChecked { get; set; }
+        public bool PriorityCboxChecked { get; set; }
+        public List<string> PriorityLboxItems { get; set; }
+        public bool NearestFirstCbxChecked { get; set; }
+        public bool FasFirstRbtnChecked { get; set; }
+        public bool CurseFirstRbtnChecked { get; set; }
+        public bool SpellOneRbtnChecked { get; set; }
+        public bool SpellAllRbtnChecked { get; set; }
+        public bool PramhFirstRbtnChecked { get; set; }
+        public bool SpellFirstRbtnChecked { get; set; }
+        public bool IgnoreCboxChecked { get; set; }
+        public List<string> IgnoreLboxItems { get; set; }
+        public decimal ExpectedHitsNumValue { get; set; }
+        public bool MpndDionedChecked { get; set; }
+        public bool MpndSilencedChecked { get; set; }
+        public bool MspgPctChecked { get; set; }
+        public bool AttackCboxTwoChecked { get; set; }
+        public bool MspgSilencedChecked { get; set; }
+        public string AttackComboxOneText { get; set; }
+        public string SpellsFasComboxText { get; set; }
+        public string SpellsCurseComboxText { get; set; }
+        public bool SpellsControlCboxChecked { get; set; }
+        public string SpellsControlComboxText { get; set; }
+        public bool SpellsFasCboxChecked { get; set; }
+        public bool SpellsCurseCboxChecked { get; set; }
+        public bool TargetCursedCboxChecked { get; set; }
+        public bool TargetFassedCboxChecked { get; set; }
+        public string TargetComboxText { get; set; }
+        public bool TargetCboxChecked { get; set; }
+        public bool AttackCboxOneChecked { get; set; }
+        public List<string> PriorityList { get; set; }
+        public string EnemyPageName { get; set; }
+    }
+
 
 }
