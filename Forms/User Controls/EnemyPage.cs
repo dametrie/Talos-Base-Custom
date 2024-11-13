@@ -69,7 +69,7 @@ namespace Talos.Forms
                 { "Shock Arrow", "Shock Arrow" }
             };
 
-            UIHelper.SetupComboBox(spellsCurseCombox, new[] { "Demise", "Darker Seal", "Dark Seal", "ard cradh", "mor cradh", "cradh", "beag cradh" }, spellsCurseCbox);
+            UIHelper.SetupComboBox(spellsCurseCombox, new[] { "Demon Seal", "Demise", "Darker Seal", "Dark Seal", "ard cradh", "mor cradh", "cradh", "beag cradh" }, spellsCurseCbox);
             UIHelper.SetupComboBox(spellsFasCombox, new[] { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" }, spellsFasCbox);
             UIHelper.SetupComboBox(spellsControlCombox, new[] { "Mesmerize", "pramh", "beag pramh", "suain" }, spellsControlCbox);
             UIHelper.SetupComboBox(attackComboxOne, new[] { "Hail of Feathers", "Keeter", "Groo", "Torch", "Mermaid", "Star Arrow", "Barrage", "ard pian na dion", "mor pian na dion", "pian na dion", "deo searg", "Deception of Life", "Dragon Blast", "Frost Arrow", "lamh" }, attackCboxOne, null, null, null, partialMatch: true, abbreviations: singleTarget);

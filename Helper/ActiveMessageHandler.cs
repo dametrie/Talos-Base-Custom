@@ -70,6 +70,7 @@ namespace Talos.Helper
                 { "ard cradh end.", HandleCurseEndMessage },
                 { "Dark Seal end.", HandleCurseEndMessage },
                 { "Darker Seal end.", HandleCurseEndMessage },
+                { "Demon Seal end.", HandleCurseEndMessage },
                 { "Demise end.", HandleCurseEndMessage },
                 { "beag cradh", HandleCurseBeginMessage },
                 { "cradh", HandleCurseBeginMessage },
@@ -78,6 +79,7 @@ namespace Talos.Helper
                 { "Dark Seal", HandleCurseBeginMessage },
                 { "Darker Seal", HandleCurseBeginMessage },
                 { "Demise", HandleCurseBeginMessage },
+                { "Demon Seal", HandleCurseBeginMessage },
                 { "double attribute", HandleFasMessage },
                 { "normal nature.", HandleFasMessage },
                 { "Stunned", HandleBeagSuainMessage },
@@ -201,6 +203,7 @@ namespace Talos.Helper
                     case "Dark Seal":
                     case "Darker Seal":
                     case "Demise":
+                    case "Demon Seal":
                         if (creature != null)
                         {
                             //creature.Curse = spellName;

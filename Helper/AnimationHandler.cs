@@ -298,7 +298,7 @@ namespace Talos.Helper
 
                     break;
 
-                case (ushort)SpellAnimation.DarkerSeal:
+                case (ushort)SpellAnimation.DarkerSeal: //Adam how do we handle demon seal
 
                     double darkerSealDuration = Spell.GetSpellDuration("Darker Seal");
 

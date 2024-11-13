@@ -1615,19 +1615,15 @@ namespace Talos
 
 
             client.Doors.Clear();
-
-/*          if (client._mapChangePending)
-            {
-                client.NearbyPlayers.Clear();
-                client.PlayersWithNoName.Clear();
-                client.NearbyNPC.Clear();
-                client.NearbyGhosts.Clear();
-                client.CreatureHashSet.Clear();
-                client.ClientTab.ClearNearbyEnemies();
-                client.ClientTab.ClearNearbyAllies();
-            }*/
-
+            client.NearbyPlayers.Clear();
+            client.PlayersWithNoName.Clear();
+            client.NearbyNPC.Clear();
+            client.NearbyGhosts.Clear();
+            client.NearbyObjects.Clear();
+            client.ClientTab.ClearNearbyEnemies();
+            client.ClientTab.ClearNearbyAllies();
             client.ClientTab.UpdateStrangerList();
+
             
             client.ClientTab.DisplayMapInfoOnCover(client._map);
 
@@ -1635,8 +1631,7 @@ namespace Talos
             client._mapChangePending = false;
             client._worldMap = null;
             client._clientWalkPending = false;
-            //client.Pathfinder = new Pathfinder(client);
-            //client.Pathfinding = new Pathfinding(client);   
+            client.Pathfinder = new Pathfinder(client);
 
 
             //Console.WriteLine("Map ID: " + map.MapID);
@@ -1724,20 +1719,15 @@ namespace Talos
 
         private bool ServerMessage_0x1F_MapChangeComplete(Client client, ServerPacket serverPacket)
         {
-            client._mapChangePending = false;
+
             client._previousMapID = client._map.MapID;
-            client._lastMapChange = DateTime.UtcNow;
             client.Bot._doorTime = DateTime.UtcNow;
             client.Bot._doorPoint = client._clientLocation.Point;
 
-            client.NearbyPlayers.Clear();
-            client.PlayersWithNoName.Clear();
-            client.NearbyNPC.Clear();
-            client.NearbyGhosts.Clear();
-            client.NearbyObjects.Clear();
-            client.ClientTab.ClearNearbyEnemies();
-            client.ClientTab.ClearNearbyAllies();
-            client.ClientTab.UpdateStrangerList();
+            client._lastMapChange = DateTime.UtcNow;
+
+            client._map.CanUseSkills = true;
+            client._map.CanUseSpells = true;
 
             return true;
         }
@@ -2982,9 +2972,7 @@ namespace Talos
             if (client._isRefreshing == 1)
                 client._mapChanged = true;
 
-            client.Pathfinder = new Pathfinder(client);
 
-            client.ClientTab.UpdateStrangerList();
 
             return true;
         }

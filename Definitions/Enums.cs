@@ -415,6 +415,7 @@ namespace Talos.Enumerations
         AssassinStrike = 70,
         Demise = 75,
         DarkerSeal = 82,
+        DemonSeal = 82,
         LyliacPlant = 84,
         WingsOfProtection = 86,
         IronSkin = 89,

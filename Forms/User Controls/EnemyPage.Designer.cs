@@ -531,6 +531,7 @@
             this.spellsCurseCombox.ForeColor = System.Drawing.Color.Black;
             this.spellsCurseCombox.FormattingEnabled = true;
             this.spellsCurseCombox.Items.AddRange(new object[] {
+            "Demon Seal",
             "Demise",
             "Darker Seal",
             "Dark Seal",

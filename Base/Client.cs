@@ -619,6 +619,10 @@ namespace Talos.Base
                     Monitor.Exit(Server.SyncObj);
                 }
             }
+            //foreach (var p in nearbyPlayers)
+            //{
+            //    Console.WriteLine("NearbyPlayer: " + p.Name);
+            //}
             return nearbyPlayers;
         }
         internal List<Player> GetNearbyAllies()
@@ -929,6 +933,7 @@ namespace Talos.Base
                     case 2118188214: // ard cradh
                     case 1928539694: // Dark Seal
                     case 219207967: // Darker Seal
+                    case 4252225073: // Demon Seal
                     case 928817768: // Demise
                         if (!CastedTarget.IsCursed) return true;
                         return false;
@@ -1081,6 +1086,7 @@ namespace Talos.Base
             {
                 case 107956092: // ard fas nadur
                 case 219207967: // Darker Seal
+                case 4252225073: //Demon Seal
                 case 291448073: // naomh aite
                 case 420187390: // beag fas nadur
                 case 443271170: // ard naomh aite
@@ -1139,6 +1145,7 @@ namespace Talos.Base
                     case "Dark Seal":
                     case "Darker Seal":
                     case "Demise":
+                    case "Demon Seal":
                         //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()} Currently Cursed: {creature.IsCursed}");
                         return creature.IsCursed;
 
@@ -1534,7 +1541,7 @@ namespace Talos.Base
             }
             foreach (KeyValuePair<string, byte> item6 in new List<KeyValuePair<string, byte>>(cradhZeroLine))
             {
-                if (item6.Key == "beag cradh" || item6.Key == "cradh" || item6.Key == "mor cradh" || item6.Key == "ard cradh" || item6.Key == "Dark Seal" || item6.Key == "Darker Seal" || item6.Key == "Demise")
+                if (item6.Key == "beag cradh" || item6.Key == "cradh" || item6.Key == "mor cradh" || item6.Key == "ard cradh" || item6.Key == "Dark Seal" || item6.Key == "Darker Seal" || item6.Key == "Demise" || item6.Key == "Demon Seal")
                 {
                     cradhZeroLine[item6.Key] = 0;
                 }

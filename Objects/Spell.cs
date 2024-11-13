@@ -102,6 +102,7 @@ namespace Talos.Objects
             { "Dark Seal", 155.0 },
             { "Darker Seal", 155.0 },
             { "Demise", 155.0 },
+            { "Demon Seal", 155.0 },
             { "creag neart", 163.0 },
             { "cradh", 180.0 },
             { "mor cradh", 210.0 },

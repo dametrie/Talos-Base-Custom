@@ -562,32 +562,32 @@ namespace Talos.Forms
         }
 
 
-            internal void UpdateBindingList(BindingList<string> bindingList, ListBox listBox, string name)
+        internal void UpdateBindingList(BindingList<string> bindingList, ListBox listBox, string name)
+        {
+            if (listBox == null || string.IsNullOrEmpty(name))
             {
-                if (listBox == null || string.IsNullOrEmpty(name))
-                {
-                    return;
-                }
+                return;
+            }
 
-                // Check if we're on the UI thread
-                if (listBox.InvokeRequired)
+            // Check if we're on the UI thread
+            if (listBox.InvokeRequired)
+            {
+                listBox.Invoke(new Action(() => UpdateBindingList(bindingList, listBox, name)));
+            }
+            else
+            {
+                if (bindingList.Count != 0)
                 {
-                    listBox.Invoke(new Action(() => UpdateBindingList(bindingList, listBox, name)));
+                    bindingList.Add(name);
                 }
                 else
                 {
-                    if (bindingList.Count != 0)
-                    {
-                        bindingList.Add(name);
-                    }
-                    else
-                    {
-                        bindingList.Add(name);
-                        listBox.DataSource = null;
-                        listBox.DataSource = bindingList;
-                    }
+                    bindingList.Add(name);
+                    listBox.DataSource = null;
+                    listBox.DataSource = bindingList;
                 }
             }
+        }
 
         internal void AddMessageToChatPanel(System.Drawing.Color color, string message)
         {
@@ -2403,6 +2403,7 @@ namespace Talos.Forms
             seeHiddenCbox.Checked = true;
             noBlindCbox.Checked = true;
             alertRangerCbox.Checked = true;
+            rangerStopCbox.Checked = true;
 
             // Reset trash list with BindingList
             ResetTrashList();
