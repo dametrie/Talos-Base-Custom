@@ -3,7 +3,7 @@
 
 Talos is a C# reverse engineering project to learn about tools and processes for obfuscation/deobfuscation.
 
-Talos is a bot for the game [Dark Ages](https://en.wikipedia.org/wiki/Dark_Ages_(1999_video_game)) by Kru and can be found at www.darkages.com
+Talos is a bot for the game [Dark Ages](https://en.wikipedia.org/wiki/Dark_Ages_(1999_video_game)) by Kru. The game can be found at www.darkages.com
 
 The general principle is that a proxy server is established on a loobpack port that allows the user to intercept, modify, and send on packets to the game server. This allows the user to control many, if not all, aspects of the game (e.g., walking, casting spells, communicating with other players).
 
