@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Talos.Utility
+namespace Talos
 {
     public sealed class Timer
     {

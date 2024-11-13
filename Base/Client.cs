@@ -25,7 +25,7 @@ using System.Collections.Concurrent;
 using GroundItem = Talos.Objects.GroundItem;
 using Talos.PInvoke;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using Talos.Utility;
+
 
 
 namespace Talos.Base
@@ -524,7 +524,7 @@ namespace Talos.Base
                 if (!UseItem("Equipment Repair"))
                     return;
 
-                Talos.Utility.Timer hammer = Talos.Utility.Timer.FromSeconds(5);
+                Timer hammer = Timer.FromSeconds(5);
 
                 while (Dialog == null)
                 {
