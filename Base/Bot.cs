@@ -48,7 +48,7 @@ namespace Talos.Base
 
         internal bool _dontWalk;
         internal bool _dontCast;
-        private bool _dontBash;
+        internal bool _dontBash;
         private bool bool_32;
         private int? _leaderID;
         internal bool _hasRescue;
@@ -100,6 +100,8 @@ namespace Talos.Base
         private DateTime _followerTimer;
         internal DateTime _lastMushroomBonusAppliedTime;
         internal object _mushroomBonusElapsedTime;
+        internal bool _netRepair = false;
+        internal DateTime _hammerTimer = DateTime.MinValue;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -1407,7 +1409,7 @@ namespace Talos.Base
                         continue;//adam return?
                     }
 
-                    PerformSpellActions();
+                    PerformActions();
 
                 }
                 catch (Exception ex)
@@ -1617,7 +1619,7 @@ namespace Talos.Base
             _playersExistingOver250ms = _playersExistingOver250ms.Except(duplicateOrHiddenPlayers).ToList();
         }
 
-        private void PerformSpellActions()
+        private void PerformActions()
         {
             Loot();
             //ManageSpellCasting(); //Adam rework this, it breaks casting
@@ -1693,9 +1695,9 @@ namespace Talos.Base
             ArmachdAllies();
 
 
-            CastPlayerBuffs(); //Deireas Faileas, Monk Forms, Asgall, Perfect Defense,
+            Other(); //Deireas Faileas, Monk Forms, Asgall, Perfect Defense,
                                //Aegis Spehre, ao beag suain, Muscle Stim, Nerve Stim, Mist, Mana Ward
-                               //Vanish Elixir, Regens, Mantid Scent
+                               //Vanish Elixir, Regens, Mantid Scent, Repair hammer
             Comlhas();
             return true;
         }
@@ -1739,7 +1741,7 @@ namespace Talos.Base
             return true;
         }
 
-        private bool CastPlayerBuffs()
+        private bool Other()
         {
             if (Client.ClientTab.deireasFaileasCbox.Checked && !Client.HasEffect(EffectsBar.DeireasFaileas))
             {
@@ -1933,20 +1935,30 @@ namespace Talos.Base
                     }
                 }
             }
-            if (!Client.ClientTab.mantidScentCbox.Checked || !Client._isRegistered || Client.HasEffect(EffectsBar.MantidScent))
+
+            if (Client.ClientTab.mantidScentCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.MantidScent))
             {
-                return true;
-            }
-            if (!Client.UseItem("Mantid Scent") && !Client.UseItem("Potent Mantid Scent"))
-            {
+                if (Client.UseItem("Mantid Scent") || Client.UseItem("Potent Mantid Scent"))
+                {
+                    return true;
+                }
+
                 Client.ClientTab.mantidScentCbox.Checked = false;
                 Client.ServerMessage((byte)ServerMessageType.Whisper, "You do not own Mantid Scent");
                 return false;
             }
+
+            if (Client.ClientTab.equipmentrepairCbox.Checked && Client.needsToRepairHammer && DateTime.UtcNow.Subtract(_hammerTimer).TotalMinutes > 40.0)
+            {
+                Client.UseHammer();
+            }
+
             while (Client.Dialog == null)
             {
                 Thread.Sleep(10);
             }
+
+
             Client.Dialog.DialogNext();
             Thread.Sleep(500);
             return false;

@@ -24,6 +24,8 @@ using Talos.Base;
 using System.Collections.Concurrent;
 using GroundItem = Talos.Objects.GroundItem;
 using Talos.PInvoke;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using Talos.Utility;
 
 
 namespace Talos.Base
@@ -134,7 +136,7 @@ namespace Talos.Base
         internal bool _unmaxedSpellsLoaded = false;
         internal bool _unmaxedSkillsLoaded = false;
 
-        internal double _walkSpeed = 420.0;
+        internal double _walkSpeed = 150;
         internal ushort _monsterFormID = 1;
         internal bool _deformNearStrangers = false;
         internal int _spellCounter;
@@ -292,6 +294,7 @@ namespace Talos.Base
         internal bool _stopped;
         internal short _previousMapID;
         internal uint _exchangeID;
+        internal bool needsToRepairHammer = false;
 
         internal Pathfinder Pathfinder { get; set; }
         internal RouteFinder RouteFinder { get; set; }
@@ -500,6 +503,45 @@ namespace Talos.Base
             return false;
         }
 
+        internal void UseHammer()
+        {
+            Bot._dontWalk = true;
+            Bot._dontCast = true;
+            Bot._dontBash = true;
+
+            var repairItem = Inventory.FirstOrDefault(i => i.Name.Equals("Equipment Repair", StringComparison.OrdinalIgnoreCase));
+
+            if (repairItem == null)
+            {
+                ServerMessage((byte)ServerMessageType.OrangeBar1, "You do not have any Equipment Repair hammers!");
+                ClientTab.equipmentrepairCbox.Checked = false;
+                Bot._dontWalk = false;
+                Bot._dontCast = false;
+                Bot._dontBash = false;
+            }
+            else
+            {
+                if (!UseItem("Equipment Repair"))
+                    return;
+
+                Talos.Utility.Timer hammer = Talos.Utility.Timer.FromSeconds(5);
+
+                while (Dialog == null)
+                {
+                    if (hammer.IsTimeExpired || Player.IsSuained || Player.IsAsleep)
+                        return;
+                    Thread.Sleep(25);
+                }
+
+                ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, (ushort)(Dialog.DialogID + 1U));
+                needsToRepairHammer = false;
+                Bot._hammerTimer = DateTime.UtcNow;
+                Bot._dontWalk = false;
+                Bot._dontCast = false;
+                Bot._dontBash = false;
+            }
+        }
+
         internal List<GroundItem> GetNearbyGroundItems(int distance = 12, params ushort[] sprites)
         {
             var spriteSet = new HashSet<ushort>(sprites);
@@ -696,13 +738,6 @@ namespace Talos.Base
         {
             return RouteFind(new Location(mapID, 0, 0), 0, true);
         }
-
-
-
-
-
-
-
 
 
         internal List<WorldObject> GetNearbyObjects() //Adam

@@ -2161,7 +2161,7 @@ namespace Talos.Forms
             this.walkSpeedLbl.Name = "walkSpeedLbl";
             this.walkSpeedLbl.Size = new System.Drawing.Size(25, 15);
             this.walkSpeedLbl.TabIndex = 19;
-            this.walkSpeedLbl.Text = "420";
+            this.walkSpeedLbl.Text = "150";
             // 
             // walkFastLbl
             // 
@@ -2197,7 +2197,7 @@ namespace Talos.Forms
             this.walkSpeedSldr.TabIndex = 16;
             this.walkSpeedSldr.TickFrequency = 200;
             this.walkSpeedSldr.TickStyle = System.Windows.Forms.TickStyle.Both;
-            this.walkSpeedSldr.Value = 420;
+            this.walkSpeedSldr.Value = 150;
             this.walkSpeedSldr.Scroll += new System.EventHandler(this.walkSpeedSldr_Scroll);
             // 
             // walkAllClientsBtn

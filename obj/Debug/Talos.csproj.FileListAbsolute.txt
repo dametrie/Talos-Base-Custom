@@ -61,3 +61,4 @@ C:\Users\Games\Documents\GitHub\Talos\bin\Debug\WindowsInput.xml
 C:\Users\Games\Documents\GitHub\Talos\obj\Debug\Talos.csproj.CopyComplete
 C:\Users\Games\Documents\GitHub\Talos\obj\Debug\Talos.exe
 C:\Users\Games\Documents\GitHub\Talos\obj\Debug\Talos.pdb
+C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.Forms.InputDialog.resources

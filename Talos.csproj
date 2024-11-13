@@ -187,6 +187,7 @@
     <Compile Include="Structs\Point.cs" />
     <Compile Include="Structs\Rectangle.cs" />
     <Compile Include="Structs\Tile.cs" />
+    <Compile Include="Utility\Timer.cs" />
     <Compile Include="Utility\Utility.cs" />
     <EmbeddedResource Include="Forms\InputDialog.resx">
       <DependentUpon>InputDialog.cs</DependentUpon>

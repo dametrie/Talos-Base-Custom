@@ -2364,7 +2364,7 @@ namespace Talos.Forms
             bool toggleGenderChecked = toggleGenderCbox.Checked;
 
             // Clear controls recursively
-            ClearAllControls(this.Controls);
+            ClearAllControls(Controls);
 
             // Restore specific states
             toggleDmuCbox.Checked = toggleDmuChecked;
@@ -2424,7 +2424,8 @@ namespace Talos.Forms
             combo3List.Clear();
             combo4List.Clear();
 
-            _client._walkSpeed = 150.0;
+            _client._walkSpeed = 150;
+            walkSpeedLbl.Text = "150";
 
             // Clear ally and enemy pages
             ClearAllyAndEnemyPages();

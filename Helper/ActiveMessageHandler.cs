@@ -589,14 +589,20 @@ namespace Talos.Helper
 
             if (client.ClientTab.alertDuraCbox.Checked && durabilityPercent == 30)
             {
-                //client.Bot.bool_8 = new bool[] { true, true, true, true, true };
+                client.Bot.itemDurabilityAlerts = new bool[] { true, true, true, true, true };
             }
 
             if (itemName == "Insect Net" && durabilityPercent == 10)
             {
-                //client.Bot.bool_16 = true;
+                client.Bot._netRepair = true;
+            }
+
+            if (client.ClientTab.equipmentrepairCbox.Checked && durabilityPercent == 10)
+            {
+                client.needsToRepairHammer = true;
             }
         }
+
         private void HandleTrainingGroundsMessage(Client client, string message)
         {
             client._trainingGroundsMember = false;
