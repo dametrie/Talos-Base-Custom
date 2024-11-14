@@ -1616,7 +1616,7 @@ namespace Talos
 
             client.Doors.Clear();
             client.NearbyPlayers.Clear();
-            client.PlayersWithNoName.Clear();
+            client.NearbyHiddenPlayers.Clear();
             client.NearbyNPC.Clear();
             client.NearbyGhosts.Clear();
             client.NearbyObjects.Clear();
@@ -2397,7 +2397,7 @@ namespace Talos
             }
             else
             {
-                client.PlayersWithNoName.AddOrUpdate(id, player, (key, oldValue) => player);
+                client.NearbyHiddenPlayers.AddOrUpdate(id, player, (key, oldValue) => player);
                 _shouldCloseProfile = true;
                 client.ClickObject(id);
                 client.RequestRefresh(false);
@@ -2527,9 +2527,9 @@ namespace Talos
                         client.NearbyPlayers.TryAdd(name, p);
                     }
 
-                    if (client.PlayersWithNoName.ContainsKey(p.ID))
+                    if (client.NearbyHiddenPlayers.ContainsKey(p.ID))
                     {
-                        client.PlayersWithNoName.TryRemove(p.ID, out _);
+                        client.NearbyHiddenPlayers.TryRemove(p.ID, out _);
                     }
 
                 }

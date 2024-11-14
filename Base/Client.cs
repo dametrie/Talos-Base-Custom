@@ -271,7 +271,7 @@ namespace Talos.Base
         internal Dictionary<int, Location> LastSeenLocations { get; set; } = new Dictionary<int, Location>();
 
         internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
-        internal ConcurrentDictionary<int, Player> PlayersWithNoName { get; private set; } = new ConcurrentDictionary<int, Player>();
+        internal ConcurrentDictionary<int, Player> NearbyHiddenPlayers { get; private set; } = new ConcurrentDictionary<int, Player>();
         internal ConcurrentDictionary<string, Player> NearbyPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
         internal ConcurrentDictionary<string, Player> NearbyGhosts { get; private set; } = new ConcurrentDictionary<string, Player>();
         internal ConcurrentDictionary<string, Creature> NearbyNPC { get; private set; } = new ConcurrentDictionary<string, Creature>();
@@ -2126,7 +2126,7 @@ namespace Talos.Base
                             {
                                 DisplayChant(" ");
                             }
-                            else if (!string.IsNullOrWhiteSpace(ClientTab.customLinesBox.Text) && !Bot._shouldBotStop)
+                            else if (!string.IsNullOrWhiteSpace(ClientTab.customLinesBox.Text) && !Bot._rangerNear)
                             {
                                 DisplayChant(ParseCustomSpellLines());
                             }
@@ -2480,36 +2480,9 @@ namespace Talos.Base
         internal bool Pathfind(Location destination, short distance = 1, bool shouldBlock = true, bool avoidWarps = true)
         {
 
-            while (true)
+            if (NearbyHiddenPlayers.Count > 0 || _isCasting)
             {
-                double totalMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
-                //Console.WriteLine($"Checking walk throttle: {totalMilliseconds}ms elapsed since last move");
-
-                if (Bot.IsStrangerNearby() || Bot._shouldBotStop)
-                {
-                    Console.WriteLine($"Stranger nearby or bot stop required, waiting...");
-                    if (totalMilliseconds >= 420.0)
-                    {
-                        //Console.WriteLine("Elapsed time exceeds maximum wait time, proceeding with action.");
-                        break;
-                    }
-                }
-                else if (!(totalMilliseconds < _walkSpeed))
-                {
-                    //Console.WriteLine($"Proceeding with try walk. Value of totalMilliseconds: {totalMilliseconds}");
-                    break;
-                }
-                Thread.Sleep(10);
-            }
-
-            //Console.WriteLine($"Current location of client: {_clientLocation}"); // Debugging: Log current client location
-            //Console.WriteLine($"Current location of client according to server: {_serverLocation}"); // Debugging: Log current server location
-
-            //Console.WriteLine($"Trying to walk to location: {destination} with follow distance: {followDistance}, lock required: {lockRequired}, avoid exits: {avoidExits}");
-
-            if (PlayersWithNoName.Count > 0 || _isCasting)
-            {
-                //Console.WriteLine($"Cannot walk because PlayersWithNoName count is {PlayersWithNoName.Count} or is casting {_isCasting}");
+                //Console.WriteLine($"Cannot walk because NearbyHiddenPlayers count is {NearbyHiddenPlayers.Count} or is casting {_isCasting}");
                 if (!_isWalking)
                 {
                     Console.WriteLine("Not currently walking.");
@@ -2518,172 +2491,159 @@ namespace Talos.Base
                 _isCasting = false;
             }
 
-            if ((!_map.IsWall(_clientLocation) && (_stuckCounter != 0 || !GetNearbyObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && Equals(creature.Location, _clientLocation)))) || (!_hasWalked && (_clientLocation.X != 0 || _clientLocation.Y != 0) && (_serverLocation.X != 0 || _serverLocation.Y != 0)))
+            bool isWall = _map.IsWall(_clientLocation);
+            bool isStuck = _stuckCounter == 0 && GetNearbyObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && (creature.Location == _clientLocation));
+
+            if ((isWall || isStuck) && (_hasWalked || _clientLocation.X == (short)0 && _clientLocation.Y == (short)0 || _serverLocation.X == (short)0 && _serverLocation.Y == (short)0))
             {
-                int dist = _clientLocation.DistanceFrom(destination);
-                //Console.WriteLine($"Current distance to destination: {dist}, Threshold: {distance}");
+                RequestRefresh();
+                _hasWalked = false;
+                return false;
+            }
 
-                //Adam - commented this out because we were ending up 2x the distance from the destination on follow
-                //Not sure if this is needed
-                //if (destinationThreshold != 0 && _clientLocation.DistanceFrom(destination) <= destinationThreshold)
-                //{
-                //    Console.WriteLine("Too close to destination to require movement.");
-                //    Thread.Sleep(25);
-                //    return false;
-                //}
-
-                if (Equals(_clientLocation, destination))
+            if (_clientLocation == destination)
+            {
+                if (_hasWalked || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
                 {
-                    if (_hasWalked || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
+                    if (_stuckCounter == 0)
                     {
-                        if (_stuckCounter == 0)
-                        {
-                            //Console.WriteLine("Refreshing client due to timeout or refresh needed.");
-                            RequestRefresh();
-                        }
-                        _hasWalked = false;
+                        //Console.WriteLine("Refreshing client due to timeout or refresh needed.");
+                        RequestRefresh();
                     }
-                    return true;
-                }
-
-
-
-                if (Equals(_clientLocation, destination))
-                {
-                    Console.WriteLine("Destination reached.");
-                    RequestRefresh();
-                    return true;
-                }
-
-                if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
-                {
-                    //Console.WriteLine("New destination or empty path stack. Calculating new path.");
-                    _lastDestination = destination;
-                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
-
-                }
-
-                if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _hasWalked)
-                {
-                    pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidWarps);
-                    if (pathStack.Count == 0)
-                    {
-                        return false;
-                    }
-                    //Console.WriteLine("Location difference detected, requesting refresh.");
-                    RequestRefresh();
                     _hasWalked = false;
-                    return false;
                 }
+                return true;
+            }
 
+            double elapsedMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+            double waitThreshold = (Bot.IsStrangerNearby() && !ClientTab.chkSpeedStrangers.Checked) || Bot._rangerNear
+                ? 420.0
+                : _walkSpeed;
+
+            // Continue looping until elapsed time meets or exceeds the threshold
+            while (elapsedMilliseconds < waitThreshold)
+            {
+                Thread.Sleep(10);
+                elapsedMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+            }
+
+            if (Equals(_clientLocation, destination))
+            {
+                Console.WriteLine("Destination reached.");
+                RequestRefresh();
+                return true;
+            }
+
+            if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
+            {
+                //Console.WriteLine("New destination or empty path stack. Calculating new path.");
+                _lastDestination = destination;
+                pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
+
+            }
+
+            if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _hasWalked)
+            {
+                pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidWarps);
                 if (pathStack.Count == 0)
                 {
-                    Console.WriteLine("Path stack is empty, no further movement possible.");
-                    RequestRefresh();
                     return false;
                 }
-                else
+                //Console.WriteLine("Location difference detected, requesting refresh.");
+                RequestRefresh();
+                _hasWalked = false;
+                return false;
+            }
+
+            if (pathStack.Count == 0)
+            {
+                Console.WriteLine("Path stack is empty, no further movement possible.");
+                RequestRefresh();
+                return false;
+            }
+
+
+            List<Creature> nearbyCreatures = (from creature in GetNearbyObjects().OfType<Creature>()
+                                              where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(_serverLocation) <= 11
+                                              select creature).ToList();
+
+            foreach (Location loc in pathStack)
+            {
+                Door door = Doors.Values.FirstOrDefault(d => d.Location.Equals(loc));
+                if (door != null)
                 {
-                    //Console.WriteLine($"Next step in path stack: {pathStack.Peek()}, Stack count: {pathStack.Count}");
-                }
-
-
-                List<Creature> nearbyCreatures = (from creature in GetNearbyObjects().OfType<Creature>()
-                                                  where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(_serverLocation) <= 11
-                                                  select creature).ToList();
-
-                foreach (Location loc in pathStack)
-                {
-                    Door door = Doors.Values.FirstOrDefault(d => d.Location.Equals(loc));
-                    if (door != null)
+                    //Console.WriteLine($"Door at {loc}, Closed: {door.Closed}, RecentlyClicked: {door.RecentlyClicked}");
+                    if (door.Closed && !door.RecentlyClicked)
                     {
-                        //Console.WriteLine($"Door at {loc}, Closed: {door.Closed}, RecentlyClicked: {door.RecentlyClicked}");
-                        if (door.Closed && !door.RecentlyClicked)
-                        {
-                            //Console.WriteLine("Attempting to click door.");
-                            ClickObject(loc);
-                            door.LastClicked = DateTime.UtcNow;
-                        }
-                    }
-                    if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(npc => Location.NotEquals(loc, destination) && Location.Equals(npc.Location, loc) || (!HasEffect(EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.SpriteID) && GetCreatureCoverage(npc).Contains(loc))))
-                    {
-                        //Console.WriteLine($"Creature interaction required at {loc}, recalculating path.");
-                        pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
-                        return false;
+                        //Console.WriteLine("Attempting to click door.");
+                        ClickObject(loc);
+                        door.LastClicked = DateTime.UtcNow;
                     }
                 }
-
-                Location nextPosition = pathStack.Peek();
-                if (nextPosition.Equals(_clientLocation))
+                if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(npc => Location.NotEquals(loc, destination) && Location.Equals(npc.Location, loc) || (!HasEffect(EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.SpriteID) && GetCreatureCoverage(npc).Contains(loc))))
                 {
-                    pathStack.Pop();
-                    if (pathStack.Count == 0)
-                    {
-                        Console.WriteLine("Path complete. Destination reached.");
-                        return true;
-                    }
-                    nextPosition = pathStack.Peek();
-                }
-
-
-                if (nextPosition.DistanceFrom(_clientLocation) != 1)
-                {
-                    //Console.WriteLine($"Unexpected distance from {_clientLocation} to {nextPosition}. Expected distance: 1, Actual: {nextPosition.DistanceFrom(_clientLocation)}");
-                }
-
-                if (nextPosition.DistanceFrom(_clientLocation) != 1)
-                {
-                    //Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
-                    if (nextPosition.DistanceFrom(_clientLocation) > 2 && _hasWalked)
-                    {
-                        if (_stuckCounter == 0)
-                        {
-                            //Console.WriteLine("Refreshing client due to unexpected position distance.");
-                            RequestRefresh();
-                        }
-                        _hasWalked = false;
-                    }
+                    //Console.WriteLine($"Creature interaction required at {loc}, recalculating path.");
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
                     return false;
                 }
+            }
 
-                Direction directionToWalk = nextPosition.GetDirection(_clientLocation);
-                if (shouldBlock)
+            Location nextPosition = pathStack.Peek();
+            if (nextPosition.Equals(_clientLocation))
+            {
+                pathStack.Pop();
+                if (pathStack.Count == 0)
                 {
-                    lock (CastLock)
+                    Console.WriteLine("Path complete. Destination reached.");
+                    return true;
+                }
+                nextPosition = pathStack.Peek();
+            }
+
+
+            if (nextPosition.DistanceFrom(_clientLocation) != 1)
+            {
+                //Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
+                if (nextPosition.DistanceFrom(_clientLocation) > 2 && _hasWalked)
+                {
+                    if (_stuckCounter == 0)
                     {
-                        //Console.WriteLine($"Acquired lock and attempting to walk towards {directionToWalk}.");
-                        if (CanWalk())
+                        //Console.WriteLine("Refreshing client due to unexpected position distance.");
+                        RequestRefresh();
+                    }
+                    _hasWalked = false;
+                }
+                pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
+                return false;
+            }
+
+            Direction directionToWalk = nextPosition.GetDirection(_clientLocation);
+            if (shouldBlock)
+            {
+                lock (CastLock)
+                {
+                    if (!HasEffect(EffectsBar.Pramh))
+                    {
+                        if (!HasEffect(EffectsBar.Suain))
                         {
-                            //Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
+                            if (HasEffect(EffectsBar.Skull))
+                            {
+                                if (ClientTab.ascendBtn.Text != "Ascending")
+                                {
+                                    return true;
+                                }
+                            }
                             Walk(directionToWalk);
                         }
                     }
                 }
-                else if (CanWalk())
-                {
-                    //Console.WriteLine($"Decided to walk {directionToWalk} from {_clientLocation} to {nextPosition}");
-                    //Console.WriteLine($"Walking towards {directionToWalk} without lock.");
-                    Walk(directionToWalk);
-                }
-                return true;
             }
-
-            // After moving, check if the current position matches the destination to confirm reach
-            if (Equals(_clientLocation, destination))
+            else if (!HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
             {
-                Console.WriteLine("Successfully reached the destination.");
-                return true;
+                Walk(directionToWalk);              
             }
 
-            Console.WriteLine("Conditions not met for walking, requesting client refresh.");
-            RequestRefresh();
-            _hasWalked = false;
-            return false;
-        }
-        private bool CanWalk()
-        {
-            return !HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending");
+            return true;
         }
 
         internal bool RouteFind(Location destination, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)

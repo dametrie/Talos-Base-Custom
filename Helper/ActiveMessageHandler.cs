@@ -617,7 +617,7 @@ namespace Talos.Helper
             client.CastedSpell = null;
             client.CastedTarget = null;
             client._stuckCounter++;
-            if ((client._stuckCounter > 4) && (!client.Bot._shouldBotStop || !client.ClientTab.rangerStopCbox.Checked))
+            if ((client._stuckCounter > 4) && (!client.Bot._rangerNear || !client.ClientTab.rangerStopCbox.Checked))
             {
                 //ADAM insert logic to get a list of points around the carachter
                 //check for walls, check for creatures etc.

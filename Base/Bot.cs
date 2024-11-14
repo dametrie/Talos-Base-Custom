@@ -41,7 +41,7 @@ namespace Talos.Base
         private bool _isSilenced;
         internal bool _needFasSpiorad = true;
         internal bool _manaLessThanEightyPct = true;
-        internal bool _shouldBotStop = false;
+        internal bool _rangerNear = false;
         internal bool _shouldAlertItemCap;
         internal bool _recentlyAoSithed;
         internal bool[] itemDurabilityAlerts = new bool[5];
@@ -132,12 +132,12 @@ namespace Talos.Base
 
         private void TavalyWallHacks()
         {
-            if (Client.ClientTab.chkTavWallStranger.Checked && StrangerNear() && Client.ClientTab.chkTavWallHacks.Checked && !Client._map.IsWall(Client._serverLocation))
+            if (Client.ClientTab.chkTavWallStranger.Checked && IsStrangerNearby() && Client.ClientTab.chkTavWallHacks.Checked && !Client._map.IsWall(Client._serverLocation))
             {
                 Client.ClientTab.chkTavWallHacks.Checked = false;
                 Client.RequestRefresh();
             }
-            if (Client.ClientTab.chkTavWallStranger.Checked && !StrangerNear() && !Client.ClientTab.chkTavWallHacks.Checked)
+            if (Client.ClientTab.chkTavWallStranger.Checked && !IsStrangerNearby() && !Client.ClientTab.chkTavWallHacks.Checked)
             {
                 Client.ClientTab.chkTavWallHacks.Checked = true;
                 Client.RequestRefresh();
@@ -148,7 +148,7 @@ namespace Talos.Base
         {
             if (Client != null && Client.ClientTab != null)
             {
-                bool strangerNear = StrangerNear();
+                bool strangerNear = IsStrangerNearby();
                 bool deformChecked = Client.ClientTab.deformCbox.Checked;
                 ushort desiredFormNum = (ushort)Client.ClientTab.formNum.Value;
 
@@ -176,10 +176,23 @@ namespace Talos.Base
 
         }
 
-        internal bool StrangerNear()
+
+
+        internal bool IsStrangerNearby()
         {
-            var friends = Client.ClientTab.friendList.Items.OfType<string>();
-            return Client.GetNearbyPlayers().Any(user => !friends.Contains(user.Name, StringComparer.OrdinalIgnoreCase));
+            return _client.GetNearbyPlayers().Any(player => IsNotInFriendList(player));
+        }
+
+        private bool IsNotInFriendList(Player player)
+        {
+            if (_client.ClientTab != null)
+            {
+                return !_client.ClientTab.friendList.Items.OfType<string>().Any(friend => string.Equals(friend, player.Name, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                return true;//Adam
+            }
         }
 
         private void Walker()
@@ -187,7 +200,7 @@ namespace Talos.Base
             //var start = DateTime.UtcNow;
             //Console.WriteLine($"Walker started at {start:HH:mm:ss.fff}");
 
-            _shouldBotStop = IsRangerNearBy();
+            _rangerNear = IsRangerNearBy();
             if (!Client._exchangeOpen && Client.ClientTab != null)
             {
                 HandleDialog();
@@ -210,7 +223,7 @@ namespace Talos.Base
                 _nearbyPlayers = Client.GetNearbyPlayers();
                 _nearbyValidCreatures = Client.GetNearbyValidCreatures(12);
                 var shouldWalk = !_dontWalk &&
-                    (!Client.ClientTab.rangerStopCbox.Checked || !_shouldBotStop);
+                    (!Client.ClientTab.rangerStopCbox.Checked || !_rangerNear);
 
                 if (shouldWalk)
                 {
@@ -441,7 +454,7 @@ namespace Talos.Base
             bool? isBashing = client?.ClientTab?._isBashing;
 
             if (isBashing.GetValueOrDefault()
-                && !_shouldBotStop
+                && !_rangerNear
                 && !Client.HasEffect(EffectsBar.BeagSuain)
                 && !Client.HasEffect(EffectsBar.Pramh)
                 && !Client.HasEffect(EffectsBar.Suain)
@@ -1358,7 +1371,7 @@ namespace Talos.Base
                         currentAction = Client.ClientTab.currentAction;
                     }
 
-                    _shouldBotStop = IsRangerNearBy();
+                    _rangerNear = IsRangerNearBy();
 
                     //Console.WriteLine("Checking for stop conditions");
                     if (CheckForStopConditions())
@@ -3810,22 +3823,7 @@ namespace Talos.Base
             }
         }
 
-        internal bool IsStrangerNearby()
-        {
-            return _client.GetNearbyPlayers().Any(player => IsNotInFriendList(player));
-        }
 
-        private bool IsNotInFriendList(Player player)
-        {
-            if (_client.ClientTab != null)
-            {
-                return !_client.ClientTab.friendList.Items.OfType<string>().Any(friend => string.Equals(friend, player.Name, StringComparison.OrdinalIgnoreCase));
-            }
-            else
-            {
-                return true;//Adam
-            }
-        }
 
         private void Loot()
         {
