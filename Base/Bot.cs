@@ -115,8 +115,8 @@ namespace Talos.Base
             _client = client;
             _server = server;
             AddTask(new BotLoop(BotLoop));
-            AddTask(new BotLoop(Sounds));
-            AddTask(new BotLoop(Walker));
+            AddTask(new BotLoop(SoundLoop));
+            AddTask(new BotLoop(WalkLoop));
             AddTask(new BotLoop(Misc));
         }
 
@@ -124,8 +124,11 @@ namespace Talos.Base
         {
             while (!_shouldThreadStop)
             {
-                //TavalyWallHacks();
+                //Console.WriteLine("[MiscLoop] Pulse");
+                TavalyWallHacks();
                 MonsterForm();
+
+                Thread.Sleep(500); // Add a small sleep to avoid flooding the CPU default: 100
             }
 
         }
@@ -195,22 +198,23 @@ namespace Talos.Base
             }
         }
 
-        private void Walker()
+        private void WalkLoop()
         {
-            //var start = DateTime.UtcNow;
-            //Console.WriteLine($"Walker started at {start:HH:mm:ss.fff}");
 
-            _rangerNear = IsRangerNearBy();
-            if (!Client._exchangeOpen && Client.ClientTab != null)
+            while (!_shouldThreadStop)
             {
-                HandleDialog();
-                HandleDumbMTGWarp();
-                WalkActions();
+                //Console.WriteLine("[WalkLoop] Pulse");
+                _rangerNear = IsRangerNearBy();
+                if (!Client._exchangeOpen && Client.ClientTab != null)
+                {
+                    HandleDialog();
+                    HandleDumbMTGWarp();
+                    WalkActions();
+                }
+
+                Thread.Sleep(100); // Add a small sleep to avoid flooding the CPU default: 100
             }
 
-            //var end = DateTime.UtcNow;
-            //Console.WriteLine($"Walker ended at {end:HH:mm:ss.fff}, Duration: {(end - start).TotalMilliseconds} ms");
-            Thread.Sleep(10); // Add a small sleep to avoid flooding the CPU
         }
 
         private void WalkActions()
@@ -218,17 +222,14 @@ namespace Talos.Base
             //var start = DateTime.UtcNow;
             //Console.WriteLine($"WalkActions started at {start:HH:mm:ss.fff}");
 
-            while (!_shouldThreadStop)
-            {
-                _nearbyPlayers = Client.GetNearbyPlayers();
-                _nearbyValidCreatures = Client.GetNearbyValidCreatures(12);
-                var shouldWalk = !_dontWalk &&
-                    (!Client.ClientTab.rangerStopCbox.Checked || !_rangerNear);
+            _nearbyPlayers = Client.GetNearbyPlayers();
+            _nearbyValidCreatures = Client.GetNearbyValidCreatures(12);
+            var shouldWalk = !_dontWalk &&
+                (!Client.ClientTab.rangerStopCbox.Checked || !_rangerNear);
 
-                if (shouldWalk)
-                {
-                    HandleWalkingCommand();
-                }
+            if (shouldWalk)
+            {
+                HandleWalkingCommand();
             }
 
             //var end = DateTime.UtcNow;
@@ -1290,7 +1291,7 @@ namespace Talos.Base
                 Client._npcDialog = "";
             }
         }
-        private void Sounds()
+        private void SoundLoop()
         {
             if (Client.ClientTab == null || Client == null)
             {
@@ -1298,6 +1299,7 @@ namespace Talos.Base
             }
             while (!_shouldThreadStop)  // Assuming _shouldStop is a volatile bool that is set to true when you want to stop all threads
             {
+                //Console.WriteLine("[SoundLoop] Pulse");
                 if (_server._disableSound)
                 {
                     Thread.Sleep(250);
@@ -1354,84 +1356,88 @@ namespace Talos.Base
         }
         private void BotLoop()
         {
-            while (!_shouldThreadStop)
+            try
             {
-                try
+                while (!_shouldThreadStop)
                 {
-                    //Console.WriteLine("BotLoop running");
 
-                    if (Client.InArena)
+                    //Console.WriteLine("[BotLoop] Pulse - _shouldThreadStop: " + _shouldThreadStop);
+
+                    try
                     {
-                        //Console.WriteLine("Sleeping for 1 second");
-                        Thread.Sleep(1000);
-                        return;
-                    }
-                    if (currentAction == null)
-                    {
-                        currentAction = Client.ClientTab.currentAction;
-                    }
-
-                    _rangerNear = IsRangerNearBy();
-
-                    //Console.WriteLine("Checking for stop conditions");
-                    if (CheckForStopConditions())
-                    {
-                        //Console.WriteLine("Sleeping for 100ms");
-                        Thread.Sleep(100);
-                        return;
-                    }
-
-                    //Console.WriteLine("Processing players");
-                    ProcessPlayers();
-
-                    if (Client.CurrentHP <= 1U && Client.IsSkulled)
-                    {
-                        HandleSkullStatus();
-                        return;
-                    }
-
-                    if (ShouldRequestRefresh())
-                    {
-                        Console.WriteLine("Requesting refresh");
-                        Client.RequestRefresh(false);
-                        _lastRefresh = DateTime.UtcNow;
-                        continue;
-                    }
-
-                    //Console.WriteLine("Checking and handling spells");
-                    //CheckAndHandleSpells();
-
-                    //Console.WriteLine("Checking for autoRed conditions");
-                    if (AutoRedConditionsMet())
-                    {
-                        if (GetSkulledPlayers().Count > 0)
+                        if (Client.InArena)
                         {
-                            RedSkulledPlayers();
+                            Thread.Sleep(1000);
+                            continue;
                         }
-                    }
 
-                    //Console.WriteLine("Checking for strangers");
-                    if (IsStrangerNearby())
+                        if (currentAction == null)
+                        {
+                            currentAction = Client.ClientTab.currentAction;
+                        }
+
+                        _rangerNear = IsRangerNearBy();
+
+                        if (CheckForStopConditions())
+                        {
+                            Thread.Sleep(100);
+                            continue;
+                        }
+
+                        ProcessPlayers();
+
+                        if (Client.CurrentHP <= 1U && Client.IsSkulled)
+                        {
+                            Console.WriteLine("[BotLoop] Client HP <= 1 and is skulled, handling skull status");
+                            HandleSkullStatus();
+                            continue;
+                        }
+
+                        if (ShouldRequestRefresh())
+                        {
+                            Client.RequestRefresh(false);
+                            _lastRefresh = DateTime.UtcNow;
+                            continue;
+                        }
+
+                        if (AutoRedConditionsMet())
+                        {
+                            Console.WriteLine("[BotLoop] AutoRed conditions met");
+                            if (GetSkulledPlayers().Count > 0)
+                            {
+                                Console.WriteLine("[BotLoop] RedSkulledPlayers called");
+                                RedSkulledPlayers();
+                            }
+                        }
+
+                        if (IsStrangerNearby())
+                        {
+                            FilterStrangerPlayers();
+                        }
+
+                        double botCheckSeconds = DateTime.UtcNow.Subtract(_botChecks).TotalSeconds;
+
+                        if (botCheckSeconds < 2.5)
+                        {
+                            continue;
+                        }
+
+                        PerformActions();
+                    }
+                    catch (Exception ex)
                     {
-                        FilterStrangerPlayers();
+                        Console.WriteLine($"[BotLoop] Exception caught in inner try: {ex.Message}");
                     }
-
-                    if (DateTime.UtcNow.Subtract(_botChecks).TotalSeconds < 2.5)
-                    {
-                        Console.WriteLine("Botcheck");
-                        continue;//adam return?
-                    }
-
-                    PerformActions();
-
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Exception in BotLoop: {ex.Message}");
-                }
+
+                Console.WriteLine("Exiting BotLoop, _shouldThreadStop: " + _shouldThreadStop);
             }
-
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[BotLoop] Exception caught in outer try: {ex.Message}");
+            }
         }
+
         internal bool IsRangerNearBy()
         {
             if (!Settings.Default.paranoiaMode)
@@ -1529,9 +1535,9 @@ namespace Talos.Base
         }
         private List<Player> GetSkulledPlayers()
         {
-            if (_playersExistingOver250ms.Any(p => p._isSkulled))
+            if (_playersExistingOver250ms.Any(p => p.IsSkulled))
             {
-                _playersExistingOver250ms.RemoveAll(p => p._isSkulled);
+                _playersExistingOver250ms.RemoveAll(p => p.IsSkulled);
                 foreach (Player player in Client.GetNearbyPlayers().Where(IsSkulledFriendOrGroupMember))
                 {
                     _playersNeedingRed.Add(player);
@@ -1709,8 +1715,8 @@ namespace Talos.Base
 
 
             Other(); //Deireas Faileas, Monk Forms, Asgall, Perfect Defense,
-                               //Aegis Spehre, ao beag suain, Muscle Stim, Nerve Stim, Mist, Mana Ward
-                               //Vanish Elixir, Regens, Mantid Scent, Repair hammer
+                     //Aegis Spehre, ao beag suain, Muscle Stim, Nerve Stim, Mist, Mana Ward
+                     //Vanish Elixir, Regens, Mantid Scent, Repair hammer
             Comlhas();
             return true;
         }
@@ -1966,11 +1972,13 @@ namespace Talos.Base
                 Client.UseHammer();
             }
 
+            Timer dialogWaitTime = Timer.FromSeconds(5);
             while (Client.Dialog == null)
             {
+                if (dialogWaitTime.IsTimeExpired)
+                    return false;
                 Thread.Sleep(10);
             }
-
 
             Client.Dialog.DialogNext();
             Thread.Sleep(500);

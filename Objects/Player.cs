@@ -7,7 +7,6 @@ namespace Talos.Objects
     internal sealed class Player : Creature
     {
         internal bool _isHidden;
-        internal bool _isSkulled;
         internal ushort HeadSprite { get; set; }
         internal ushort ArmorSprite1 { get; set; }
         internal ushort ArmorSprite2 { get; set; }
@@ -38,9 +37,7 @@ namespace Talos.Objects
         {
             get
             {
-                if (!SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Skull))
-                    return false;
-                return DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds < 2.0;
+               return SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Skull) && DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds < 2.0;
             }
         }
 

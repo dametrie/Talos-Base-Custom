@@ -379,7 +379,7 @@ namespace Talos.Base
         internal bool HasLetter => Stats.Mail.HasFlag(Mail.HasLetter);
         internal bool HasParcel => Stats.Mail.HasFlag(Mail.HasParcel);
 
-        internal bool IsSkulled => Player?._isSkulled == true && (EffectsBarHashSet.Contains((ushort)EffectsBar.Skull) || EffectsBarHashSet.Contains((ushort)EffectsBar.WormSkull));
+        internal bool IsSkulled => Player != null && (EffectsBarHashSet.Contains((ushort)EffectsBar.Skull) || EffectsBarHashSet.Contains((ushort)EffectsBar.WormSkull) && Player.IsSkulled);
 
         public int CurrentWaypoint { get; internal set; }
 

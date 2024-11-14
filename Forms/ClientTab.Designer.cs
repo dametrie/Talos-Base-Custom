@@ -36,8 +36,6 @@ namespace Talos.Forms
         /// </summary>
         private void InitializeComponent()
         {
-            this.healthBar = new ResourceBar("healthBar");
-            this.manaBar = new ResourceBar("manaBar");
             this.components = new System.ComponentModel.Container();
             this.clientTabControl = new System.Windows.Forms.TabControl();
             this.mainCoverTab = new System.Windows.Forms.TabPage();
@@ -635,6 +633,31 @@ namespace Talos.Forms
             this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
+            // healthBar
+            // 
+            ResourceBar resourcebar = new ResourceBar("healthBar");
+            resourcebar.BackColor = Color.White;
+            resourcebar.ForeColor = Color.Crimson;
+            resourcebar.Location = new System.Drawing.Point(6, 282);
+            resourcebar.MaximumSize = new System.Drawing.Size(50, 196);
+            resourcebar.Name = "healthBar";
+            resourcebar.Size = new System.Drawing.Size(50, 196);
+            resourcebar.Style = ProgressBarStyle.Continuous;
+            healthBar = resourcebar;
+            // 
+            // manaBar
+            // 
+            ResourceBar resourcebar2 = new ResourceBar("manaBar");
+            resourcebar2.BackColor = Color.White;
+            resourcebar2.ForeColor = Color.MidnightBlue;
+            resourcebar2.Location = new System.Drawing.Point(65, 282);
+            resourcebar2.MaximumSize = new System.Drawing.Size(50, 196);
+            resourcebar2.Name = "manaBar";
+            resourcebar2.Size = new System.Drawing.Size(50, 196);
+            resourcebar2.Style = ProgressBarStyle.Continuous;
+            manaBar = resourcebar2;
+            // 
+            // 
             // clientTabControl
             // 
             this.clientTabControl.Controls.Add(this.mainCoverTab);
@@ -672,6 +695,8 @@ namespace Talos.Forms
             this.mainCoverTab.Controls.Add(this.addEnemyGroup);
             this.mainCoverTab.Controls.Add(this.coverEXPGrp);
             this.mainCoverTab.Controls.Add(this.chatPanel);
+            this.mainCoverTab.Controls.Add(this.healthBar);
+            this.mainCoverTab.Controls.Add(this.manaBar);
             this.mainCoverTab.ForeColor = System.Drawing.Color.Black;
             this.mainCoverTab.Location = new System.Drawing.Point(4, 24);
             this.mainCoverTab.Name = "mainCoverTab";
