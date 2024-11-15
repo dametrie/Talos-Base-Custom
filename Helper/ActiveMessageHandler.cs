@@ -191,7 +191,7 @@ namespace Talos.Helper
                                 { CreatureState.AiteDuration, Spell.GetSpellDuration(spellName) },
                                 { CreatureState.LastAited, DateTime.UtcNow }
                             };
-                            
+
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, stateUpdates);
                         }
                         break;
@@ -263,10 +263,11 @@ namespace Talos.Helper
                     case "Iron Skin":
                     case "Wings of Protection":
                     case "dionLR":
+                        if (creature != null)
+                        {
+                            double dionDuration = Spell.GetSpellDuration(spellName);
 
-                        double dionDuration = Spell.GetSpellDuration(spellName);
-
-                        var dionStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                            var dionStateUpdates = new Dictionary<CreatureState, object> //Adam new
                             {
                                 { CreatureState.IsDioned, true },
                                 { CreatureState.LastDioned, DateTime.UtcNow },
@@ -274,8 +275,8 @@ namespace Talos.Helper
                                 { CreatureState.DionDuration, dionDuration } // Duration in seconds
                             };
 
-                        CreatureStateHelper.UpdateCreatureStates(client, creature.ID, dionStateUpdates);
-
+                            CreatureStateHelper.UpdateCreatureStates(client, creature.ID, dionStateUpdates);
+                        }
                         break;
 
                     case "fas spiorad":
@@ -371,7 +372,7 @@ namespace Talos.Helper
                                 { CreatureState.LastPramhed, DateTime.UtcNow },
                                 { CreatureState.PramhDuration, Spell.GetSpellDuration(spellName) }
                             };
-                            
+
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, pramhStateUpdates);
 
                             Console.WriteLine($"[UpdateSpellAnimationHistory] 'Sleep' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Sleep Duration: {creature.GetState<double>(CreatureState.PramhDuration)}");
@@ -487,7 +488,7 @@ namespace Talos.Helper
                         break;
                 }
             }
-           
+
         }
 
         private void HandleBowMessage(Client client, Match match)
@@ -836,7 +837,7 @@ namespace Talos.Helper
 
                 CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, aiteStateUpdates);
             }
-               
+
             else
             {
                 client.EffectsBarHashSet.Add((ushort)EffectsBar.NaomhAite);
@@ -848,7 +849,7 @@ namespace Talos.Helper
                     { CreatureState.AiteName, "ard naomh aite" },// if we login and have aite there is no way to know the duration so we assume it is max
                     { CreatureState.AiteDuration, Spell.GetSpellDuration("ard naomh aite") } // Duration in seconds
                 };
-            }    
+            }
         }
 
         private void HandleBeagSuainMessage(Client client, string message)
@@ -874,7 +875,7 @@ namespace Talos.Helper
                 };
 
                 CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, fasStateUpdates);
-            }               
+            }
             else
             {
                 client.EffectsBarHashSet.Add((ushort)EffectsBar.FasNadur);
@@ -891,7 +892,7 @@ namespace Talos.Helper
 
                 CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, fasStateUpdates);
 
-            }             
+            }
         }
 
         private void HandleCurseBeginMessage(Client client, string message)
@@ -1032,7 +1033,7 @@ namespace Talos.Helper
             client._server.RemoveFirstCreatureToSpell(client);
             client.Bot._needFasSpiorad = true;
         }
-        
+
         private void HandleCantCastMessage(Client client, string message)
         {
             if (message == "You can't cast a spell.")

@@ -1530,7 +1530,13 @@ namespace Talos.Forms
 
         private void groupAltsBtn_Click(object sender, EventArgs e)
         {
-            foreach (Client client in _client._server._clientList)
+            List<Client> clientListCopy;
+            lock (_client._server._clientListLock)
+            {
+                clientListCopy = _client._server._clientList.ToList(); // Create a copy to iterate over
+            }
+
+            foreach (Client client in clientListCopy)
             {
                 if (!_client.GroupedPlayers.Contains(client.Name) && _client != client)
                 {
@@ -1562,7 +1568,15 @@ namespace Talos.Forms
         private void friendAltsBtn_Click(object sender, EventArgs e)
         {
             BindingList<string> friends = _client._friendBindingList;
-            foreach (Client client in _client._server._clientList)
+
+
+            List<Client> clientListCopy;
+            lock (_client._server._clientListLock)
+            {
+                clientListCopy = _client._server._clientList.ToList(); // Create a copy to iterate over
+            }
+
+            foreach (Client client in clientListCopy)
             {
                 if (!friends.Contains(client.Name) && _client != client)
                 {
@@ -1648,7 +1662,13 @@ namespace Talos.Forms
             TabPage tabPage = new TabPage("alts");
             tabPage.Controls.Add(_client.Bot.AllyPage);
             aislingTabControl.TabPages.Add(tabPage);
-            foreach (Client client in _client._server._clientList.Where((Client c) => c._identifier != _client._identifier))
+
+            List<Client> clientListCopy;
+            lock (_client._server._clientListLock)
+            {
+                clientListCopy = _client._server._clientList.ToList(); // Create a copy to iterate over
+            }
+            foreach (Client client in clientListCopy.Where((Client c) => c._identifier != _client._identifier))
             {
                 if (_client.Bot.IsAllyAlreadyListed(client.Name))
                 {
@@ -1791,6 +1811,7 @@ namespace Talos.Forms
                 // Aisling page
                 AislingPage = new AislingPageState
                 {
+                    FollowText = followText.Text,
                     DoublesComboxText = doublesCombox.Text,
                     AutoDoubleCboxChecked = autoDoubleCbox.Checked,
                     ExpGemsComboxText = expGemsCombox.Text,
@@ -2197,6 +2218,7 @@ namespace Talos.Forms
                             dontCBox4.Checked = formState.ComboBoxPage.DontCBox4Checked;
 
                             // AislingPage controls
+                            followText.Text = formState.AislingPage.FollowText;
                             doublesCombox.Text = formState.AislingPage.DoublesComboxText;
                             autoDoubleCbox.Checked = formState.AislingPage.AutoDoubleCboxChecked;
                             expGemsCombox.Text = formState.AislingPage.ExpGemsComboxText;
@@ -3254,7 +3276,13 @@ namespace Talos.Forms
 
         private void walkAllClientsBtn_Click(object sender, EventArgs e)
         {
-            foreach (Client client in _client._server._clientList)
+            List<Client> clientListCopy;
+            lock (_client._server._clientListLock)
+            {
+                clientListCopy = _client._server._clientList.ToList(); // Create a copy to iterate over
+            }
+
+            foreach (Client client in clientListCopy)
             {
                 if (client != _client)
                 {

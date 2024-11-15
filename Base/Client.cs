@@ -3151,7 +3151,7 @@ namespace Talos.Base
 
 
 
-        internal List<Creature> GetCreaturesInRange(int distance = 12, params ushort[] creatureArray)
+        internal List<Creature> GetAllNearbyMonsters(int distance = 12, params ushort[] creatureArray)
         {
             var creatureList = new List<Creature>();
             var hashSet = new HashSet<ushort>(creatureArray);
@@ -3599,7 +3599,10 @@ namespace Talos.Base
         private void CleanupClient()
         {
             Thread.Sleep(500);
-            _server._clientList.Remove(this);
+            lock (_server._clientListLock)
+            {
+                _server._clientList.Remove(this);
+            }
             Thread.Sleep(100);
             _server._mainForm.RemoveClient(this);
         }

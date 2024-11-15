@@ -57,7 +57,12 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.Dion:
-                    if (_targetID == _sourceID && _targetID != _client.PlayerID && !_server._clientList.Any(c => c.PlayerID == _targetID))
+                    List<Client> clientListCopy;
+                    lock (_server._clientListLock)
+                    {
+                        clientListCopy = _server._clientList.ToList(); // Create a copy to iterate over
+                    }
+                    if (_targetID == _sourceID && _targetID != _client.PlayerID && !clientListCopy.Any(c => c.PlayerID == _targetID))
                     {
                         var dionStateUpdates = new Dictionary<CreatureState, object>
                         {

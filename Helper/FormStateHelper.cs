@@ -25,6 +25,7 @@ namespace Talos.Helper
     public class AislingPageState
     {
         // ComboBox and CheckBox values
+        public string FollowText { get; set; }
         public string DoublesComboxText { get; set; }
         public bool AutoDoubleCboxChecked { get; set; }
         public string ExpGemsComboxText { get; set; }

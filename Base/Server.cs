@@ -59,6 +59,7 @@ namespace Talos
         private Thread _serverThread;
 
         internal List<Client> _clientList;
+        internal readonly object _clientListLock = new object();
 
         private bool _initialized;
         #endregion
@@ -159,7 +160,10 @@ namespace Talos
                 client.Connect(_remoteEndPoint);
                 _remoteEndPoint = new IPEndPoint(IPAddress.Parse("52.88.55.94"), 2610);
                 _clientSocket.BeginAccept(new AsyncCallback(EndAccept), null);
-                _clientList.Add(client);
+                lock (_clientListLock)
+                {
+                    _clientList.Add(client);
+                }
             }
             catch (SocketException)
             {
@@ -1236,7 +1240,13 @@ namespace Talos
                         string messageToSend = match.Groups[2].Value;
                         string formattedMessage = $"<!{senderName}({client.GuildName})> ";
 
-                        foreach (Client recipient in _clientList)
+                        List<Client> clientListCopy;
+                        lock (_clientListLock)
+                        {
+                            clientListCopy = _clientList.ToList(); // Create a copy to iterate over
+                        }
+
+                        foreach (Client recipient in clientListCopy)
                         {
                             if (recipient.UnifiedGuildChat && recipient.GuildName != client.GuildName)
                             {
@@ -2659,7 +2669,14 @@ namespace Talos
                     string[] textArray1 = new string[] { "Logged at ", DateTime.UtcNow.ToLocalTime().ToString(), " due to ", name, " appearing on WorldList." };
                     File.WriteAllText(path, string.Concat(textArray1));
                     Process.Start(path);
-                    foreach (Client c in _clientList)
+
+                    List<Client> clientListCopy;
+                    lock (_clientListLock)
+                    {
+                        clientListCopy = _clientList.ToList(); // Create a copy to iterate over
+                    }
+
+                    foreach (Client c in clientListCopy)
                     {
                         ClientTab tab = c.ClientTab;
                         if (tab == null)
@@ -2829,14 +2846,14 @@ namespace Talos
             {
                 if (!client.EffectsBarHashSet.Contains(effect))
                 {
-                    Console.WriteLine("Adding effect: " + effect);
+                    //Console.WriteLine("Adding effect: " + effect);
                     client.EffectsBarHashSet.Add(effect);
-                    Console.WriteLine("total items in hashset: " + client.EffectsBarHashSet.Count);
+                    //Console.WriteLine("total items in hashset: " + client.EffectsBarHashSet.Count);
                 }
             }
             else if (client.EffectsBarHashSet.Contains(effect))
             {
-                Console.WriteLine("Removing effect: " + effect);
+                //Console.WriteLine("Removing effect: " + effect);
                 client.EffectsBarHashSet.Remove(effect);
                 if ((effect == 19) && !client.InArena)//bday or incapacitate //ADAM check this
                 {
@@ -3442,7 +3459,14 @@ namespace Talos
                 Thread.Sleep(3000);
             }
 
-            foreach (Client currentClient in _clientList)
+            List<Client> clientListCopy;
+            lock (_clientListLock)
+            {
+                clientListCopy = _clientList.ToList(); // Create a copy to iterate over
+            }
+
+
+            foreach (Client currentClient in clientListCopy)
             {
                 WorldObject worldObject;
                 if (!currentClient.WorldObjects.TryGetValue(creatureId, out worldObject))
@@ -3490,7 +3514,13 @@ namespace Talos
         {
             while (_initialized)
             {
-                foreach (Client client in _clientList)
+                List<Client> clientListCopy;
+                lock (_clientListLock)
+                {
+                    clientListCopy = _clientList.ToList(); // Create a copy to iterate over
+                }
+
+                foreach (Client client in clientListCopy)
                 {
                     try
                     {

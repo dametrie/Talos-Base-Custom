@@ -125,7 +125,7 @@ namespace Talos.Base
             while (!_shouldThreadStop)
             {
                 //Console.WriteLine("[MiscLoop] Pulse");
-                TavalyWallHacks();
+                //TavalyWallHacks(); //Adam Fix
                 MonsterForm();
 
                 Thread.Sleep(500); // Add a small sleep to avoid flooding the CPU default: 100
@@ -135,6 +135,7 @@ namespace Talos.Base
 
         private void TavalyWallHacks()
         {
+            //Adam Fix
             if (Client.ClientTab.chkTavWallStranger.Checked && IsStrangerNearby() && Client.ClientTab.chkTavWallHacks.Checked && !Client._map.IsWall(Client._serverLocation))
             {
                 Client.ClientTab.chkTavWallHacks.Checked = false;
@@ -1388,7 +1389,7 @@ namespace Talos.Base
 
                         if (Client.CurrentHP <= 1U && Client.IsSkulled)
                         {
-                            Console.WriteLine("[BotLoop] Client HP <= 1 and is skulled, handling skull status");
+                            //Console.WriteLine("[BotLoop] Client HP <= 1 and is skulled, handling skull status");
                             HandleSkullStatus();
                             continue;
                         }
@@ -1402,10 +1403,10 @@ namespace Talos.Base
 
                         if (AutoRedConditionsMet())
                         {
-                            Console.WriteLine("[BotLoop] AutoRed conditions met");
+                            //Console.WriteLine("[BotLoop] AutoRed conditions met");
                             if (GetSkulledPlayers().Count > 0)
                             {
-                                Console.WriteLine("[BotLoop] RedSkulledPlayers called");
+                                Console.WriteLine("[BotLoop] Skulledplayers > 0, calling RedSkulledPlayers");
                                 RedSkulledPlayers();
                             }
                         }
@@ -1415,12 +1416,12 @@ namespace Talos.Base
                             FilterStrangerPlayers();
                         }
 
-                        double botCheckSeconds = DateTime.UtcNow.Subtract(_botChecks).TotalSeconds;
+/*                        double botCheckSeconds = DateTime.UtcNow.Subtract(_botChecks).TotalSeconds;
 
                         if (botCheckSeconds < 2.5)
                         {
                             continue;
-                        }
+                        }*/
 
                         PerformActions();
                     }
@@ -1430,7 +1431,7 @@ namespace Talos.Base
                     }
                 }
 
-                Console.WriteLine("Exiting BotLoop, _shouldThreadStop: " + _shouldThreadStop);
+                //Console.WriteLine("Exiting BotLoop, _shouldThreadStop: " + _shouldThreadStop);
             }
             catch (Exception ex)
             {
@@ -1549,30 +1550,44 @@ namespace Talos.Base
 
         private bool RedSkulledPlayers()
         {
+            Console.WriteLine("[BotLoop] RedSkulledPlayers called");
+
             if (_playersNeedingRed.Count > 0 && Client.ClientTab.autoRedCbox.Checked)
             {
+                Console.WriteLine("[BotLoop] Players needing red > 0 and autoRed checked");
+
                 Player player = _playersNeedingRed[0];
+                Console.WriteLine($"[BotLoop] Target player: {player?.Name}, HealthPercent: {player?.HealthPercent}");
 
                 var inventory = Client.Inventory;
                 bool canUseBeetleAid = inventory.HasItem("Beetle Aid") && Client._isRegistered &&
                                        DateTime.UtcNow.Subtract(_lastUsedBeetleAid).TotalMinutes > 2.0;
                 bool canUseOtherItems = inventory.HasItem("Komadium") || inventory.HasItem("beothaich deum");
 
+                Console.WriteLine($"[BotLoop] Can use Beetle Aid: {canUseBeetleAid}, Can use other items: {canUseOtherItems}");
+
                 if (canUseBeetleAid || canUseOtherItems)
                 {
                     _dontWalk = true;
                     Direction direction = player.Location.Point.Relation(Client._serverLocation.Point);
+                    Console.WriteLine($"[BotLoop] Calculated direction to player: {direction}");
 
                     if (Client._serverLocation.DistanceFrom(player.Location) > 1)
                     {
+                        Console.WriteLine("[BotLoop] Server distance from player > 1");
+
                         if (Client._clientLocation.DistanceFrom(player.Location) == 1)
                         {
+                            Console.WriteLine("[BotLoop] Client distance from player = 1, requesting refresh");
                             Client.RequestRefresh(true);
                         }
+
+                        Console.WriteLine("[BotLoop] Pathfinding to player location");
                         Client.Pathfind(player.Location, 1, true, true);
                     }
-                    else if (direction != Client._clientDirection)
+                    else if (direction != Client._serverDirection)
                     {
+                        Console.WriteLine("[BotLoop] Turning to face player");
                         Client.Turn(direction);
                     }
                     else
@@ -1580,14 +1595,17 @@ namespace Talos.Base
                         if (canUseBeetleAid && Client.UseItem("Beetle Aid"))
                         {
                             _lastUsedBeetleAid = DateTime.UtcNow;
+                            Console.WriteLine("[BotLoop] Used Beetle Aid, updated lastUsedBeetleAid");
                             player.SpellAnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
                         }
                         else if (canUseOtherItems && (Client.UseItem("Komadium") || Client.UseItem("beothaich deum")))
                         {
+                            Console.WriteLine("[BotLoop] Used other item (Komadium or beothaich deum)");
                             player.SpellAnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
                             Thread.Sleep(1000); // Consider async/await pattern if possible
                         }
 
+                        Console.WriteLine("[BotLoop] Using Transferblood skill");
                         Client.UseSkill("Transferblood");
 
                         return false;
@@ -1595,6 +1613,7 @@ namespace Talos.Base
                 }
                 else if (player == null || !Client.GetNearbyPlayers().Contains(player) || player.HealthPercent > 30 || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds > 5.0)
                 {
+                    Console.WriteLine("[BotLoop] Conditions for ending red-skull action met, resetting player and dontWalk flag");
                     player = null;
                     _dontWalk = false;
 
@@ -1602,8 +1621,10 @@ namespace Talos.Base
                 }
             }
 
+            Console.WriteLine("[BotLoop] RedSkulledPlayers method returning true");
             return true;
         }
+
 
         private bool IsSkulledFriendOrGroupMember(Player player)
         {
@@ -1640,13 +1661,12 @@ namespace Talos.Base
 
         private void PerformActions()
         {
-            Loot();
-            //ManageSpellCasting(); //Adam rework this, it breaks casting
 
             _autoStaffSwitch = Client.ClientTab.autoStaffCbox.Checked;
             _fasSpiorad = Client.HasEffect(EffectsBar.FasSpiorad) || (Client.HasSpell("fas spiorad") && DateTime.UtcNow.Subtract(Client.Spellbook["fas spiorad"].LastUsed).TotalSeconds < 1.5);
             _isSilenced = Client.HasEffect(EffectsBar.Silenced);
 
+            Loot();
             AoSuain();
             WakeScroll();
             AutoGem();
@@ -1972,7 +1992,8 @@ namespace Talos.Base
                 Client.UseHammer();
             }
 
-            Timer dialogWaitTime = Timer.FromSeconds(5);
+            //Adam this shit breaks casting
+/*            Timer dialogWaitTime = Timer.FromSeconds(5);
             while (Client.Dialog == null)
             {
                 if (dialogWaitTime.IsTimeExpired)
@@ -1980,8 +2001,8 @@ namespace Talos.Base
                 Thread.Sleep(10);
             }
 
-            Client.Dialog.DialogNext();
-            Thread.Sleep(500);
+            Client.Dialog.DialogNext();*/
+
             return false;
         }
 
@@ -2830,7 +2851,7 @@ namespace Talos.Base
         {
             foreach (Enemy enemy in ReturnEnemyList())
             {
-                var creatureList = Client.GetCreaturesInRange(11, new ushort[] { enemy.SpriteID })
+                var creatureList = Client.GetAllNearbyMonsters(11, new ushort[] { enemy.SpriteID })
                     .Where(c => c.SpriteID.ToString() == enemy.SpriteID.ToString())
                     .ToList();
 
@@ -2922,7 +2943,7 @@ namespace Talos.Base
         {
             foreach (Enemy enemy in ReturnEnemyList())
             {
-                var creaturesToAttack = Client.GetCreaturesInRange(11, new ushort[] { enemy.SpriteID })
+                var creaturesToAttack = Client.GetAllNearbyMonsters(11, new ushort[] { enemy.SpriteID })
                     .Where(c => c.SpriteID.ToString() == enemy.SpriteID.ToString())
                     .ToList();
 
@@ -3600,7 +3621,7 @@ namespace Talos.Base
             List<Creature> creatureList = FilterCreaturesByControlStatus(enemyPage, creatures);
             if (CONSTANTS.GREEN_BOROS.Contains(enemyPage.Enemy.SpriteID))
             {
-                List<Creature> greenBorosInRange = Client.GetCreaturesInRange(8, CONSTANTS.GREEN_BOROS.ToArray());
+                List<Creature> greenBorosInRange = Client.GetAllNearbyMonsters(8, CONSTANTS.GREEN_BOROS.ToArray());
                 foreach (Creature creature in greenBorosInRange.ToList<Creature>())
                 {
                     foreach (Location location in Client.GetWarpPoints(new Location(Client._map.MapID, 0, 0)))
@@ -3629,7 +3650,7 @@ namespace Talos.Base
 
             if (CONSTANTS.GREEN_BOROS.Contains(enemyPage.Enemy.SpriteID))
             {
-                var additionalCreatures = Client.GetCreaturesInRange(8, CONSTANTS.GREEN_BOROS.ToArray())
+                var additionalCreatures = Client.GetAllNearbyMonsters(8, CONSTANTS.GREEN_BOROS.ToArray())
                     .Where(creature => !Client.GetWarpPoints(new Location(Client._map.MapID, 0, 0))
                     .Any(location => creature.Location.DistanceFrom(location) <= 3))
                     .ToList();

@@ -100,7 +100,11 @@ namespace Talos
             tabPage.Controls.Add(clientTab);
             clientTabControl.TabPages.Add(tabPage);
             _clients.Add(client, tabPage);
-            Server._clientList.Add(client);
+            lock (Server._clientListLock)
+            {
+                Server._clientList.Add(client);
+            }
+
         }
 
 
