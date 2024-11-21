@@ -268,7 +268,7 @@ namespace Talos.Base
 
         internal Dictionary<string, byte> AvailableSpellsAndCastLines { get; set; } = new Dictionary<string, byte>();
         internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
-        internal Dictionary<int, Location> LastSeenLocations { get; set; } = new Dictionary<int, Location>();
+        internal ConcurrentDictionary<int, Location> LastSeenLocations { get; set; } = new ConcurrentDictionary<int, Location>();
 
         internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
         internal ConcurrentDictionary<int, Player> NearbyHiddenPlayers { get; private set; } = new ConcurrentDictionary<int, Player>();
@@ -291,7 +291,7 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
-        internal bool _stopped;
+        internal bool _stopped = false;
         internal short _previousMapID;
         internal uint _exchangeID;
         internal bool needsToRepairHammer = false;

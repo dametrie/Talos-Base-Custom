@@ -1268,8 +1268,8 @@ namespace Talos
             Direction direction = (Direction)serverPacket.ReadByte();
             try { location = serverPacket.ReadStruct().TranslatePointByDirection(direction); } catch { return false; }
 
-            //client._clientLocation.X = location.X;
-            //client._clientLocation.Y = location.Y;
+            client._clientLocation.X = location.X;
+            client._clientLocation.Y = location.Y;
             client._serverLocation.X = location.X;
             client._serverLocation.Y = location.Y;
             client._clientDirection = direction;

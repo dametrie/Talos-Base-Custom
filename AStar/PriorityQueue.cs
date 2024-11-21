@@ -1,97 +1,95 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Talos.AStar
 {
-
-    enum QueuePriorityEnum
+    class PriorityQueue<T> where T : IComparable<T>
     {
-        Low = 0,
-        High = 1
-    }
+        private List<T> _heap;
 
-    class PriorityQueue<T>
-    {
-        private Queue<T>[] _queues;
-
-        // Constructor that allows specifying the number of priority levels dynamically
-        public PriorityQueue(int levels = -1)
+        public PriorityQueue()
         {
-            if (levels == -1)
-            {
-                levels = Enum.GetValues(typeof(QueuePriorityEnum)).Length;
-            }
-            _queues = new Queue<T>[levels];
-            for (int i = 0; i < levels; i++)
-            {
-                _queues[i] = new Queue<T>();
-            }
+            _heap = new List<T>();
         }
 
-        public void Enqueue(QueuePriorityEnum priority, T item)
+        public void Enqueue(T item)
         {
-            _queues[(int)priority].Enqueue(item);
+            _heap.Add(item);
+            HeapifyUp(_heap.Count - 1);
         }
 
-        // A method to dequeue with a fail-safe mechanism
-        public bool TryDequeue(out T item)
-        {
-            int levels = _queues.Length;
-            for (int i = levels - 1; i >= 0; i--)
-            {
-                if (_queues[i].Count > 0)
-                {
-                    item = _queues[i].Dequeue();
-                    return true;
-                }
-            }
-            item = default;
-            return false;
-        }
-
-        // Method to safely peek at the next item
-        public T Peek()
-        {
-            int levels = _queues.Length;
-            for (int i = levels - 1; i >= 0; i--)
-            {
-                if (_queues[i].Count > 0)
-                {
-                    return _queues[i].Peek();
-                }
-            }
-            throw new InvalidOperationException("The Queue is empty.");
-        }
-
-        // A property to get the total count of items in the queue
-        public int Count
-        {
-            get
-            {
-                return _queues.Sum(q => q.Count);
-            }
-        }
-
-        // Standard Dequeue method, using TryDequeue to handle empty queues
         public T Dequeue()
         {
-            if (TryDequeue(out T item))
-            {
-                return item;
-            }
-            throw new InvalidOperationException("The Queue is empty.");
+            if (_heap.Count == 0)
+                throw new InvalidOperationException("The queue is empty.");
+
+            T root = _heap[0];
+            T lastItem = _heap[_heap.Count - 1];
+            _heap[0] = lastItem;
+            _heap.RemoveAt(_heap.Count - 1);
+            HeapifyDown(0);
+            return root;
         }
 
-        public bool TryRemove(QueuePriorityEnum priority, T item)
+        public int Count => _heap.Count;
+
+        private void HeapifyUp(int index)
         {
-            Queue<T> queue = _queues[(int)priority];
-            if (queue.Contains(item))
+            while (index > 0)
             {
-                queue = new Queue<T>(queue.Where(x => !EqualityComparer<T>.Default.Equals(x, item)));
-                return true;
+                int parentIndex = (index - 1) / 2;
+                if (_heap[index].CompareTo(_heap[parentIndex]) >= 0)
+                    break;
+
+                Swap(index, parentIndex);
+                index = parentIndex;
             }
-            return false;
+        }
+
+        private void HeapifyDown(int index)
+        {
+            int lastIndex = _heap.Count - 1;
+            while (true)
+            {
+                int leftChild = index * 2 + 1;
+                int rightChild = index * 2 + 2;
+                int smallest = index;
+
+                if (leftChild <= lastIndex && _heap[leftChild].CompareTo(_heap[smallest]) < 0)
+                    smallest = leftChild;
+
+                if (rightChild <= lastIndex && _heap[rightChild].CompareTo(_heap[smallest]) < 0)
+                    smallest = rightChild;
+
+                if (smallest == index)
+                    break;
+
+                Swap(index, smallest);
+                index = smallest;
+            }
+        }
+
+        private void Swap(int i, int j)
+        {
+            T temp = _heap[i];
+            _heap[i] = _heap[j];
+            _heap[j] = temp;
+        }
+
+        public bool Contains(T item)
+        {
+            return _heap.Contains(item);
+        }
+
+        // Optional: Implement a method to update an item's priority
+        public void UpdatePriority(T item)
+        {
+            int index = _heap.IndexOf(item);
+            if (index == -1)
+                return;
+
+            HeapifyUp(index);
+            HeapifyDown(index);
         }
     }
 }

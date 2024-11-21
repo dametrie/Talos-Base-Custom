@@ -313,7 +313,7 @@ namespace Talos.Base
                     {
                         // If we have the last seen location, use it
                         Console.WriteLine($"Using last seen location for player {playerName}: {lastSeenLocation}");
-                        Client._isWalking = Client.RouteFind(lastSeenLocation, 0, true, true)
+                        Client._isWalking = Client.RouteFind(lastSeenLocation)
                                             && !Client.ClientTab.oneLineWalkCbox.Checked
                                             && !Server._toggleWalk;
                     }

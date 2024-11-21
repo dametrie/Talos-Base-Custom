@@ -38,7 +38,7 @@ namespace Talos.AStar
                 RouteNodes.Add(end, endNode);
                 startNode.IsOpen = true;
                 startNode.AccumulatedCost = 0f;
-                OpenNodes.Enqueue(QueuePriorityEnum.High, startNode);
+                OpenNodes.Enqueue(startNode);
                 RouteNode currentNode;
                 while (true)
                 {
@@ -77,7 +77,6 @@ namespace Talos.AStar
                     {
                         ProcessAdjacentExits(end, currentNode, exit);
                     }
-                    OpenNodes.TryRemove(QueuePriorityEnum.High, currentNode);
                     currentNode.IsOpen = false;
                     currentNode.IsClosed = true;
                 }
@@ -113,6 +112,7 @@ namespace Talos.AStar
             Location newLocation = worldMapNode.TargetLocation;
             Warp warp = new Warp((byte)worldMapEntry.Key.X, (byte)worldMapEntry.Key.Y, (byte)newLocation.X, (byte)newLocation.Y, currentMap.MapID, newLocation.MapID);
             RouteNode adjacentNode;
+
             if (RouteNodes.ContainsKey(newLocation))
             {
                 adjacentNode = RouteNodes[newLocation];
@@ -134,6 +134,7 @@ namespace Talos.AStar
                     {
                         adjacentNode.AccumulatedCost = newDistance;
                         adjacentNode.Parent = currentNode;
+                        OpenNodes.UpdatePriority(adjacentNode);
                     }
                 }
                 else
@@ -141,7 +142,7 @@ namespace Talos.AStar
                     adjacentNode.AccumulatedCost = newDistance;
                     adjacentNode.Parent = currentNode;
                     adjacentNode.IsOpen = true;
-                    OpenNodes.Enqueue(QueuePriorityEnum.High, adjacentNode);
+                    OpenNodes.Enqueue(adjacentNode);
                 }
             }
 
@@ -152,6 +153,7 @@ namespace Talos.AStar
         {
             Location newLocation = exit.TargetLocation;
             RouteNode adjacentNode;
+
             if (RouteNodes.ContainsKey(newLocation) && Location.NotEquals(newLocation, end))
             {
                 adjacentNode = RouteNodes[newLocation];
@@ -178,6 +180,7 @@ namespace Talos.AStar
                     {
                         adjacentNode.AccumulatedCost = newDistance;
                         adjacentNode.Parent = currentNode;
+                        OpenNodes.UpdatePriority(adjacentNode);
                     }
                 }
                 else
@@ -185,12 +188,12 @@ namespace Talos.AStar
                     adjacentNode.AccumulatedCost = newDistance;
                     adjacentNode.Parent = currentNode;
                     adjacentNode.IsOpen = true;
-                    OpenNodes.Enqueue(QueuePriorityEnum.High, adjacentNode);
+                    OpenNodes.Enqueue(adjacentNode);
                 }
             }
         }
 
-        internal sealed class RouteNode
+        internal sealed class RouteNode : IComparable<RouteNode>
         {
             internal Warp Warp { get; set; }
             internal Location Location { get; }
@@ -205,6 +208,13 @@ namespace Talos.AStar
             {
                 Location = location;
                 AccumulatedCost = float.MaxValue;
+            }
+
+            public int CompareTo(RouteNode other)
+            {
+                if (other == null)
+                    return -1;
+                return AccumulatedCost.CompareTo(other.AccumulatedCost);
             }
 
         }

@@ -8,12 +8,14 @@ using System.Linq;
 using Talos.Enumerations;
 using Talos.Objects;
 using Talos.Definitions;
+using System.Threading;
 
 internal class Pathfinder
 {
     private PathNode[,] _pathNodes;
     private readonly byte _mapWidth;
     private readonly byte _mapHeight;
+    private readonly object Sync = new object();
     private PriorityQueue<PathNode> _openNodes;
     private Map _map;
     private Client _client;
@@ -36,7 +38,6 @@ internal class Pathfinder
         _map = client._map;
         _mapWidth = _map.Width;
         _mapHeight = _map.Height;
-        _openNodes = new PriorityQueue<PathNode>((int)QueuePriorityEnum.High + 1);
         InitializePathNodes(true);
     }
 
@@ -222,81 +223,84 @@ internal class Pathfinder
 
     internal Stack<Location> FindPath(Location start, Location end, bool avoidWarps = true, short distance = 1)
     {
-        InitializePathNodes(false, end, avoidWarps);
-        Console.WriteLine($"Starting pathfinding from {start} to {end}.");
-
-        if (!_pathNodes[start.X, start.Y].Walkable)
+        if (Monitor.TryEnter(Sync, 150))
         {
-            Console.WriteLine("Start location is blocked.");
-            return new Stack<Location>();
-        }
-
-        if (end.X < 0 || end.X >= _mapWidth || end.Y < 0 || end.Y >= _mapHeight)
-        {
-            Console.WriteLine("End location is outside map boundaries.");
-            return new Stack<Location>();
-        }
-
-        PathNode startNode = _pathNodes[start.X, start.Y];
-        PathNode endNode = _pathNodes[end.X, end.Y];
-        startNode.GCost = 0;
-        startNode.FCost = CalculateHeuristic(startNode.Location, endNode.Location);
-        _openNodes.Enqueue(QueuePriorityEnum.High, startNode);
-        startNode.IsOpen = true;
-
-        while (_openNodes.Count > 0)
-        {
-            PathNode currentNode = _openNodes.Dequeue();
-            //Console.WriteLine($"Processing node at {currentNode.Location}, FCost: {currentNode.FCost}");
-
-            if (currentNode.Location.DistanceFrom(end) <= distance)
+            try
             {
-                Console.WriteLine("Reached destination proximity, constructing path.");
-                return ConstructPath(currentNode);
-            }
+                InitializePathNodes(false, end, avoidWarps);
+                Console.WriteLine($"Starting pathfinding from {start} to {end}.");
 
-            //Console.WriteLine($"Processing node at {currentNode.Location}, Neighbors: {currentNode.Neighbors.Length}");
-            foreach (var neighbor in currentNode.Neighbors)
-            {
-                if (neighbor == null)
+                if (!_pathNodes[start.X, start.Y].Walkable)
                 {
-                    //Console.WriteLine($"Skipped neighbor at {neighbor?.Location} - null.");
-                    continue;
+                    Console.WriteLine("Start location is blocked.");
+                    return new Stack<Location>();
                 }
 
-                if (!neighbor.Walkable && neighbor != endNode)
+                if (end.X < 0 || end.X >= _mapWidth || end.Y < 0 || end.Y >= _mapHeight)
                 {
-                    //Console.WriteLine($"Skipped neighbor at {neighbor?.Location} - not walkable.");
-                    continue;
+                    Console.WriteLine("End location is outside map boundaries.");
+                    return new Stack<Location>();
                 }
 
+                PathNode startNode = _pathNodes[start.X, start.Y];
+                PathNode endNode = _pathNodes[end.X, end.Y];
+                startNode.GCost = 0;
+                startNode.FCost = CalculateHeuristic(startNode.Location, endNode.Location);
+                _openNodes = new PriorityQueue<PathNode>();
+                _openNodes.Enqueue(startNode);
+                startNode.IsOpen = true;
 
-                if (neighbor.IsClosed)
+                while (_openNodes.Count > 0)
                 {
-                    //Console.WriteLine($"Skipped neighbor at {neighbor.Location} - Already visited.");
-                    continue;
-                }
+                    PathNode currentNode = _openNodes.Dequeue();
+                    //Console.WriteLine($"Processing node at {currentNode.Location}, FCost: {currentNode.FCost}");
 
-                //Console.WriteLine($"Neighbor at {neighbor.Location} is walkable and will be evaluated.");
-
-                float tentativeGCost = currentNode.GCost + 1;
-                if (!neighbor.IsOpen || tentativeGCost < neighbor.GCost)
-                {
-                    neighbor.ParentNode = currentNode;
-                    neighbor.GCost = tentativeGCost;
-                    neighbor.FCost = tentativeGCost + CalculateHeuristic(neighbor.Location, end);
-
-                    if (!neighbor.IsOpen)
+                    if (currentNode == endNode)
                     {
-                        _openNodes.Enqueue(QueuePriorityEnum.High, neighbor);
-                        neighbor.IsOpen = true;
-                        //Console.WriteLine($"Enqueued neighbor at {neighbor.Location} with GCost: {tentativeGCost}, FCost: {neighbor.FCost}");
+                        Console.WriteLine("Constructing path.");
+                        return ConstructPath(currentNode);
+                    }
+
+                    currentNode.IsClosed = true;
+
+                    //Console.WriteLine($"Processing node at {currentNode.Location}, Neighbors: {currentNode.Neighbors.Length}");
+                    foreach (var neighbor in currentNode.Neighbors)
+                    {
+                        if (neighbor == null || neighbor.IsClosed)
+                            continue;
+
+                        if (!neighbor.Walkable && neighbor != endNode)
+                            continue;
+
+                        //Console.WriteLine($"Neighbor at {neighbor.Location} is walkable and will be evaluated.");
+
+                        float tentativeGCost = currentNode.GCost + 1;
+
+                        if (!neighbor.IsOpen || tentativeGCost < neighbor.GCost)
+                        {
+                            neighbor.ParentNode = currentNode;
+                            neighbor.GCost = tentativeGCost;
+                            neighbor.FCost = tentativeGCost + CalculateHeuristic(neighbor.Location, end);
+
+                            if (!neighbor.IsOpen)
+                            {
+                                _openNodes.Enqueue(neighbor);
+                                neighbor.IsOpen = true;
+                                //Console.WriteLine($"Enqueued neighbor at {neighbor.Location} with GCost: {tentativeGCost}, FCost: {neighbor.FCost}");
+                            }
+                            else
+                            {
+                                _openNodes.UpdatePriority(neighbor);
+                            }
+                        }
                     }
                 }
             }
-            currentNode.IsClosed = true;
+            finally
+            {
+                Monitor.Exit(Sync);
+            }       
         }
-
         Console.WriteLine("Failed to find a path.");
         return new Stack<Location>(); // No path found
     }
@@ -325,7 +329,7 @@ internal class Pathfinder
     }
 }
 
-internal sealed class PathNode
+internal sealed class PathNode : IComparable<PathNode>
 {
     public Location Location { get; }
     public bool Walkable { get; set; }
@@ -340,6 +344,19 @@ internal sealed class PathNode
     {
         Location = new Location(mapID, x, y);
         Neighbors = new PathNode[4];
+    }
+
+    public int CompareTo(PathNode other)
+    {
+        if (other == null)
+            return -1;
+        int compare = FCost.CompareTo(other.FCost);
+        if (compare == 0)
+        {
+            // Break ties using GCost
+            compare = GCost.CompareTo(other.GCost);
+        }
+        return compare;
     }
 }
 
