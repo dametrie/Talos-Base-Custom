@@ -789,25 +789,49 @@ namespace Talos.Base
 
                         if (distanceToTarget > waysForm.distanceUpDwn.Value)
                         {
+                            Console.WriteLine($"[WAYPOINTS] Distance to target ({distanceToTarget}) is greater than allowed value ({waysForm.distanceUpDwn.Value}). Initiating RouteFind.");
+
                             if (this.Client._map.MapID == targetWay.MapID)
                             {
-                                this.Client._isWalking = this.Client.RouteFind(targetWay, (short)waysForm.distanceUpDwn.Value) && !this.Client.ClientTab.oneLineWalkCbox.Checked && !this.Server._toggleWalk;
+                                Console.WriteLine($"[WAYPOINTS] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
+                                
+                                bool routeFindResult = this.Client.RouteFind(targetWay, (short)waysForm.distanceUpDwn.Value);
+                                Console.WriteLine($"[WAYPOINTS] RouteFind to {targetWay} returned: {routeFindResult}");
+
+                                bool canWalk = !this.Client.ClientTab.oneLineWalkCbox.Checked && !this.Server._toggleWalk;
+                                Console.WriteLine($"[WAYPOINTS] Can walk conditions - oneLineWalkCbox.Checked: {this.Client.ClientTab.oneLineWalkCbox.Checked}, _toggleWalk: {this.Server._toggleWalk}, Result: {canWalk}");
+
+                                this.Client._isWalking = routeFindResult && canWalk;
+                                Console.WriteLine($"[WAYPOINTS] Client._isWalking set to: {this.Client._isWalking}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[WAYPOINTS] Client MapID ({this.Client._map.MapID}) does not match Target MapID ({targetWay.MapID}). RouteFind not initiated.");
                             }
                         }
                         else
                         {
+                            Console.WriteLine($"[WAYPOINTS] Distance to target waypoint({distanceToTarget}) is within allowed value ({waysForm.distanceUpDwn.Value}). Stopping movement.");
+
                             this.Client._isWalking = false;
+                            Console.WriteLine($"[WAYPOINTS] Client._isWalking set to: {this.Client._isWalking}");
 
                             if (this.Client._clientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
                             {
+                                Console.WriteLine($"[WAYPOINTS] Client is within the allowed distance to the target.");
+
                                 if (this.Client._map.MapID == targetWay.MapID)
                                 {
+                                    Console.WriteLine($"[WAYPOINTS] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
+
                                     if (this.Client._serverLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
                                     {
+                                        Console.WriteLine($"[WAYPOINTS] Server's location is beyond the allowed distance. Requesting position refresh.");
                                         this.Client.RequestRefresh();
                                     }
                                     else
                                     {
+                                        Console.WriteLine($"[WAYPOINTS] Both client and server positions are within the allowed distance. Advancing to the next waypoint.");
                                         this.currentWay++;
                                     }
                                 }
@@ -2421,12 +2445,14 @@ namespace Talos.Base
         {
             Player player = Client.Player;
 
+            var isDispelCurseChecked = Client.ClientTab.aoCurseCbox.Checked;
+
             var cursesToDispel = new HashSet<string> { "cradh", "mor cradh", "ard cradh" };
 
             var curseName = player.GetState<string>(CreatureState.CurseName);
             var curseDuration = player.GetState<double>(CreatureState.CurseDuration);
 
-            if (cursesToDispel.Contains(curseName))
+            if (isDispelCurseChecked && cursesToDispel.Contains(curseName))
             {
                 Client.UseSpell("ao " + curseName, player, _autoStaffSwitch, true);
 

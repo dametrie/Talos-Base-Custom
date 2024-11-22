@@ -21,46 +21,9 @@ namespace Talos.Objects
         public DateTime LastSeen { get; set; } = DateTime.UtcNow;
         internal Direction Direction { get; set; }
 
-        //
-        //
-        //
-        // Adam work on removing these variables and changing their existing implementations to use CreatureState
-        //internal DateTime LastCursed { get; set; }
-        //internal DateTime LastFassed { get; set; } 
-        //internal DateTime LastAited { get; set; }
-        //internal DateTime LastStep { get; set; }
-
-        //internal DateTime LastDioned { get; set; }
-        //internal DateTime LastSuained { get; set; }
-        //internal DateTime LastArmachd { get; set; }
-        //internal DateTime LastPramhed { get; set; }
-        //internal DateTime LastFrostArrow { get; set; }
-        //internal DateTime LastCursedTune { get; set; }
-        //internal DateTime LastRegen { get; set; }
-        //internal DateTime LastIncreasedRegen { get; set; }
-
-
-        //internal double CurseDuration { get; set; }
-        //internal double FasDuration { get; set; }
-        //internal double AiteDuration { get; set; }
-        //internal double DionDuration { get; set; }
-        //internal double PramhDuration { get; set; } 
-        //internal double SuainDuration { get; set; }
-        //internal double FrostArrowDuration { get; set; }
-        //internal double CursedTuneDuration { get; set; }
-        //internal double RegenDuration { get; set; }
-        //internal double IncreasedRegenDuration { get; set; }
-        //internal double ArmachdDuration { get; set; }
-        //internal string CurseName { get; set; }
-        //
-        //
-        //
-        // 
-
         internal Dictionary<ushort, DateTime> SpellAnimationHistory { get; set; }
         internal Dictionary<ushort, DateTime> SourceAnimationHistory { get; set; }
         internal CreatureType Type { get; set; }
-
 
         internal bool CanPND
         {
@@ -351,10 +314,6 @@ namespace Talos.Objects
                 }
             }
         }
-
-
-
-
 
 
         internal Creature(int id, string name, ushort sprite, byte type, Location location, Direction direction)
