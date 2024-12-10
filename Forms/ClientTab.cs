@@ -72,7 +72,7 @@ namespace Talos.Forms
             "",
             ""
         };
-        internal List<string> _unmaxedBashingSkills = new List<string>();
+        internal List<string> _bashingSkillList = new List<string>();
         internal List<string> _unmaxedSkills = new List<string>();
         internal List<string> _unmaxedSpells = new List<string>();
 
@@ -114,7 +114,7 @@ namespace Talos.Forms
         internal DATArchive setoaArchive;
         internal EPFImage skillImageArchive;
         internal EPFImage spellImageArchive;
-        internal Palette256 palette256;
+        internal Palette256 iconPalette;
         internal bool _isBashing;
         internal bool _isLoading;
         private string waypointsPath;
@@ -141,7 +141,7 @@ namespace Talos.Forms
             setoaArchive = DATArchive.FromFile(Settings.Default.DarkAgesPath.Replace("Darkages.exe", "setoa.dat"));
             spellImageArchive = EPFImage.FromArchive("spell001.epf", setoaArchive);
             skillImageArchive = EPFImage.FromArchive("skill001.epf", setoaArchive);
-            palette256 = Palette256.FromArchive("gui06.pal", setoaArchive);
+            iconPalette = Palette256.FromArchive("gui06.pal", setoaArchive);
 
             OnlyDisplaySpellsWeHave();
             AddClientToFriends();
@@ -452,7 +452,7 @@ namespace Talos.Forms
             packetList.Items.Add(p);
         }
 
-        internal void RefreshUnmaxedSpells(object sender, EventArgs e)
+        internal void SpellToUse(object sender, EventArgs e)
         {
             Button button = sender as Button;
             string name = button.Name;
@@ -468,7 +468,7 @@ namespace Talos.Forms
             }
         }
 
-        internal void RefreshUnmaxedSkills(object sender, EventArgs e)
+        internal void SkillToUse(object sender, EventArgs e)
         {
             Button button = sender as Button;
             string name = button.Name;
@@ -483,24 +483,10 @@ namespace Talos.Forms
                 _unmaxedSkills.Add(name);
             }
         }
-        internal void RefreshUnmaxedBashingSkills(object sender, EventArgs e)
-        {
-            Button button = sender as Button;
-            string name = button.Name;
-            if (button.BackColor == Color.DodgerBlue)
-            {
-                button.BackColor = Color.White;
-                _unmaxedBashingSkills.Remove(name);
-            }
-            else
-            {
-                button.BackColor = Color.DodgerBlue;
-                _unmaxedBashingSkills.Add(name);
-            }
-        }
+       
         internal void RenderUnmaxedSkills(string name, ushort index, System.Drawing.Point point)
         {
-            Bitmap image = DAGraphics.RenderImage(skillImageArchive[index], palette256);
+            Bitmap image = DAGraphics.RenderImage(skillImageArchive[index], iconPalette);
             Button button = new Button();
             TextBox textBox = new TextBox
             {
@@ -520,40 +506,13 @@ namespace Talos.Forms
             button.Margin = Padding.Empty;
             button.MouseEnter += ShowAndBringToFrontTextBox;
             button.MouseLeave += HideTextBox;
-            button.Click += RefreshUnmaxedSkills;
+            button.Click += SkillToUse;
             unmaxedSkillsGroup.Controls.Add(button);
             unmaxedSkillsGroup.Controls.Add(textBox);
         }
-        internal void RenderUnmaxedBashingSkills(string name, ushort index, System.Drawing.Point point)
-        {
-            Bitmap image = DAGraphics.RenderImage(skillImageArchive[index], palette256);
-            Button button = new Button();
-            TextBox textBox = new TextBox
-            {
-                Visible = false,
-                Text = name,
-                Name = name + "whatever"
-            };
-            textBox.Width = (int)((double)TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
-            textBox.Location = new System.Drawing.Point(point.X + 25, point.Y + 25);
-            button.Location = new System.Drawing.Point(point.X, point.Y);
-            button.FlatStyle = FlatStyle.Flat;
-            button.Size = new Size(40, 40);
-            button.Image = image;
-            button.BackColor = Color.White;
-            button.Name = name;
-            button.Padding = Padding.Empty;
-            button.Margin = Padding.Empty;
-            button.MouseEnter += ShowAndBringToFrontTextBox;
-            button.MouseLeave += HideTextBox;
-            button.Click += RefreshUnmaxedBashingSkills;
-            bashingSkillsToUseGrp.Controls.Add(button);
-            bashingSkillsToUseGrp.Controls.Add(textBox);
-        }
-
         internal void RenderUnmaxedSpells(string name, ushort index, System.Drawing.Point point)
         {
-            Bitmap image = DAGraphics.RenderImage(spellImageArchive[index], palette256);
+            Bitmap image = DAGraphics.RenderImage(spellImageArchive[index], iconPalette);
             Button button = new Button();
             TextBox textBox = new TextBox
             {
@@ -572,10 +531,52 @@ namespace Talos.Forms
             button.Margin = Padding.Empty;
             button.MouseEnter += ShowAndBringToFrontTextBox;
             button.MouseLeave += HideTextBox;
-            button.Click += RefreshUnmaxedSpells;
+            button.Click += SpellToUse;
             unmaxedSpellsGroup.Controls.Add(button);
             unmaxedSpellsGroup.Controls.Add(textBox);
         }
+        internal void RenderBashingSkills(string name, ushort index, System.Drawing.Point point)
+        {
+            Bitmap image = DAGraphics.RenderImage(skillImageArchive[index], iconPalette);
+            Button button = new Button();
+            TextBox textBox = new TextBox
+            {
+                Visible = false,
+                Text = name,
+                Name = name + "whatever"
+            };
+            textBox.Width = (int)((double)TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
+            textBox.Location = new System.Drawing.Point(point.X + 25, point.Y + 25);
+            button.Location = new System.Drawing.Point(point.X, point.Y);
+            button.FlatStyle = FlatStyle.Flat;
+            button.Size = new Size(40, 40);
+            button.Image = image;
+            button.BackColor = Color.White;
+            button.Name = name;
+            button.Padding = Padding.Empty;
+            button.Margin = Padding.Empty;
+            button.MouseEnter += ShowAndBringToFrontTextBox;
+            button.MouseLeave += HideTextBox;
+            button.Click += BashSkillToUse;
+            bashingSkillsToUseGrp.Controls.Add(button);
+            bashingSkillsToUseGrp.Controls.Add(textBox);
+        }
+        internal void BashSkillToUse(object sender, EventArgs e)
+        {
+            Button button = sender as Button;
+            string name = button.Name;
+            if (button.BackColor == Color.DodgerBlue)
+            {
+                button.BackColor = Color.White;
+                _bashingSkillList.Remove(name);
+            }
+            else
+            {
+                button.BackColor = Color.DodgerBlue;
+                _bashingSkillList.Add(name);
+            }
+        }
+
 
         private void HideTextBox(object sender, EventArgs e)
         {
@@ -1192,34 +1193,43 @@ namespace Talos.Forms
         private void dojoRefreshBtn_Click(object sender, EventArgs e)
         {
             _client.ClientTab.StopBot();
-
-            _client._staffList.Clear();
-            _client.LoadStavesAndBows();
-            _unmaxedSkills.Clear();
-            _unmaxedSpells.Clear();
-
-            setoaArchive = DATArchive.FromFile(Settings.Default.DarkAgesPath.Replace("Darkages.exe", "setoa.dat"));
-            spellImageArchive = EPFImage.FromArchive("spell001.epf", setoaArchive);
-            skillImageArchive = EPFImage.FromArchive("skill001.epf", setoaArchive);
-            palette256 = Palette256.FromArchive("gui06.pal", setoaArchive);
-
-            while (unmaxedSkillsGroup.Controls.Count > 0)
+            try
             {
-                unmaxedSkillsGroup.Controls[0].Dispose();
+                _client.ClientTab._isLoading = true;
+                _client._staffList.Clear();
+                _client.LoadStavesAndBows();
+                _unmaxedSkills.Clear();
+                _unmaxedSpells.Clear();
+                setoaArchive = DATArchive.FromFile(Settings.Default.DarkAgesPath.Replace("Darkages.exe", "setoa.dat"));
+                spellImageArchive = EPFImage.FromArchive("spell001.epf", setoaArchive);
+                skillImageArchive = EPFImage.FromArchive("skill001.epf", setoaArchive);
+                iconPalette = Palette256.FromArchive("gui06.pal", setoaArchive);
+                while (unmaxedSkillsGroup.Controls.Count > 0)
+                {
+                    unmaxedSkillsGroup.Controls[0].Dispose();
+                }
+                while (unmaxedSpellsGroup.Controls.Count > 0)
+                {
+                    unmaxedSpellsGroup.Controls[0].Dispose();
+                }
+                _client.LoadUnmaxedSkills();
+                _client.LoadUnmaxedSpells();
             }
-            while (unmaxedSpellsGroup.Controls.Count > 0)
+            catch (Exception ex)
             {
-                unmaxedSpellsGroup.Controls[0].Dispose();
+                Console.WriteLine(ex.ToString());
             }
-            _client.LoadUnmaxedSkills();
-            _client.LoadUnmaxedSpells();
+            finally
+            {
+                if (_client.ClientTab.startStrip.Text == "Stop")
+                {
+                    _client.BotBase.Start();
+                }
+                _client.ClientTab._isLoading = false;
 
-            if (_client.ClientTab.startStrip.Text == "Stop")
-            {
-                _client.BotBase.Start();
+                OnlyDisplaySpellsWeHave();
+                SetClassSpecificSpells();
             }
-            OnlyDisplaySpellsWeHave();
-            SetClassSpecificSpells();
         }
 
         private void addAislingBtn_Click(object sender, EventArgs e)
@@ -3400,6 +3410,65 @@ namespace Talos.Forms
 
         private void toggleBugBtn_Click(object sender, EventArgs e)
         {
+            toggleBugBtn.Text = toggleBugBtn.Text == "Enable" ? "Disable" : "Enable";
+        }
+
+        private void toggleDojoBtn_Click(object sender, EventArgs e)
+        {
+            toggleDojoBtn.Text = toggleDojoBtn.Text == "Enable" ? "Disable" : "Enable";
+        }
+
+        private void toggleYuleBtn_Click(object sender, EventArgs e)
+        {
+            toggleYuleBtn.Text = toggleYuleBtn.Text == "Enable" ? "Disable" : "Enable";
+
+        }
+
+        private void togglePigChaseBtn_Click(object sender, EventArgs e)
+        {
+            togglePigChaseBtn.Text = togglePigChaseBtn.Text == "Enable" ? "Disable" : "Enable";
+
+        }
+
+        private void toggleFowlBtn_Click(object sender, EventArgs e)
+        {
+            toggleFowlBtn.Text = toggleFowlBtn.Text == "Enable" ? "Disable" : "Enable";
+
+        }
+
+        private void toggleMAWBtn_Click(object sender, EventArgs e)
+        {
+            toggleMAWBtn.Text = toggleMAWBtn.Text == "Enable" ? "Disable" : "Enable";
+
+        }
+
+        private void toggleCatchLeprechaunBtn_Click(object sender, EventArgs e)
+        {
+            toggleCatchLeprechaunBtn.Text = toggleCatchLeprechaunBtn.Text == "Enable" ? "Disable" : "Enable";
+
+        }
+
+        private void toggleSeasonalDblBtn_Click(object sender, EventArgs e)
+        {
+            toggleSeaonalDblBtn.Text = toggleSeaonalDblBtn.Text == "Enable" ? "Disable" : "Enable";
+
+        }
+
+        private void toggleScavengerHuntBtn_Click(object sender, EventArgs e)
+        {
+            toggleScavengerHuntBtn.Text = toggleScavengerHuntBtn.Text == "Enable" ? "Disable" : "Enable";
+
+        }
+
+        private void toggleParchmentMaskBtn_Click(object sender, EventArgs e)
+        {
+            toggleParchmentMaskBtn.Text = toggleParchmentMaskBtn.Text == "Enable" ? "Disable" : "Enable";
+
+        }
+
+        private void toggleCandyTreatsBtn_Click(object sender, EventArgs e)
+        {
+            toggleCandyTreatsBtn.Text = toggleCandyTreatsBtn.Text == "Enable" ? "Disable" : "Enable";
 
         }
     }

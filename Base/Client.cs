@@ -1888,7 +1888,7 @@ namespace Talos.Base
                 Skill skill = entry.Value;
                 if (skill != null && !_dojoBlackList2.Contains(skill.Name) && !skill.Name.Contains("Lore") && !skill.Name.Contains("Inner Beast") && !skill.Name.Contains("Item") && !skill.Name.Contains("Archery") && !skill.Name.Contains("Thrust Attack") && !skill.Name.Contains("Arrow Shot") && skill != null)
                 {
-                    ClientTab.RenderUnmaxedBashingSkills(skill.Name, skill.Sprite, new System.Drawing.Point(num, num2));
+                    ClientTab.RenderBashingSkills(skill.Name, skill.Sprite, new System.Drawing.Point(num, num2));
                     num = (short)(num + 40);
                     if (num >= 650)
                     {

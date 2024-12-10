@@ -1687,7 +1687,7 @@ namespace Talos
             
             if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client._map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab._unmaxedSpells.Contains(spell.Name)))))
             {
-                client.ClientTab.RefreshUnmaxedSpells(client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name], new EventArgs());
+                client.ClientTab.SpellToUse(client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name], new EventArgs());
                 client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name].Dispose();
             }
             
@@ -1834,7 +1834,7 @@ namespace Talos
 
             if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client._map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab._unmaxedSkills.Contains(skill.Name)))))
             {
-                client.ClientTab.RefreshUnmaxedSkills(client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name], new EventArgs());
+                client.ClientTab.SkillToUse(client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name], new EventArgs());
                 client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name].Dispose();
             }
 
