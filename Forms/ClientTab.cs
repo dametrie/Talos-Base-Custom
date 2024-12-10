@@ -2523,24 +2523,63 @@ namespace Talos.Forms
 
         }
 
-        private void spellBarIdsBtn_Click(object sender, EventArgs e)
+        private void effectBarIdsBtn_Click(object sender, EventArgs e)
         {
-
+            if (!_client.EffectsBar.Any())
+            {     
+                _client.ServerMessage((byte)ServerMessageType.Whisper, "You currently have no effects");
+            }
+            else
+            {
+                foreach (var spell in _client.EffectsBar)
+                {
+                    _client.ServerMessage((byte)ServerMessageType.Whisper, spell.ToString());
+                }
+            }
         }
 
         private void mapNodeIdsBtn_Click(object sender, EventArgs e)
         {
+            if (_client._worldMap == null)
+            {
+                _client.ServerMessage((byte)ServerMessageType.Whisper, "Please be in the world map before clicking!");
+            }
+            else
+            {
+                var messages = _client._worldMap.Nodes
+                    .Select(node => $"{node.Name}: {node.MapID}  {node.Location}")
+                    .ToArray();
 
+                foreach (var message in messages)
+                {
+                    _client.ServerMessage((byte)ServerMessageType.Whisper, message);
+                }
+            }
         }
 
         private void classDetectorBtn_Click(object sender, EventArgs e)
         {
-
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Prev Class: " + _client._previousClass.ToString());
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Current Class: " + _client._temuairClass.ToString());
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Med Class: " + _client._medeniaClass.ToString());
         }
 
         private void pursuitIdsBtn_Click(object sender, EventArgs e)
         {
+            if (!_client._server.PursuitIDs.Any())
+            {
+                _client.ServerMessage((byte)ServerMessageType.Whisper, "No pursuits recorded yet, please click an NPC");
+                return;
+            }
 
+            var messages = _client._server.PursuitIDs
+                .Select(p => $"{p.Value}: {p.Key}   ")
+                .ToList();
+
+            foreach (var message in messages)
+            {
+                _client.ServerMessage((byte)ServerMessageType.Whisper, message);
+            }
         }
 
         private void fullscreenToolStripMenuItem_Click(object sender, EventArgs e)
@@ -3292,6 +3331,40 @@ namespace Talos.Forms
                     client.ClientTab.walkBtn.Text = "Stop";
                 }
             }
+        }
+
+        private void StopWalk(object sender, EventArgs e) => walkBtn.Text = "Walk";
+        private void SetWalk(object sender, EventArgs e)
+        {
+            walkMapCombox.Text = (sender as ToolStripMenuItem).Text;
+            walkBtn.Text = "Stop";
+        }
+        private void WalkToMenu_Click(object sender, EventArgs e)
+        {
+            if (walkToMenu.DropDownItems.Count > 0)
+            {
+                walkToMenu.DropDownItems.Clear();
+            }
+            
+            AddMenuItem(walkToMenu, "STOP", StopWalk);
+
+            foreach (string item in walkMapCombox.Items)
+            {
+                AddMenuItem(walkToMenu, item, SetWalk);
+            }
+
+            walkToMenu.DropDownClosed += new EventHandler(DropClosed);
+        }
+        internal void DropClosed(object sender, EventArgs e)
+        {
+            (sender as ToolStripDropDownItem).DropDown.Close();
+        }
+
+        // Helper method to add a menu item
+        private void AddMenuItem(ToolStripMenuItem parentMenu, string text, EventHandler clickHandler)
+        {
+            var menuItem = new ToolStripMenuItem(text, null, clickHandler);
+            parentMenu.DropDownItems.Add(menuItem);
         }
     }
 }

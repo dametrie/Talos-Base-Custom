@@ -281,8 +281,7 @@ namespace Talos.Base
 
         internal HashSet<int> NearbyObjects { get; private set; } = new HashSet<int>();
         internal HashSet<int> NearbyGroundItems { get; private set; } = new HashSet<int>();
-        internal HashSet<ushort> EffectsBarHashSet { get; set; } = new HashSet<ushort>();
-        internal HashSet<ushort> SpellBar { get; set; } = new HashSet<ushort>();
+        internal HashSet<ushort> EffectsBar { get; set; } = new HashSet<ushort>();
         internal HashSet<string> GroupedPlayers { get; set; } = new HashSet<string> { };
 
         internal static HashSet<string> AoSuainHashSet = new HashSet<string>(new string[3]
@@ -379,7 +378,7 @@ namespace Talos.Base
         internal bool HasLetter => Stats.Mail.HasFlag(Mail.HasLetter);
         internal bool HasParcel => Stats.Mail.HasFlag(Mail.HasParcel);
 
-        internal bool IsSkulled => Player != null && (EffectsBarHashSet.Contains((ushort)EffectsBar.Skull) || EffectsBarHashSet.Contains((ushort)EffectsBar.WormSkull) && Player.IsSkulled);
+        internal bool IsSkulled => Player != null && (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Skull) || EffectsBar.Contains((ushort)Enumerations.EffectsBar.WormSkull) && Player.IsSkulled);
 
         public int CurrentWaypoint { get; internal set; }
 
@@ -413,8 +412,8 @@ namespace Talos.Base
             ClientTab = null;
         }
 
-        internal bool HasEffect(EffectsBar effectID) => EffectsBarHashSet.Contains((ushort)effectID);
-        internal void ClearEffect(EffectsBar effectID) => EffectsBarHashSet.Remove((ushort)effectID);
+        internal bool HasEffect(EffectsBar effectID) => EffectsBar.Contains((ushort)effectID);
+        internal void ClearEffect(EffectsBar effectID) => EffectsBar.Remove((ushort)effectID);
         internal bool GetMapFlags(MapFlags flagID) => _mapFlags.HasFlag(flagID);
         internal void SetMapFlags(MapFlags flagID) => _mapFlags |= flagID;
         internal void SetTemuairClass(TemuairClass temClass) => _temuairClass |= temClass;
@@ -479,14 +478,14 @@ namespace Talos.Base
         }
         internal bool CanUseItem(Item item)
         {
-            if (!EffectsBarHashSet.Contains((ushort)EffectsBar.Pramh) || !EffectsBarHashSet.Contains((ushort)EffectsBar.Suain))
+            if (!EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh) || !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain))
                 return true;
 
             return false;
         }
         internal bool CanUseSkill(Skill skill)
         {
-            if (skill.CanUse && _map.CanUseSkills && !EffectsBarHashSet.Contains((ushort)EffectsBar.Pramh) && !EffectsBarHashSet.Contains((ushort)EffectsBar.Suain))
+            if (skill.CanUse && _map.CanUseSkills && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh) && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain))
                 return true;
 
             return false;
@@ -495,7 +494,7 @@ namespace Talos.Base
         {
             if (spell.CanUse && _map.CanUseSpells)
             {
-                if (EffectsBarHashSet.Contains((ushort)EffectsBar.Pramh) || EffectsBarHashSet.Contains((ushort)EffectsBar.Suain))
+                if (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh) || EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain))
                     return AoSuainHashSet.Contains(spell.Name);
 
                 return true; // If neither Pramh nor Suain is active, always return true
@@ -1070,7 +1069,7 @@ namespace Talos.Base
         }
         private bool ShouldRejectSpellDueToSuain(Client client, string spellName)
         {
-            return (EffectsBarHashSet.Contains((ushort)EffectsBar.Suain) &&
+            return (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain) &&
                    (client == null || !IsAllowedSuainSpell(spellName)));
         }
         private bool IsAllowedSuainSpell(string spellName)
@@ -1964,7 +1963,7 @@ namespace Talos.Base
                 return false;
             }
 
-            if (!EffectsBarHashSet.Contains((ushort)EffectsBar.Pramh) && !EffectsBarHashSet.Contains((ushort)EffectsBar.Suain) && !_server._stopCasting)
+            if (!EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh) && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain) && !_server._stopCasting)
             {
                 ClientPacket clientPacket = new ClientPacket(28);
                 clientPacket.WriteByte(item.Slot);
@@ -2580,7 +2579,7 @@ namespace Talos.Base
                         door.LastClicked = DateTime.UtcNow;
                     }
                 }
-                if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(npc => Location.NotEquals(loc, destination) && Location.Equals(npc.Location, loc) || (!HasEffect(EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.SpriteID) && GetCreatureCoverage(npc).Contains(loc))))
+                if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(npc => Location.NotEquals(loc, destination) && Location.Equals(npc.Location, loc) || (!HasEffect(Enumerations.EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.SpriteID) && GetCreatureCoverage(npc).Contains(loc))))
                 {
                     Console.WriteLine($"Creature interaction required at {loc}, recalculating path.");
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
@@ -2622,11 +2621,11 @@ namespace Talos.Base
             {
                 lock (CastLock)
                 {
-                    if (!HasEffect(EffectsBar.Pramh))
+                    if (!HasEffect(Enumerations.EffectsBar.Pramh))
                     {
-                        if (!HasEffect(EffectsBar.Suain))
+                        if (!HasEffect(Enumerations.EffectsBar.Suain))
                         {
-                            if (HasEffect(EffectsBar.Skull))
+                            if (HasEffect(Enumerations.EffectsBar.Skull))
                             {
                                 if (ClientTab.ascendBtn.Text != "Ascending")
                                 {
@@ -2638,7 +2637,7 @@ namespace Talos.Base
                     }
                 }
             }
-            else if (!HasEffect(EffectsBar.Pramh) && !HasEffect(EffectsBar.Suain) && (!HasEffect(EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
+            else if (!HasEffect(Enumerations.EffectsBar.Pramh) && !HasEffect(Enumerations.EffectsBar.Suain) && (!HasEffect(Enumerations.EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
             {
                 Walk(directionToWalk);              
             }
@@ -3128,7 +3127,7 @@ namespace Talos.Base
 
         internal List<Location> GetCreatureCoverage(Creature creature)
         {
-            if (HasEffect(EffectsBar.Hide))
+            if (HasEffect(Enumerations.EffectsBar.Hide))
             {
                 return new List<Location>();
             }

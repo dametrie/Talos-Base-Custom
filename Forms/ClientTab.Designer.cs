@@ -5924,7 +5924,7 @@ namespace Talos.Forms
             this.spellBarIdsBtn.TabIndex = 0;
             this.spellBarIdsBtn.Text = "Spell Icon IDs";
             this.spellBarIdsBtn.UseVisualStyleBackColor = true;
-            this.spellBarIdsBtn.Click += new System.EventHandler(this.spellBarIdsBtn_Click);
+            this.spellBarIdsBtn.Click += new System.EventHandler(this.effectBarIdsBtn_Click);
             // 
             // mapNodeIdsBtn
             // 
@@ -6462,6 +6462,7 @@ namespace Talos.Forms
             this.walkToMenu.Name = "walkToMenu";
             this.walkToMenu.Size = new System.Drawing.Size(57, 24);
             this.walkToMenu.Text = "WalkTo";
+            this.walkToMenu.Click += new System.EventHandler(this.WalkToMenu_Click);
             // 
             // windowOptions
             // 

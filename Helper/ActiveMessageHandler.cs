@@ -639,16 +639,16 @@ namespace Talos.Helper
         private void HandleDragonMessage(Client client, string message)
         {
             if (message == "No longer dragon.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.DragonsFire);
+                client.EffectsBar.Remove((ushort)EffectsBar.DragonsFire);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.DragonsFire);
+                client.EffectsBar.Add((ushort)EffectsBar.DragonsFire);
         }
 
         private void HandleDionMessage(Client client, string message)
         {
             if (message == "Your skin turns back to flesh.")
             {
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Dion);
+                client.EffectsBar.Remove((ushort)EffectsBar.Dion);
 
                 var dionStateUpdates = new Dictionary<CreatureState, object>
                 {
@@ -663,7 +663,7 @@ namespace Talos.Helper
             }
             else if (message == "Harden body spell")
             {
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Dion);
+                client.EffectsBar.Add((ushort)EffectsBar.Dion);
 
                 var dionStateUpdates = new Dictionary<CreatureState, object>
                 {
@@ -735,19 +735,19 @@ namespace Talos.Helper
         private void HandleSuainMessage(Client client, string message)
         {
             if (message == "Your body thaws.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Suain);
+                client.EffectsBar.Remove((ushort)EffectsBar.Suain);
             else if (message == "Your body is freezing.")
             {
                 if (DateTime.UtcNow.Subtract(client.Player.GetState<DateTime>(CreatureState.LastSuained)).TotalSeconds < 6.0)
                 {
-                    client.EffectsBarHashSet.Add((ushort)EffectsBar.Suain);
+                    client.EffectsBar.Add((ushort)EffectsBar.Suain);
                     CreatureStateHelper.UpdateCreatureState(client, client.Player.ID, CreatureState.LastSuained, DateTime.UtcNow);
                 }
 
             }
             else if (message == "You are in hibernation.")
             {
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Suain);
+                client.EffectsBar.Add((ushort)EffectsBar.Suain);
                 CreatureStateHelper.UpdateCreatureState(client, client.Player.ID, CreatureState.LastSuained, DateTime.UtcNow);
             }
         }
@@ -760,33 +760,33 @@ namespace Talos.Helper
         private void HandleHaltMessage(Client client, string message)
         {
             if (message == "Halt end.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Halt);
+                client.EffectsBar.Remove((ushort)EffectsBar.Halt);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Halt);
+                client.EffectsBar.Add((ushort)EffectsBar.Halt);
         }
 
         private void HandleDeireasFaileasMessage(Client client, string message)
         {
             if (message == "Reflect end.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.DeireasFaileas);
+                client.EffectsBar.Remove((ushort)EffectsBar.DeireasFaileas);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.DeireasFaileas);
+                client.EffectsBar.Add((ushort)EffectsBar.DeireasFaileas);
         }
 
         private void HandleMistMessage(Client client, string message)
         {
             if (message == "Your reflexes return to normal.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Mist);
+                client.EffectsBar.Remove((ushort)EffectsBar.Mist);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Mist);
+                client.EffectsBar.Add((ushort)EffectsBar.Mist);
         }
 
         private void HandleAsgallMessage(Client client, string message)
         {
             if (message == "asgall faileas end.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.AsgallFaileas);
+                client.EffectsBar.Remove((ushort)EffectsBar.AsgallFaileas);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.AsgallFaileas);
+                client.EffectsBar.Add((ushort)EffectsBar.AsgallFaileas);
         }
 
         private void HandleCantAttackMessage(Client client, string message)
@@ -802,17 +802,17 @@ namespace Talos.Helper
         private void HandleHideMessage(Client client, string message)
         {
             if (message == "You are no longer invisible.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Hide);
+                client.EffectsBar.Remove((ushort)EffectsBar.Hide);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Hide);
+                client.EffectsBar.Add((ushort)EffectsBar.Hide);
         }
 
         private void HandleDallMessage(Client client, string message)
         {
             if (message == "You can see again.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Dall);
+                client.EffectsBar.Remove((ushort)EffectsBar.Dall);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Dall);
+                client.EffectsBar.Add((ushort)EffectsBar.Dall);
         }
 
         private void HandleDisenchanterMessage(Client client, string message)
@@ -825,7 +825,7 @@ namespace Talos.Helper
         {
             if (message == "You feel vulnerable again.")
             {
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.NaomhAite);
+                client.EffectsBar.Remove((ushort)EffectsBar.NaomhAite);
 
                 var aiteStateUpdates = new Dictionary<CreatureState, object>
                 {
@@ -840,7 +840,7 @@ namespace Talos.Helper
 
             else
             {
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.NaomhAite);
+                client.EffectsBar.Add((ushort)EffectsBar.NaomhAite);
 
                 var aiteStateUpdates = new Dictionary<CreatureState, object>
                 {
@@ -855,16 +855,16 @@ namespace Talos.Helper
         private void HandleBeagSuainMessage(Client client, string message)
         {
             if (message == "You can move again.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.BeagSuain);
+                client.EffectsBar.Remove((ushort)EffectsBar.BeagSuain);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.BeagSuain);
+                client.EffectsBar.Add((ushort)EffectsBar.BeagSuain);
         }
 
         private void HandleFasMessage(Client client, string message)
         {
             if (message == "normal nature.")
             {
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.FasNadur);
+                client.EffectsBar.Remove((ushort)EffectsBar.FasNadur);
 
                 var fasStateUpdates = new Dictionary<CreatureState, object> // Adam new
                 {
@@ -878,7 +878,7 @@ namespace Talos.Helper
             }
             else
             {
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.FasNadur);
+                client.EffectsBar.Add((ushort)EffectsBar.FasNadur);
 
                 double fasDuration = Spell.GetSpellDuration("mor fas nadur");
 
@@ -943,71 +943,71 @@ namespace Talos.Helper
         private void HandleBonusMessage(Client client, string message)
         {
             //Adam check other bonuses - stars/vdays double shrooms
-            client.EffectsBarHashSet.Add((ushort)EffectsBar.SpellSkillBonus1);
+            client.EffectsBar.Add((ushort)EffectsBar.SpellSkillBonus1);
         }
 
         private void HandlePerfectDefenseMessage(Client client, string message)
         {
             if (message == "You become normal.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.PerfectDefense);
+                client.EffectsBar.Remove((ushort)EffectsBar.PerfectDefense);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.PerfectDefense);
+                client.EffectsBar.Add((ushort)EffectsBar.PerfectDefense);
         }
 
         private void HandlePurifyMessage(Client client, string message)
         {
             if (message == "Purify end")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Purify);
+                client.EffectsBar.Remove((ushort)EffectsBar.Purify);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Purify);
+                client.EffectsBar.Add((ushort)EffectsBar.Purify);
         }
 
         private void HandleInnerFireMessage(Client client, string message)
         {
             if (message == "Inner warmth of regeneration dissipates.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.InnerFire);
+                client.EffectsBar.Remove((ushort)EffectsBar.InnerFire);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.InnerFire);
+                client.EffectsBar.Add((ushort)EffectsBar.InnerFire);
         }
 
         private void HandleBeannaichMessage(Client client, string message)
         {
             if (message == "End of blessing.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Beannaich);
+                client.EffectsBar.Remove((ushort)EffectsBar.Beannaich);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Beannaich);
+                client.EffectsBar.Add((ushort)EffectsBar.Beannaich);
         }
 
         private void HandleFasDeireasMessage(Client client, string message)
         {
             if (message == "Normal power.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.FasDeireas);
+                client.EffectsBar.Remove((ushort)EffectsBar.FasDeireas);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.FasDeireas);
+                client.EffectsBar.Add((ushort)EffectsBar.FasDeireas);
         }
 
         private void HandlePauseMessage(Client client, string message)
         {
             if (message == "Pause")
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Pause);
+                client.EffectsBar.Add((ushort)EffectsBar.Pause);
             else
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Pause);
+                client.EffectsBar.Remove((ushort)EffectsBar.Pause);
         }
 
         private void HandlePramhMessage(Client client, string message)
         {
             if (message == "Awake")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Pramh);
+                client.EffectsBar.Remove((ushort)EffectsBar.Pramh);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Pramh);
+                client.EffectsBar.Add((ushort)EffectsBar.Pramh);
         }
 
         private void HandleCatsMessage(Client client, string message)
         {
             if (message == "You can perceive the invisible.")
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.EisdCreature);
+                client.EffectsBar.Add((ushort)EffectsBar.EisdCreature);
             else
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.EisdCreature);
+                client.EffectsBar.Remove((ushort)EffectsBar.EisdCreature);
         }
 
         private void HandleGroupMessage(Client client, string message)
@@ -1071,9 +1071,9 @@ namespace Talos.Helper
         private void HandlePreventAfflictionMessage(Client client, Match match)
         {
             if (match.Value.Equals("PreventAffliction end."))
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.PreventAffliction);
+                client.EffectsBar.Remove((ushort)EffectsBar.PreventAffliction);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.PreventAffliction);
+                client.EffectsBar.Add((ushort)EffectsBar.PreventAffliction);
         }
 
         private void HandleCurseMessage(Client client, Match match)
@@ -1118,17 +1118,17 @@ namespace Talos.Helper
         private void HandleArmachdMessage(Client client, string message)
         {
             if (message == "Your armor is strengthened.")
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Armachd);
+                client.EffectsBar.Add((ushort)EffectsBar.Armachd);
             else
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Armachd);
+                client.EffectsBar.Remove((ushort)EffectsBar.Armachd);
         }
 
         private void HandlePoisonMessage(Client client, string message)
         {
             if (message == "You feel better.")
-                client.EffectsBarHashSet.Remove((ushort)EffectsBar.Poison);
+                client.EffectsBar.Remove((ushort)EffectsBar.Poison);
             else
-                client.EffectsBarHashSet.Add((ushort)EffectsBar.Poison);
+                client.EffectsBar.Add((ushort)EffectsBar.Poison);
         }
 
         private void HandleArenaBroadcastMessage(Client client, string message)

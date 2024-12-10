@@ -2844,17 +2844,17 @@ namespace Talos
             byte color = serverPacket.ReadByte();
             if (color != 0)
             {
-                if (!client.EffectsBarHashSet.Contains(effect))
+                if (!client.EffectsBar.Contains(effect))
                 {
                     //Console.WriteLine("Adding effect: " + effect);
-                    client.EffectsBarHashSet.Add(effect);
+                    client.EffectsBar.Add(effect);
                     //Console.WriteLine("total items in hashset: " + client.EffectsBarHashSet.Count);
                 }
             }
-            else if (client.EffectsBarHashSet.Contains(effect))
+            else if (client.EffectsBar.Contains(effect))
             {
                 //Console.WriteLine("Removing effect: " + effect);
-                client.EffectsBarHashSet.Remove(effect);
+                client.EffectsBar.Remove(effect);
                 if ((effect == 19) && !client.InArena)//bday or incapacitate //ADAM check this
                 {
                     ThreadPool.QueueUserWorkItem(_ => client.ReEquipItem(client._itemToReEquip));
