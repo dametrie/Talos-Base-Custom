@@ -109,6 +109,48 @@ namespace Talos.Base
         internal AllyPage AllyPage { get; set; }
         internal EnemyPage AllMonsters { get; set; }
 
+        private static readonly Dictionary<uint, Location> DestinationMap = new Dictionary<uint, Location>
+        {
+            { 104857644U,  new Location(11500, 76, 90) }, // Tavaly
+            { 42952968U,   new Location(8995, 41, 36)  }, // Lost Ruins
+            { 197647056U,  new Location(8295, 12, 7)   }, // Aman Skills/Spells
+            { 140575268U,  new Location(10055, 0, 0)   }, // Noam
+            { 122196308U,  new Location(10240, 15, 15) }, // Andor 140
+            { 362565633U,  new Location(6718, 8, 8)    }, // Nobis Storage
+            { 270108063U,  new Location(8314, 9, 95)   }, // Crystal Caves
+            { 705191458U,  new Location(72, 23, 19)    }, // Succi Hair
+            { 656194412U,  new Location(3210, 69, 34)  }, // Blackstar
+            { 390284915U,  new Location(6537, 65, 1)   }, // Nobis 2-11 (Actually 2-4)
+            { 3045472732U, new Location(6534, 1, 36)   }, // Nobis 2-5 (Actually 2-1)
+            { 1434418274U, new Location(6541, 73, 4)   }, // Nobis 3-11 (Actually 3-4)
+            { 3002224923U, new Location(6538, 58, 73)  }, // Nobis 3-5 (Actually 3-1)
+            { 1054692617U, new Location(3938, 7, 13)   }, // Canals (Loures Storage 12)
+            { 1917735196U, new Location(3950, 13, 12)  }, // Glad Arena
+            { 1570042694U, new Location(8368, 48, 24)  }, // YT 24
+            { 2122966770U, new Location(6998, 11, 9)   }, // Water Dungeon
+            { 1936185911U, new Location(10101, 15, 10) }, // Andor Lobby
+            { 2510239379U, new Location(559, 43, 26)   }, // Shinewood
+            { 2487385400U, new Location(8358, 58, 1)   }, // YT Vine Rooms
+            { 2199457723U, new Location(3012, 15, 0)   }, // Loures
+            { 2543647522U, new Location(566, 28, 24)   }, // Shinewood 36
+            { 2529604651U, new Location(10265, 93, 48) }, // Fire Canyon (Hwarone City)
+            { 2728795543U, new Location(9376, 42, 47)  }, // Plamit Boss
+            { 2628668450U, new Location(573, 22, 26)   }, // Shinewood 43
+            { 2577202760U, new Location(568, 28, 38)   }, // Shinewood 38
+            { 2911405393U, new Location(8300, 121, 33) }, // Aman Jungle
+            { 3381421134U, new Location(9378, 40, 20)  }, // Plamit Lobby
+            { 3033542801U, new Location(10180, 20, 20) }, // Andor 80
+            { 3560321112U, new Location(2092, 79, 6)   }, // MTG 16
+            { 3660986826U, new Location(2096, 4, 7)    }, // MTG 10
+            { 3644209207U, new Location(2095, 55, 94)  }, // MTG 13
+            { 3610506874U, new Location(2092, 57, 93)  }, // MTG 25
+            { 3390820287U, new Location(2901, 15, 15)  }, // Mines
+            { 3826339036U, new Location(8318, 50, 93)  }, // Yowien Territory
+            { 3791705852U, new Location(424, 6, 6)     }, // Black Market
+            { 3770643204U, new Location(8432, 5, 8)    }, // Chadul Mileth 1
+            { 4189239892U, new Location(3634, 18, 10)  }, // Chaos 1
+            { 3848419112U, new Location(5031, 6, 34)   }, // CR 31
+        };
 
         internal Bot(Client client, Server server) : base(client, server)
         {
@@ -239,9 +281,6 @@ namespace Talos.Base
 
         private void HandleWalkingCommand()
         {
-            //var start = DateTime.UtcNow;
-            //Console.WriteLine($"HandleWalkingCommand started at {start:HH:mm:ss.fff}");
-
             string comboBoxText = Client.ClientTab.walkMapCombox.Text;
             bool followChecked = Client.ClientTab.followCbox.Checked;
             string followName = Client.ClientTab.followText.Text;
@@ -257,35 +296,461 @@ namespace Talos.Base
                 if (comboBoxText == "SW Lure")
                 {
                     SWLure();
+                    return;
                 }
                 else if (comboBoxText == "WayPoints")
                 {
                     WayPointWalking();
+                    return;
                 }
 
-                else
+                // Determine the route target from comboBoxText
+                if (TryGetRouteTarget(comboBoxText, out short mapID, out Location destination))
                 {
-                    if (short.TryParse(comboBoxText, out short mapID))
+                    // Handle extra map actions if needed
+                    HandleExtraMapActions(destination);
+
+                    // Update the walk button or directly route
+                    if (mapID > 0)
                     {
                         Client.RouteFindByMapID(mapID);
                     }
-                    else
+                    else if (destination != default)
                     {
-                        Location destination = GetDestinationBasedOnComboBoxText(comboBoxText);
-                        if (destination != default)
-                        {
-                            HandleExtraMapActions(destination);
-                            UpdateWalkButton(destination);
-                        }
+                        UpdateWalkButton(destination);
                     }
+                }
+                else
+                {
+                    UpdateWalkButton(destination);
+                }
+
+            }
+        }
+        private void HandleExtraMapActions(Location destination)
+        {
+            // Extracting for readability
+            var currentMapID = Client._map.MapID;
+            var currentLocation = Client._serverLocation;
+
+            // First, handle specific cases triggered by the current map ID
+            if (HandleMapSpecificActions(currentMapID, currentLocation))
+            {
+                return; // If handled, stop
+            }
+
+            // Next, handle cases based on the destination map ID
+            if (HandleDestinationSpecificActions(destination))
+            {
+                return;
+            }
+        }
+        private bool HandleMapSpecificActions(int currentMapID, Location currentLocation)
+        {
+            switch (currentMapID)
+            {
+                case 6525: // Oren Island Ruins0
+                    return HandleOrenIslandRuins0(currentLocation);
+
+                case 3938: // Loures Storage 12
+                    return HandleLouresStorage12(currentLocation);
+
+                case 3920: // Gladiator Arena Entrance
+                    return HandleGladiatorArenaEntrance(currentLocation);
+
+                case 3012: // Loures Castle Way
+                    return HandleLouresCastleWay(currentLocation);
+
+                case 10265: // Hwarone City
+                    return HandleHwaroneCity(currentLocation);
+
+                case 424: // Rucesion Empty Room 1
+                    return HandleRucesionEmptyRoom1(currentLocation);
+
+                default:
+                    return false; // Not handled here
+            }
+        }
+
+        // Below are the helper methods for each map or destination.
+        // Each returns true if it handled the action (meaning it performed
+        // some routing or updated the UI and then returned early).
+
+        private bool HandleOrenIslandRuins0(Location currentLocation)
+        {
+            if (currentLocation.AbsoluteXY(32, 23) > 2)
+            {
+                Client.RouteFind(new Location(6525, 32, 23), 0, false, true, true);
+                return true;
+            }
+            else
+            {
+                Client.PublicChat(3, "Welcome Aisling");
+                Thread.Sleep(500);
+                return true;
+            }
+        }
+        private bool HandleLouresStorage12(Location currentLocation)
+        {
+            if (currentLocation.AbsoluteXY(7, 13) > 2)
+            {
+                Client.Pathfind(new Location(3938, 7, 13), 0, true, false);
+                return true;
+            }
+            else
+            {
+                Client.ClientTab.walkBtn.Text = "Walk";
+                return true;
+            }
+        }
+        private bool HandleGladiatorArenaEntrance(Location currentLocation)
+        {
+            if (currentLocation.AbsoluteXY(13, 12) > 2)
+            {
+                Client.Pathfind(new Location(3920, 13, 12), 0, true, false);
+                return true;
+            }
+            else
+            {
+                Client.ClientTab.walkBtn.Text = "Walk";
+                return true;
+            }
+        }
+        private bool HandleLouresCastleWay(Location currentLocation)
+        {
+            if (currentLocation.AbsoluteXY(15, 0) > 2)
+            {
+                Client.Pathfind(new Location(3012, 15, 0), 0, true, false);
+                return true;
+            }
+            else
+            {
+                Client.ClientTab.walkBtn.Text = "Walk";
+                return true;
+            }
+        }
+        private bool HandleHwaroneCity(Location currentLocation)
+        {
+            if (currentLocation.AbsoluteXY(93, 48) > 2)
+            {
+                Client.Pathfind(new Location(10265, 93, 48), 0, true, false);
+                return true;
+            }
+            else
+            {
+                Client.ClientTab.walkBtn.Text = "Walk";
+                return true;
+            }
+        }
+        private bool HandleRucesionEmptyRoom1(Location currentLocation)
+        {
+            if (currentLocation.AbsoluteXY(6, 6) > 2)
+            {
+                Client.Pathfind(new Location(424, 6, 6), 0, true, false);
+                return true;
+            }
+            else
+            {
+                Client.ClientTab.walkBtn.Text = "Walk";
+                return true;
+            }
+        }
+        private bool HandleDestinationSpecificActions(Location destination)
+        {
+            switch (destination.MapID)
+            {
+                case 6537: // Oren Ruins 2-4
+                    return HandleOrenRuins2tack4(destination);
+
+                case 6541: // Oren Ruins 3-4
+                    return HandleOrenRuins3tack4(destination);
+
+                case 6538: // Oren Ruins 1-2
+                    return HandleOrenRuins1tack2(destination);
+
+                case 6534: // Oren Ruins 2-1
+                    return HandleOrenRuins2tack1(destination);
+
+                default:
+                    return false; // Not handled here
+            }
+        }
+
+        // The Oren Ruins related methods are more complex. Each of these methods is specific
+        // to a destination and handles the logic to move through the annoying Nobis rooms
+
+        private bool HandleOrenRuins2tack4(Location destination)
+        {
+            // We'll try a direct route first, if it fails we attempt pathfinding, etc.
+
+            if (Client._map.MapID == 6530)
+            {
+                if(!TryRouteFind(new Location(6537, 65, 1)))
+                {
+                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
+                    return true;
                 }
             }
 
-            //var end = DateTime.UtcNow;
-            //Console.WriteLine($"HandleWalkingCommand ended at {end:HH:mm:ss.fff}, Duration: {(end - start).TotalMilliseconds} ms");
+            if (Client._map.MapID == 6537 && Client._clientLocation.X < 31 && Client._clientLocation.Y < 43)
+            {
+                Client.Pathfind(new Location(6537, 0, 31), 0, true, false);
+                return true;
+            }
 
+            if (Client._map.MapID == 6535 && Client._clientLocation.X > 68 && Client._clientLocation.Y < 56)
+            {
+                Client.Pathfind(new Location(6535, 74, 49), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6537 && Client._clientLocation.X < 43 && Client._clientLocation.Y > 43)
+            {
+                Client.Pathfind(new Location(6537, 14, 74), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6536 && Client._clientLocation.X < 25 && Client._clientLocation.Y < 24)
+            {
+                Client.Pathfind(new Location(6536, 0, 15), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6534 && Client._clientLocation.X > 45)
+            {
+                Client.Pathfind(new Location(6534, 74, 28), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6536 && (Client._clientLocation.X > 25 || Client._clientLocation.Y > 26) && Client._clientLocation.X < 69)
+            {
+                Client.Pathfind(new Location(6536, 72, 4), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6536 && Client._clientLocation.X > 68)
+            {
+                Client.Pathfind(new Location(6536, 69, 0), 0, true, false);
+                return true;
+            }
+
+            // If route attempts fail:
+            if (!TryRouteFind(new Location(6537, 65, 1)))
+            {
+                if (Client._map.MapID == 6537 && IsCloseTo(new Location(6537, 65, 1), 3))
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
+                Client.RouteFind(new Location(6525, 0, 0), 0, true);
+                return true;
+            }
+
+            return false;
+        }
+        private bool HandleOrenRuins3tack4(Location destination)
+        {
+            // Oren Ruins 3-4 (MapID: 6541)
+
+            if (Client._map.MapID == 6530)
+            {
+                if (!TryRouteFind(new Location(6541, 73, 4)))
+                {
+                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
+                    return true;
+                }
+            }
+
+            if (Client._map.MapID == 6537)
+            {
+                Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6539)
+            {
+                Client.Pathfind(new Location(6539, 53, 74), 0, true, true);
+                return true;
+            }
+
+            if (Client._map.MapID == 6538)
+            {
+                Client.Pathfind(new Location(6538, 74, 16), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6540 && Client._clientLocation.X < 4)
+            {
+                Client.Pathfind(new Location(6540, 3, 0), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6541 && Client._clientLocation.X < 28 && Client._clientLocation.Y > 63)
+            {
+                Client.Pathfind(new Location(6541, 23, 74), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6540)
+            {
+                Client.Pathfind(new Location(6540, 35, 0), 0, true, false);
+                return true;
+            }
+
+            // If route attempts fail:
+            if (!TryRouteFind(new Location(6541, 73, 4), 3))
+            {
+                if (Client._map.MapID == 6541 && IsCloseTo(new Location(6541, 73, 4), 3))
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
+                Client.RouteFind(new Location(6525, 0, 0), 0, true);
+                return true;
+            }
+
+            return false;
+        }
+        private bool HandleOrenRuins1tack2(Location destination)
+        {
+            // Oren Ruins 1-2 (MapID: 6538)
+
+            if (Client._map.MapID == 6530)
+            {
+                if (!TryRouteFind(new Location(6538, 58, 73)))
+                {
+                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
+                    return true;
+                }
+            }
+
+            if (Client._map.MapID == 6537)
+            {
+                Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6539 && Client._clientLocation.Y < 8)
+            {
+                Client.Pathfind(new Location(6539, 1, 8), 1, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6539)
+            {
+                Client.Pathfind(new Location(6539, 4, 74), 0, true, true);
+                return true;
+            }
+
+            if (Client._map.MapID == 6538 && Client._clientLocation.Y < 50)
+            {
+                Client.Pathfind(new Location(6538, 74, 47), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6540)
+            {
+                Client.Pathfind(new Location(6540, 0, 67), 0, true, false);
+                return true;
+            }
+
+            // If route attempts fail:
+            if (!TryRouteFind(new Location(6538, 58, 73), 3))
+            {
+                if (Client._map.MapID == 6538 && IsCloseTo(new Location(6538, 58, 73), 3))
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
+                Client.RouteFind(new Location(6525, 0, 0), 0, true);
+                return true;
+            }
+
+            return false;
+        }
+        private bool HandleOrenRuins2tack1(Location destination)
+        {
+            // Oren Ruins 2-1 (MapID: 6534)
+
+            if (Client._map.MapID == 6530)
+            {
+                if (!TryRouteFind(new Location(6534, 1, 36)))
+                {
+                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
+                    return true;
+                }
+            }
+
+            if (Client._map.MapID == 6537)
+            {
+                Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
+                return true;
+            }
+
+            if (Client._map.MapID == 6535)
+            {
+                Client.Pathfind(new Location(6535, 20, 74), 0, true, false);
+                return true;
+            }
+
+            // If route attempts fail:
+            if (!TryRouteFind(new Location(6534, 1, 36), 3))
+            {
+                if (Client._map.MapID == 6534 && IsCloseTo(new Location(6534, 1, 36), 3))
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
+                Client.RouteFind(new Location(6525, 0, 0), 0, true);
+                return true;
+            }
+
+            return false;
         }
 
+
+
+        // Utility methods to reduce repeated code
+        private bool TryRouteFind(Location loc, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)
+        {
+            return Client.RouteFind(loc, distance, mapOnly, shouldBlock, avoidWarps);
+        }
+
+        private bool IsCloseTo(Location target, int threshold)
+        {
+            Location serverLocation = Client._serverLocation;
+            return (serverLocation.DistanceFrom(target) <= threshold);
+        }
+
+
+
+        /// <summary>
+        /// Attempts to interpret the user input as either a map ID or a named destination.
+        /// Returns true if a valid route target was found.
+        /// </summary>
+        private bool TryGetRouteTarget(string input, out short mapID, out Location destination)
+        {
+            mapID = 0;
+            destination = default;
+
+            // Try parsing as Map ID
+            if (short.TryParse(input, out short parsedMapID))
+            {
+                mapID = parsedMapID;
+                return true;
+            }
+
+            // If not a map ID, try getting a named destination
+            destination = GetDestinationBasedOnComboBoxText(input);
+            return (destination != default);
+        }
+
+
+        private Location GetDestinationBasedOnComboBoxText(string text)
+        {
+            uint fnvHash = Utility.CalculateFNV(text);
+            return DestinationMap.TryGetValue(fnvHash, out var loc) ? loc : default;
+        }
 
         private void FollowWalking(string playerName)
         {
@@ -917,359 +1382,7 @@ namespace Talos.Base
 
 
 
-        private void HandleExtraMapActions(Location destination)
-        {
-            Location location = Client._serverLocation;
-
-            if (Client._map.MapID == 6525) // Oren Island Ruins0
-            {
-                if (location.AbsoluteXY(32, 23) > 2)
-                {
-                    Client.RouteFind(new Location(6525, 32, 23), 0, false, true, true);
-                    return;
-                }
-                else
-                {
-                    Client.PublicChat(3, "Welcome Aisling");
-                    Thread.Sleep(500);
-                    return;
-                }
-
-            }
-            if (Client._map.MapID == 3938) // Loures Storage 12
-            {
-                if (location.AbsoluteXY(7, 13) > 2)
-                {
-                    Client.Pathfind(new Location(3938, 7, 13), 0, true, false);
-                    return;
-                }
-                else
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                }
-            }
-            if (Client._map.MapID == 3920) // Gladiator Arena Entrance
-            {
-                if (location.AbsoluteXY(13, 12) > 2)
-                {
-                    Client.Pathfind(new Location(3920, 13, 12), 0, true, false);
-                    return;
-                }
-                else
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                }
-            }
-            if (Client._map.MapID == 3012)
-            {
-                if (location.AbsoluteXY(15, 0) > 2)
-                {
-                    Client.Pathfind(new Location(3012, 15, 0), 0, true, false);
-                    return;
-                }
-                else
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                }
-            }
-            if (Client._map.MapID == 10265)
-            {
-                if (location.AbsoluteXY(93, 48) > 2)
-                {
-                    Client.Pathfind(new Location(10265, 93, 48), 0, true, false);
-                    return;
-                }
-                else
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                }
-            }
-            if (Client._map.MapID == 424)
-            {
-                if (location.AbsoluteXY(6, 6) > 2)
-                {
-                    Client.Pathfind(new Location(424, 6, 6), 0, true, false);
-                    return;
-                }
-                else
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                }
-            }
-
-
-            if (destination.MapID == 6537)
-            {
-                if (Client._map.MapID == 6530 && !Client.RouteFind(new Location(6537, 65, 1), 0, false, true, true))
-                {
-                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6537 && Client._clientLocation.X < 31 && Client._clientLocation.Y < 43)
-                {
-                    Client.Pathfind(new Location(6537, 0, 31), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6535 && Client._clientLocation.X > 68 && Client._clientLocation.Y < 56)
-                {
-                    Client.Pathfind(new Location(6535, 74, 49), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6537 && Client._clientLocation.X < 43 && Client._clientLocation.Y > 43)
-                {
-                    Client.Pathfind(new Location(6537, 14, 74), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6536 && Client._clientLocation.X < 25 && Client._clientLocation.Y < 24)
-                {
-                    Client.Pathfind(new Location(6536, 0, 15), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6534 && Client._clientLocation.X > 45)
-                {
-                    Client.Pathfind(new Location(6534, 74, 28), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6536 && (Client._clientLocation.X > 25 || Client._clientLocation.Y > 26) && Client._clientLocation.X < 69)
-                {
-                    Client.Pathfind(new Location(6536, 72, 4), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6536 && Client._clientLocation.X > 68)
-                {
-                    Client.Pathfind(new Location(6536, 69, 0), 0, true, false);
-                    return;
-                }
-                if (!Client.RouteFind(new Location(6537, 65, 1), 3, false, true, true) && !Client.RouteFind(new Location(6537, 65, 1), 3, false, true, true))
-                {
-                    if (Client._map.MapID == 6537)
-                    {
-                        Location serverLocation = Client._serverLocation;
-                        if (serverLocation.DistanceFrom(new Location(6537, 65, 1)) <= 3)
-                        {
-                            Client.ClientTab.walkBtn.Text = "Walk";
-                        }
-                    }
-                    //Client.SetMapID00(6525);
-                    Client.RouteFind(new Location(6525, 0, 0), 0, true); //problem because continuously recalls routefind
-                }
-            }
-            if (destination.MapID == 6541)
-            {
-                if (Client._map.MapID == 6530 && !Client.RouteFind(new Location(6541, 73, 4), 0, false, true, true))
-                {
-                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6537)
-                {
-                    Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6539)
-                {
-                    Client.Pathfind(new Location(6539, 53, 74), 0, true, true);
-                    return;
-                }
-                if (Client._map.MapID == 6538)
-                {
-                    Client.Pathfind(new Location(6538, 74, 16), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6540 && Client._clientLocation.X < 4)
-                {
-                    Client.Pathfind(new Location(6540, 3, 0), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6541 && Client._clientLocation.X < 28 && Client._clientLocation.Y > 63)
-                {
-                    Client.Pathfind(new Location(6541, 23, 74), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6540)
-                {
-                    Client.Pathfind(new Location(6540, 35, 0), 0, true, false);
-                    return;
-                }
-                if (!Client.RouteFind(new Location(6541, 73, 4), 3, false, true, true) && !Client.RouteFind(new Location(6541, 73, 4), 3, false, true, true))
-                {
-                    if (Client._map.MapID == 6541)
-                    {
-                        Location serverLocation = Client._serverLocation;
-                        if (serverLocation.DistanceFrom(new Location(6541, 73, 4)) <= 3)
-                        {
-                            Client.ClientTab.walkBtn.Text = "Walk";
-                        }
-                    }
-                    Client.RouteFind(new Location(6525, 0, 0), 0, true);
-                }
-            }
-            if (destination.MapID == 6538)
-            {
-                if (Client._map.MapID == 6530 && !Client.RouteFind(new Location(6538, 58, 73), 0, false, true, true))
-                {
-                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6537)
-                {
-                    Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6539 && Client._clientLocation.Y < 8)
-                {
-                    Client.Pathfind(new Location(6539, 1, 8), 1, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6539)
-                {
-                    Client.Pathfind(new Location(6539, 4, 74), 0, true, true);
-                    return;
-                }
-                if (Client._map.MapID == 6538 && Client._clientLocation.Y < 50)
-                {
-                    Client.Pathfind(new Location(6538, 74, 47), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6540)
-                {
-                    Client.Pathfind(new Location(6540, 0, 67), 0, true, false);
-                    return;
-                }
-                if (!Client.RouteFind(new Location(6538, 58, 73), 3, false, true, true) && !Client.RouteFind(new Location(6538, 58, 73), 3, false, true, true))
-                {
-                    if (Client._map.MapID == 6538)
-                    {
-                        Location serverLocation = Client._serverLocation;
-                        if (serverLocation.DistanceFrom(new Location(6538, 58, 73)) <= 3)
-                        {
-                            Client.ClientTab.walkBtn.Text = "Walk";
-                        }
-                    }
-                    Client.RouteFind(new Location(6525, 0, 0), 0, true);
-                }
-            }
-            if (destination.MapID == 6534)
-            {
-                if (Client._map.MapID == 6530 && !Client.RouteFind(new Location(6534, 1, 36), 0, false, true, true))
-                {
-                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6537)
-                {
-                    Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
-                    return;
-                }
-                if (Client._map.MapID == 6535)
-                {
-                    Client.Pathfind(new Location(6535, 20, 74), 0, true, false);
-                    return;
-                }
-                if (!Client.RouteFind(new Location(6534, 1, 36), 3, false, true, true) && !Client.RouteFind(new Location(6534, 1, 36), 3, false, true, true))
-                {
-                    if (Client._map.MapID == 6534)
-                    {
-                        Location serverLocation = Client._serverLocation;
-                        if (serverLocation.DistanceFrom(new Location(6534, 1, 36)) <= 3)
-                        {
-                            Client.ClientTab.walkBtn.Text = "Walk";
-                        }
-                    }
-                    Client.RouteFind(new Location(6525, 0, 0), 0, true);
-                }
-            }
-
-        }
-
-        private Location GetDestinationBasedOnComboBoxText(string text)
-        {
-            uint fnvHash = Utility.CalculateFNV(text);
-            switch (fnvHash)
-            {
-                case 104857644U: // Tavaly
-                    return new Location(11500, 76, 90);
-                case 42952968U: // Lost Ruins
-                    return new Location(8995, 41, 36);
-                case 197647056U: // Aman Skills/Spells
-                    return new Location(8295, 12, 7);
-                case 140575268U: // Noam
-                    return new Location(10055, 0, 0);
-                case 122196308U: // Andor 140
-                    return new Location(10240, 15, 15);
-                case 362565633U: // Nobis Storage
-                    return new Location(6718, 8, 8);
-                case 270108063U: // Crystal Caves
-                    return new Location(8314, 9, 95);
-                case 705191458U: // Succi Hair
-                    return new Location(72, 23, 19);
-                case 656194412U: // Blackstar
-                    return new Location(3210, 69, 34);
-                case 390284915U: // Nobis 2-11
-                    return new Location(6537, 65, 1); //Actually 2-4
-                case 3045472732U: // Nobis 2-5
-                    return new Location(6534, 1, 36); // Actually 2-1
-                case 1434418274U: // Nobis 3-11
-                    return new Location(6541, 73, 4); //Actually 3-4
-                case 3002224923U: // Nobis 3-5
-                    return new Location(6538, 58, 73); //Actually 3-1
-                case 1054692617U: // Canals
-                    return new Location(3938, 7, 13); //Loures Storage 12
-                case 1917735196U: // Glad Arena
-                    return new Location(3950, 13, 12);
-                case 1570042694U: // YT 24
-                    return new Location(8368, 48, 24);
-                case 2122966770U: // Water Dungeon
-                    return new Location(6998, 11, 9);
-                case 1936185911U: // Andor Lobby
-                    return new Location(10101, 15, 10);
-                case 2510239379U: // Shinewood
-                    return new Location(559, 43, 26);
-                case 2487385400U: //YT Vine Rooms
-                    return new Location(8358, 58, 1);
-                case 2199457723U: // Loures
-                    return new Location(3012, 15, 0);
-                case 2543647522U: // Shinewood 36
-                    return new Location(566, 28, 24);
-                case 2529604651U: // Fire Canyon
-                    return new Location(10265, 93, 48); //Hwarone City
-                case 2728795543U: // Plamit Boss
-                    return new Location(9376, 42, 47);
-                case 2628668450U: // Shinewood 43
-                    return new Location(573, 22, 26);
-                case 2577202760U: // Shinewood 38
-                    return new Location(568, 28, 38);
-                case 2911405393U: // Aman Jungle
-                    return new Location(8300, 121, 33);
-                case 3381421134U: // Plamit Lobby
-                    return new Location(9378, 40, 20);
-                case 3033542801U: // Andor 80
-                    return new Location(10180, 20, 20);
-                case 3560321112U: // MTG 16
-                    return new Location(2092, 79, 6);
-                case 3660986826U: // MTG 10
-                    return new Location(2096, 4, 7);
-                case 3644209207U: // MTG 13
-                    return new Location(2095, 55, 94);
-                case 3610506874U: // MTG 25
-                    return new Location(2092, 57, 93);
-                case 3390820287U: // Mines
-                    return new Location(2901, 15, 15);
-                case 3826339036U: // Yowien Territory
-                    return new Location(8318, 50, 93);
-                case 3791705852U: // Black Market
-                    return new Location(424, 6, 6);
-                case 3770643204U: // Chadul Mileth 1
-                    return new Location(8432, 5, 8);
-                case 4189239892U: // Chaos 1
-                    return new Location(3634, 18, 10);
-                case 3848419112U: // CR 31
-                    return new Location(5031, 6, 34);
-                default:
-                    return default;
-            }
-        }
-
+       
         private void UpdateWalkButton(Location targetLocation)
         {
             if (!Client.ClientTab.walkMapCombox.Text.Contains("Nobis") && ShouldProceedWithNavigation(targetLocation))
@@ -1330,6 +1443,12 @@ namespace Talos.Base
                     Thread.Sleep(250);
                     return;
                 }
+
+                if (Client.ClientTab == null || Client == null)
+                {
+                    return;
+                }
+
                 if (Client.ClientTab.alertSkulledCbox.Checked && Client.IsSkulled)
                 {
                     soundPlayer.Stream = Resources.skull;

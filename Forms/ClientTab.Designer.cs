@@ -91,7 +91,6 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
-            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -247,8 +246,8 @@ namespace Talos.Forms
             this.numComboImgSelect = new System.Windows.Forms.NumericUpDown();
             this.picComboSkill = new System.Windows.Forms.PictureBox();
             this.btnAddSkillCombo = new System.Windows.Forms.Button();
-            this.groupBox6 = new System.Windows.Forms.GroupBox();
-            this.label7 = new System.Windows.Forms.Label();
+            this.resetGroup = new System.Windows.Forms.GroupBox();
+            this.resetLbl = new System.Windows.Forms.Label();
             this.btnResetAllStatus = new System.Windows.Forms.Button();
             this.customLinesGroup = new System.Windows.Forms.GroupBox();
             this.customLinesBox = new System.Windows.Forms.TextBox();
@@ -532,6 +531,7 @@ namespace Talos.Forms
             this.expBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.mushroomBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
+            this.chatPanel = new Talos.Forms.UI.ChatPanel();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -577,7 +577,7 @@ namespace Talos.Forms
             this.groupBox9.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numComboImgSelect)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picComboSkill)).BeginInit();
-            this.groupBox6.SuspendLayout();
+            this.resetGroup.SuspendLayout();
             this.customLinesGroup.SuspendLayout();
             this.dmuGroup.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.acc3ColorNum)).BeginInit();
@@ -1338,19 +1338,6 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // chatPanel
-            // 
-            this.chatPanel.AutoDetectUrls = true;
-            this.chatPanel.BackColor = System.Drawing.Color.White;
-            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel.Name = "chatPanel";
-            this.chatPanel.ReadOnly = true;
-            this.chatPanel.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel.TabIndex = 0;
-            this.chatPanel.Text = "";
             // 
             // mainAislingsTab
             // 
@@ -3260,7 +3247,7 @@ namespace Talos.Forms
             // toolsTab
             // 
             this.toolsTab.Controls.Add(this.groupBox9);
-            this.toolsTab.Controls.Add(this.groupBox6);
+            this.toolsTab.Controls.Add(this.resetGroup);
             this.toolsTab.Controls.Add(this.customLinesGroup);
             this.toolsTab.Controls.Add(this.unifiedGuildChatCbox);
             this.toolsTab.Controls.Add(this.dmuGroup);
@@ -3348,24 +3335,24 @@ namespace Talos.Forms
             // 
             // groupBox6
             // 
-            this.groupBox6.Controls.Add(this.label7);
-            this.groupBox6.Controls.Add(this.btnResetAllStatus);
-            this.groupBox6.Location = new System.Drawing.Point(233, 112);
-            this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Size = new System.Drawing.Size(223, 187);
-            this.groupBox6.TabIndex = 133;
-            this.groupBox6.TabStop = false;
-            this.groupBox6.Text = "Reset";
+            this.resetGroup.Controls.Add(this.resetLbl);
+            this.resetGroup.Controls.Add(this.btnResetAllStatus);
+            this.resetGroup.Location = new System.Drawing.Point(233, 112);
+            this.resetGroup.Name = "groupBox6";
+            this.resetGroup.Size = new System.Drawing.Size(223, 187);
+            this.resetGroup.TabIndex = 133;
+            this.resetGroup.TabStop = false;
+            this.resetGroup.Text = "Reset";
             // 
             // label7
             // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(52, 101);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(130, 30);
-            this.label7.TabIndex = 134;
-            this.label7.Text = "resets booleans related \r\nto casting and walking";
-            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.resetLbl.AutoSize = true;
+            this.resetLbl.Location = new System.Drawing.Point(52, 101);
+            this.resetLbl.Name = "label7";
+            this.resetLbl.Size = new System.Drawing.Size(130, 30);
+            this.resetLbl.TabIndex = 134;
+            this.resetLbl.Text = "resets booleans related \r\nto casting and walking";
+            this.resetLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btnResetAllStatus
             // 
@@ -3376,6 +3363,7 @@ namespace Talos.Forms
             this.btnResetAllStatus.TabIndex = 133;
             this.btnResetAllStatus.Text = "Reset All Status";
             this.btnResetAllStatus.UseVisualStyleBackColor = true;
+            this.btnResetAllStatus.Click += new System.EventHandler(this.btnResetAllStatus_Click);
             // 
             // customLinesGroup
             // 
@@ -6650,6 +6638,19 @@ namespace Talos.Forms
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // chatPanel
+            // 
+            this.chatPanel.AutoDetectUrls = true;
+            this.chatPanel.BackColor = System.Drawing.Color.White;
+            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel.Name = "chatPanel";
+            this.chatPanel.ReadOnly = true;
+            this.chatPanel.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel.TabIndex = 0;
+            this.chatPanel.Text = "";
+            // 
             // ClientTab
             // 
             this.AllowDrop = true;
@@ -6733,8 +6734,8 @@ namespace Talos.Forms
             this.groupBox9.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numComboImgSelect)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picComboSkill)).EndInit();
-            this.groupBox6.ResumeLayout(false);
-            this.groupBox6.PerformLayout();
+            this.resetGroup.ResumeLayout(false);
+            this.resetGroup.PerformLayout();
             this.customLinesGroup.ResumeLayout(false);
             this.customLinesGroup.PerformLayout();
             this.dmuGroup.ResumeLayout(false);
@@ -7049,8 +7050,8 @@ namespace Talos.Forms
         internal NumericUpDown numComboImgSelect;
         private PictureBox picComboSkill;
         internal Button btnAddSkillCombo;
-        internal GroupBox groupBox6;
-        internal Label label7;
+        internal GroupBox resetGroup;
+        internal Label resetLbl;
         internal Button btnResetAllStatus;
         internal GroupBox customLinesGroup;
         internal TextBox customLinesBox;

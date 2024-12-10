@@ -162,7 +162,7 @@ namespace Talos.Helper
                 }
             }
 
-            return false;
+            return true; // allow any message we aren't handling to come through
         }
         private static void HandleSpellCastMessage(Client client, Match match)
         {

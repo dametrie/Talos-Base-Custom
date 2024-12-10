@@ -112,6 +112,7 @@ namespace Talos.Base
         internal bool _clientWalkPending;
         internal bool _isCasting;
         internal bool _isWalking;
+        internal bool _isBashing;
         internal int _isRefreshing;
         internal bool _mapChanged;
         internal bool _hasLabor;
@@ -123,7 +124,7 @@ namespace Talos.Base
         internal bool _inventoryFull;
         internal bool _shouldEquipBow;
         internal bool _trainingGroundsMember;
-        private bool _hasWalked;
+        internal bool _hasWalked;
         internal bool _cancelPressed;
         internal bool _acceptPressed;
         internal bool _exchangeOpen;

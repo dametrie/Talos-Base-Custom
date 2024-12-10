@@ -2733,10 +2733,6 @@ namespace Talos.Forms
 
         }
 
-        private void btnResetAllStatus_Click(object sender, EventArgs e)
-        {
-
-        }
 
         private void faceNum_ValueChanged(object sender, EventArgs e)
         {
@@ -3470,6 +3466,18 @@ namespace Talos.Forms
         {
             toggleCandyTreatsBtn.Text = toggleCandyTreatsBtn.Text == "Enable" ? "Disable" : "Enable";
 
+        }
+
+        private void btnResetAllStatus_Click(object sender, EventArgs e)
+        {
+            _client._isRefreshing = 0;
+            _client.needsToRepairHammer = false;
+            _client._isCasting = false;
+            _client._isWalking = false;
+            _client._isBashing = false;
+            _client._hasWalked = false;
+            _client._map.CanUseSpells = true;
+            _client._spellHistory.Clear();
         }
     }
 }
