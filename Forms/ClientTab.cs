@@ -142,6 +142,7 @@ namespace Talos.Forms
 
             OnlyDisplaySpellsWeHave();
             AddClientToFriends();
+            UpdateFriendList();
             SetupInitialClientHacks();
         }
 
@@ -235,6 +236,81 @@ namespace Talos.Forms
             }
         }
 
+        private void SaveFriendList()
+        {
+            // Get the path to the friend list file
+            string dataDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
+            string filePath = Path.Combine(dataDirectory, "FriendList.xml");
+
+            // Create the directory if it doesn't exist
+            Directory.CreateDirectory(dataDirectory);
+
+            // Setup XML writer settings
+            XmlWriterSettings settings = new XmlWriterSettings
+            {
+                Indent = true
+            };
+
+            try
+            {
+                using (FileStream fileStream = File.Create(filePath))
+                using (XmlWriter writer = XmlWriter.Create(fileStream, settings))
+                {
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("Friends");
+
+
+                    foreach (string friend in _client._friendBindingList)
+                    {
+                        writer.WriteElementString("friend", friend);
+                    }
+
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving friend list: {ex.Message}");
+            }
+        }
+        internal void UpdateFriendList()
+        {
+            string dataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "FriendList.xml");
+
+            if (!File.Exists(dataPath))
+                return;
+
+            // Example regex: Matches one or more word characters (letters, digits, underscore)
+            // Adjust this pattern to suit your exact needs.
+            Regex wordPattern = new Regex(@"^\w+$", RegexOptions.Compiled);
+
+            try
+            {
+                using (XmlReader xmlReader = XmlReader.Create(dataPath))
+                {
+                    xmlReader.MoveToContent();
+                    while (xmlReader.Read())
+                    {
+                        if (xmlReader.Name == "friend" && xmlReader.Read())
+                        {
+                            string friendName = xmlReader.Value;
+
+                            // Check that friendName matches the regex and that a case-insensitive match does not already exist
+                            if (wordPattern.IsMatch(friendName) &&
+                                !_client._friendBindingList.Any(f => f.Equals(friendName, StringComparison.CurrentCultureIgnoreCase)))
+                            {
+                                UpdateBindingList(_client._friendBindingList, friendList, friendName);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating friend list: {ex.Message}");
+            }
+        }
 
         private void AddClientToFriends()
         {
@@ -660,6 +736,10 @@ namespace Talos.Forms
             }
         }
 
+        internal void UpdateChatPanelMaxLength(Client client)
+        {
+            chatPanel.MaxLength = 65 - client.Name.Length;
+        }
         internal void UpdateChatPanel(string input)
         {
             var match = Regex.Match(input, "(\\[!|<!|[a-zA-Z]+)");
@@ -1526,21 +1606,28 @@ namespace Talos.Forms
                 UpdateBindingList(_client._friendBindingList, friendList, selectedItem);
                 _client._strangerBindingList.Remove(selectedItem);             
             }
-            //Adam add method to save friends to file. 
-            //Load it on startup
+
+            SaveFriendList();
+            UpdateFriendList();
+
         }
 
         private void removeFriendBtn_Click(object sender, EventArgs e)
         {
+            List<Player> source = _client.GetNearbyPlayers();
+
             foreach (string seletedItem in friendList.SelectedItems.OfType<string>().ToList())
             {
-                UpdateBindingList(_client._strangerBindingList, strangerList, seletedItem);
-                _client._friendBindingList.Remove(seletedItem);
-                if (_client.DictLastSeen.ContainsKey(seletedItem))
+                if (source.Select((Player player) => player.Name).Contains(seletedItem, StringComparer.CurrentCultureIgnoreCase))
                 {
-                    _client.DictLastSeen.Remove(seletedItem);
+                    UpdateBindingList(_client._strangerBindingList, strangerList, seletedItem);
                 }
+
+                _client._friendBindingList.Remove(seletedItem);
+                                
                 UpdateStrangerList();
+                SaveFriendList();
+                UpdateFriendList();
             }
         }
 
@@ -1586,6 +1673,8 @@ namespace Talos.Forms
                     UpdateBindingList(_client._friendBindingList, friendList, selectedItem);
                 }
             }
+            SaveFriendList();
+            UpdateFriendList();
         }
 
         private void kickGroupedBtn_Click(object sender, EventArgs e)
@@ -1619,6 +1708,10 @@ namespace Talos.Forms
                     _client._strangerBindingList.Remove(client.Name);
                 }
             }
+
+            SaveFriendList();
+            UpdateFriendList();
+
         }
 
         internal void RemoveAllyPage()

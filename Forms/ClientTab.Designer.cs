@@ -91,6 +91,8 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
+            this.chatPanel = new Talos.Forms.UI.ChatPanel();
+            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -531,8 +533,6 @@ namespace Talos.Forms
             this.expBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.mushroomBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
-            this.chatPanel = new Talos.Forms.UI.ChatPanel();
-            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -1340,6 +1340,35 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chatPanel
+            // 
+            this.chatPanel.AutoDetectUrls = true;
+            this.chatPanel.BackColor = System.Drawing.Color.White;
+            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel.Name = "chatPanel";
+            this.chatPanel.ReadOnly = true;
+            this.chatPanel.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel.TabIndex = 0;
+            this.chatPanel.Text = "";
+            // 
+            // chatBox
+            // 
+            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatBox.ForeColor = System.Drawing.Color.Black;
+            this.chatBox.Location = new System.Drawing.Point(121, 484);
+            this.chatBox.MaxLength = 53;
+            this.chatBox.Name = "chatBox";
+            this.chatBox.Size = new System.Drawing.Size(508, 23);
+            this.chatBox.TabIndex = 13;
+            this.chatBox.TabStop = false;
+            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
+            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
+            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
+            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
             // mainAislingsTab
             // 
@@ -3335,22 +3364,22 @@ namespace Talos.Forms
             this.btnAddSkillCombo.Text = "Add Skill";
             this.btnAddSkillCombo.UseVisualStyleBackColor = true;
             // 
-            // groupBox6
+            // resetGroup
             // 
             this.resetGroup.Controls.Add(this.resetLbl);
             this.resetGroup.Controls.Add(this.btnResetAllStatus);
             this.resetGroup.Location = new System.Drawing.Point(233, 112);
-            this.resetGroup.Name = "groupBox6";
+            this.resetGroup.Name = "resetGroup";
             this.resetGroup.Size = new System.Drawing.Size(223, 187);
             this.resetGroup.TabIndex = 133;
             this.resetGroup.TabStop = false;
             this.resetGroup.Text = "Reset";
             // 
-            // label7
+            // resetLbl
             // 
             this.resetLbl.AutoSize = true;
             this.resetLbl.Location = new System.Drawing.Point(52, 101);
-            this.resetLbl.Name = "label7";
+            this.resetLbl.Name = "resetLbl";
             this.resetLbl.Size = new System.Drawing.Size(130, 30);
             this.resetLbl.TabIndex = 134;
             this.resetLbl.Text = "resets booleans related \r\nto casting and walking";
@@ -6639,35 +6668,6 @@ namespace Talos.Forms
             this.currentAction.TabIndex = 6;
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // chatPanel
-            // 
-            this.chatPanel.AutoDetectUrls = true;
-            this.chatPanel.BackColor = System.Drawing.Color.White;
-            this.chatPanel.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel.Name = "chatPanel";
-            this.chatPanel.ReadOnly = true;
-            this.chatPanel.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel.TabIndex = 0;
-            this.chatPanel.Text = "";
-            //
-            // chatBox
-            //
-            this.chatBox.BorderStyle = BorderStyle.FixedSingle;
-            this.chatBox.Font = new Font("Segoe UI", 9f, FontStyle.Bold, GraphicsUnit.Point, (byte)0);
-            this.chatBox.ForeColor = Color.Black;
-            this.chatBox.Location = new System.Drawing.Point(121, 484);
-            this.chatBox.MaxLength = 53;
-            this.chatBox.Name = "chatBox";
-            this.chatBox.Size = new System.Drawing.Size(508, 23);
-            this.chatBox.TabIndex = 13;
-            this.chatBox.TabStop = false;
-            this.chatBox.Enter += new EventHandler(ChatBox_Enter);
-            this.chatBox.KeyDown += new KeyEventHandler(WhispShout);
-            this.chatBox.KeyPress += new KeyPressEventHandler(EscapeSay);
-            this.chatBox.Leave += new EventHandler(ChatBox_Leave);
             // 
             // ClientTab
             // 

@@ -1802,8 +1802,12 @@ namespace Talos.Base
             _playersExistingOver250ms = _playersExistingOver250ms.Except(duplicateOrHiddenPlayers).ToList();
         }
 
-        private void PerformActions()
+        private bool PerformActions()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
 
             _autoStaffSwitch = Client.ClientTab.autoStaffCbox.Checked;
             _fasSpiorad = Client.HasEffect(EffectsBar.FasSpiorad) || (Client.HasSpell("fas spiorad") && DateTime.UtcNow.Subtract(Client.Spellbook["fas spiorad"].LastUsed).TotalSeconds < 1.5);
@@ -1853,6 +1857,8 @@ namespace Talos.Base
             {
                 Thread.Sleep(330);
             }
+
+            return true;
         }
         private bool CastDefensiveSpells()
         {
@@ -1925,6 +1931,12 @@ namespace Talos.Base
 
         private bool Other()
         {
+            if (Client.ClientTab == null)
+            {
+                //Exit early if clienttab is null e.g., switching servers
+                return false;
+            }
+
             if (Client.ClientTab.deireasFaileasCbox.Checked && !Client.HasEffect(EffectsBar.DeireasFaileas))
             {
                 Client.UseSpell("deireas faileas", null, _autoStaffSwitch, true);
@@ -2151,6 +2163,11 @@ namespace Talos.Base
 
         private bool DispellAllySuain()
         {
+            if (AllyPage == null)
+            {
+                return false;
+            }
+
             foreach (Ally ally in ReturnAllyList())
             {
                 bool isDispelSuainChecked = ally.AllyPage.dispelSuainCbox.Checked;
@@ -2178,8 +2195,13 @@ namespace Talos.Base
             return false;
         }
 
-        private void FasSpiorad()
+        private bool FasSpiorad()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             if (_needFasSpiorad)
             {
                 uint currentMP = Client.CurrentMP;
@@ -2210,10 +2232,17 @@ namespace Talos.Base
                     Thread.Sleep(10);
                 }
             }
+
+            return true;
         }
 
         private bool BeagCradh()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isBeagCradhChecked = Client.ClientTab.beagCradhCbox.Checked;
             bool isPlayerCursed = Client.Player.IsCursed;
 
@@ -2228,6 +2257,10 @@ namespace Talos.Base
 
         private bool BeagCradhAllies()
         {
+            if (AllyPage == null)
+            {
+                return false;
+            }
 
             foreach (Ally ally in ReturnAllyList())
             {
@@ -2245,6 +2278,10 @@ namespace Talos.Base
 
         private bool WakeScroll()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
 
             bool isWakeScrollChecked = Client.ClientTab.wakeScrollCbox.Checked;
             bool isRegistered = Client._isRegistered;
@@ -2280,6 +2317,11 @@ namespace Talos.Base
 
         private bool AoPoison()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isAoPoisonChecked = Client.ClientTab.aoPoisonCbox.Checked;
             bool isPlayerPoisoned = Client.Player.IsPoisoned;
             bool isFungusExtractChecked = Client.ClientTab.fungusExtractCbox.Checked;
@@ -2309,6 +2351,11 @@ namespace Talos.Base
 
         private bool AoPoisonForAllies(bool shouldUseFungusExtract)
         {
+            if (AllyPage == null)
+            {
+                return false;
+            }
+
             foreach (Ally ally in ReturnAllyList())
             {
                 if (ally.AllyPage.dispelPoisonCbox.Checked && IsAlly(ally, out Player player, out Client client))
@@ -2341,6 +2388,11 @@ namespace Talos.Base
 
         private bool Aite()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isAiteChecked = Client.ClientTab.aiteCbox.Checked;
             bool isPlayerAited = Client.Player.IsAited;
             double aiteDuration = Client.Player.GetState<double>(CreatureState.AiteDuration);
@@ -2357,6 +2409,11 @@ namespace Talos.Base
 
         private bool AiteAllies()
         {
+            if (AllyPage == null)
+            {
+                return false;
+            }
+
             foreach (Ally ally in ReturnAllyList())
             {
                 // Check if the Aite spell is enabled for the ally and get the spell name
@@ -2386,6 +2443,11 @@ namespace Talos.Base
 
         private bool FasAllies()
         {
+            if (AllyPage == null)
+            {
+                return false;
+            }
+
             foreach (Ally ally in ReturnAllyList())
             {
                 // Check if the Fas spell is enabled for the ally and get the spell name
@@ -2415,6 +2477,11 @@ namespace Talos.Base
 
         private bool Fas()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isFasChecked = Client.ClientTab.fasCbox.Checked;
             bool isPlayerFassed = Client.Player.IsFassed;
             double fasDuration = Client.Player.GetState<double>(CreatureState.FasDuration);
@@ -2431,6 +2498,11 @@ namespace Talos.Base
 
         private bool DragonScale()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isDragonScaleChecked = Client.ClientTab.dragonScaleCbox.Checked;
 
             if (isDragonScaleChecked && Client._isRegistered && !Client.HasEffect(EffectsBar.Armachd))
@@ -2455,6 +2527,11 @@ namespace Talos.Base
 
         private bool Dion()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isDionChecked = Client.ClientTab.dionCbox.Checked;
 
             if (!isDionChecked || Client.HasEffect(EffectsBar.Dion))
@@ -2501,6 +2578,11 @@ namespace Talos.Base
 
         private bool Armachd()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isArmachdChecked = Client.ClientTab.armachdCbox.Checked;
 
             if (isArmachdChecked && !Client.HasEffect(EffectsBar.Armachd))
@@ -2514,6 +2596,11 @@ namespace Talos.Base
 
         private bool ArmachdAllies()
         {
+            if (AllyPage == null)
+            {
+                return false;
+            }
+
             foreach (Ally ally in ReturnAllyList())
             {
                 bool isArmachdChecked = ally.AllyPage.dbArmachdCbox.Checked;
@@ -2542,8 +2629,13 @@ namespace Talos.Base
             return true;
         }
 
-        private void UseDionOrStone()
+        private bool UseDionOrStone()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             string dionSpell = Client.ClientTab.dionCombox.Text;
 
             if (dionSpell == "Glowing Stone" && !RecentlyUsedGlowingStone)
@@ -2558,10 +2650,17 @@ namespace Talos.Base
             {
                 Client.UseSpell(dionSpell, null, _autoStaffSwitch, false);
             }
+
+            return true;
         }
 
         private bool DispellPlayerCurse()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             Player player = Client.Player;
 
             var isDispelCurseChecked = Client.ClientTab.aoCurseCbox.Checked;
@@ -2591,6 +2690,11 @@ namespace Talos.Base
         }
         private bool DispellAllyCurse()
         {
+            if (AllyPage == null)
+            {
+                return false;
+            }
+
             foreach (Ally ally in ReturnAllyList())
             {
                 bool isDispelCurseChecked = ally.AllyPage.dispelCurseCbox.Checked;
@@ -2625,7 +2729,6 @@ namespace Talos.Base
 
         private bool TryGetCursedAlly(Ally ally, out Player player, out Client client)
         {
-
             if (IsAlly(ally, out player, out client))
             {
                 //Console.WriteLine($"[TryGetCursedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} is cursed: {player.IsCursed}");
@@ -2656,7 +2759,7 @@ namespace Talos.Base
 
         private bool Heal()
         {
-            if (Client.HasEffect(EffectsBar.FasSpiorad))
+            if (Client.HasEffect(EffectsBar.FasSpiorad) || Client.ClientTab == null || AllyPage == null)
             {
                 return false;
             }
@@ -2775,6 +2878,11 @@ namespace Talos.Base
 
         private bool BubbleBlock()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isBubbleBlockChecked = Client.ClientTab.bubbleBlockCbox.Checked;
             bool isSpamBubbleChecked = Client.ClientTab.spamBubbleCbox.Checked;
             bool isFollowChecked = Client.ClientTab.followCbox.Checked;
@@ -2854,6 +2962,11 @@ namespace Talos.Base
         }
         private bool CastHide()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
+
             bool isHideChecked = Client.ClientTab.hideCbox.Checked;
             bool canUseSpells = Client._map.CanUseSpells;
 
@@ -2881,6 +2994,10 @@ namespace Talos.Base
 
         private bool CastOffensiveSpells()
         {
+            if (Client.ClientTab == null)
+            {
+                return false;
+            }
             _nearbyValidCreatures = Client.GetNearbyValidCreatures(11);
 
             if (_nearbyValidCreatures.Count > 0)
@@ -3833,6 +3950,11 @@ namespace Talos.Base
 
         private void AutoGem()
         {
+            if (Client.ClientTab == null) 
+            { 
+                return; 
+            }
+
             bool shouldUseGem = Client.ClientTab.autoGemCbox.Checked &&
                                 Client.Experience > 4250000000U &&
                                 DateTime.UtcNow.Subtract(_lastUsedGem).TotalMinutes > 5.0;

@@ -2819,8 +2819,8 @@ namespace Talos
             client.GuildName = guildName;
             client.ClientTab.UpdateGroupList();
             client.ClientTab.UpdateStrangerList();
-            //client.ClientTab.AddFriends();
-            //client.ClientTab.UpdateChatPanelMaxLength(client);
+            client.ClientTab.UpdateFriendList();
+            client.ClientTab.UpdateChatPanelMaxLength(client);
  
             if (client.Bot.AllyPage != null)
             {
