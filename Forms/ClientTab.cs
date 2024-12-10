@@ -32,6 +32,8 @@ namespace Talos.Forms
 {
     public partial class ClientTab : UserControl
     {
+        private ResourceBar healthBar;
+        private ResourceBar manaBar;
 
         private Client _client;
         private bool _isBotRunning = false;
@@ -125,6 +127,7 @@ namespace Talos.Forms
             _wayForm = new WayForm(_client);
             UIHelper.Initialize(_client);
             InitializeComponent();
+            InitializeCustomResourceBars();
 
             _wayForm.savedWaysLBox.DataSource = _wayFormProfiles;
             worldObjectListBox.DataSource = client._worldObjectBindingList;
@@ -143,6 +146,34 @@ namespace Talos.Forms
             OnlyDisplaySpellsWeHave();
             AddClientToFriends();
             SetupInitialClientHacks();
+        }
+
+        private void InitializeCustomResourceBars()
+        {
+            healthBar = new ResourceBar("healthBar")
+            {
+                BackColor = Color.White,
+                ForeColor = Color.Crimson,
+                Location = new System.Drawing.Point(6, 282),
+                MaximumSize = new Size(50, 196),
+                Name = "healthBar",
+                Size = new Size(50, 196),
+                Style = ProgressBarStyle.Continuous
+            };
+
+            manaBar = new ResourceBar("manaBar")
+            {
+                BackColor = Color.White,
+                ForeColor = Color.MidnightBlue,
+                Location = new System.Drawing.Point(65, 282),
+                MaximumSize = new Size(50, 196),
+                Name = "manaBar",
+                Size = new Size(50, 196),
+                Style = ProgressBarStyle.Continuous
+            };
+
+            this.mainCoverTab.Controls.Add(healthBar);
+            this.mainCoverTab.Controls.Add(manaBar);
         }
 
         private void ClientTab_Load(object sender, EventArgs e)
@@ -3365,6 +3396,11 @@ namespace Talos.Forms
         {
             var menuItem = new ToolStripMenuItem(text, null, clickHandler);
             parentMenu.DropDownItems.Add(menuItem);
+        }
+
+        private void toggleBugBtn_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

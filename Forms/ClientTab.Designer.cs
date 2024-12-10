@@ -401,7 +401,7 @@ namespace Talos.Forms
             this.label8 = new System.Windows.Forms.Label();
             this.btnCatchLeprechaun = new System.Windows.Forms.Button();
             this.MAWGroup = new System.Windows.Forms.GroupBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.mawLbl = new System.Windows.Forms.Label();
             this.ToggleMAWBtn = new System.Windows.Forms.Button();
             this.fowlGroup = new System.Windows.Forms.GroupBox();
             this.fowlLbl = new System.Windows.Forms.Label();
@@ -633,31 +633,6 @@ namespace Talos.Forms
             this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
-            // healthBar
-            // 
-            ResourceBar resourcebar = new ResourceBar("healthBar");
-            resourcebar.BackColor = Color.White;
-            resourcebar.ForeColor = Color.Crimson;
-            resourcebar.Location = new System.Drawing.Point(6, 282);
-            resourcebar.MaximumSize = new System.Drawing.Size(50, 196);
-            resourcebar.Name = "healthBar";
-            resourcebar.Size = new System.Drawing.Size(50, 196);
-            resourcebar.Style = ProgressBarStyle.Continuous;
-            healthBar = resourcebar;
-            // 
-            // manaBar
-            // 
-            ResourceBar resourcebar2 = new ResourceBar("manaBar");
-            resourcebar2.BackColor = Color.White;
-            resourcebar2.ForeColor = Color.MidnightBlue;
-            resourcebar2.Location = new System.Drawing.Point(65, 282);
-            resourcebar2.MaximumSize = new System.Drawing.Size(50, 196);
-            resourcebar2.Name = "manaBar";
-            resourcebar2.Size = new System.Drawing.Size(50, 196);
-            resourcebar2.Style = ProgressBarStyle.Continuous;
-            manaBar = resourcebar2;
-            // 
-            // 
             // clientTabControl
             // 
             this.clientTabControl.Controls.Add(this.mainCoverTab);
@@ -695,8 +670,6 @@ namespace Talos.Forms
             this.mainCoverTab.Controls.Add(this.addEnemyGroup);
             this.mainCoverTab.Controls.Add(this.coverEXPGrp);
             this.mainCoverTab.Controls.Add(this.chatPanel);
-            this.mainCoverTab.Controls.Add(this.healthBar);
-            this.mainCoverTab.Controls.Add(this.manaBar);
             this.mainCoverTab.ForeColor = System.Drawing.Color.Black;
             this.mainCoverTab.Location = new System.Drawing.Point(4, 24);
             this.mainCoverTab.Name = "mainCoverTab";
@@ -5260,7 +5233,7 @@ namespace Talos.Forms
             // 
             // MAWGroup
             // 
-            this.MAWGroup.Controls.Add(this.label1);
+            this.MAWGroup.Controls.Add(this.mawLbl);
             this.MAWGroup.Controls.Add(this.ToggleMAWBtn);
             this.MAWGroup.Location = new System.Drawing.Point(9, 198);
             this.MAWGroup.Name = "MAWGroup";
@@ -5269,15 +5242,15 @@ namespace Talos.Forms
             this.MAWGroup.TabStop = false;
             this.MAWGroup.Text = "Make A Wish Event";
             // 
-            // label1
+            // mawLbl
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(206, 32);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(177, 30);
-            this.label1.TabIndex = 156;
-            this.label1.Text = "Will walk near fountain and stop\r\nfor you to pick a prize";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.mawLbl.AutoSize = true;
+            this.mawLbl.Location = new System.Drawing.Point(206, 32);
+            this.mawLbl.Name = "label1";
+            this.mawLbl.Size = new System.Drawing.Size(177, 30);
+            this.mawLbl.TabIndex = 156;
+            this.mawLbl.Text = "Will walk near fountain and stop\r\nfor you to pick a prize";
+            this.mawLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // ToggleMAWBtn
             // 
@@ -5418,6 +5391,7 @@ namespace Talos.Forms
             this.toggleBugBtn.TabIndex = 2;
             this.toggleBugBtn.Text = "Enable";
             this.toggleBugBtn.UseVisualStyleBackColor = true;
+            this.toggleBugBtn.Click += new System.EventHandler(this.toggleBugBtn_Click);
             // 
             // comboTab
             // 
@@ -7065,7 +7039,7 @@ namespace Talos.Forms
         internal Label label8;
         internal Button btnCatchLeprechaun;
         internal GroupBox MAWGroup;
-        internal Label label1;
+        internal Label mawLbl;
         internal Button ToggleMAWBtn;
         internal GroupBox fowlGroup;
         internal Label fowlLbl;
@@ -7158,8 +7132,6 @@ namespace Talos.Forms
         internal Button spellBarIdsBtn;
         internal Button mapNodeIdsBtn;
         internal Button pursuitIdsBtn;
-        internal ResourceBar manaBar;
-        internal ResourceBar healthBar;
         internal ChatPanel chatPanel;
         internal TabPage tabPage1;
         private TextBox spellName;
@@ -7197,5 +7169,6 @@ namespace Talos.Forms
         internal CheckBox deformCbox;
         internal CheckBox autoMushroomCbox;
         internal ComboBox mushroomCombox;
+
     }
 }
