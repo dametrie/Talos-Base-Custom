@@ -532,6 +532,7 @@ namespace Talos.Forms
             this.mushroomBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
             this.chatPanel = new Talos.Forms.UI.ChatPanel();
+            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -686,6 +687,7 @@ namespace Talos.Forms
             this.mainCoverTab.Controls.Add(this.addEnemyGroup);
             this.mainCoverTab.Controls.Add(this.coverEXPGrp);
             this.mainCoverTab.Controls.Add(this.chatPanel);
+            this.mainCoverTab.Controls.Add(this.chatBox);
             this.mainCoverTab.ForeColor = System.Drawing.Color.Black;
             this.mainCoverTab.Location = new System.Drawing.Point(4, 24);
             this.mainCoverTab.Name = "mainCoverTab";
@@ -6650,6 +6652,22 @@ namespace Talos.Forms
             this.chatPanel.Size = new System.Drawing.Size(508, 225);
             this.chatPanel.TabIndex = 0;
             this.chatPanel.Text = "";
+            //
+            // chatBox
+            //
+            this.chatBox.BorderStyle = BorderStyle.FixedSingle;
+            this.chatBox.Font = new Font("Segoe UI", 9f, FontStyle.Bold, GraphicsUnit.Point, (byte)0);
+            this.chatBox.ForeColor = Color.Black;
+            this.chatBox.Location = new System.Drawing.Point(121, 484);
+            this.chatBox.MaxLength = 53;
+            this.chatBox.Name = "chatBox";
+            this.chatBox.Size = new System.Drawing.Size(508, 23);
+            this.chatBox.TabIndex = 13;
+            this.chatBox.TabStop = false;
+            this.chatBox.Enter += new EventHandler(ChatBox_Enter);
+            this.chatBox.KeyDown += new KeyEventHandler(WhispShout);
+            this.chatBox.KeyPress += new KeyPressEventHandler(EscapeSay);
+            this.chatBox.Leave += new EventHandler(ChatBox_Leave);
             // 
             // ClientTab
             // 
@@ -6844,9 +6862,6 @@ namespace Talos.Forms
             this.PerformLayout();
 
         }
-
-
-
 
 
 
@@ -7347,5 +7362,6 @@ namespace Talos.Forms
         internal GroupBox parchmentMaskGroup;
         internal Label parchmentMaskLbl;
         internal Button toggleParchmentMaskBtn;
+        internal ChatBox chatBox;
     }
 }

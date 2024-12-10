@@ -106,12 +106,14 @@ namespace Talos.Forms
                 string text = AppDomain.CurrentDomain.BaseDirectory + "waypoints\\" + savedWaysLBox.SelectedItem.ToString();
                 if (File.Exists(text))
                 {
+                    Console.WriteLine("Deleting waypoint file: " + text);
                     File.Delete(text);
                 }
                 Client.ClientTab._wayFormProfiles.Remove(text);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
             }
         }
 

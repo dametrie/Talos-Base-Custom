@@ -46,6 +46,8 @@ namespace Talos.Forms
         private short testY;
         internal WayForm _wayForm = null;
 
+        internal string _lastWhispered;
+        internal int _whispIndex;
         private uint _abilityExp;
         private uint _gold;
         internal ulong _sessionExperience;
@@ -64,14 +66,9 @@ namespace Talos.Forms
 
         internal List<string> botProfiles = new List<string>();
 
-        private List<string> _chatPanelList = new List<string>
-        {
-            "",
-            "",
-            "",
-            "",
-            ""
-        };
+        private List<string> _chatPanelList = new List<string> { "", "", "", "", "" };
+        internal List<string> _recentWhispers = new List<string> { "", "", "", "", "" };
+
         internal List<string> _bashingSkillList = new List<string>();
         internal List<string> _unmaxedSkills = new List<string>();
         internal List<string> _unmaxedSpells = new List<string>();
@@ -662,39 +659,33 @@ namespace Talos.Forms
                 chatPanel.ScrollToCaret();
             }
         }
+
         internal void UpdateChatPanel(string input)
         {
-            // Use pattern matching to extract the first match from the input string
-            Match match = Regex.Match(input, @"(\[!|<!|[a-zA-Z]+)");
-
-            // If there is no match, return early
+            var match = Regex.Match(input, "(\\[!|<!|[a-zA-Z]+)");
             if (!match.Success)
-            {
                 return;
+
+            string str = match.Groups[1].Value;
+            if (str == "[!")
+                str = "!!";
+            if (str == "<!")
+                str = "!";
+
+            // Remove existing occurrence if any
+            if (_recentWhispers.Contains(str))
+            {
+                _recentWhispers.Remove(str);
             }
 
-            // Extract the matched text
-            string text = match.Groups[1].Value;
+            // Insert at the front
+            _recentWhispers.Insert(0, str);
 
-            // Replace specific patterns with their corresponding replacements
-            text = text switch
+            // Ensure the list doesn't grow beyond 5 items
+            if (_recentWhispers.Count > 5)
             {
-                "[!" => "!!",
-                "<!" => "!",
-                _ => text
-            };
-
-            // Update the chat panel list based on the extracted text
-            if (_chatPanelList.Contains(text))
-            {
-                int index = _chatPanelList.IndexOf(text);
-                ShiftListItemsDown(index);
-                _chatPanelList[0] = text;
-            }
-            else
-            {
-                ShiftListItemsDown(_chatPanelList.Count - 1);
-                _chatPanelList[0] = text;
+                _recentWhispers
+                    .RemoveAt(5);
             }
         }
 
@@ -3479,6 +3470,213 @@ namespace Talos.Forms
             _client._map.CanUseSpells = true;
             _client._spellHistory.Clear();
         }
+
+        private void EscapeSay(object sender, KeyPressEventArgs k)
+        {
+            if (k.KeyChar == '\u001B')
+            {
+                chatBox.Text = "";
+                chatBox.MaxLength = 65 - _client.Name.Length;
+                k.Handled = true;
+            }
+            else
+            {
+                if (k.KeyChar != '\r')
+                    return;
+                _client.PublicMessage((byte)0, chatBox.Text);
+                chatBox.MaxLength = 65 - _client.Name.Length;
+                chatBox.Text = "";
+            }
+        }
+
+        private void WhispShout(object sender, KeyEventArgs k)
+        {
+            if (k.KeyCode == Keys.OemQuotes && k.Shift)
+            {
+                chatBox.KeyPress -= new KeyPressEventHandler(EscapeSay);
+                chatBox.KeyDown -= new KeyEventHandler(WhispShout);
+                if (!string.IsNullOrWhiteSpace(chatBox.Text))
+                    return;
+                chatBox.MaxLength = 67;
+                chatBox.ForeColor = Color.Magenta;
+                if (!string.IsNullOrWhiteSpace(_recentWhispers[0]))
+                {
+                    chatBox.Text = "to [" + _recentWhispers[0] + "]? ";
+                    chatBox.KeyDown += new KeyEventHandler(WhispUpDown);
+                    _whispIndex = 0;
+                    k.Handled = true;
+                    k.SuppressKeyPress = true;
+                }
+                else
+                    chatBox.Text = "to []? ";
+                k.Handled = true;
+                k.SuppressKeyPress = true;
+                chatBox.KeyPress += new KeyPressEventHandler(WhispTargetEnter);
+                chatBox.SelectionStart = chatBox.Text.Length;
+            }
+            else
+            {
+                if (k.KeyCode != Keys.D1 || !k.Shift)
+                    return;
+                chatBox.KeyPress -= new KeyPressEventHandler(EscapeSay);
+                chatBox.ForeColor = Color.Red;
+                chatBox.MaxLength = 67;
+                chatBox.Text = _client.Name + "! ";
+                k.Handled = true;
+                k.SuppressKeyPress = true;
+                chatBox.KeyDown -= new KeyEventHandler(WhispShout);
+                chatBox.KeyPress += new KeyPressEventHandler(ShoutEnter);
+                chatBox.SelectionStart = chatBox.Text.Length;
+            }
+        }
+
+        private void ShoutEnter(object sender, KeyPressEventArgs k)
+        {
+            if (k.KeyChar == '\u001B')
+            {
+                chatBox.KeyPress -= new KeyPressEventHandler(ShoutEnter);
+                chatBox.MaxLength = 65 - _client.Name.Length;
+                chatBox.KeyDown += new KeyEventHandler(WhispShout);
+                chatBox.KeyPress += new KeyPressEventHandler(EscapeSay);
+                chatBox.ForeColor = Color.Black;
+                chatBox.Text = "";
+                k.Handled = true;
+            }
+            else
+            {
+                if (k.KeyChar != '\r')
+                    return;
+                _client.PublicMessage((byte)1, chatBox.Text.Replace(_client.Name + "! ", ""));
+                chatBox.Text = "";
+                chatBox.ForeColor = Color.Black;
+                k.Handled = true;
+                chatBox.KeyPress -= new KeyPressEventHandler(ShoutEnter);
+                chatBox.KeyDown += new KeyEventHandler(WhispShout);
+                chatBox.KeyPress += new KeyPressEventHandler(EscapeSay);
+                chatBox.SelectionStart = chatBox.Text.Length;
+            }
+        }
+
+        private void WhispUpDown(object sender, KeyEventArgs k)
+        {
+            if (k.KeyCode == Keys.Up)
+            {
+                string[] strArray = chatBox.Text.Replace("to [", "").Replace("]?", "").Split(new char[1]
+                {
+          ' '
+                }, 2);
+                while (string.IsNullOrWhiteSpace(_recentWhispers[_whispIndex]))
+                {
+                    ++_whispIndex;
+                    if (_whispIndex > 4)
+                        _whispIndex = 0;
+                }
+                chatBox.Text = "to [" + strArray[0] + "]? " + _recentWhispers[_whispIndex];
+                ++_whispIndex;
+                if (_whispIndex > 4)
+                    _whispIndex = 0;
+                k.Handled = true;
+                k.SuppressKeyPress = true;
+                chatBox.SelectionStart = chatBox.Text.Length;
+            }
+            else
+            {
+                if (k.KeyCode != Keys.Down)
+                    return;
+                string[] strArray = chatBox.Text.Replace("to [", "").Replace("]?", "").Split(new char[1]
+                {
+          ' '
+                }, 2);
+                while (string.IsNullOrWhiteSpace(_recentWhispers[_whispIndex]))
+                {
+                    --_whispIndex;
+                    if (_whispIndex < 0)
+                        _whispIndex = 4;
+                }
+                chatBox.Text = "to [" + strArray[0] + "]? " + _recentWhispers[_whispIndex];
+                --_whispIndex;
+                if (_whispIndex < 0)
+                    _whispIndex = 4;
+                k.Handled = true;
+                chatBox.SelectionStart = chatBox.Text.Length;
+            }
+        }
+
+        private void WhispTargetEnter(object sender, KeyPressEventArgs k)
+        {
+            if (k.KeyChar == '\u001B')
+            {
+                chatBox.KeyPress -= new KeyPressEventHandler(WhispTargetEnter);
+                chatBox.KeyDown -= new KeyEventHandler(WhispUpDown);
+                chatBox.MaxLength = 65 - _client.Name.Length;
+                chatBox.KeyDown += new KeyEventHandler(WhispShout);
+                chatBox.KeyPress += new KeyPressEventHandler(EscapeSay);
+                chatBox.ForeColor = Color.Black;
+                chatBox.Text = "";
+                k.Handled = true;
+            }
+            else
+            {
+                if (k.KeyChar != '\r')
+                    return;
+                string text = chatBox.Text;
+                if (chatBox.Text.Contains("to []? "))
+                    _lastWhispered = text.Replace("to []? ", "");
+                else if (chatBox.Text.Contains("to [" + _recentWhispers[0] + "]? ") && chatBox.Text.Length == _recentWhispers[0].Length + 7)
+                {
+                    _lastWhispered = text.Replace("to [", "").Replace("]? ", "");
+                }
+                else
+                {
+                    string[] strArray = text.Replace("to [", "").Replace("]?", "").Split(new char[1]
+                    {
+            ' '
+                    }, 2);
+                    _lastWhispered = (strArray[0] == strArray[1]) ? strArray[0] : strArray[1];
+                }
+                chatBox.Text = "- > " + _lastWhispered + ": ";
+                k.Handled = true;
+                chatBox.KeyDown -= new KeyEventHandler(WhispUpDown);
+                chatBox.KeyPress -= new KeyPressEventHandler(WhispTargetEnter);
+                chatBox.KeyPress += new KeyPressEventHandler(WhispMessageEnter);
+                chatBox.SelectionStart = chatBox.Text.Length;
+            }
+        }
+
+        private void WhispMessageEnter(object sender, KeyPressEventArgs k)
+        {
+            if (k.KeyChar == '\u001B')
+            {
+                chatBox.KeyPress -= new KeyPressEventHandler(WhispMessageEnter);
+                chatBox.MaxLength = 65 - _client.Name.Length;
+                chatBox.KeyDown += new KeyEventHandler(WhispShout);
+                chatBox.KeyPress += new KeyPressEventHandler(EscapeSay);
+                chatBox.ForeColor = Color.Black;
+                chatBox.Text = "";
+                k.Handled = true;
+            }
+            else
+            {
+                if (k.KeyChar != '\r')
+                    return;
+                _client.Whisper(_lastWhispered, chatBox.Text.Replace("- > " + _lastWhispered + ": ", ""));
+                k.Handled = true;
+                chatBox.KeyDown += new KeyEventHandler(WhispShout);
+                chatBox.KeyPress -= new KeyPressEventHandler(WhispMessageEnter);
+                chatBox.KeyPress += new KeyPressEventHandler(EscapeSay);
+                chatBox.ForeColor = Color.Black;
+                chatBox.Text = "";
+            }
+        }
+
+
+
+        private void ChatBox_Enter(object sender, EventArgs e)
+        {
+            chatBox.BackColor = SystemColors.GradientInactiveCaption;
+        }
+
+        private void ChatBox_Leave(object sender, EventArgs e) => chatBox.BackColor = Color.White;
     }
 }
 

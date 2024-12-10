@@ -385,7 +385,7 @@ namespace Talos.Base
             }
             else
             {
-                Client.PublicChat(3, "Welcome Aisling");
+                Client.PublicMessage(3, "Welcome Aisling");
                 Thread.Sleep(500);
                 return true;
             }

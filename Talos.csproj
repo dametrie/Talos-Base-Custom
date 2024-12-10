@@ -87,6 +87,9 @@
     <Compile Include="Forms\InputDialog.Designer.cs">
       <DependentUpon>InputDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\UI\ChatBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Forms\User Controls\AllyPage.cs">
       <SubType>UserControl</SubType>
     </Compile>

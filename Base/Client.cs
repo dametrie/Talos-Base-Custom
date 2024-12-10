@@ -731,7 +731,7 @@ namespace Talos.Base
             Enqueue(cp);
         }
 
-        internal void PublicChat(byte type, string message)
+        internal void PublicMessage(byte type, string message)
         {
             ClientPacket clientPacket = new ClientPacket(14);
             clientPacket.WriteByte(type);
@@ -2964,7 +2964,7 @@ namespace Talos.Base
                     }
                     else if (Location.Equals(_clientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
                     {
-                        PublicChat(3, "Enter Sewer Maze");
+                        PublicMessage(3, "Enter Sewer Maze");
                     }
                     else if (Location.Equals(_clientLocation, new Location(10000, 29, 31)) && nextLocation.MapID == 10999)
                     {
@@ -3032,7 +3032,7 @@ namespace Talos.Base
                     else if (Location.Equals(_clientLocation, new Location(8355, 32, 5)) && nextLocation.MapID == 8356)
                     {
                         Creature class8 = GetNearyByNPC("Norrie");
-                        PublicChat(0, "let me through");
+                        PublicMessage(0, "let me through");
                         while (Dialog == null)
                         {
                             Thread.Sleep(25);
@@ -3042,7 +3042,7 @@ namespace Talos.Base
                             ReplyDialog(1, class8.ID, 0, 2, 1);
                             ReplyDialog(1, class8.ID, 0, 2, 1);
                             Thread.Sleep(1000);
-                            PublicChat(0, "let me through");
+                            PublicMessage(0, "let me through");
                         }
                         ReplyDialog(1, class8.ID, 0, 2);
                         ReplyDialog(1, class8.ID, 0, 2);
@@ -3059,7 +3059,7 @@ namespace Talos.Base
                             UseItem("Yowien Headgear");
                             Thread.Sleep(1000);
                         }
-                        PublicChat(0, "graauuloow");
+                        PublicMessage(0, "graauuloow");
                         DateTime utcNow = DateTime.UtcNow;
                         while (Dialog == null)
                         {
