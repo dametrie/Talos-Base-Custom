@@ -520,6 +520,18 @@ namespace Talos.Forms
             this.expBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.mushroomBonusCooldownTimer = new System.Windows.Forms.Timer(this.components);
             this.currentAction = new System.Windows.Forms.Label();
+            this.seasonalDblGroup = new System.Windows.Forms.GroupBox();
+            this.seasonalDblLbl = new System.Windows.Forms.Label();
+            this.btnSeasonalDbl = new System.Windows.Forms.Button();
+            this.scavengerHuntGroup = new System.Windows.Forms.GroupBox();
+            this.scavengerHuntLbl = new System.Windows.Forms.Label();
+            this.btnScavengerHunt = new System.Windows.Forms.Button();
+            this.parchmentMaskGroup = new System.Windows.Forms.GroupBox();
+            this.parchmentMaskLbl = new System.Windows.Forms.Label();
+            this.btnParchmentMask = new System.Windows.Forms.Button();
+            this.candyTreatsGroup = new System.Windows.Forms.GroupBox();
+            this.candyTreatsLbl = new System.Windows.Forms.Label();
+            this.button4 = new System.Windows.Forms.Button();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -631,6 +643,10 @@ namespace Talos.Forms
             this.packetStrip.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.menuStrip.SuspendLayout();
+            this.seasonalDblGroup.SuspendLayout();
+            this.scavengerHuntGroup.SuspendLayout();
+            this.parchmentMaskGroup.SuspendLayout();
+            this.candyTreatsGroup.SuspendLayout();
             this.SuspendLayout();
             // 
             // clientTabControl
@@ -5185,6 +5201,10 @@ namespace Talos.Forms
             // 
             // mainEventsTab
             // 
+            this.mainEventsTab.Controls.Add(this.candyTreatsGroup);
+            this.mainEventsTab.Controls.Add(this.parchmentMaskGroup);
+            this.mainEventsTab.Controls.Add(this.scavengerHuntGroup);
+            this.mainEventsTab.Controls.Add(this.seasonalDblGroup);
             this.mainEventsTab.Controls.Add(this.groupBox8);
             this.mainEventsTab.Controls.Add(this.MAWGroup);
             this.mainEventsTab.Controls.Add(this.fowlGroup);
@@ -5246,7 +5266,7 @@ namespace Talos.Forms
             // 
             this.mawLbl.AutoSize = true;
             this.mawLbl.Location = new System.Drawing.Point(206, 32);
-            this.mawLbl.Name = "label1";
+            this.mawLbl.Name = "mawLbl";
             this.mawLbl.Size = new System.Drawing.Size(177, 30);
             this.mawLbl.TabIndex = 156;
             this.mawLbl.Text = "Will walk near fountain and stop\r\nfor you to pick a prize";
@@ -6491,6 +6511,135 @@ namespace Talos.Forms
             this.currentAction.Text = "Current Action: ";
             this.currentAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // seasonalDblGroup
+            // 
+            this.seasonalDblGroup.Controls.Add(this.seasonalDblLbl);
+            this.seasonalDblGroup.Controls.Add(this.btnSeasonalDbl);
+            this.seasonalDblGroup.Location = new System.Drawing.Point(9, 291);
+            this.seasonalDblGroup.Name = "seasonalDblGroup";
+            this.seasonalDblGroup.Size = new System.Drawing.Size(408, 88);
+            this.seasonalDblGroup.TabIndex = 159;
+            this.seasonalDblGroup.TabStop = false;
+            this.seasonalDblGroup.Text = "Double Bonus";
+            // 
+            // seasonalDblLbl
+            // 
+            this.seasonalDblLbl.AutoSize = true;
+            this.seasonalDblLbl.Location = new System.Drawing.Point(206, 32);
+            this.seasonalDblLbl.Name = "seasonalDblLbl";
+            this.seasonalDblLbl.Size = new System.Drawing.Size(170, 15);
+            this.seasonalDblLbl.TabIndex = 156;
+            this.seasonalDblLbl.Text = "Let\'s collect a stack of doubles!";
+            this.seasonalDblLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // btnSeasonalDbl
+            // 
+            this.btnSeasonalDbl.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSeasonalDbl.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeasonalDbl.Location = new System.Drawing.Point(25, 22);
+            this.btnSeasonalDbl.Name = "btnSeasonalDbl";
+            this.btnSeasonalDbl.Size = new System.Drawing.Size(132, 49);
+            this.btnSeasonalDbl.TabIndex = 2;
+            this.btnSeasonalDbl.Text = "Enable";
+            this.btnSeasonalDbl.UseVisualStyleBackColor = true;
+            // 
+            // scavengerHuntGroup
+            // 
+            this.scavengerHuntGroup.Controls.Add(this.scavengerHuntLbl);
+            this.scavengerHuntGroup.Controls.Add(this.btnScavengerHunt);
+            this.scavengerHuntGroup.Location = new System.Drawing.Point(423, 292);
+            this.scavengerHuntGroup.Name = "scavengerHuntGroup";
+            this.scavengerHuntGroup.Size = new System.Drawing.Size(408, 88);
+            this.scavengerHuntGroup.TabIndex = 160;
+            this.scavengerHuntGroup.TabStop = false;
+            this.scavengerHuntGroup.Text = "Oren Ball Scavenger Hunt";
+            // 
+            // scavengerHuntLbl
+            // 
+            this.scavengerHuntLbl.AutoSize = true;
+            this.scavengerHuntLbl.Location = new System.Drawing.Point(176, 24);
+            this.scavengerHuntLbl.Name = "scavengerHuntLbl";
+            this.scavengerHuntLbl.Size = new System.Drawing.Size(198, 15);
+            this.scavengerHuntLbl.TabIndex = 159;
+            this.scavengerHuntLbl.Text = "Find some items to get a ball crown!";
+            this.scavengerHuntLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // btnScavengerHunt
+            // 
+            this.btnScavengerHunt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnScavengerHunt.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnScavengerHunt.Location = new System.Drawing.Point(25, 22);
+            this.btnScavengerHunt.Name = "btnScavengerHunt";
+            this.btnScavengerHunt.Size = new System.Drawing.Size(132, 49);
+            this.btnScavengerHunt.TabIndex = 157;
+            this.btnScavengerHunt.Text = "Enable";
+            this.btnScavengerHunt.UseVisualStyleBackColor = true;
+            // 
+            // parchmentMaskGroup
+            // 
+            this.parchmentMaskGroup.BackColor = System.Drawing.Color.White;
+            this.parchmentMaskGroup.Controls.Add(this.parchmentMaskLbl);
+            this.parchmentMaskGroup.Controls.Add(this.btnParchmentMask);
+            this.parchmentMaskGroup.Location = new System.Drawing.Point(9, 385);
+            this.parchmentMaskGroup.Name = "parchmentMaskGroup";
+            this.parchmentMaskGroup.Size = new System.Drawing.Size(408, 88);
+            this.parchmentMaskGroup.TabIndex = 160;
+            this.parchmentMaskGroup.TabStop = false;
+            this.parchmentMaskGroup.Text = "Parchment Mask";
+            // 
+            // parchmentMaskLbl
+            // 
+            this.parchmentMaskLbl.Location = new System.Drawing.Point(184, 32);
+            this.parchmentMaskLbl.Name = "parchmentMaskLbl";
+            this.parchmentMaskLbl.Size = new System.Drawing.Size(218, 31);
+            this.parchmentMaskLbl.TabIndex = 156;
+            this.parchmentMaskLbl.Text = "Picks up Parchment and makes a mask! Please make inventory space!";
+            this.parchmentMaskLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // btnParchmentMask
+            // 
+            this.btnParchmentMask.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnParchmentMask.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnParchmentMask.Location = new System.Drawing.Point(25, 22);
+            this.btnParchmentMask.Name = "btnParchmentMask";
+            this.btnParchmentMask.Size = new System.Drawing.Size(132, 49);
+            this.btnParchmentMask.TabIndex = 2;
+            this.btnParchmentMask.Text = "Enable";
+            this.btnParchmentMask.UseVisualStyleBackColor = true;
+            // 
+            // candyTreatsGroup
+            // 
+            this.candyTreatsGroup.BackColor = System.Drawing.Color.White;
+            this.candyTreatsGroup.Controls.Add(this.candyTreatsLbl);
+            this.candyTreatsGroup.Controls.Add(this.button4);
+            this.candyTreatsGroup.Location = new System.Drawing.Point(423, 386);
+            this.candyTreatsGroup.Name = "candyTreatsGroup";
+            this.candyTreatsGroup.Size = new System.Drawing.Size(408, 88);
+            this.candyTreatsGroup.TabIndex = 161;
+            this.candyTreatsGroup.TabStop = false;
+            this.candyTreatsGroup.Text = "Candy Treats";
+            // 
+            // candyTreatsLbl
+            // 
+            this.candyTreatsLbl.Location = new System.Drawing.Point(179, 18);
+            this.candyTreatsLbl.Name = "candyTreatsLbl";
+            this.candyTreatsLbl.Size = new System.Drawing.Size(223, 66);
+            this.candyTreatsLbl.TabIndex = 156;
+            this.candyTreatsLbl.Text = "Picks up Candy Treats then shoves them down a little girls mug for a crappy Hallo" +
+    "ween Box. Please make inventory space for treats.";
+            this.candyTreatsLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // button4
+            // 
+            this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button4.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button4.Location = new System.Drawing.Point(25, 22);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(132, 49);
+            this.button4.TabIndex = 2;
+            this.button4.Text = "Enable";
+            this.button4.UseVisualStyleBackColor = true;
+            // 
             // ClientTab
             // 
             this.AllowDrop = true;
@@ -6674,6 +6823,12 @@ namespace Talos.Forms
             this.tabPage1.PerformLayout();
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
+            this.seasonalDblGroup.ResumeLayout(false);
+            this.seasonalDblGroup.PerformLayout();
+            this.scavengerHuntGroup.ResumeLayout(false);
+            this.scavengerHuntGroup.PerformLayout();
+            this.parchmentMaskGroup.ResumeLayout(false);
+            this.candyTreatsGroup.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -7169,6 +7324,17 @@ namespace Talos.Forms
         internal CheckBox deformCbox;
         internal CheckBox autoMushroomCbox;
         internal ComboBox mushroomCombox;
-
+        internal GroupBox seasonalDblGroup;
+        internal Label seasonalDblLbl;
+        internal Button btnSeasonalDbl;
+        internal GroupBox scavengerHuntGroup;
+        internal Label scavengerHuntLbl;
+        internal Button btnScavengerHunt;
+        internal GroupBox candyTreatsGroup;
+        internal Label candyTreatsLbl;
+        internal Button button4;
+        internal GroupBox parchmentMaskGroup;
+        internal Label parchmentMaskLbl;
+        internal Button btnParchmentMask;
     }
 }
