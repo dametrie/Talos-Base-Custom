@@ -1804,12 +1804,13 @@ namespace Talos.Base
 
         private bool PerformActions()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            _autoStaffSwitch = Client.ClientTab.autoStaffCbox.Checked;
+            _autoStaffSwitch = clientTab.autoStaffCbox.Checked;
             _fasSpiorad = Client.HasEffect(EffectsBar.FasSpiorad) || (Client.HasSpell("fas spiorad") && DateTime.UtcNow.Subtract(Client.Spellbook["fas spiorad"].LastUsed).TotalSeconds < 1.5);
             _isSilenced = Client.HasEffect(EffectsBar.Silenced);
 
@@ -1931,24 +1932,25 @@ namespace Talos.Base
 
         private bool Other()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 //Exit early if clienttab is null e.g., switching servers
                 return false;
             }
 
-            if (Client.ClientTab.deireasFaileasCbox.Checked && !Client.HasEffect(EffectsBar.DeireasFaileas))
+            if (clientTab.deireasFaileasCbox.Checked && !Client.HasEffect(EffectsBar.DeireasFaileas))
             {
                 Client.UseSpell("deireas faileas", null, _autoStaffSwitch, true);
                 return false;
             }
 
-            if (Client.ClientTab.dragonsFireCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.DragonsFire))
+            if (clientTab.dragonsFireCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.DragonsFire))
             {
                 Client.UseItem("Dragon's Fire");
             }
 
-            if (Client.ClientTab.druidFormCbox.Checked && !Client.HasEffect(EffectsBar.FeralForm) && !Client.HasEffect(EffectsBar.BirdForm) && !Client.HasEffect(EffectsBar.LizardForm) && !_swappingNecklace)
+            if (clientTab.druidFormCbox.Checked && !Client.HasEffect(EffectsBar.FeralForm) && !Client.HasEffect(EffectsBar.BirdForm) && !Client.HasEffect(EffectsBar.LizardForm) && !_swappingNecklace)
             {
                 if (!Client.UseSpell("Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Feral form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Master Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Master Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Komodas Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Komodas Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Komodas Form", null, _autoStaffSwitch, true))
                 {
@@ -1957,59 +1959,59 @@ namespace Talos.Base
                 Thread.Sleep(1000);
             }
 
-            if (Client.ClientTab.asgallCbox.Checked && !Client.HasEffect(EffectsBar.AsgallFaileas))
+            if (clientTab.asgallCbox.Checked && !Client.HasEffect(EffectsBar.AsgallFaileas))
             {
                 Client.UseSpell("asgall faileas", null, true, true);
             }
 
-            if (Client.ClientTab.perfectDefenseCbox.Checked && !Client.HasEffect(EffectsBar.PerfectDefense))
+            if (clientTab.perfectDefenseCbox.Checked && !Client.HasEffect(EffectsBar.PerfectDefense))
             {
                 Client.UseSkill("Perfect Defense");
             }
 
-            if (Client.ClientTab.aegisSphereCbox.Checked && !Client.HasEffect(EffectsBar.Armachd))
+            if (clientTab.aegisSphereCbox.Checked && !Client.HasEffect(EffectsBar.Armachd))
             {
                 Client.UseSpell("Aegis Sphere", null, false, true);
             }
 
-            if (Client.ClientTab.aoSuainCbox.Checked && Client.HasEffect(EffectsBar.BeagSuain))
+            if (clientTab.aoSuainCbox.Checked && Client.HasEffect(EffectsBar.BeagSuain))
             {
                 Client.UseSkill("ao beag suain");
             }
 
-            if (Client.ClientTab.muscleStimulantCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.FasDeireas))
+            if (clientTab.muscleStimulantCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.FasDeireas))
             {
                 Client.UseItem("Muscle Stimulant");
             }
 
-            if (Client.ClientTab.nerveStimulantCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.Beannaich))
+            if (clientTab.nerveStimulantCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.Beannaich))
             {
                 Client.UseItem("Nerve Stimulant");
             }
 
-            if (Client.ClientTab.disenchanterCbox.Checked && DateTime.UtcNow.Subtract(_lastDisenchanterCast).TotalMinutes > 6.0)
+            if (clientTab.disenchanterCbox.Checked && DateTime.UtcNow.Subtract(_lastDisenchanterCast).TotalMinutes > 6.0)
             {
                 Client.UseSpell("Disenchanter", null, _autoStaffSwitch, true);
                 Thread.Sleep(1000);
                 return false;
             }
 
-            if (Client.ClientTab.monsterCallCbox.Checked && Client._isRegistered && DateTime.UtcNow.Subtract(_lastUsedMonsterCall).TotalSeconds > 2.0 && Client.UseItem("Monster Call"))
+            if (clientTab.monsterCallCbox.Checked && Client._isRegistered && DateTime.UtcNow.Subtract(_lastUsedMonsterCall).TotalSeconds > 2.0 && Client.UseItem("Monster Call"))
             {
                 _lastUsedMonsterCall = DateTime.UtcNow;
             }
 
-            if (Client.ClientTab.mistCbox.Checked && !Client.HasEffect(EffectsBar.Mist))
+            if (clientTab.mistCbox.Checked && !Client.HasEffect(EffectsBar.Mist))
             {
                 Client.UseSpell("Mist", null, _autoStaffSwitch, true);
             }
 
-            if (Client.ClientTab.manaWardCbox.Checked)
+            if (clientTab.manaWardCbox.Checked)
             {
                 Client.UseSpell("Mana Ward", null, false, false);
             }
 
-            if (Client.ClientTab.vanishingElixirCbox.Checked && Client._isRegistered)
+            if (clientTab.vanishingElixirCbox.Checked && Client._isRegistered)
             {
                 foreach (Player ally in _nearbyAllies)
                 {
@@ -2020,7 +2022,7 @@ namespace Talos.Base
                 }
             }
 
-            if (Client.ClientTab.autoDoubleCbox.Checked && !Client.HasEffect(EffectsBar.BonusExperience) && Client._isRegistered && Client.CurrentMP > 100)
+            if (clientTab.autoDoubleCbox.Checked && !Client.HasEffect(EffectsBar.BonusExperience) && Client._isRegistered && Client.CurrentMP > 100)
             {
                 // Mapping of combobox text to the item names
                 var itemMappings = new Dictionary<string, string>
@@ -2033,20 +2035,20 @@ namespace Talos.Base
                 };
 
                 // Check for special case where additional logic is needed
-                if (Client.ClientTab.doublesCombox.Text == "Xmas 100%")
+                if (clientTab.doublesCombox.Text == "Xmas 100%")
                 {
                     var itemText = _client.HasItem("Christmas Double Exp-Ap") ? "Christmas Double Exp-Ap" : "XMas Double Exp-Ap";
-                    Client.ClientTab.UseDouble(itemText);
+                    clientTab.UseDouble(itemText);
                 }
-                else if (itemMappings.TryGetValue(Client.ClientTab.doublesCombox.Text, out var itemText))
+                else if (itemMappings.TryGetValue(clientTab.doublesCombox.Text, out var itemText))
                 {
-                    Client.ClientTab.UseDouble(itemText);
+                    clientTab.UseDouble(itemText);
                 }
 
-                Client.ClientTab.UpdateExpBonusTimer();
+               clientTab.UpdateExpBonusTimer();
             }
 
-            if (Client.ClientTab.autoMushroomCbox.Checked && !Client.HasEffect(EffectsBar.BonusMushroom) && Client._isRegistered && Client.CurrentMP > 100)
+            if (clientTab.autoMushroomCbox.Checked && !Client.HasEffect(EffectsBar.BonusMushroom) && Client._isRegistered && Client.CurrentMP > 100)
             {
                 var itemMappings = new Dictionary<string, string>
                 {
@@ -2058,23 +2060,23 @@ namespace Talos.Base
                     { "Experience Mushroom", "Experience Mushroom" }
                 };
 
-                if (Client.ClientTab.mushroomCombox.Text == "Best Available")
+                if (clientTab.mushroomCombox.Text == "Best Available")
                 {
-                    var mushrooom = Client.ClientTab.FindBestMushroomInInventory(_client);
-                    Client.ClientTab.UseMushroom(mushrooom);
+                    var mushrooom = clientTab.FindBestMushroomInInventory(_client);
+                    clientTab.UseMushroom(mushrooom);
                 }
-                else if (itemMappings.TryGetValue(Client.ClientTab.mushroomCombox.Text, out var mushroom))
+                else if (itemMappings.TryGetValue(clientTab.mushroomCombox.Text, out var mushroom))
                 {
-                    Client.ClientTab.UseMushroom(mushroom);
+                    clientTab.UseMushroom(mushroom);
                 }
 
 
-                Client.ClientTab.UpdateMushroomBonusTimer();
+                clientTab.UpdateMushroomBonusTimer();
             }
 
 
 
-            if (Client.ClientTab.regenerationCbox.Checked && (!Client.HasEffect(EffectsBar.Regeneration) || !Client.HasEffect(EffectsBar.IncreasedRegeneration)))
+            if (clientTab.regenerationCbox.Checked && (!Client.HasEffect(EffectsBar.Regeneration) || !Client.HasEffect(EffectsBar.IncreasedRegeneration)))
             {
                 if (Client.HasSpell("Increased Regeneration") && !Client.HasEffect(EffectsBar.IncreasedRegeneration))
                 {
@@ -2130,19 +2132,19 @@ namespace Talos.Base
                 }
             }
 
-            if (Client.ClientTab.mantidScentCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.MantidScent))
+            if (clientTab.mantidScentCbox.Checked && Client._isRegistered && !Client.HasEffect(EffectsBar.MantidScent))
             {
                 if (Client.UseItem("Mantid Scent") || Client.UseItem("Potent Mantid Scent"))
                 {
                     return true;
                 }
 
-                Client.ClientTab.mantidScentCbox.Checked = false;
+                clientTab.mantidScentCbox.Checked = false;
                 Client.ServerMessage((byte)ServerMessageType.Whisper, "You do not own Mantid Scent");
                 return false;
             }
 
-            if (Client.ClientTab.equipmentrepairCbox.Checked && Client.needsToRepairHammer && DateTime.UtcNow.Subtract(_hammerTimer).TotalMinutes > 40.0)
+            if (clientTab.equipmentrepairCbox.Checked && Client.needsToRepairHammer && DateTime.UtcNow.Subtract(_hammerTimer).TotalMinutes > 40.0)
             {
                 Client.UseHammer();
             }
@@ -2197,7 +2199,8 @@ namespace Talos.Base
 
         private bool FasSpiorad()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
@@ -2211,8 +2214,8 @@ namespace Talos.Base
                 {
                     int fasSpioradThreshold;
 
-                    bool isFasSpioradChecked = Client.ClientTab.fasSpioradCbox.Checked;
-                    bool isThresholdParsed = int.TryParse(Client.ClientTab.fasSpioradText.Text.Trim(), out fasSpioradThreshold);
+                    bool isFasSpioradChecked = clientTab.fasSpioradCbox.Checked;
+                    bool isThresholdParsed = int.TryParse(clientTab.fasSpioradText.Text.Trim(), out fasSpioradThreshold);
                     bool isBelowThreshold = Client.CurrentMP <= fasSpioradThreshold;
 
                     if (isFasSpioradChecked && isThresholdParsed && isBelowThreshold)
@@ -2238,12 +2241,13 @@ namespace Talos.Base
 
         private bool BeagCradh()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isBeagCradhChecked = Client.ClientTab.beagCradhCbox.Checked;
+            bool isBeagCradhChecked = clientTab.beagCradhCbox.Checked;
             bool isPlayerCursed = Client.Player.IsCursed;
 
             if (isBeagCradhChecked && !isPlayerCursed)
@@ -2278,12 +2282,13 @@ namespace Talos.Base
 
         private bool WakeScroll()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isWakeScrollChecked = Client.ClientTab.wakeScrollCbox.Checked;
+            bool isWakeScrollChecked = clientTab.wakeScrollCbox.Checked;
             bool isRegistered = Client._isRegistered;
 
             if (isWakeScrollChecked && isRegistered && _nearbyAllies.Any(player => IsAllyAffectedByPramhOrAsleep(player)))
@@ -2317,14 +2322,15 @@ namespace Talos.Base
 
         private bool AoPoison()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isAoPoisonChecked = Client.ClientTab.aoPoisonCbox.Checked;
+            bool isAoPoisonChecked = clientTab.aoPoisonCbox.Checked;
             bool isPlayerPoisoned = Client.Player.IsPoisoned;
-            bool isFungusExtractChecked = Client.ClientTab.fungusExtractCbox.Checked;
+            bool isFungusExtractChecked = clientTab.fungusExtractCbox.Checked;
             bool shouldUseFungusExtract = DateTime.UtcNow.Subtract(_lastUsedFungusBeetle).TotalSeconds > 1.0;
 
             // Process allies for Ao poison dispel
@@ -2388,15 +2394,16 @@ namespace Talos.Base
 
         private bool Aite()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isAiteChecked = Client.ClientTab.aiteCbox.Checked;
+            bool isAiteChecked = clientTab.aiteCbox.Checked;
             bool isPlayerAited = Client.Player.IsAited;
             double aiteDuration = Client.Player.GetState<double>(CreatureState.AiteDuration);
-            string aiteSpell = Client.ClientTab.aiteCombox.Text;
+            string aiteSpell = clientTab.aiteCombox.Text;
 
             if (isAiteChecked && !Client.HasEffect(EffectsBar.NaomhAite) && (!isPlayerAited || aiteDuration != 2.0))
             {
@@ -2477,15 +2484,16 @@ namespace Talos.Base
 
         private bool Fas()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isFasChecked = Client.ClientTab.fasCbox.Checked;
+            bool isFasChecked = clientTab.fasCbox.Checked;
             bool isPlayerFassed = Client.Player.IsFassed;
             double fasDuration = Client.Player.GetState<double>(CreatureState.FasDuration);
-            string fasSpell = Client.ClientTab.fasCombox.Text;
+            string fasSpell = clientTab.fasCombox.Text;
 
             if (isFasChecked && !Client.HasEffect(EffectsBar.FasNadur) && (!isPlayerFassed || fasDuration != 2.0))
             {
@@ -2498,12 +2506,13 @@ namespace Talos.Base
 
         private bool DragonScale()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isDragonScaleChecked = Client.ClientTab.dragonScaleCbox.Checked;
+            bool isDragonScaleChecked = clientTab.dragonScaleCbox.Checked;
 
             if (isDragonScaleChecked && Client._isRegistered && !Client.HasEffect(EffectsBar.Armachd))
             {
@@ -2527,19 +2536,20 @@ namespace Talos.Base
 
         private bool Dion()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isDionChecked = Client.ClientTab.dionCbox.Checked;
+            bool isDionChecked = clientTab.dionCbox.Checked;
 
             if (!isDionChecked || Client.HasEffect(EffectsBar.Dion))
             {
                 return false;
             }
 
-            string dionWhen = Client.ClientTab.dionWhenCombox.Text;
+            string dionWhen = clientTab.dionWhenCombox.Text;
             bool shouldUseSpell = false;
 
             switch (dionWhen)
@@ -2561,7 +2571,7 @@ namespace Talos.Base
                     break;
             }
 
-            if (shouldUseSpell || (Client.ClientTab.aoSithCbox.Checked && _recentlyAoSithed))
+            if (shouldUseSpell || (clientTab.aoSithCbox.Checked && _recentlyAoSithed))
             {
                 UseDionOrStone();
                 return false; // Spell used, exit the method
@@ -2578,12 +2588,13 @@ namespace Talos.Base
 
         private bool Armachd()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isArmachdChecked = Client.ClientTab.armachdCbox.Checked;
+            bool isArmachdChecked = clientTab.armachdCbox.Checked;
 
             if (isArmachdChecked && !Client.HasEffect(EffectsBar.Armachd))
             {
@@ -2631,12 +2642,13 @@ namespace Talos.Base
 
         private bool UseDionOrStone()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            string dionSpell = Client.ClientTab.dionCombox.Text;
+            string dionSpell = clientTab.dionCombox.Text;
 
             if (dionSpell == "Glowing Stone" && !RecentlyUsedGlowingStone)
             {
@@ -2656,14 +2668,15 @@ namespace Talos.Base
 
         private bool DispellPlayerCurse()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
             Player player = Client.Player;
 
-            var isDispelCurseChecked = Client.ClientTab.aoCurseCbox.Checked;
+            var isDispelCurseChecked = clientTab.aoCurseCbox.Checked;
 
             var cursesToDispel = new HashSet<string> { "cradh", "mor cradh", "ard cradh" };
 
@@ -2878,15 +2891,16 @@ namespace Talos.Base
 
         private bool BubbleBlock()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isBubbleBlockChecked = Client.ClientTab.bubbleBlockCbox.Checked;
-            bool isSpamBubbleChecked = Client.ClientTab.spamBubbleCbox.Checked;
-            bool isFollowChecked = Client.ClientTab.followCbox.Checked;
-            string walkMap = Client.ClientTab.walkMapCombox.Text;
+            bool isBubbleBlockChecked = clientTab.bubbleBlockCbox.Checked;
+            bool isSpamBubbleChecked = clientTab.spamBubbleCbox.Checked;
+            bool isFollowChecked = clientTab.followCbox.Checked;
+            string walkMap = clientTab.walkMapCombox.Text;
 
             if (isBubbleBlockChecked && isSpamBubbleChecked)
             {
@@ -2962,12 +2976,13 @@ namespace Talos.Base
         }
         private bool CastHide()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
 
-            bool isHideChecked = Client.ClientTab.hideCbox.Checked;
+            bool isHideChecked = clientTab.hideCbox.Checked;
             bool canUseSpells = Client._map.CanUseSpells;
 
             if (isHideChecked && canUseSpells)
@@ -2994,7 +3009,8 @@ namespace Talos.Base
 
         private bool CastOffensiveSpells()
         {
-            if (Client.ClientTab == null)
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
             {
                 return false;
             }
@@ -3950,12 +3966,13 @@ namespace Talos.Base
 
         private void AutoGem()
         {
-            if (Client.ClientTab == null) 
+            var clientTab = Client.ClientTab;
+            if (clientTab == null) 
             { 
                 return; 
             }
 
-            bool shouldUseGem = Client.ClientTab.autoGemCbox.Checked &&
+            bool shouldUseGem = clientTab.autoGemCbox.Checked &&
                                 Client.Experience > 4250000000U &&
                                 DateTime.UtcNow.Subtract(_lastUsedGem).TotalMinutes > 5.0;
 
@@ -3965,7 +3982,7 @@ namespace Talos.Base
             }
 
             // Determine the gem type based on the selected text, then use the gem.
-            byte choice = Client.ClientTab.expGemsCombox.Text == "Ascend HP" ? (byte)1 : (byte)2;
+            byte choice = clientTab.expGemsCombox.Text == "Ascend HP" ? (byte)1 : (byte)2;
             Client.UseExperienceGem(choice);
         }
 
@@ -3977,8 +3994,13 @@ namespace Talos.Base
         private void CheckFasSpioradRequirement()
         {
             int requiredMp;
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
+            {
+                return;
+            }
 
-            if (Client.ClientTab.fasSpioradCbox.Checked && int.TryParse(Client.ClientTab.fasSpioradText.Text.Trim(), out requiredMp) && Client.ManaPct < requiredMp)
+            if (clientTab.fasSpioradCbox.Checked && int.TryParse(clientTab.fasSpioradText.Text.Trim(), out requiredMp) && Client.ManaPct < requiredMp)
             {
                 _needFasSpiorad = true;
             }

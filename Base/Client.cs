@@ -756,6 +756,8 @@ namespace Talos.Base
 
         internal bool IsLocationSurrounded(Location location)
         {
+            if (Player == null) return false;
+
             // Early return if the player is too close to the location.
             if (Player.Location.DistanceFrom(location) <= 1)
             {

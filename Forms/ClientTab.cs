@@ -186,6 +186,35 @@ namespace Talos.Forms
             
             _client._spellTimer.Start();
 
+            _wayForm.DesktopLocation = Location;
+            if (_client._server._medWalk.ContainsKey(_client.Name) && _client._server._medWalk.ContainsKey(_client.Name))
+            {
+                walkMapCombox.Text = _client._server._medWalk[_client.Name];
+                walkSpeedSldr.Value = _client._server._medWalkSpeed[_client.Name];
+                walkSpeedSldr_Scroll(_client.ClientTab.walkSpeedSldr, new EventArgs());
+                walkBtn.Text = "Stop";
+                startStrip_Click_1(new object(), new EventArgs());
+                _client._server._medWalk.Remove(_client.Name);
+                _client._server._medWalkSpeed.Remove(_client.Name);
+            }
+            else if (_client._server._medTask.ContainsKey(_client.Name) && _client._server._medWalkSpeed.ContainsKey(_client.Name))
+            {
+                if (_client._server._medTask[_client.Name] == "bugEvent")   
+                {
+                    toggleBugBtn.Text = "Disable";
+                }
+                else
+                {
+                    followText.Text = _client._server._medTask[_client.Name];
+                    followCbox.Checked = true;
+                }
+                walkSpeedSldr.Value = _client._server._medWalkSpeed[_client.Name];
+                walkSpeedSldr_Scroll(_client.ClientTab.walkSpeedSldr, new EventArgs());
+                startStrip_Click_1(new object(), new EventArgs());
+                _client._server._medTask.Remove(_client.Name);
+                _client._server._medWalkSpeed.Remove(_client.Name);
+            }
+
             if (!Directory.Exists(profilePath))
             {
                 Directory.CreateDirectory(profilePath);
