@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Media;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using Talos.Base;
 using Talos.Enumerations;
-using Talos.Forms;
 using Talos.Objects;
+using Talos.Structs;
 
 namespace Talos.Helper
 {
@@ -613,19 +609,85 @@ namespace Talos.Helper
         }
         private void HandleStuckMessage(Client client, string message)
         {
-            Console.WriteLine("Stuck message received");
+            Console.WriteLine("Stuck message received. Current stuck counter: {0}", client._stuckCounter);
+            Console.WriteLine("Message: {0}", message);
+
             client._server.RemoveFirstCreatureToSpell(client);
             client.CastedSpell = null;
             client.CastedTarget = null;
             client._stuckCounter++;
+
+            Console.WriteLine("Incremented stuck counter to: {0}", client._stuckCounter);
+
+            // Check conditions to attempt moving out of a stuck position
             if ((client._stuckCounter > 4) && (!client.Bot._rangerNear || !client.ClientTab.rangerStopCbox.Checked))
             {
-                //ADAM insert logic to get a list of points around the carachter
-                //check for walls, check for creatures etc.
+                Console.WriteLine("Stuck counter > 4 and conditions met to attempt moving.");
+
+                Location serverLocation = client._serverLocation;
+                Console.WriteLine("Current server location: MapID={0}, X={1}, Y={2}", serverLocation.MapID, serverLocation.X, serverLocation.Y);
+
+                // Define the four adjacent tiles (up, right, down, left)
+                var adjacentLocations = new List<Location>
+                {
+                    new Location(serverLocation.MapID, (short)(serverLocation.X), (short)(serverLocation.Y - 1)),
+                    new Location(serverLocation.MapID, (short)(serverLocation.X + 1), serverLocation.Y),
+                    new Location(serverLocation.MapID, serverLocation.X, (short)(serverLocation.Y + 1)),
+                    new Location(serverLocation.MapID, (short)(serverLocation.X - 1), serverLocation.Y)
+                };
+
+                Console.WriteLine("Checking adjacent tiles for possible path:");
+                foreach (var loc in adjacentLocations)
+                {
+                    Console.WriteLine("  Checking location: MapID={0}, X={1}, Y={2}", loc.MapID, loc.X, loc.Y);
+                }
+
+                // Get all creatures nearby
+                var creatures = client.GetNearbyObjects().OfType<Creature>().ToList();
+                Console.WriteLine("Number of nearby creatures: {0}", creatures.Count);
+
+                // Check each adjacent location
+                foreach (var loc in adjacentLocations)
+                {
+                    bool isWall = client._map.Tiles[loc.Point].IsWall;
+                    bool creatureAtLoc = creatures.Any(c => c.Location == loc);
+
+                    Console.WriteLine("Evaluating location MapID={0}, X={1}, Y={2}: IsWall={3}, CreatureThere={4}", loc.MapID, loc.X, loc.Y, isWall, creatureAtLoc);
+
+                    // Ensure the tile is not a wall and no creature stands there
+                    if (!isWall && !creatureAtLoc)
+                    {
+                        Console.WriteLine("  Attempting pathfind to {0},{1}", loc.X, loc.Y);
+                        // Attempt pathfinding to that point
+                        if (client.Pathfind(loc, 0))
+                        {
+                            Console.WriteLine("  Pathfind successful. Breaking out of loop.");
+                            // If successful, stop checking other points
+                            break;
+                        }
+                        else
+                        {
+                            Console.WriteLine("  Pathfind failed at {0},{1}. Trying next location.", loc.X, loc.Y);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("  Cannot pathfind here. IsWall={0}, CreatureThere={1}", isWall, creatureAtLoc);
+                    }
+                }
             }
+            else
+            {
+                Console.WriteLine("Stuck counter <= 4 or conditions not met to attempt moving.");
+            }
+
             if (client._stuckCounter > 6)
+            {
+                Console.WriteLine("Stuck counter > 6, playing system beep.");
                 SystemSounds.Beep.Play();
+            }
         }
+
 
         private void HandleSpiritWorldMessage(Client client, string message)
         {

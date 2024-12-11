@@ -1274,7 +1274,7 @@ namespace Talos
             client._serverLocation.Y = location.Y;
             client._clientDirection = direction;
             client.LastMoved = DateTime.UtcNow;
-
+            client._stuckCounter = 0;
             client.ClientTab.DisplayMapInfoOnCover(client._map);
 
             //Console.WriteLine("[ConfirmClientWalk] Direction facing: " + client._clientDirection);

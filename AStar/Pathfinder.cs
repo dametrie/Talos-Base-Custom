@@ -230,11 +230,11 @@ internal class Pathfinder
                 InitializePathNodes(false, end, avoidWarps);
                 Console.WriteLine($"Starting pathfinding from {start} to {end}.");
 
-                if (!_pathNodes[start.X, start.Y].Walkable)
-                {
-                    Console.WriteLine("Start location is blocked.");
-                    return new Stack<Location>();
-                }
+                //if (!_pathNodes[start.X, start.Y].Walkable)
+                //{
+                //    Console.WriteLine("Start location is blocked.");
+                //    return new Stack<Location>();
+                //}
 
                 if (end.X < 0 || end.X >= _mapWidth || end.Y < 0 || end.Y >= _mapHeight)
                 {

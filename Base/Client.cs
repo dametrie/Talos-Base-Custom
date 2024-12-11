@@ -2494,14 +2494,19 @@ namespace Talos.Base
             }
 
             bool isWall = _map.IsWall(_clientLocation);
-            bool isStuck = _stuckCounter == 0 && GetNearbyObjects().OfType<Creature>().Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && (creature.Location == _clientLocation));
+            bool isStuck = GetNearbyObjects().OfType<Creature>()
+                .Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && creature.Location == _clientLocation);
+
+            Console.WriteLine("value of isStuck = " + isStuck);
 
             if ((isWall || isStuck) && (_hasWalked || _clientLocation.X == (short)0 && _clientLocation.Y == (short)0 || _serverLocation.X == (short)0 && _serverLocation.Y == (short)0))
             {
+                Console.WriteLine("first is stuck break");
                 RequestRefresh();
                 _hasWalked = false;
                 return false;
             }
+
 
             if (_clientLocation == destination)
             {
@@ -2582,8 +2587,13 @@ namespace Talos.Base
                         door.LastClicked = DateTime.UtcNow;
                     }
                 }
-                if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(npc => Location.NotEquals(loc, destination) && Location.Equals(npc.Location, loc) || (!HasEffect(Enumerations.EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(npc.SpriteID) && GetCreatureCoverage(npc).Contains(loc))))
+                if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(creature => Location.NotEquals(loc, destination) && Location.Equals(creature.Location, loc) || (!HasEffect(Enumerations.EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID) && GetCreatureCoverage(creature).Contains(loc))))
                 {
+                    if (isStuck)
+                    {
+                        Console.WriteLine($"Stuck in creature intreaction if.");
+                        break;
+                    }
                     Console.WriteLine($"Creature interaction required at {loc}, recalculating path.");
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
                     return false;
