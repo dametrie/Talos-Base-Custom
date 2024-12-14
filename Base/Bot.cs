@@ -407,7 +407,7 @@ namespace Talos.Base
         private void HandleWalkingCommand()
         {
             var clientTab = Client.ClientTab;
-            if (clientTab  != null || Client.ClientTab == null)
+            if (clientTab == null || Client.ClientTab == null)
             {
                 return;
             }
@@ -635,75 +635,7 @@ namespace Talos.Base
 
         // The Oren Ruins related methods are more complex. Each of these methods is specific
         // to a destination and handles the logic to move through the annoying Nobis rooms
-        private bool HandleOrenRuins2tack4()
-        {
-            // We'll try a direct route first, if it fails we attempt pathfinding, etc.
 
-            if (Client._map.MapID == 6530)
-            {
-                if(!TryRouteFind(new Location(6537, 65, 1)))
-                {
-                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
-                    return true;
-                }
-            }
-
-            if (Client._map.MapID == 6537 && Client._clientLocation.X < 31 && Client._clientLocation.Y < 43)
-            {
-                Client.Pathfind(new Location(6537, 0, 31), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6535 && Client._clientLocation.X > 68 && Client._clientLocation.Y < 56)
-            {
-                Client.Pathfind(new Location(6535, 74, 49), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6537 && Client._clientLocation.X < 43 && Client._clientLocation.Y > 43)
-            {
-                Client.Pathfind(new Location(6537, 14, 74), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6536 && Client._clientLocation.X < 25 && Client._clientLocation.Y < 24)
-            {
-                Client.Pathfind(new Location(6536, 0, 15), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6534 && Client._clientLocation.X > 45)
-            {
-                Client.Pathfind(new Location(6534, 74, 28), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6536 && (Client._clientLocation.X > 25 || Client._clientLocation.Y > 26) && Client._clientLocation.X < 69)
-            {
-                Client.Pathfind(new Location(6536, 72, 4), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6536 && Client._clientLocation.X > 68)
-            {
-                Client.Pathfind(new Location(6536, 69, 0), 0, true, false);
-                return true;
-            }
-
-            // If route attempts fail:
-            if (!TryRouteFind(new Location(6537, 65, 1)))
-            {
-                if (Client._map.MapID == 6537 && IsCloseTo(new Location(6537, 65, 1), 3))
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                    return true;
-                }
-                Client.RouteFind(new Location(6525, 0, 0), 0, true);
-                return true;
-            }
-
-            return false;
-        }
         private bool HandleOrenRuins3tack4()
         {
             // Oren Ruins 3-4 (MapID: 6541)
@@ -864,9 +796,74 @@ namespace Talos.Base
             return false;
         }
 
+        private bool HandleOrenRuins2tack4()
+        {
+            // Handle sub-routes within specific maps
+            if (HandleSubRouteLogic(Client._map.MapID, Client._clientLocation))
+            {
+                return true;
+            }
 
+            // Handle main routing logic
+            var ruinsMapIDs = new HashSet<int> { 6924, 6701, 6700, 6530, 6531, 6533, 6534, 6535, 6536, 6537 };
+            if (ruinsMapIDs.Contains(Client._map.MapID))
+            {
+                return TryRouteOrPathfind(new Location(6537, 65, 1));
+            }
 
+            // Handle Oren Island City
+            if (Client._map.MapID == 6228)
+            {
+                return TryRouteOrPathfind(new Location(6525, 62, 146), 4);
+            }
 
+            // Default to Oren Island City
+            if (Client._map.MapID != 6228)
+            {
+                return TryRouteOrPathfind(new Location(6228, 59, 169), 4);
+            }
+
+            return false;
+        }
+
+        private bool HandleSubRouteLogic(int mapID, Location clientLocation)
+        {
+            switch (mapID)
+            {
+                case 6537 when clientLocation.X < 31 && clientLocation.Y < 43:
+                    return Client.Pathfind(new Location(6537, 0, 31), 0, true, false);
+
+                case 6535 when clientLocation.X > 68 && clientLocation.Y < 56:
+                    return Client.Pathfind(new Location(6535, 74, 49), 0, true, false);
+
+                case 6537 when clientLocation.X < 43 && clientLocation.Y > 43:
+                    return Client.Pathfind(new Location(6537, 14, 74), 0, true, false);
+
+                case 6536 when clientLocation.X < 25 && clientLocation.Y < 24:
+                    return Client.Pathfind(new Location(6536, 0, 15), 0, true, false);
+
+                case 6534 when clientLocation.X > 45:
+                    return Client.Pathfind(new Location(6534, 74, 28), 0, true, false);
+
+                case 6536 when (clientLocation.X > 25 || clientLocation.Y > 26) && clientLocation.X < 69:
+                    return Client.Pathfind(new Location(6536, 72, 4), 0, true, false);
+
+                case 6536 when clientLocation.X > 68:
+                    return Client.Pathfind(new Location(6536, 69, 0), 0, true, false);
+
+                case 6537 when IsCloseTo(new Location(6537, 65, 1), 3):
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        private bool TryRouteOrPathfind(Location target, short distance = 0)
+        {
+            return TryRouteFind(target) || Client.Pathfind(target, distance, true, false);
+        }
         // Utility methods to reduce repeated code
         private bool TryRouteFind(Location loc, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)
         {
