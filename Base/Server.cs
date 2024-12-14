@@ -1270,10 +1270,19 @@ namespace Talos
 
             //client._clientLocation.X = location.X; // Uncommenting these makes pathfinding spazz
             //client._clientLocation.Y = location.Y; // because the bot thinks we are at a location before we are
+
+            Location playerLocation = client.Player.Location;
+            playerLocation.X = location.X;
+            playerLocation.Y = location.Y;
+            client.Player.Location = playerLocation;
+            client.Player.LastStep = client.Player.LastStep;
+
             client._serverLocation.X = location.X;
             client._serverLocation.Y = location.Y;
             client._clientDirection = direction;
+            client.LastStep = DateTime.UtcNow;
             client.LastMoved = DateTime.UtcNow;
+
             client._stuckCounter = 0;
             client.ClientTab.DisplayMapInfoOnCover(client._map);
 
@@ -1315,7 +1324,7 @@ namespace Talos
             if (client.WorldObjects[id] is Player player)
             {
                 player.Location = location; // Make sure this is happening for players too
-                //Console.WriteLine($"[ConfirmCreatureWalk] Updated Player {player.Name}'s location to {player.Location} at {DateTime.UtcNow}");
+                Console.WriteLine($"[ConfirmCreatureWalk] {client.Name} Updated Player {player.Name}'s location to {player.Location} at {DateTime.UtcNow}");
 
                 if (!client.NearbyPlayers.ContainsKey(player.Name) && !client.NearbyGhosts.ContainsKey(player.Name))
                 {

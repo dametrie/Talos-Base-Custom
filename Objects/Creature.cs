@@ -20,6 +20,7 @@ namespace Talos.Objects
         public bool IsActive { get; set; } = true; // Default to active when created
         public DateTime LastSeen { get; set; } = DateTime.UtcNow;
         internal Direction Direction { get; set; }
+        internal DateTime LastStep { get; set; }
 
         internal Dictionary<ushort, DateTime> SpellAnimationHistory { get; set; }
         internal Dictionary<ushort, DateTime> SourceAnimationHistory { get; set; }

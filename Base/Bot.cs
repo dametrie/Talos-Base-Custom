@@ -839,7 +839,7 @@ namespace Talos.Base
                         {
                             if (distance > followDistance)
                             {
-                                Console.WriteLine($"[FollowWalking] Lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
+                                Console.WriteLine($"[FollowWalking] [{Client.Name}] Lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
                                 Client._confirmBubble = false;
                                 Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                     && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -848,7 +848,7 @@ namespace Talos.Base
                         }
                         else if (distance > followDistance)
                         {
-                            Console.WriteLine($"[FollowWalking] Non-lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
+                            Console.WriteLine($"[FollowWalking] [{Client.Name}] Non-lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
                             Client._confirmBubble = false;
                             Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                 && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -856,7 +856,7 @@ namespace Talos.Base
                         }
                         else
                         {
-                            Console.WriteLine($"[FollowWalking] else block triggered, setting _isWalking to false");
+                            Console.WriteLine($"[FollowWalking] [{Client.Name}] else block triggered, setting _isWalking to false");
                             Client._isWalking = false;
                         }
 
@@ -896,14 +896,12 @@ namespace Talos.Base
             {
                 return false;
             }
-            Console.WriteLine($"[UnStucker] method was triggered");
             
             if (DateTime.UtcNow.Subtract(leader.GetState<DateTime>(CreatureState.LastStep)).TotalSeconds > 5.0
                 && leader.Location.MapID == Client._map.MapID
                 && (DateTime.UtcNow.Subtract(_lastEXP).TotalSeconds > 5.0
                 || DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 10.0))
             {
-
                 // Get nearby object points (creatures with type Merchant or Aisling)
                 HashSet<Location> objectPoints = (from c in Client.GetNearbyObjects().OfType<Creature>()
                                                   where c != null &&
@@ -914,23 +912,34 @@ namespace Talos.Base
                 // Get warp points
                 List<Location> warps = Client.GetAllWarpPoints(leader.Location);
 
-                // Convert kvp.Key (Point) to Location using the leader's MapID
+                // Build a list of all reachable (non-wall) tiles on the leader's current map, excluding warp tiles,
+                // object-occupied tiles, and the leader's own current position.
                 List<Location> list = (from kvp in Server._maps[leader.Location.MapID].Tiles
                                        where !kvp.Value.IsWall
-                                             && !warps.Contains(new Location(leader.Location.MapID, kvp.Key)) // Convert Point to Location
-                                             && !objectPoints.Contains(new Location(leader.Location.MapID, kvp.Key)) // Convert Point to Location
+                                             && !warps.Contains(new Location(leader.Location.MapID, kvp.Key))
+                                             && !objectPoints.Contains(new Location(leader.Location.MapID, kvp.Key))
                                              && kvp.Key != leader.Location.Point
                                        select new Location(leader.Location.MapID, kvp.Key)).ToList();
 
-                // Determine the flood fill threshold
+                // Determine the flood fill threshold based on the number of available locations.
+                // This threshold helps decide if the area around the leader is sufficiently navigable.
+                // It is calculated as 1% of the total reachable tiles but constrained between 5 and 25
+                // to maintain a reasonable minimum and maximum threshold.  
                 int val = list.Count / 100;
                 int num = Math.Max(5, Math.Min(val, 25));
 
-                // Perform flood fill and check if the result meets the criteria
+                // Perform a flood fill algorithm starting from the leader's location to identify the
+                // connected region of accessible tiles. The flood fill is limited to a maximum of 26 tiles
+                // to prevent excessive computation and ensure performance remains optimal.
+                // The result is compared against the threshold to determine if the navigable area meets
+                // the required criteria for safe movement. If the count of connected tiles is less than
+                // or equal to the threshold, it indicates limited navigable space
                 bool flag = list.FloodFill(leader.Location).Take(26).Count() <= num;
 
                 if (flag)
                 {
+                    Console.WriteLine($"[UnStucker] flag was triggered");
+
                     // Select a random location from the list
                     Random random = new Random();
                     Location location = list.OrderBy(_ => random.Next()).FirstOrDefault();
@@ -1414,6 +1423,10 @@ namespace Talos.Base
         private void UpdateWalkButton(Location targetLocation)
         {
             var clientTab = Client.ClientTab;
+            if (clientTab == null)
+            {
+                return;
+            }
 
             if (!clientTab.walkMapCombox.Text.Contains("Nobis") && ShouldProceedWithNavigation(targetLocation))
             {
