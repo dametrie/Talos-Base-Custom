@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Media;
@@ -54,6 +55,7 @@ namespace Talos.Base
         internal bool _hasRescue;
 
         internal byte _fowlCount;
+        internal bool _receivedDblBonus = false;
         internal int currentWay;
 
         internal DateTime _lastEXP = DateTime.MinValue;
@@ -159,22 +161,138 @@ namespace Talos.Base
             AddTask(new BotLoop(BotLoop));
             AddTask(new BotLoop(SoundLoop));
             AddTask(new BotLoop(WalkLoop));
-            AddTask(new BotLoop(Misc));
+            AddTask(new BotLoop(AutomatedTasks));
         }
 
-        private void Misc()
+        private void AutomatedTasks()
         {
             while (!_shouldThreadStop)
             {
-                //Console.WriteLine("[MiscLoop] Pulse");
+                //Console.WriteLine("[AutomatedTasks] Pulse");
                 //TavalyWallHacks(); //Adam Fix
-                MonsterForm();
+                try
+                {
+                    Client client = this.Client;
+                    if (client != null)
+                    {
+                        if (client.ClientTab != null)
+                        {
+                            MonsterForm();
+                            //Bashing();
 
-                Thread.Sleep(500); // Add a small sleep to avoid flooding the CPU default: 100
+                            if ((!_rangerNear || !Client.ClientTab.rangerStopCbox.Checked) && !Client._exchangeOpen)
+                            {
+                                HolidayEvents();
+                                //ItemFinding();
+                                //TreasureChests();
+                                Thread.Sleep(80);
+                            }
+                            Thread.Sleep(100);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[AutomatedTasks] Exception occurred: {ex.ToString()}");
+                }
             }
-
         }
 
+        private void HolidayEvents()
+        {
+            RetrieveDoubles();
+        }
+
+        private void RetrieveDoubles()
+        {
+            {
+                int targetMapID = 3271;
+                Location targetLocation = new Location(3271, 43, 58);
+                string npcName = "Frosty3";
+
+                // Adjust based on the calendar month
+                switch (DateTime.Now.Month)
+                {
+                    case 12: // December
+                        targetMapID = 3271;
+                        targetLocation = new Location(3271, 43, 58);
+                        npcName = "Frosty3";
+                        break;
+
+                    case 2: // February
+                        targetMapID = 3043;
+                        targetLocation = new Location(3043, 20, 24);
+                        npcName = "Aidan";
+                        break;
+
+                    default:
+                        Console.WriteLine("[HolidayEvents] Cannot retrieve doubles during this month.");
+                        Client.ServerMessage((byte)ServerMessageType.Whisper, "Cannot retrieve doubles during this month.");
+                        return;
+                }
+
+                // Logic to retrieve doubles
+                if (Client.ClientTab != null && Client.ClientTab.toggleSeaonalDblBtn.Text == "Disable")
+                {
+                    if (!_receivedDblBonus)
+                    {
+                        // Check if we are on the target map and close to the target location
+                        if (Client._map.MapID == targetMapID && Client._serverLocation.DistanceFrom(targetLocation) <= 2)
+                        {
+                            Creature creature = Client.GetNearyByNPC(npcName);
+                            if (creature != null)
+                            {
+                                Console.WriteLine($"[HolidayEvents] Retrieved NPC Name: {creature.Name}, ID: {creature.ID}");
+                                Console.WriteLine($"[HolidayEvents] Clicking creature");
+                                Client.ClickObject(creature.ID);
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[HolidayEvents] Creature was null");
+                                return;
+                            }
+                            Thread.Sleep(1000);
+                            Console.WriteLine($"[HolidayEvents] Hitting escape key");
+                            Client.EscapeKey();
+                            Console.WriteLine($"[HolidayEvents] Setting boolean to true");
+                            _receivedDblBonus = true;
+                            Console.WriteLine($"[HolidayEvents] Sleeping for 1 s");
+                            Thread.Sleep(1000);
+                        }
+                        else // We need to walk to the target location
+                        {
+                            Console.WriteLine($"[HolidayEvents] Routing to target location: {targetLocation}");
+                            Client.RouteFind(targetLocation, 0, false, true, true);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        // Move to the next stage based on the map and location
+                        if (Client._map.MapID != 6925)
+                        {
+                            Console.WriteLine($"[HolidayEvents] Routing to Loures Harbor");
+                            Client.RouteFind(new Location(6925, 41, 4), 0, false, true, true);
+                        }
+                        else
+                        {
+                            if (Client._serverLocation.DistanceFrom(new Location(6925, 41, 4)) <= 2)
+                            {
+                                Console.WriteLine($"[HolidayEvents] We are done!");
+                                Client.ClientTab.toggleSeaonalDblBtn.Text = "Enable";
+                                SystemSounds.Beep.Play();
+                                Client.FlashWindowEx(Process.GetProcessById(Client.processId).MainWindowHandle);
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[HolidayEvents] Moving closer to (41, 4)");
+                                Client.RouteFind(new Location(6925, 41, 4), 0, false, true, true);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         private void TavalyWallHacks()
         {
             //Adam Fix
@@ -231,9 +349,11 @@ namespace Talos.Base
 
         private bool IsNotInFriendList(Player player)
         {
-            if (_client.ClientTab != null)
+            var clientTab = Client.ClientTab;
+
+            if (clientTab != null || _client.ClientTab != null)
             {
-                return !_client.ClientTab.friendList.Items.OfType<string>().Any(friend => string.Equals(friend, player.Name, StringComparison.OrdinalIgnoreCase));
+                return !clientTab.friendList.Items.OfType<string>().Any(friend => string.Equals(friend, player.Name, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
@@ -264,11 +384,16 @@ namespace Talos.Base
         {
             //var start = DateTime.UtcNow;
             //Console.WriteLine($"WalkActions started at {start:HH:mm:ss.fff}");
+            var clientTab = Client.ClientTab;
+            if (clientTab == null || Client.ClientTab == null)
+            {
+                return;
+            }
 
             _nearbyPlayers = Client.GetNearbyPlayers();
             _nearbyValidCreatures = Client.GetNearbyValidCreatures(12);
             var shouldWalk = !_dontWalk &&
-                (!Client.ClientTab.rangerStopCbox.Checked || !_rangerNear);
+                (!clientTab.rangerStopCbox.Checked || !_rangerNear);
 
             if (shouldWalk)
             {
@@ -281,15 +406,21 @@ namespace Talos.Base
 
         private void HandleWalkingCommand()
         {
-            string comboBoxText = Client.ClientTab.walkMapCombox.Text;
-            bool followChecked = Client.ClientTab.followCbox.Checked;
-            string followName = Client.ClientTab.followText.Text;
+            var clientTab = Client.ClientTab;
+            if (clientTab  != null || Client.ClientTab == null)
+            {
+                return;
+            }
+
+            string comboBoxText = clientTab.walkMapCombox.Text;
+            bool followChecked = clientTab.followCbox.Checked;
+            string followName = clientTab.followText.Text;
 
             if (followChecked && !string.IsNullOrEmpty(followName))
             {
                 FollowWalking(followName);
             }
-            else if (Client.ClientTab.walkBtn.Text == "Stop")
+            else if (clientTab.walkBtn.Text == "Stop")
             {
                 RefreshLastStep();
 
@@ -1452,6 +1583,11 @@ namespace Talos.Base
 
         private void HandleDumbMTGWarp()
         {
+            if (Client._map == null)
+            {
+                return;
+            }
+
             //The warp into Mt. Giragan 1 is stupid and sometimes drops you in the warp to the world server
             if (Client._map.MapID.Equals(2120)) //Giragan
             {
@@ -4194,9 +4330,16 @@ namespace Talos.Base
 
         private void Loot()
         {
-            bool isPickupGoldChecked = Client.ClientTab.pickupGoldCbox.Checked;
-            bool isPickupItemsChecked = Client.ClientTab.pickupItemsCbox.Checked;
-            bool isDropTrashChecked = Client.ClientTab.dropTrashCbox.Checked;
+            var clientTab = Client.ClientTab;
+
+            if (clientTab == null || Client.ClientTab == null)
+            {
+                return;
+            }
+
+            bool isPickupGoldChecked = clientTab.pickupGoldCbox.Checked;
+            bool isPickupItemsChecked = clientTab.pickupItemsCbox.Checked;
+            bool isDropTrashChecked = clientTab.dropTrashCbox.Checked;
 
             if (!isPickupGoldChecked && !isPickupItemsChecked && !isDropTrashChecked)
             {

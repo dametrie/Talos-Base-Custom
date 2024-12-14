@@ -2501,7 +2501,7 @@ namespace Talos.Base
             bool isStuck = GetNearbyObjects().OfType<Creature>()
                 .Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && creature.Location == _clientLocation);
 
-            Console.WriteLine($"[Pathfind] [{this.Name}] value of isStuck = " + isStuck);
+            //Console.WriteLine($"[Pathfind] [{this.Name}] value of isStuck = " + isStuck);
 
             if ((isWall || isStuck) && (_hasWalked || _clientLocation.X == (short)0 && _clientLocation.Y == (short)0 || _serverLocation.X == (short)0 && _serverLocation.Y == (short)0))
             {
@@ -2976,6 +2976,11 @@ namespace Talos.Base
                             _server._medTask[Name] = "bugEvent";
                             _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
                         }
+                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = "vDayEvent";
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
                     }
                     else if (Location.Equals(_clientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
                     {
@@ -3029,6 +3034,11 @@ namespace Talos.Base
                         if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
                         {
                             _server._medTask[Name] = "bugEvent";
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = "vDayEvent";
                             _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
                         }
                     }
@@ -3134,9 +3144,11 @@ namespace Talos.Base
                         ReplyDialog(1, npc.ID, 0, 2, 1);
                         ReplyDialog(1, npc.ID, 0, 2);
                     }
+
                 }
-                catch
+                catch(Exception ex)
                 {
+                    Console.WriteLine($"[WarpWithNPC] Exception occurred: {ex.ToString()}");
                 }
             }
         }

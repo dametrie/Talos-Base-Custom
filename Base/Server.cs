@@ -1324,7 +1324,7 @@ namespace Talos
             if (client.WorldObjects[id] is Player player)
             {
                 player.Location = location; // Make sure this is happening for players too
-                Console.WriteLine($"[ConfirmCreatureWalk] {client.Name} Updated Player {player.Name}'s location to {player.Location} at {DateTime.UtcNow}");
+                //Console.WriteLine($"[ConfirmCreatureWalk] {client.Name} Updated Player {player.Name}'s location to {player.Location} at {DateTime.UtcNow}");
 
                 if (!client.NearbyPlayers.ContainsKey(player.Name) && !client.NearbyGhosts.ContainsKey(player.Name))
                 {
@@ -2143,12 +2143,12 @@ namespace Talos
                             }
                             if (npcDialog == "You legs are the strongest.  You enemies will be scattered.")
                             {
-                                //client.Tasks.bool_36 = true;
+                                client.Bot._circle1 = true;
                                 return false;
                             }
                             if (npcDialog == "Over that left door, you can be born a Monk.  You will be strong in working with the Nature.  You will save the people in danger, and only you will be able to increase other peoples' mana.")
                             {
-                                //client.Tasks.bool_37 = true;
+                                client.Bot._circle2 = true;
                                 return false;
                             }
                             if (!client.Bot._hasWhiteDugon && CONSTANTS.WHITE_DUGON_RESPONSES.TryGetValue(npcDialog, out str5))

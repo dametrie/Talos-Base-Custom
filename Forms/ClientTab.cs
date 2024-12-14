@@ -203,6 +203,10 @@ namespace Talos.Forms
                 {
                     toggleBugBtn.Text = "Disable";
                 }
+                if (_client._server._medTask[_client.Name] == "vDayEvent")
+                {
+                    toggleSeaonalDblBtn.Text = "Disable";
+                }
                 else
                 {
                     followText.Text = _client._server._medTask[_client.Name];
