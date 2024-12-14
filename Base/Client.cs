@@ -133,7 +133,7 @@ namespace Talos.Base
         internal bool _confirmBubble;
         internal bool isStatusUpdated;
         internal bool _recentlyCrashered;
-        internal bool _unmaxedBashingSkillsLoaded = false;
+        internal bool _bashingSkillsLoaded = false;
         internal bool _unmaxedSpellsLoaded = false;
         internal bool _unmaxedSkillsLoaded = false;
 
@@ -456,7 +456,11 @@ namespace Talos.Base
                     return 52800 - (255 - num) * 300;
 
                 case 3783935686: //nuadhaich
+                case 1649558369: //Nuadhiach Le Cheile
                     return 88000 - (255 - num) * 500;
+
+                case 1445356977: //Leigheas
+                    return 264000 - (255 - num) * 1000;
 
                 case 4167026527: //Cold Blood
                     return 500 * Ability;
@@ -1882,7 +1886,7 @@ namespace Talos.Base
             _unmaxedSkillsLoaded = true;
         }
 
-        internal void LoadUnmaxedBashingSkills()
+        internal void LoadBashingSkills()
         {
             short num = 15;
             short num2 = 20;
@@ -1900,7 +1904,7 @@ namespace Talos.Base
                     }
                 }
             }
-            _unmaxedBashingSkillsLoaded = true;
+            _bashingSkillsLoaded = true;
         }
 
         internal void LoadUnmaxedSpells()
@@ -2484,10 +2488,10 @@ namespace Talos.Base
 
             if (NearbyHiddenPlayers.Count > 0 || _isCasting)
             {
-                Console.WriteLine($"Cannot walk because NearbyHiddenPlayers count is {NearbyHiddenPlayers.Count} or is casting {_isCasting}");
+                Console.WriteLine($"[Pathfind] [{this.Name}] Cannot walk because NearbyHiddenPlayers count is {NearbyHiddenPlayers.Count} or is casting {_isCasting}");
                 if (!_isWalking)
                 {
-                    Console.WriteLine("Not currently walking.");
+                    Console.WriteLine($"[Pathfind] [{this.Name}] Not currently walking.");
                     return false;
                 }
                 _isCasting = false;
@@ -2497,11 +2501,11 @@ namespace Talos.Base
             bool isStuck = GetNearbyObjects().OfType<Creature>()
                 .Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && creature.Location == _clientLocation);
 
-            Console.WriteLine("value of isStuck = " + isStuck);
+            Console.WriteLine($"[Pathfind] [{this.Name}] value of isStuck = " + isStuck);
 
             if ((isWall || isStuck) && (_hasWalked || _clientLocation.X == (short)0 && _clientLocation.Y == (short)0 || _serverLocation.X == (short)0 && _serverLocation.Y == (short)0))
             {
-                Console.WriteLine("first is stuck break");
+                Console.WriteLine($"[Pathfind] [{this.Name}] isWall or isStuck, refreshing. Setting _hasWalked to false and returning false");
                 RequestRefresh();
                 _hasWalked = false;
                 return false;
@@ -2514,7 +2518,7 @@ namespace Talos.Base
                 {
                     if (_stuckCounter == 0)
                     {
-                        Console.WriteLine("Refreshing client due to timeout or refresh needed.");
+                        Console.WriteLine($"[Pathfind] [{this.Name}] Refreshing client due to timeout or refresh needed.");
                         RequestRefresh();
                     }
                     _hasWalked = false;
@@ -2536,14 +2540,14 @@ namespace Talos.Base
 
             if (Equals(_clientLocation, destination))
             {
-                Console.WriteLine("Destination reached.");
+                Console.WriteLine($"[Pathfind] [{this.Name}] Destination reached.");
                 RequestRefresh();
                 return true;
             }
 
             if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
             {
-                Console.WriteLine("New destination or empty path stack. Calculating new path.");
+                Console.WriteLine($"[Pathfind] [{this.Name}] New destination or empty path stack. Calculating new path.");
                 _lastDestination = destination;
                 pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
 
@@ -2556,7 +2560,7 @@ namespace Talos.Base
                 {
                     return false;
                 }
-                Console.WriteLine("Location difference detected, requesting refresh.");
+                Console.WriteLine($"[Pathfind] [{this.Name}] Location difference detected, requesting refresh.");
                 RequestRefresh();
                 _hasWalked = false;
                 return false;
@@ -2564,7 +2568,7 @@ namespace Talos.Base
 
             if (pathStack.Count == 0)
             {
-                Console.WriteLine("Path stack is empty, no further movement possible.");
+                Console.WriteLine($"[Pathfind] [{this.Name}] Path stack is empty, no further movement possible.");
                 RequestRefresh();
                 return false;
             }
@@ -2579,10 +2583,10 @@ namespace Talos.Base
                 Door door = Doors.Values.FirstOrDefault(d => d.Location.Equals(loc));
                 if (door != null)
                 {
-                    Console.WriteLine($"Door at {loc}, Closed: {door.Closed}, RecentlyClicked: {door.RecentlyClicked}");
+                    Console.WriteLine($"[Pathfind] [{this.Name}] Door at {loc}, Closed: {door.Closed}, RecentlyClicked: {door.RecentlyClicked}");
                     if (door.Closed && !door.RecentlyClicked)
                     {
-                        Console.WriteLine("Attempting to click door.");
+                        Console.WriteLine($"[Pathfind] [{this.Name}] Attempting to click door.");
                         ClickObject(loc);
                         door.LastClicked = DateTime.UtcNow;
                     }
@@ -2591,10 +2595,10 @@ namespace Talos.Base
                 {
                     if (isStuck)
                     {
-                        Console.WriteLine($"Stuck in creature intreaction if.");
+                        Console.WriteLine($"[Pathfind] [{this.Name}] Stuck in creature intreaction if statement.");
                         break;
                     }
-                    Console.WriteLine($"Creature interaction required at {loc}, recalculating path.");
+                    Console.WriteLine($"[Pathfind] [{this.Name}] Creature interaction required at {loc}, recalculating path.");
                     pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
                     return false;
                 }
@@ -2606,7 +2610,7 @@ namespace Talos.Base
                 pathStack.Pop();
                 if (pathStack.Count == 0)
                 {
-                    Console.WriteLine("Path complete. Destination reached.");
+                    Console.WriteLine($"[Pathfind] [{this.Name}] Path complete. Destination reached.");
                     return true;
                 }
                 nextPosition = pathStack.Peek();
@@ -2615,12 +2619,12 @@ namespace Talos.Base
 
             if (nextPosition.DistanceFrom(_clientLocation) != 1)
             {
-                Console.WriteLine($"Unexpected distance to next position {nextPosition}, recalculating path.");
+                Console.WriteLine($"[Pathfind] [{this.Name}] Unexpected distance to next position {nextPosition}, recalculating path.");
                 if (nextPosition.DistanceFrom(_clientLocation) > 2 && _hasWalked)
                 {
                     if (_stuckCounter == 0)
                     {
-                        Console.WriteLine("Refreshing client due to unexpected position distance.");
+                        Console.WriteLine($"[Pathfind] [{this.Name}] Refreshing client due to unexpected position distance.");
                         RequestRefresh();
                     }
                     _hasWalked = false;
@@ -2662,15 +2666,15 @@ namespace Talos.Base
         {
             try
             {
-                Console.WriteLine($"***Starting RouteFind to {destination}");
+                Console.WriteLine($"[RouteFind] [{this.Name}] Starting RouteFind to {destination}");
                 if (_server._stopWalking)
                 {
-                    Console.WriteLine("***Not supposed to walk.");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Not supposed to walk.");
                     return false;
                 }
 
                 Location currentLocation = new Location(_map.MapID, _clientLocation.X, _clientLocation.Y);
-                Console.WriteLine($"***Current location: {currentLocation}");
+                Console.WriteLine($"[RouteFind] [{this.Name}] Current location: {currentLocation}");
                 Location adjustedDestination;
                 //adjust for followdistance?
                 if (ClientTab.followCbox.Checked)
@@ -2692,7 +2696,7 @@ namespace Talos.Base
                     {
                         Bot._circle2 = true;
                     }
-                    Console.WriteLine("***Already at destination.");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Already at destination.");
                     routeStack.Clear();
                     return false;
                 }
@@ -2705,7 +2709,7 @@ namespace Talos.Base
 
                 if (Location.NotEquals(_routeDestination, adjustedDestination) || routeStack.Count == 0)
                 {
-                    Console.WriteLine("***Finding new route.");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Finding new route.");
                     _routeDestination = adjustedDestination;
                     routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
                 }
@@ -2717,7 +2721,7 @@ namespace Talos.Base
 
                 if (routeStack.Count == 0)
                 {
-                    Console.WriteLine("***Route not found, initializing new RouteFinder.");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Route not found, initializing new RouteFinder.");
                     RouteFinder = new RouteFinder(_server, this);
                     _routeDestination = adjustedDestination;
                     _lastClickedWorldMap = DateTime.MinValue;
@@ -2735,30 +2739,29 @@ namespace Talos.Base
 
                 if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
                 {
-                    Console.WriteLine("***routeStack.Count > 1 & nextLocaiton = _serverLocation");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] routeStack.Count > 1 & nextLocaiton = _serverLocation");
                     routeStack.Pop();
                     nextLocation = routeStack.Peek();
                 }
 
                 if (_worldMap != null)
                 {
-                    Console.WriteLine("***World map is not null, processing world map navigation.");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] World map is not null, processing world map navigation.");
                     List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
                     if (DateTime.UtcNow.Subtract(_lastClickedWorldMap).TotalSeconds < 1.0)
                     {
-                        Console.WriteLine("***DateTime.UtcNow.Subtract(dateTime_1).TotalSeconds < 1.0");
                         return false;
                     }
                     foreach (Location location in list)
                     {
-                        Console.WriteLine($"***Checking world map node for location {location}");
+                        Console.WriteLine($"[RouteFind] [{this.Name}] Checking world map node for location {location}");
 
                         foreach (WorldMapNode node in _worldMap.Nodes)
                         {
-                            Console.WriteLine($"***Checking node {node.Location}");
+                            Console.WriteLine($"[RouteFind] [{this.Name}] Checking node {node.Location}");
                             if (node.MapID == location.MapID)
                             {
-                                Console.WriteLine($"***Need to click world map");
+                                Console.WriteLine($"[RouteFind] [{this.Name}] Need to click world map");
                                 _lastClickedWorldMap = DateTime.UtcNow;
                                 ClickWorldMap(node.MapID, node.Location);
                                 return true;
@@ -2767,11 +2770,11 @@ namespace Talos.Base
                     }
                     foreach (WorldMapNode node in _worldMap.Nodes)
                     {
-                        Console.WriteLine($"***[2]Checking node {node.Location}");
+                        Console.WriteLine($"[RouteFind] [{this.Name}] [2]Checking node {node.Location}");
 
                         if (node.MapID == nextLocation.MapID)
                         {
-                            Console.WriteLine($"***[2]Need to click world map");
+                            Console.WriteLine($"[RouteFind] [{this.Name}] [2]Need to click world map");
                             _lastClickedWorldMap = DateTime.UtcNow;
                             ClickWorldMap(node.MapID, node.Location);
                             return true;
@@ -2783,7 +2786,7 @@ namespace Talos.Base
                 {
                     if (!_server._maps.TryGetValue(_map.MapID, out Map value))
                     {
-                        Console.WriteLine("***Map not found in server maps. Clearing routeStack.");
+                        Console.WriteLine($"[RouteFind] [{this.Name}] Map not found in server maps. Clearing routeStack.");
                         routeStack.Clear();
                         return false;
                     }
@@ -2791,7 +2794,7 @@ namespace Talos.Base
                     {
                         if (!value.WorldMaps.TryGetValue(_serverLocation.Point, out _worldMapNodeList))
                         {
-                            Console.WriteLine($"***Need to refresh");
+                            Console.WriteLine($"[RouteFind] [{this.Name}] Need to refresh");
                             RequestRefresh();
                             return false;
                         }
@@ -2799,14 +2802,14 @@ namespace Talos.Base
                         {
                             if (worldMapNode.MapID == nextLocation.MapID)
                             {
-                                Console.WriteLine($"***maps are equal");
+                                Console.WriteLine($"[RouteFind] [{this.Name}] maps are equal");
                                 return false;
                             }
                         }
                     }
                     if (value.Exits.TryGetValue(_clientLocation.Point, out Warp warp) && warp.TargetMapID == nextLocation.MapID)
                     {
-                        Console.WriteLine("***Warping with NPC");
+                        Console.WriteLine($"[RouteFind] [{this.Name}] Warping with NPC");
                         WarpWithNPC(nextLocation);
                         RequestRefresh();
                         return true;
@@ -2814,23 +2817,23 @@ namespace Talos.Base
                     routeStack.Clear();
                     return false;
                 }
-                Console.WriteLine($"***About to call TryWalkLocation with distance value of: {distance}");
+                Console.WriteLine($"[RouteFind] [{this.Name}] About to call TryWalkLocation with distance value of: {distance}");
                 if (!Pathfind(nextLocation, distance, shouldBlock, avoidWarps = true))
                 {
                     if (_map.Name.Contains("Threshold"))
                     {
-                        Console.WriteLine("***Threshold map detected, attempting to walk south.");
+                        Console.WriteLine($"[RouteFind] [{this.Name}] Threshold map detected, attempting to walk south.");
                         Walk(Direction.South);
                         Thread.Sleep(1000);
                         return true;
                     }
-                    Console.WriteLine("***TryWalkToLocation failed, returning false.");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] TryWalkToLocation failed, returning false.");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("***Exception in RouteFind. Refreshing.");
+                Console.WriteLine($"[RouteFind] [{this.Name}] Exception in RouteFind. Refreshing.");
                 Console.WriteLine(ex.ToString());
                 Console.WriteLine("***");
                 RequestRefresh();
@@ -2838,10 +2841,10 @@ namespace Talos.Base
             }
             if (routeStack.Count <= 0)
             {
-                Console.WriteLine("***Route stack empty, returning false.");
+                Console.WriteLine($"[RouteFind] [{this.Name}] Route stack empty, returning false.");
                 return false;
             }
-            Console.WriteLine($"***Returning true");
+
             return true;
         }
         private Location GetValidLocationNearTarget(Location targetLocation, short followDistance)

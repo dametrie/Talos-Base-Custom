@@ -27,7 +27,7 @@ namespace Talos.Forms
 
         private void OnlyDisplaySpellsWeHave()
         {
-            SetupComboBox(dbIocCombox, new[] { "nuadhaich", "ard ioc", "ard ioc comlha", "mor ioc", "mor ioc comlha", "ioc", "beag ioc" }, dbIocCbox, dbIocNumPct);
+            SetupComboBox(dbIocCombox, new[] { "Leigheas", "nuadhaich", "Nuadhiach Le Cheile", "ard ioc", "ard ioc comlha", "mor ioc", "mor ioc comlha", "ioc", "beag ioc" }, dbIocCbox, dbIocNumPct);
             SetupComboBox(dbFasCombox, new[] { "ard fas nadur", "mor fas nadur", "fas nadur", "beag fas nadur" }, dbFasCbox);
             SetupComboBox(dbAiteCombox, new[] { "ard naomh aite", "mor naomh aite", "naomh aite", "beag naomh aite" }, dbAiteCbox);
 

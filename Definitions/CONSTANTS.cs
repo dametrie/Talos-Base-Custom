@@ -74,6 +74,7 @@ namespace Talos.Definitions
         {
             { "Blackstar", new ushort[] { 529 } } // dont allow casting on chickens in blackstar
         };
+
         public static readonly IReadOnlyDictionary<string, string> WHITE_DUGON_RESPONSES = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             {"A bat flutters", "*patience*"},

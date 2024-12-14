@@ -930,9 +930,9 @@ namespace Talos
             {
                 client.LoadUnmaxedSpells();
             }
-            if (!client._unmaxedBashingSkillsLoaded)
+            if (!client._bashingSkillsLoaded)
             {
-                client.LoadUnmaxedBashingSkills();
+                client.LoadBashingSkills();
             }
 
             return true;

@@ -352,20 +352,41 @@ namespace Talos.Base
                 case 6525: // Oren Island Ruins0
                     return HandleOrenIslandRuins0(currentLocation);
 
-                case 3938: // Loures Storage 12
-                    return HandleLouresStorage12(currentLocation);
+                default:
+                    return false; // Not handled here
+            }
+        }
 
-                case 3920: // Gladiator Arena Entrance
-                    return HandleGladiatorArenaEntrance(currentLocation);
+        private bool HandleDestinationSpecificActions(Location destination)
+        {
+            switch (destination.MapID)
+            {
+                case 424: // Rucesion Black Market
+                    return HandleBlackMarket();
 
                 case 3012: // Loures Castle Way
-                    return HandleLouresCastleWay(currentLocation);
+                    return HandleLouresCastleWay();
 
-                case 10265: // Hwarone City
-                    return HandleHwaroneCity(currentLocation);
+                case 3938: // Loures Storage 12
+                    return HandleLouresStore12();
 
-                case 424: // Rucesion Empty Room 1
-                    return HandleRucesionEmptyRoom1(currentLocation);
+                case 3950: // Gladiator Arena Entrance
+                    return HandleGladiatorArenaEntrance();
+
+                case 6537: // Oren Ruins 2-4
+                    return HandleOrenRuins2tack4();
+
+                case 6541: // Oren Ruins 3-4
+                    return HandleOrenRuins3tack4();
+
+                case 6538: // Oren Ruins 1-2
+                    return HandleOrenRuins1tack2();
+
+                case 6534: // Oren Ruins 2-1
+                    return HandleOrenRuins2tack1();
+
+                case 10265: // Hwarone City, with the ultimate destination of Fire Canyon
+                    return HandleFireCanyon();
 
                 default:
                     return false; // Not handled here
@@ -375,7 +396,6 @@ namespace Talos.Base
         // Below are the helper methods for each map or destination.
         // Each returns true if it handled the action (meaning it performed
         // some routing or updated the UI and then returned early).
-
         private bool HandleOrenIslandRuins0(Location currentLocation)
         {
             if (currentLocation.AbsoluteXY(32, 23) > 2)
@@ -390,96 +410,101 @@ namespace Talos.Base
                 return true;
             }
         }
-        private bool HandleLouresStorage12(Location currentLocation)
+        private bool HandleLouresStore12()
         {
-            if (currentLocation.AbsoluteXY(7, 13) > 2)
+            if (Client._map.MapID == 3938)
             {
-                Client.Pathfind(new Location(3938, 7, 13), 0, true, false);
-                return true;
+                if (Client._clientLocation.AbsoluteXY(7, 13) > 2)
+                {
+                    Client.Pathfind(new Location(3938, 7, 13), 0, true, false);
+                    return true;
+                }
+                else
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
             }
             else
-            {
-                Client.ClientTab.walkBtn.Text = "Walk";
-                return true;
-            }
+                return false;
         }
-        private bool HandleGladiatorArenaEntrance(Location currentLocation)
+        private bool HandleGladiatorArenaEntrance()
         {
-            if (currentLocation.AbsoluteXY(13, 12) > 2)
+            if (Client._map.MapID == 3950)
             {
-                Client.Pathfind(new Location(3920, 13, 12), 0, true, false);
-                return true;
+                if (Client._clientLocation.AbsoluteXY(13, 12) > 2)
+                {
+                    Client.Pathfind(new Location(3950, 13, 12), 0, true, false);
+                    return true;
+                }
+                else
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
             }
             else
-            {
-                Client.ClientTab.walkBtn.Text = "Walk";
-                return true;
-            }
+                return false;
         }
-        private bool HandleLouresCastleWay(Location currentLocation)
+        private bool HandleLouresCastleWay()
         {
-            if (currentLocation.AbsoluteXY(15, 0) > 2)
+            if (Client._map.MapID == 3012)
             {
-                Client.Pathfind(new Location(3012, 15, 0), 0, true, false);
-                return true;
+                if (Client._clientLocation.AbsoluteXY(15, 0) > 2)
+                {
+                    Client.Pathfind(new Location(3012, 15, 0), 0, true, false);
+                    return true;
+                }
+                else
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
             }
             else
-            {
-                Client.ClientTab.walkBtn.Text = "Walk";
-                return true;
-            }
+                return false;
         }
-        private bool HandleHwaroneCity(Location currentLocation)
+        private bool HandleFireCanyon()
         {
-            if (currentLocation.AbsoluteXY(93, 48) > 2)
+            if (Client._map.MapID == 10265)
             {
-                Client.Pathfind(new Location(10265, 93, 48), 0, true, false);
-                return true;
+                if (Client._clientLocation.AbsoluteXY(93, 48) > 2)
+                {
+                    // Actually puts us in Hwarone City Entrance
+                    Client.Pathfind(new Location(10265, 93, 48), 0, true, false);
+                    return true;
+                }
+                else
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
             }
             else
-            {
-                Client.ClientTab.walkBtn.Text = "Walk";
-                return true;
-            }
+                return false;
         }
-        private bool HandleRucesionEmptyRoom1(Location currentLocation)
+        private bool HandleBlackMarket()
         {
-            if (currentLocation.AbsoluteXY(6, 6) > 2)
+            if (Client._map.MapID == 424)
             {
-                Client.Pathfind(new Location(424, 6, 6), 0, true, false);
-                return true;
+                if (Client._clientLocation.AbsoluteXY(6, 6) > 2)
+                {
+                    Client.Pathfind(new Location(424, 6, 6), 0, true, false);
+                    return true;
+                }
+                else
+                {
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+                }
             }
             else
-            {
-                Client.ClientTab.walkBtn.Text = "Walk";
-                return true;
-            }
-        }
-        private bool HandleDestinationSpecificActions(Location destination)
-        {
-            switch (destination.MapID)
-            {
-                case 6537: // Oren Ruins 2-4
-                    return HandleOrenRuins2tack4(destination);
-
-                case 6541: // Oren Ruins 3-4
-                    return HandleOrenRuins3tack4(destination);
-
-                case 6538: // Oren Ruins 1-2
-                    return HandleOrenRuins1tack2(destination);
-
-                case 6534: // Oren Ruins 2-1
-                    return HandleOrenRuins2tack1(destination);
-
-                default:
-                    return false; // Not handled here
-            }
+                return false;
         }
 
         // The Oren Ruins related methods are more complex. Each of these methods is specific
         // to a destination and handles the logic to move through the annoying Nobis rooms
-
-        private bool HandleOrenRuins2tack4(Location destination)
+        private bool HandleOrenRuins2tack4()
         {
             // We'll try a direct route first, if it fails we attempt pathfinding, etc.
 
@@ -548,7 +573,7 @@ namespace Talos.Base
 
             return false;
         }
-        private bool HandleOrenRuins3tack4(Location destination)
+        private bool HandleOrenRuins3tack4()
         {
             // Oren Ruins 3-4 (MapID: 6541)
 
@@ -611,7 +636,7 @@ namespace Talos.Base
 
             return false;
         }
-        private bool HandleOrenRuins1tack2(Location destination)
+        private bool HandleOrenRuins1tack2()
         {
             // Oren Ruins 1-2 (MapID: 6538)
 
@@ -668,7 +693,7 @@ namespace Talos.Base
 
             return false;
         }
-        private bool HandleOrenRuins2tack1(Location destination)
+        private bool HandleOrenRuins2tack1()
         {
             // Oren Ruins 2-1 (MapID: 6534)
 
@@ -710,6 +735,7 @@ namespace Talos.Base
 
 
 
+
         // Utility methods to reduce repeated code
         private bool TryRouteFind(Location loc, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)
         {
@@ -737,6 +763,7 @@ namespace Talos.Base
             if (short.TryParse(input, out short parsedMapID))
             {
                 mapID = parsedMapID;
+                destination = new Location(mapID, 0, 0);
                 return true;
             }
 
@@ -752,7 +779,7 @@ namespace Talos.Base
             return DestinationMap.TryGetValue(fnvHash, out var loc) ? loc : default;
         }
 
-        private void FollowWalking(string playerName)
+        private void FollowWalking(string followName)
         {
             try
             {
@@ -761,9 +788,9 @@ namespace Talos.Base
                     return;
 
                 // Try to identify the leader (bot or player)
-                Client botClient = _server.GetClient(playerName);
-                Player leader = botClient?.Player ?? Client.WorldObjects.Values.OfType<Player>()
-                    .FirstOrDefault(p => p.Name.Equals(playerName, StringComparison.CurrentCultureIgnoreCase));
+                Client botClientToFollow = _server.GetClient(followName);
+                Player leader = botClientToFollow?.Player ?? Client.WorldObjects.Values.OfType<Player>()
+                    .FirstOrDefault(p => p.Name.Equals(followName, StringComparison.CurrentCultureIgnoreCase));
 
                 if (_client != null && (_client.ClientTab._isBashing || !_client._stopped))
                 {
@@ -777,14 +804,14 @@ namespace Talos.Base
                     if (_leaderID.HasValue && Client.LastSeenLocations.TryGetValue(_leaderID.Value, out Location lastSeenLocation))
                     {
                         // If we have the last seen location, use it
-                        Console.WriteLine($"Using last seen location for player {playerName}: {lastSeenLocation}");
+                        Console.WriteLine($"[FollowWalking] [{Client.Name}] Using last seen location for player {followName}: {lastSeenLocation}");
                         Client._isWalking = Client.RouteFind(lastSeenLocation)
                                             && !Client.ClientTab.oneLineWalkCbox.Checked
                                             && !Server._toggleWalk;
                     }
                     else
                     {
-                        Console.WriteLine("No known location for player.");
+                        Console.WriteLine($"[FollowWalking] [{Client.Name}] No known location for player.");
                         Client._isWalking = false;
                         return;
                     }
@@ -794,7 +821,10 @@ namespace Talos.Base
                     // We have a visible leader, proceed with following logic
                     _leaderID = leader.ID;
                     Location leaderLocation = leader.Location;
+                    Console.WriteLine($"[FollowWalking] [{Client.Name}] Current leader name: {leader.Name}, ID: {_leaderID}, location: {leaderLocation}");
+
                     int distance = leaderLocation.DistanceFrom(Client._clientLocation);
+                    Console.WriteLine($"[FollowWalking] [{Client.Name}] is {distance} spaces from leader named: {leader.Name}");
 
                     // UnStucker logic if necessary
                     if (!UnStucker(leader))
@@ -809,7 +839,7 @@ namespace Talos.Base
                         {
                             if (distance > followDistance)
                             {
-                                //Console.WriteLine($"[Lockstep Mode] Distance ({distance}) exceeds follow distance ({followDistance}). Initiating route find.");
+                                Console.WriteLine($"[FollowWalking] Lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
                                 Client._confirmBubble = false;
                                 Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                     && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -818,7 +848,7 @@ namespace Talos.Base
                         }
                         else if (distance > followDistance)
                         {
-                            //Console.WriteLine($"[Non-Lockstep Mode] Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
+                            Console.WriteLine($"[FollowWalking] Non-lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
                             Client._confirmBubble = false;
                             Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                 && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -826,6 +856,7 @@ namespace Talos.Base
                         }
                         else
                         {
+                            Console.WriteLine($"[FollowWalking] else block triggered, setting _isWalking to false");
                             Client._isWalking = false;
                         }
 
@@ -837,7 +868,7 @@ namespace Talos.Base
                             //Console.WriteLine("Bubble conditions met, checking for refresh.");
                             if (Client._serverLocation != Client._clientLocation)
                             {
-                                Console.WriteLine("Client position differs from server, requesting refresh.");
+                                Console.WriteLine($"[FollowWalking] [{Client.Name}] Client position differs from server, requesting refresh.");
                                 Client._confirmBubble = false;
                                 Client.RequestRefresh(true);
                             }
@@ -865,7 +896,8 @@ namespace Talos.Base
             {
                 return false;
             }
-
+            Console.WriteLine($"[UnStucker] method was triggered");
+            
             if (DateTime.UtcNow.Subtract(leader.GetState<DateTime>(CreatureState.LastStep)).TotalSeconds > 5.0
                 && leader.Location.MapID == Client._map.MapID
                 && (DateTime.UtcNow.Subtract(_lastEXP).TotalSeconds > 5.0
@@ -1008,7 +1040,7 @@ namespace Talos.Base
                     (_server.ClientStateList.ContainsKey(Client.Name)
                     && _server.ClientStateList[Client.Name] == CharacterState.WaitForSpells))
                 {
-                    Console.WriteLine("No waypoints available or client in WaitForSpells state.");
+                    Console.WriteLine($"[Waypoints] [{Client.Name}] No waypoints available or client in WaitForSpells state.");
                     return;
                 }
 
@@ -1021,7 +1053,7 @@ namespace Talos.Base
                     if (skip && Client.GetNearbyObjects().OfType<Creature>()
                         .Any(creature => creature.Type != CreatureType.WalkThrough && creature.Location.Point == ways[currentWay].Point))
                     {
-                        Console.WriteLine($"Skipping waypoint {currentWay} due to nearby creature.");
+                        Console.WriteLine($"[Waypoints] [{Client.Name}] Skipping waypoint {currentWay} due to nearby creature.");
                         currentWay++;
                     }
                     else
@@ -1032,7 +1064,7 @@ namespace Talos.Base
                         if (DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 2.5 &&
                             Client._clientLocation.Point.Distance(_doorPoint) < 6)
                         {
-                            Console.WriteLine("Near door, adjusting walking speed.");
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] Near door, adjusting walking speed.");
                             Client._walkSpeed = Client._walkSpeed > 350.0 ? 350.0 : Client._walkSpeed;
                         }
                         else
@@ -1057,7 +1089,7 @@ namespace Talos.Base
                                 nearbyCreatures = nearbyCreatures
                                     .Where(creature => !creature.IsDioned)
                                     .ToList();
-                                Console.WriteLine("Filtered out dioned creatures");
+                                Console.WriteLine($"[Waypoints] [{Client.Name}] Filtered out dioned creatures");
                             }
 
 
@@ -1135,7 +1167,7 @@ namespace Talos.Base
                         // Check if the bot needs to backtrack
                         if (BackTracking())
                         {
-                            Console.WriteLine("Backtracking logic triggered, stopping waypoint navigation.");
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] Backtracking logic triggered, stopping waypoint navigation.");
                             return;
                         }
 
@@ -1146,7 +1178,7 @@ namespace Talos.Base
                                 || client.HasEffect(EffectsBar.BeagSuain) || client.HasEffect(EffectsBar.Skull)
                                 || client.Player.IsSkulled)
                             {
-                                Console.WriteLine("Cannot move due to effect, stopping waypoint navigation.");
+                                Console.WriteLine($"[Waypoints] [{Client.Name}] Cannot move due to effect, stopping waypoint navigation.");
                                 return;
                             }
                         }
@@ -1254,49 +1286,45 @@ namespace Talos.Base
 
                         if (distanceToTarget > waysForm.distanceUpDwn.Value)
                         {
-                            Console.WriteLine($"[WAYPOINTS] Distance to target ({distanceToTarget}) is greater than allowed value ({waysForm.distanceUpDwn.Value}). Initiating RouteFind.");
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target ({distanceToTarget}) is greater than allowed value ({waysForm.distanceUpDwn.Value}). Initiating RouteFind.");
 
-                            if (this.Client._map.MapID == targetWay.MapID)
-                            {
-                                Console.WriteLine($"[WAYPOINTS] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
+
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
                                 
-                                bool routeFindResult = this.Client.RouteFind(targetWay, (short)waysForm.distanceUpDwn.Value);
-                                Console.WriteLine($"[WAYPOINTS] RouteFind to {targetWay} returned: {routeFindResult}");
+                            bool routeFindResult = this.Client.RouteFind(targetWay, (short)waysForm.distanceUpDwn.Value);
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] RouteFind to {targetWay} returned: {routeFindResult}");
 
-                                bool canWalk = !this.Client.ClientTab.oneLineWalkCbox.Checked && !this.Server._toggleWalk;
-                                Console.WriteLine($"[WAYPOINTS] Can walk conditions - oneLineWalkCbox.Checked: {this.Client.ClientTab.oneLineWalkCbox.Checked}, _toggleWalk: {this.Server._toggleWalk}, Result: {canWalk}");
+                            bool canWalk = !this.Client.ClientTab.oneLineWalkCbox.Checked && !this.Server._toggleWalk;
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] Can walk conditions - oneLineWalkCbox.Checked: {this.Client.ClientTab.oneLineWalkCbox.Checked}, _toggleWalk: {this.Server._toggleWalk}, Result: {canWalk}");
 
-                                this.Client._isWalking = routeFindResult && canWalk;
-                                Console.WriteLine($"[WAYPOINTS] Client._isWalking set to: {this.Client._isWalking}");
-                            }
-                            else
-                            {
-                                Console.WriteLine($"[WAYPOINTS] Client MapID ({this.Client._map.MapID}) does not match Target MapID ({targetWay.MapID}). RouteFind not initiated.");
-                            }
+                            this.Client._isWalking = routeFindResult && canWalk;
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
+
+
                         }
                         else
                         {
-                            Console.WriteLine($"[WAYPOINTS] Distance to target waypoint({distanceToTarget}) is within allowed value ({waysForm.distanceUpDwn.Value}). Stopping movement.");
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target waypoint({distanceToTarget}) is within allowed value ({waysForm.distanceUpDwn.Value}). Stopping movement.");
 
                             this.Client._isWalking = false;
-                            Console.WriteLine($"[WAYPOINTS] Client._isWalking set to: {this.Client._isWalking}");
+                            Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
 
                             if (this.Client._clientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
                             {
-                                Console.WriteLine($"[WAYPOINTS] Client is within the allowed distance to the target.");
+                                Console.WriteLine($"[Waypoints] [{Client.Name}] Client is within the allowed distance to the target.");
 
                                 if (this.Client._map.MapID == targetWay.MapID)
                                 {
-                                    Console.WriteLine($"[WAYPOINTS] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
+                                    Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
 
                                     if (this.Client._serverLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
                                     {
-                                        Console.WriteLine($"[WAYPOINTS] Server's location is beyond the allowed distance. Requesting position refresh.");
+                                        Console.WriteLine($"[Waypoints] [{Client.Name}] Server's location is beyond the allowed distance. Requesting position refresh.");
                                         this.Client.RequestRefresh();
                                     }
                                     else
                                     {
-                                        Console.WriteLine($"[WAYPOINTS] Both client and server positions are within the allowed distance. Advancing to the next waypoint.");
+                                        Console.WriteLine($"[Waypoints] [{Client.Name}] Both client and server positions are within the allowed distance. Advancing to the next waypoint.");
                                         this.currentWay++;
                                     }
                                 }
@@ -1385,7 +1413,9 @@ namespace Talos.Base
        
         private void UpdateWalkButton(Location targetLocation)
         {
-            if (!Client.ClientTab.walkMapCombox.Text.Contains("Nobis") && ShouldProceedWithNavigation(targetLocation))
+            var clientTab = Client.ClientTab;
+
+            if (!clientTab.walkMapCombox.Text.Contains("Nobis") && ShouldProceedWithNavigation(targetLocation))
             {
                 UpdateButtonStateBasedOnProximity(targetLocation);
             }
@@ -1919,11 +1949,13 @@ namespace Talos.Base
             }
             else if (AllyPage.allyMICSpamRbtn.Checked)
             {
-                if (!Client.UseSpell("ard ioc comlha", null, _autoStaffSwitch, false) &&
+                if (!Client.UseSpell("Nuadhiach Le Cheile", null, _autoStaffSwitch, false) &&
+                    !Client.UseSpell("ard ioc comlha", null, _autoStaffSwitch, false) &&
                     !Client.UseSpell("mor ioc comlha", null, _autoStaffSwitch, false))
                 {
                     Client.UseSpell("ioc comlha", null, _autoStaffSwitch, false);
                 }
+
                 return false;
             }
 
@@ -2802,14 +2834,18 @@ namespace Talos.Base
 
                         //Console.WriteLine($"[CastDefensiveSpells] heal spell: {healSpell}");
 
-                        if (loopPercentThreshold == 20 && player != client.Player && (client.HasSpell("ard ioc comlha") || client.HasSpell("mor ioc comlha")))
+                        if (loopPercentThreshold == 20 && player != client.Player && (client.HasSpell("Nuadhiach Le Cheile") || client.HasSpell("ard ioc comlha") || client.HasSpell("mor ioc comlha")))
                         {
 
                             int alliesInNeed = Client.GetNearbyAllies().Count(p => p != Client.Player && IsAllyInNeed(p));
 
                             if (alliesInNeed > 2)
                             {
-                                healSpell = Client.HasSpell("ard ioc comlha") ? "ard ioc comlha" : "mor ioc comlha";
+                                healSpell = Client.HasSpell("Nuadhiach Le Cheile")
+                                            ? "Nuadhiach Le Cheile"
+                                            : Client.HasSpell("ard ioc comlha")
+                                                ? "ard ioc comlha"
+                                                : "mor ioc comhla";
                             }
                         }
 
@@ -2827,7 +2863,7 @@ namespace Talos.Base
 
                                 List<Player> playersHealed = new List<Player>();
 
-                                if (!(healSpell == "ard ioc comlha") && !(healSpell == "mor ioc comlha"))
+                                if (!(healSpell == "Nuadhiach Le Cheile") && !(healSpell == "ard ioc comlha") && !(healSpell == "mor ioc comlha"))
                                 {
                                     if (Client.UseSpell(healSpell, player, _autoStaffSwitch, false))
                                     {
@@ -3850,7 +3886,7 @@ namespace Talos.Base
 
         internal bool CalculateHitCounter(Creature creature, EnemyPage enemyPage)
         {
-            if (creature.HealthPercent == 0 && creature.SpellAnimationHistory.Count != 0 && creature._animation != 33 && DateTime.UtcNow.Subtract(creature._lastUpdate).TotalSeconds <= 1.5)
+            if (creature.HealthPercent == 0 && creature.SpellAnimationHistory.Count != 0 && creature._animation != (byte)SpellAnimation.Miss && DateTime.UtcNow.Subtract(creature._lastUpdate).TotalSeconds <= 1.5)
             {
                 return creature._hitCounter < enemyPage.expectedHitsNum.Value;
             }

@@ -277,7 +277,9 @@
             this.dbIocCombox.ForeColor = System.Drawing.Color.Black;
             this.dbIocCombox.FormattingEnabled = true;
             this.dbIocCombox.Items.AddRange(new object[] {
+            "Leigheas",
             "nuadhaich",
+            "Nuadhiach Le Cheile",
             "ard ioc",
             "ard ioc comlha",
             "mor ioc",
@@ -288,7 +290,7 @@
             this.dbIocCombox.Name = "dbIocCombox";
             this.dbIocCombox.Size = new System.Drawing.Size(121, 23);
             this.dbIocCombox.TabIndex = 6;
-            this.dbIocCombox.Text = "nuadhaich";
+            this.dbIocCombox.Text = "Leigheas";
             // 
             // dbIocCbox
             // 

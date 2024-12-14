@@ -2691,6 +2691,7 @@ namespace Talos.Forms
             this.healCombox.ForeColor = System.Drawing.Color.Black;
             this.healCombox.FormattingEnabled = true;
             this.healCombox.Items.AddRange(new object[] {
+            "Leigheas",
             "nuadhaich",
             "ard ioc",
             "mor ioc",
@@ -2702,7 +2703,7 @@ namespace Talos.Forms
             this.healCombox.Name = "healCombox";
             this.healCombox.Size = new System.Drawing.Size(121, 23);
             this.healCombox.TabIndex = 6;
-            this.healCombox.Text = "nuadhaich";
+            this.healCombox.Text = "Leigheas";
             // 
             // dionPctNum
             // 
