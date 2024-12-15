@@ -498,25 +498,25 @@ namespace Talos.Base
                 case 3012: // Loures Castle Way
                     return HandleLouresCastleWay();
 
-                case 3938: // Loures Storage 12
+                case 3938: // Loures Storage 12, to wait outside Canals
                     return HandleLouresStore12();
 
                 case 3950: // Gladiator Arena Entrance
                     return HandleGladiatorArenaEntrance();
 
-                case 6537: // Oren Ruins 2-4
-                    return HandleOrenRuins2tack4();
+                case 6534: // Oren Ruins 2-1 to wait ouside 2-5
+                    return HandleOrenRuinsWalkTo2dash5();
 
-                case 6541: // Oren Ruins 3-4
-                    return HandleOrenRuins3tack4();
+                case 6537: // Oren Ruins 2-4 to wait ouside 2-11
+                    return HandleOrenRuinsWalkTo2dash11();
 
-                case 6538: // Oren Ruins 1-2
-                    return HandleOrenRuins1tack2();
+                case 6538: // Oren Ruins 3-1 to wait ouside 3-5
+                    return HandleOrenRuinsWalkTo3dash5();
 
-                case 6534: // Oren Ruins 2-1
-                    return HandleOrenRuins2tack1();
+                case 6541: // Oren Ruins 3-4 to wait ouside 3-11
+                    return HandleOrenRuinsWalkTo3dash11();
 
-                case 10265: // Hwarone City, with the ultimate destination of Fire Canyon
+                case 10265: // Hwarone City, to wait outside Fire Canyon
                     return HandleFireCanyon();
 
                 default:
@@ -633,173 +633,184 @@ namespace Talos.Base
                 return false;
         }
 
+        #region Oren Ruins walking
         // The Oren Ruins related methods are more complex. Each of these methods is specific
         // to a destination and handles the logic to move through the annoying Nobis rooms
-
-        private bool HandleOrenRuins3tack4()
-        {
-            // Oren Ruins 3-4 (MapID: 6541)
-
-            if (Client._map.MapID == 6530)
-            {
-                if (!TryRouteFind(new Location(6541, 73, 4)))
-                {
-                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
-                    return true;
-                }
-            }
-
-            if (Client._map.MapID == 6537)
-            {
-                Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6539)
-            {
-                Client.Pathfind(new Location(6539, 53, 74), 0, true, true);
-                return true;
-            }
-
-            if (Client._map.MapID == 6538)
-            {
-                Client.Pathfind(new Location(6538, 74, 16), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6540 && Client._clientLocation.X < 4)
-            {
-                Client.Pathfind(new Location(6540, 3, 0), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6541 && Client._clientLocation.X < 28 && Client._clientLocation.Y > 63)
-            {
-                Client.Pathfind(new Location(6541, 23, 74), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6540)
-            {
-                Client.Pathfind(new Location(6540, 35, 0), 0, true, false);
-                return true;
-            }
-
-            // If route attempts fail:
-            if (!TryRouteFind(new Location(6541, 73, 4), 3))
-            {
-                if (Client._map.MapID == 6541 && IsCloseTo(new Location(6541, 73, 4), 3))
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                    return true;
-                }
-                Client.RouteFind(new Location(6525, 0, 0), 0, true);
-                return true;
-            }
-
-            return false;
-        }
-        private bool HandleOrenRuins1tack2()
-        {
-            // Oren Ruins 1-2 (MapID: 6538)
-
-            if (Client._map.MapID == 6530)
-            {
-                if (!TryRouteFind(new Location(6538, 58, 73)))
-                {
-                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
-                    return true;
-                }
-            }
-
-            if (Client._map.MapID == 6537)
-            {
-                Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6539 && Client._clientLocation.Y < 8)
-            {
-                Client.Pathfind(new Location(6539, 1, 8), 1, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6539)
-            {
-                Client.Pathfind(new Location(6539, 4, 74), 0, true, true);
-                return true;
-            }
-
-            if (Client._map.MapID == 6538 && Client._clientLocation.Y < 50)
-            {
-                Client.Pathfind(new Location(6538, 74, 47), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6540)
-            {
-                Client.Pathfind(new Location(6540, 0, 67), 0, true, false);
-                return true;
-            }
-
-            // If route attempts fail:
-            if (!TryRouteFind(new Location(6538, 58, 73), 3))
-            {
-                if (Client._map.MapID == 6538 && IsCloseTo(new Location(6538, 58, 73), 3))
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                    return true;
-                }
-                Client.RouteFind(new Location(6525, 0, 0), 0, true);
-                return true;
-            }
-
-            return false;
-        }
-        private bool HandleOrenRuins2tack1()
-        {
-            // Oren Ruins 2-1 (MapID: 6534)
-
-            if (Client._map.MapID == 6530)
-            {
-                if (!TryRouteFind(new Location(6534, 1, 36)))
-                {
-                    Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
-                    return true;
-                }
-            }
-
-            if (Client._map.MapID == 6537)
-            {
-                Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
-                return true;
-            }
-
-            if (Client._map.MapID == 6535)
-            {
-                Client.Pathfind(new Location(6535, 20, 74), 0, true, false);
-                return true;
-            }
-
-            // If route attempts fail:
-            if (!TryRouteFind(new Location(6534, 1, 36), 3))
-            {
-                if (Client._map.MapID == 6534 && IsCloseTo(new Location(6534, 1, 36), 3))
-                {
-                    Client.ClientTab.walkBtn.Text = "Walk";
-                    return true;
-                }
-                Client.RouteFind(new Location(6525, 0, 0), 0, true);
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool HandleOrenRuins2tack4()
+        private bool HandleOrenRuinsWalkTo3dash11()
         {
             // Handle sub-routes within specific maps
-            if (HandleSubRouteLogic(Client._map.MapID, Client._clientLocation))
+            if (HandleSubRouteLogicFor3dash11(Client._map.MapID, Client._clientLocation))
+            {
+                return true;
+            }
+
+            // Handle main routing logic
+            var ruinsMapIDs = new HashSet<int> { 6924, 6701, 6700, 6530, 6531, 6533, 6537, 6535, 6538, 6539, 6540, 6541 };
+            if (ruinsMapIDs.Contains(Client._map.MapID))
+            {
+                return TryRouteOrPathfind(new Location(6541, 73, 4), 3);
+            }
+
+            // Handle Oren Island City
+            if (Client._map.MapID == 6228)
+            {
+                return TryRouteOrPathfind(new Location(6525, 62, 146), 4);
+            }
+
+            // Default to Oren Island City
+            if (Client._map.MapID != 6228)
+            {
+                return TryRouteOrPathfind(new Location(6228, 59, 169), 4);
+            }
+
+            return false;
+        }
+        private bool HandleSubRouteLogicFor3dash11(int mapID, Location clientLocation)
+        {
+            switch (mapID)
+            {
+                case 6530:
+                    return Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
+
+                case 6537:
+                    return Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
+
+                case 6539:
+                    return Client.Pathfind(new Location(6539, 53, 74), 0, true, true);
+
+                case 6538:
+                    return Client.Pathfind(new Location(6538, 74, 16), 0, true, false);
+
+                case 6540 when clientLocation.X < 4:
+                    return Client.Pathfind(new Location(6540, 3, 0), 0, true, false);
+
+                case 6540:
+                    return Client.Pathfind(new Location(6540, 35, 0), 0, true, false);
+
+                case 6541 when clientLocation.X < 28 && clientLocation.Y > 63:
+                    return Client.Pathfind(new Location(6541, 23, 74), 0, true, false);
+
+                case 6541 when IsCloseTo(new Location(6541, 73, 4), 3):
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+        private bool HandleOrenRuinsWalkTo3dash5()
+        {
+            // Handle sub-routes within specific maps
+            if (HandleSubRouteLogicFor3dash5(Client._map.MapID, Client._clientLocation))
+            {
+                return true;
+            }
+
+            // Handle main routing logic
+            var ruinsMapIDs = new HashSet<int> { 6924, 6701, 6700, 6530, 6531, 6533, 6537, 6535, 6538, 6539, 6540 };
+            if (ruinsMapIDs.Contains(Client._map.MapID))
+            {
+                return TryRouteOrPathfind(new Location(6538, 58, 73), 3);
+            }
+
+            // Handle Oren Island City
+            if (Client._map.MapID == 6228)
+            {
+                return TryRouteOrPathfind(new Location(6525, 62, 146), 4);
+            }
+
+            // Default to Oren Island City
+            if (Client._map.MapID != 6228)
+            {
+                return TryRouteOrPathfind(new Location(6228, 59, 169), 4);
+            }
+
+            return false;
+        }
+        private bool HandleSubRouteLogicFor3dash5(int mapID, Location clientLocation)
+        {
+            switch (mapID)
+            {
+                case 6530:
+                    return Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
+
+                case 6537:
+                    return Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
+
+                case 6539 when clientLocation.Y < 8:
+                    return Client.Pathfind(new Location(6539, 1, 8), 1, true, false);
+
+                case 6539:
+                    return Client.Pathfind(new Location(6539, 4, 74), 0, true, true);
+
+                case 6538 when clientLocation.Y < 50:
+                    return Client.Pathfind(new Location(6538, 74, 47), 0, true, false);
+
+                case 6540:
+                    return Client.Pathfind(new Location(6540, 0, 67), 0, true, false);
+
+                case 6538 when IsCloseTo(new Location(6538, 58, 73), 3):
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+        private bool HandleOrenRuinsWalkTo2dash5()
+        {
+            // Handle sub-routes within specific maps
+            if (HandleSubRouteLogicFor2dash5(Client._map.MapID, Client._clientLocation))
+            {
+                return true;
+            }
+
+            // Handle main routing logic
+            var ruinsMapIDs = new HashSet<int> { 6924, 6701, 6700, 6530, 6531, 6533, 6534, 6535 };
+            if (ruinsMapIDs.Contains(Client._map.MapID))
+            {
+                return TryRouteOrPathfind(new Location(6534, 1, 36), 3);
+            }
+
+            // Handle Oren Island City
+            if (Client._map.MapID == 6228)
+            {
+                return TryRouteOrPathfind(new Location(6525, 62, 146), 4);
+            }
+
+            // Default to Oren Island City
+            if (Client._map.MapID != 6228)
+            {
+                return TryRouteOrPathfind(new Location(6228, 59, 169), 4);
+            }
+
+            return false;
+        }
+        private bool HandleSubRouteLogicFor2dash5(int mapID, Location clientLocation)
+        {
+            switch (mapID)
+            {
+                case 6530:
+                    return Client.Pathfind(new Location(6530, 10, 0), 0, true, false);
+
+                case 6537:
+                    return Client.Pathfind(new Location(6537, 0, 4), 0, true, false);
+
+                case 6535:
+                    return Client.Pathfind(new Location(6535, 20, 74), 0, true, false);
+
+                case 6534 when IsCloseTo(new Location(6534, 1, 36), 3):
+                    Client.ClientTab.walkBtn.Text = "Walk";
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+        private bool HandleOrenRuinsWalkTo2dash11()
+        {
+            // Handle sub-routes within specific maps
+            if (HandleSubRouteLogicFor2dash11(Client._map.MapID, Client._clientLocation))
             {
                 return true;
             }
@@ -825,8 +836,7 @@ namespace Talos.Base
 
             return false;
         }
-
-        private bool HandleSubRouteLogic(int mapID, Location clientLocation)
+        private bool HandleSubRouteLogicFor2dash11(int mapID, Location clientLocation)
         {
             switch (mapID)
             {
@@ -859,6 +869,7 @@ namespace Talos.Base
                     return false;
             }
         }
+        #endregion
 
         private bool TryRouteOrPathfind(Location target, short distance = 0)
         {
