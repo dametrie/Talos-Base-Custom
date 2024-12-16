@@ -147,6 +147,7 @@
       <DependentUpon>WayForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Helper\AnimationHandler.cs" />
+    <Compile Include="Helper\CommandManager.cs" />
     <Compile Include="Helper\CreatureStateHelper.cs" />
     <Compile Include="Helper\FormStateHelper.cs" />
     <Compile Include="Helper\UIHelper.cs" />

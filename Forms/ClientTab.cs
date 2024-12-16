@@ -600,7 +600,7 @@ namespace Talos.Forms
                 Text = name,
                 Name = name + "whatever"
             };
-            textBox.Width = (int)((double)TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
+            textBox.Width = (int)(TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
             textBox.Location = new System.Drawing.Point(point.X + 25, point.Y + 25);
             button.Location = new System.Drawing.Point(point.X, point.Y);
             button.FlatStyle = FlatStyle.Flat;
@@ -625,7 +625,7 @@ namespace Talos.Forms
                 Visible = false,
                 Text = name
             };
-            textBox.Width = (int)((double)TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
+            textBox.Width = (int)(TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
             textBox.Name = name + "whatever";
             textBox.Location = new System.Drawing.Point(point.X + 25, point.Y + 25);
             button.Location = new System.Drawing.Point(point.X, point.Y);
@@ -651,7 +651,7 @@ namespace Talos.Forms
                 Text = name,
                 Name = name + "whatever"
             };
-            textBox.Width = (int)((double)TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
+            textBox.Width = (int)(TextRenderer.MeasureText(textBox.Text, textBox.Font).Width * 1.2);
             textBox.Location = new System.Drawing.Point(point.X + 25, point.Y + 25);
             button.Location = new System.Drawing.Point(point.X, point.Y);
             button.FlatStyle = FlatStyle.Flat;
@@ -1083,12 +1083,12 @@ namespace Talos.Forms
 
         private void formCbox_CheckedChanged(object sender, EventArgs e)
         {
-            _client.InMonsterForm = (sender as CheckBox).Checked;
+            _client.SpriteOverrideEnabled = (sender as CheckBox).Checked;
             _client.DisplayAisling(_client.Player);
         }
         private void formNum_ValueChanged(object sender, EventArgs e)
         {
-            _client._monsterFormID = (ushort)(sender as NumericUpDown).Value;
+            _client._spriteOverride = (ushort)(sender as NumericUpDown).Value;
             if (formCbox.Checked)
             {
                 _client.DisplayAisling(_client.Player);
@@ -1254,7 +1254,7 @@ namespace Talos.Forms
                 try
                 {
                     bool isChargeSkillUsedRecently = _client.HasSkill("Charge") && (DateTime.UtcNow - _client.Skillbook["Charge"].LastUsed).TotalMilliseconds < 1500.0;
-                    bool isSprintPotionUsedRecently = _client.HasItem("Sprint Potion") && (DateTime.UtcNow - _client.Inventory.HasItemReturnSlot("Sprint Potion").LastUsed).TotalMilliseconds < 1500.0;
+                    bool isSprintPotionUsedRecently = _client.HasItem("Sprint Potion") && (DateTime.UtcNow - _client.Inventory.Find("Sprint Potion").LastUsed).TotalMilliseconds < 1500.0;
 
                     if (!isChargeSkillUsedRecently && !isSprintPotionUsedRecently)
                     {
@@ -1396,7 +1396,7 @@ namespace Talos.Forms
             aislingTabControl.TabPages.Add(tabPage);
             UpdateNearbyAllyTable(name);
             RefreshNearbyAllyTable();
-            _client.Bot.UpdateAllyList(ally);
+            _client.Bot.AddAlly(ally);
 
         }
 
@@ -1765,7 +1765,7 @@ namespace Talos.Forms
                     {
                         AllyPage = _client.Bot.AllyPage
                     };
-                    _client.Bot.UpdateAllyList(ally);
+                    _client.Bot.AddAlly(ally);
                 }
             }
         }
@@ -1799,7 +1799,7 @@ namespace Talos.Forms
                     {
                         AllyPage = _client.Bot.AllyPage
                     };
-                    _client.Bot.UpdateAllyList(ally);
+                    _client.Bot.AddAlly(ally);
                 }
             }
             if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
@@ -1838,7 +1838,7 @@ namespace Talos.Forms
                 {
                     AllyPage = _client.Bot.AllyPage
                 };
-                _client.Bot.UpdateAllyList(ally);
+                _client.Bot.AddAlly(ally);
             }
             if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
@@ -3214,7 +3214,7 @@ namespace Talos.Forms
             expSessionLbl.Text = "Session: " + Math.Truncate((double)_sessionExperience).ToString("N0");
             if (_sessionExperienceStopWatch.IsRunning)
             {
-                expHourLbl.Text = "EXP/hr: " + Math.Truncate((double)_sessionExperience / _sessionExperienceStopWatch.Elapsed.TotalHours).ToString("N0");
+                expHourLbl.Text = "EXP/hr: " + Math.Truncate(_sessionExperience / _sessionExperienceStopWatch.Elapsed.TotalHours).ToString("N0");
             }
             else if (_sessionExperience > 0L)
             {
@@ -3233,7 +3233,7 @@ namespace Talos.Forms
             }
             else if (_sessionAbilityStopWatch.IsRunning)
             {
-                 apHourLbl.Text = "AP/hr: " + Math.Truncate((double)(_client.AbilityExperience - _sessionAbility) / _sessionAbilityStopWatch.Elapsed.TotalHours).ToString("N0");
+                 apHourLbl.Text = "AP/hr: " + Math.Truncate((_client.AbilityExperience - _sessionAbility) / _sessionAbilityStopWatch.Elapsed.TotalHours).ToString("N0");
             }
             if (_client.Gold < _gold)
             {
@@ -3248,7 +3248,7 @@ namespace Talos.Forms
             }
             else if (_sessionGoldStopWatch.IsRunning)
             {
-                goldHourLbl.Text = "Gold/hr: " + Math.Truncate((double)(_client.Gold - _sessionGold) / _sessionGoldStopWatch.Elapsed.TotalHours).ToString("N0");
+                goldHourLbl.Text = "Gold/hr: " + Math.Truncate((_client.Gold - _sessionGold) / _sessionGoldStopWatch.Elapsed.TotalHours).ToString("N0");
             }
         }
 
@@ -3265,7 +3265,7 @@ namespace Talos.Forms
                 viewDMUCbox.Checked = false;
                 toggleDmuCbox.Checked = false;
                 //_client._server._mainForm.dressupDictionary.Clear();
-                _client.RequestRefresh(false);
+                _client.RefreshRequest(false);
             }
             else
             {
@@ -3329,7 +3329,7 @@ namespace Talos.Forms
             {
                 NativeMethods.WriteMemoryToProcess(Process.GetProcessById(_client.processId), _client.BASE_ADDRESS, _client.ADDRESS_BUFFER);
             }
-            _client.RequestRefresh();
+            _client.RefreshRequest();
         }
 
         private void ignoreCollisionCbox_CheckedChanged(object sender, EventArgs e)
@@ -3588,7 +3588,7 @@ namespace Talos.Forms
         private void btnResetAllStatus_Click(object sender, EventArgs e)
         {
             _client._isRefreshing = 0;
-            _client.needsToRepairHammer = false;
+            _client._needsToRepairHammer = false;
             _client._isCasting = false;
             _client._isWalking = false;
             _client._isBashing = false;
@@ -3609,7 +3609,7 @@ namespace Talos.Forms
             {
                 if (k.KeyChar != '\r')
                     return;
-                _client.PublicMessage((byte)0, chatBox.Text);
+                _client.PublicMessage(0, chatBox.Text);
                 chatBox.MaxLength = 65 - _client.Name.Length;
                 chatBox.Text = "";
             }
@@ -3672,7 +3672,7 @@ namespace Talos.Forms
             {
                 if (k.KeyChar != '\r')
                     return;
-                _client.PublicMessage((byte)1, chatBox.Text.Replace(_client.Name + "! ", ""));
+                _client.PublicMessage(1, chatBox.Text.Replace(_client.Name + "! ", ""));
                 chatBox.Text = "";
                 chatBox.ForeColor = Color.Black;
                 k.Handled = true;

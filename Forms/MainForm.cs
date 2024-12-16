@@ -12,6 +12,7 @@ using MapsCacheEditor;
 using Talos.Base;
 using Talos.Definitions;
 using Talos.Capricorn.IO;
+using Talos.Forms.UI;
 
 namespace Talos
 {
@@ -20,7 +21,7 @@ namespace Talos
 
         internal Server Server { get; private set; }
         internal int ThreadID { get; set; }
-        private Dictionary<Client, TabPage> _clients = new Dictionary<Client, TabPage>();
+        private Dictionary<Client, TabPage> _clientTabs = new Dictionary<Client, TabPage>();
         internal Dictionary<string, DateTime> _consecutiveLogin = new Dictionary<string, DateTime>();
         internal static Dictionary<string, DATArchive> khanFiles = new Dictionary<string, DATArchive>();
         private IntPtr _hWnd;
@@ -74,37 +75,53 @@ namespace Talos
                 Thread.Sleep(5);
             }
         }
-        internal void RemoveClient(Client client)
+        internal void RemoveClientTab(Client client)
         {
-            if (InvokeRequired) { Invoke(new Action(() => { RemoveClient(client); })); return; }
+            if (InvokeRequired) { Invoke(new Action(() => { RemoveClientTab(client); })); return; }
 
-            if (_clients.ContainsKey(client))
+            if (_clientTabs.ContainsKey(client))
             {
-                clientTabControl.Controls.Remove(_clients[client]);
-                _clients.Remove(client);
+                clientTabControl.Controls.Remove(_clientTabs[client]);
+                _clientTabs.Remove(client);
                 client.ClientTab.Dispose();
                 client.Remove();
             }
 
         }
 
-        internal void AddClient(Client client)
+        internal void AddClientTab(Client client)
         {
-            if (InvokeRequired) { Invoke(new Action(()=> { AddClient(client); })); return; }
+            if (InvokeRequired) { Invoke(new Action(()=> { AddClientTab(client); })); return; }
 
             ClientTab clientTab = new ClientTab(client)
             {
                 Dock = DockStyle.Fill
             };
+
             TabPage tabPage = new TabPage(client.Name);
             tabPage.Controls.Add(clientTab);
             clientTabControl.TabPages.Add(tabPage);
-            _clients.Add(client, tabPage);
-            lock (Server._clientListLock)
-            {
-                Server._clientList.Add(client);
-            }
 
+            _clientTabs.Add(client, tabPage);
+
+            foreach (Client otherClient in client._server._clientList)
+            {
+                Bot bot = otherClient.Bot;
+                if (bot != null && bot.AllyPage != null && otherClient != client)
+                {
+                    if (bot.IsAllyAlreadyListed(client.Name))
+                    {
+                        otherClient.ClientTab.aislingTabControl.TabPages[client.Name]?.Dispose();
+                        bot.RemoveAlly(client.Name);
+                    }
+
+                    Ally ally = new Ally(client.Name)
+                    {
+                        AllyPage = bot.AllyPage
+                    };
+                    bot.AddAlly(ally);
+                }
+            }
         }
 
 
@@ -235,7 +252,7 @@ namespace Talos
                 try
                 {
                     string str = Properties.Settings.Default.DarkAgesPath.Replace("Darkages.exe", "");
-                    foreach (string file in Directory.GetFiles(str, "khan*", (SearchOption)0))
+                    foreach (string file in Directory.GetFiles(str, "khan*", 0))
                         khanFiles.Add(file.Replace(str, ""), DATArchive.FromFile(file));
                 }
                 catch
@@ -244,7 +261,7 @@ namespace Talos
                     return;
                 }
             }
-            ThreadPool.QueueUserWorkItem((WaitCallback)(z => LaunchDarkages()));
+            ThreadPool.QueueUserWorkItem(z => LaunchDarkages());
 
         }
 

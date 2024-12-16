@@ -583,6 +583,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(782, 344);
+            this.ControlBox = false;
             this.Controls.Add(this.MoveDownBtn);
             this.Controls.Add(this.MoveUpBtn);
             this.Controls.Add(this.clearBtn);

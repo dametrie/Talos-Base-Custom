@@ -32,7 +32,7 @@ namespace Talos.Forms.UI
         internal Enemy(string name)
         {
             _name = name;
-            _spriteID = ushort.TryParse(name, out ushort result) ? result : (ushort?)null;
+            _spriteID = ushort.TryParse(name, out ushort result) ? result : null;
         }
 
         public virtual string ToString()

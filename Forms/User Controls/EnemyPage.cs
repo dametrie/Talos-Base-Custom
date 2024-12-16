@@ -163,10 +163,35 @@ namespace Talos.Forms
             if (Enemy.ToString() == "all monsters")
             {
                 Client.Bot.AllMonsters = null;
-                Client.ClientTab.monsterTabControl.TabPages.Add(Client.ClientTab.nearbyEnemyTab);
+
+                // Ensure thread access for monsterTabControl
+                if (Client.ClientTab.monsterTabControl.InvokeRequired)
+                {
+                    Client.ClientTab.monsterTabControl.Invoke(new Action(() =>
+                    {
+                        Client.ClientTab.monsterTabControl.TabPages.Add(Client.ClientTab.nearbyEnemyTab);
+                    }));
+                }
+                else
+                {
+                    Client.ClientTab.monsterTabControl.TabPages.Add(Client.ClientTab.nearbyEnemyTab);
+                }
             }
-            Parent.Dispose();
-            Client.RequestRefresh(false);
+
+            // Dispose the parent safely
+            if (Parent != null)
+            {
+                if (Parent.InvokeRequired)
+                {
+                    Parent.Invoke(new Action(() => Parent.Dispose()));
+                }
+                else
+                {
+                    Parent.Dispose();
+                }
+            }
+
+            Client.RefreshRequest(false);
         }
 
         private void priorityAddBtn_Click(object sender, EventArgs e)

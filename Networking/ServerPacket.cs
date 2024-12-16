@@ -80,7 +80,7 @@ namespace Talos.Networking
             }
 
             // Write encryption bytes
-            WriteByte((byte)(((int)a % 256) ^ 0x74));
+            WriteByte((byte)((a % 256) ^ 0x74));
             WriteByte((byte)(b ^ 0x24));
             WriteByte((byte)(((a >> 8) % 256) ^ 0x64));
         }

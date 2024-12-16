@@ -143,13 +143,13 @@ namespace Talos.Capricorn.Drawing
                         int min = Convert.ToInt32(lineSplit[0]);
                         int max = Convert.ToInt32(lineSplit[1]);
                         int pal = Convert.ToInt32(lineSplit[2]);
-                        if (min > (int)byte.MaxValue)
-                            min -= (int)byte.MaxValue;
-                        if (max > (int)byte.MaxValue)
-                            max -= (int)byte.MaxValue;
-                        if (pal > (int)byte.MaxValue)
-                            pal -= (int)byte.MaxValue;
-                        colorArray[line, index] = Color.FromArgb((int)byte.MaxValue, min, max, pal);
+                        if (min > byte.MaxValue)
+                            min -= byte.MaxValue;
+                        if (max > byte.MaxValue)
+                            max -= byte.MaxValue;
+                        if (pal > byte.MaxValue)
+                            pal -= byte.MaxValue;
+                        colorArray[line, index] = Color.FromArgb(byte.MaxValue, min, max, pal);
                     }
                 }
             }

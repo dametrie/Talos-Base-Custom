@@ -12,10 +12,13 @@ namespace Talos.Helper
 {
     internal class ActiveMessageHandler
     {
-        private static readonly ActiveMessageHandler instance = new ActiveMessageHandler();
+        private static readonly ActiveMessageHandler _instance = new ActiveMessageHandler();
         private Dictionary<string, Action<Client, string>> stringMessageHandlers;
         private Dictionary<Regex, Action<Client, Match>> regexMessageHandlers;
         private static readonly object _lock = new object();
+
+        // Public static property to provide access to the single instance
+        public static ActiveMessageHandler Instance => _instance;
 
         // Private constructor to prevent external instantiation
         private ActiveMessageHandler()
@@ -138,8 +141,7 @@ namespace Talos.Helper
 
 
 
-        // Public static property to provide access to the single instance
-        public static ActiveMessageHandler Instance => instance;
+
 
         internal bool Handle(Client client, string message)
         {
@@ -599,7 +601,7 @@ namespace Talos.Helper
 
             if (client.ClientTab.equipmentrepairCbox.Checked && durabilityPercent == 10)
             {
-                client.needsToRepairHammer = true;
+                client._needsToRepairHammer = true;
             }
         }
 
@@ -630,7 +632,7 @@ namespace Talos.Helper
                 // Define the four adjacent tiles (up, right, down, left)
                 var adjacentLocations = new List<Location>
                 {
-                    new Location(serverLocation.MapID, (short)(serverLocation.X), (short)(serverLocation.Y - 1)),
+                    new Location(serverLocation.MapID, serverLocation.X, (short)(serverLocation.Y - 1)),
                     new Location(serverLocation.MapID, (short)(serverLocation.X + 1), serverLocation.Y),
                     new Location(serverLocation.MapID, serverLocation.X, (short)(serverLocation.Y + 1)),
                     new Location(serverLocation.MapID, (short)(serverLocation.X - 1), serverLocation.Y)

@@ -272,7 +272,7 @@ namespace Talos.Cryptography
         {
             uint num = uint.MaxValue;
             for (int index = 0; index < buffer.Length; ++index)
-                num = num >> 8 ^ crc32Table[(int)num & (int)byte.MaxValue ^ (int)buffer[index]];
+                num = num >> 8 ^ crc32Table[(int)num & byte.MaxValue ^ buffer[index]];
             return num;
         }
     }

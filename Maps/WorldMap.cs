@@ -22,17 +22,17 @@ namespace Talos.Maps
         internal uint GetCRC32()
         {
             MemoryStream output = new MemoryStream();
-            BinaryWriter binaryWriter1 = new BinaryWriter((Stream)output);
+            BinaryWriter binaryWriter1 = new BinaryWriter(output);
             binaryWriter1.Write((byte)Nodes.Count);
             foreach (WorldMapNode node in Nodes)
             {
                 BinaryWriter binaryWriter2 = binaryWriter1;
                 Point position = node.Position;
-                int x = (int)position.X;
+                int x = position.X;
                 binaryWriter2.Write((short)x);
                 BinaryWriter binaryWriter3 = binaryWriter1;
                 position = node.Position;
-                int y = (int)position.Y;
+                int y = position.Y;
                 binaryWriter3.Write((short)y);
                 binaryWriter1.Write(node.Name);
                 binaryWriter1.Write(node.MapID);

@@ -138,7 +138,7 @@ namespace Talos.Base
         internal bool _unmaxedSkillsLoaded = false;
 
         internal double _walkSpeed = 150;
-        internal ushort _monsterFormID = 1;
+        internal ushort _spriteOverride = 1;
         internal bool _deformNearStrangers = false;
         internal int _spellCounter;
         private int _customSpellLineCounter;
@@ -291,10 +291,15 @@ namespace Talos.Base
             "ao pramh",
             "Leafhopper Chirp"
         }, StringComparer.CurrentCultureIgnoreCase);
+
         internal bool _stopped = false;
         internal short _previousMapID;
         internal uint _exchangeID;
-        internal bool needsToRepairHammer = false;
+        internal bool _needsToRepairHammer = false;
+        internal bool _assailNoise;
+        internal bool _ladder;
+        internal bool _chestToggle = false;
+        internal bool _raffleToggle = false;
 
         internal Pathfinder Pathfinder { get; set; }
         internal RouteFinder RouteFinder { get; set; }
@@ -317,7 +322,7 @@ namespace Talos.Base
         internal DateTime LastMoved { get; set; } = DateTime.MinValue;
         internal DateTime LastTurned { get; set; } = DateTime.MinValue;
         internal uint PlayerID { get; set; }
-        internal bool InMonsterForm { get; set; }
+        internal bool SpriteOverrideEnabled { get; set; }
         internal bool InArena
         {
             get
@@ -369,6 +374,7 @@ namespace Talos.Base
         internal uint MaximumMP { get { return Stats.MaximumMP; } set { Stats.MaximumMP = value; } }
         internal uint CurrentHP { get { return Stats.CurrentHP; } set { Stats.CurrentHP = value; } }
         internal uint CurrentMP { get { return Stats.CurrentMP; } set { Stats.CurrentMP = value; } }
+        internal byte UnspentPoints { get { return Stats.UnspentPoints; } set { Stats.UnspentPoints = value; } }
         internal uint Experience => Stats.Experience;
         internal uint AbilityExperience => Stats.AbilityExperience;
         internal uint Gold => Stats.Gold;
@@ -382,6 +388,9 @@ namespace Talos.Base
         internal bool IsSkulled => Player != null && (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Skull) || EffectsBar.Contains((ushort)Enumerations.EffectsBar.WormSkull) && Player.IsSkulled);
 
         public int CurrentWaypoint { get; internal set; }
+        public uint BaseHP { get; internal set; }
+        public uint BaseMP { get; internal set; }
+
 
         public readonly object CastLock = new object();
 
@@ -424,12 +433,10 @@ namespace Talos.Base
         internal bool GetCheats(Cheats value) => _cheats.HasFlag(value);
         internal void EnableCheats(Cheats value) => _cheats |= value;
         internal void DisableCheats(Cheats value) => _cheats &= (Cheats)(byte)(~(uint)value);
-
         internal void SetStatUpdateFlags(StatUpdateFlags flags) => Attributes(flags, Stats);
-        internal bool HasItem(string itemName) => Inventory.HasItem(itemName);
+        internal bool HasItem(string itemName) => Inventory.Contains(itemName);
         internal bool HasSkill(string skillName) => Skillbook[skillName] != null;
         internal bool HasSpell(string spellName) => Spellbook[spellName] != null;
-
         internal int CalculateHealAmount(string spellName)
         {
             int num = (Stats.CurrentWis >= 99) ? Stats.CurrentWis : 99;
@@ -506,7 +513,6 @@ namespace Talos.Base
             }
             return false;
         }
-
         internal void UseHammer()
         {
             Bot._dontWalk = true;
@@ -538,14 +544,13 @@ namespace Talos.Base
                 }
 
                 ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, (ushort)(Dialog.DialogID + 1U));
-                needsToRepairHammer = false;
+                _needsToRepairHammer = false;
                 Bot._hammerTimer = DateTime.UtcNow;
                 Bot._dontWalk = false;
                 Bot._dontCast = false;
                 Bot._dontBash = false;
             }
         }
-
         internal List<GroundItem> GetNearbyGroundItems(int distance = 12, params ushort[] sprites)
         {
             var spriteSet = new HashSet<ushort>(sprites);
@@ -647,8 +652,7 @@ namespace Talos.Base
                 Monitor.Exit(Server.SyncObj);
             }
         }
-
-        internal Creature GetNearyByNPC(string name)
+        internal Creature GetNearbyNPC(string name)
         {
             if (Monitor.TryEnter(Server.SyncObj, 300))
             {
@@ -663,146 +667,27 @@ namespace Talos.Base
             }
             return null;
         }
-        internal bool ClickNPCDialog(Creature creature, string dialogText, bool click)
+        internal List<Creature> GetNearbyNPCs()
         {
-            DateTime utcNow = DateTime.UtcNow;
-            if (creature != null)
+            if (Monitor.TryEnter(Server.SyncObj, 150))
             {
-                if (!_server.PursuitIDs.Values.Contains(dialogText))
+                try
                 {
-                    bool flag = false;
-                    ClickObject(creature.ID);
-                    while (Dialog == null)
-                    {
-                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds > 2.0)
-                        {
-                            if (flag)
-                            {
-                                return false;
-                            }
-                            ClickObject(creature.ID);
-                            flag = true;
-                        }
-                        Thread.Sleep(10);
-                    }
-                    Dialog.Reply();
+                    return NearbyNPC.Values.ToList();
                 }
-                utcNow = DateTime.UtcNow;
-                Dialog = null;
-                RequestDialog(1, creature.ID, _server.PursuitIDs.FirstOrDefault((KeyValuePair<ushort, string> keyValuePair_0) => keyValuePair_0.Value == dialogText).Key);
-                if (click)
+                finally
                 {
-                    while (Dialog == null)
-                    {
-                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
-                        {
-                            Thread.Sleep(10);
-                            continue;
-                        }
-                        return false;
-                    }
+                    Monitor.Exit(Server.SyncObj);
                 }
-                return true;
             }
-            return false;
-        }
 
-        internal bool WaitForDialog()
-        {
-            DateTime utcNow = DateTime.UtcNow;
-            while (true)
-            {
-                if (Dialog == null)
-                {
-                    if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 3.0))
-                    {
-                        break;
-                    }
-                    Thread.Sleep(10);
-                    continue;
-                }
-                return true;
-            }
-            return false;
+            // Return an empty list if unable to acquire lock
+            return new List<Creature>();
         }
-        internal void RequestDialog(byte objType, int objID, ushort pursuitID, params object[] args)
-        {
-            ClientPacket cp = new ClientPacket(57);
-            cp.WriteByte(objType);
-            cp.WriteInt32(objID);
-            cp.WriteUInt16(pursuitID);
-            cp.WriteArray(args);
-            Enqueue(cp);
-        }
-
-        internal void PublicMessage(byte type, string message)
-        {
-            ClientPacket clientPacket = new ClientPacket(14);
-            clientPacket.WriteByte(type);
-            clientPacket.WriteString8(message);
-            Enqueue(clientPacket);
-        }
-        internal bool RouteFindByMapID(short mapID)
-        {
-            return RouteFind(new Location(mapID, 0, 0), 0, true);
-        }
-
-
         internal List<WorldObject> GetNearbyObjects() //Adam
         {
             return WorldObjects.Values.Where(wo => NearbyObjects.Contains(wo.ID)).ToList();
         }
-
-        internal bool WithinRange(VisibleObject obj, int range = 12)
-        {
-            return NearbyObjects.Contains(obj.ID) && _serverLocation.DistanceFrom(obj.Location) <= range;
-        }
-
-        internal bool IsLocationSurrounded(Location location)
-        {
-            if (Player == null) return false;
-
-            // Early return if the player is too close to the location.
-            if (Player.Location.DistanceFrom(location) <= 1)
-            {
-                return false;
-            }
-
-            // Gather all relevant creatures' locations within the same map to avoid repeated enumeration.
-            var creatureLocations = GetNearbyObjects()
-                .OfType<Creature>()
-                .Where(creature => (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && !creature.Location.Equals(location))
-                .Select(creature => creature.Location)
-                .ToHashSet(); // Using HashSet for O(1) lookups.
-
-            // Get obstacle locations within the same map once to avoid repeated calls.
-            var obstacleLocations = GetWarpPoints(location).Where(obstacle => obstacle.MapID == location.MapID).ToHashSet(); // Using HashSet for O(1) lookups.
-
-            // Define adjacent locations based on cardinal directions.
-            var adjacentLocations = new[]
-            {
-                location.TranslateLocationByDirection(Direction.North),
-                location.TranslateLocationByDirection(Direction.West),
-                location.TranslateLocationByDirection(Direction.South),
-                location.TranslateLocationByDirection(Direction.East)
-            };
-
-            // Check each adjacent location for being surrounded conditions.
-            foreach (var loc in adjacentLocations)
-            {
-                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || _map.IsWall(loc);
-
-                // If any adjacent location is not occupied or within bounds, the location is not surrounded.
-                if (!isOccupiedOrBound)
-                {
-                    return false;
-                }
-            }
-
-            // All adjacent locations are occupied or within bounds, so the location is surrounded.
-            return true;
-        }
-
         internal List<Location> GetWarpPoints(Location destination)
         {
             List<Location> obstacles = new List<Location>();
@@ -850,7 +735,348 @@ namespace Talos.Base
 
             return exits;
         }
+        internal List<Creature> GetNearbyValidCreatures(int distance = 12)
+        {
+            var whiteList = new HashSet<ushort>();
+            List<Creature> creatureList = new List<Creature>();
+            if (!Monitor.TryEnter(Server.SyncObj, 1000))
+            {
+                return creatureList;
+            }
 
+            try
+            {
+                var validCreatures = GetNearbyObjects().OfType<Creature>().Where(creature => IsValidCreature(creature, distance));
+                creatureList.AddRange(validCreatures);
+
+                if (creatureList.Count == 0) return creatureList;
+
+                if (CONSTANTS.WHITELIST_BY_MAP_ID.ContainsKey((ushort)_map.MapID) ||
+                    CONSTANTS.WHITELIST_BY_MAP_NAME.Any(kv => _map.Name.StartsWith(kv.Key)))
+                {
+                    whiteList = GetWhiteLists();
+                    creatureList = creatureList.Where(creature => IsCreatureAllowed(creature, whiteList)).ToList();
+                }
+
+                return creatureList;
+            }
+            finally
+            {
+                Monitor.Exit(Server.SyncObj);
+            }
+        }
+        private HashSet<ushort> GetWhiteLists()
+        {
+            var whiteList = new HashSet<ushort>();
+            if (CONSTANTS.WHITELIST_BY_MAP_ID.TryGetValue((ushort)_map.MapID, out var whiteListByMapID))
+            {
+                whiteList.UnionWith(whiteListByMapID);
+            }
+
+            var whiteListByMapName = CONSTANTS.WHITELIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
+            if (whiteListByMapName != null)
+            {
+                whiteList.UnionWith(whiteListByMapName);
+            }
+
+            return whiteList;
+        }
+        private bool IsValidCreature(Creature creature, int distance)
+        {
+            int mapID = _map.MapID;
+
+            // Allow sprite 492 only on map 6999
+            if (creature.SpriteID == 492 && mapID == 6999)
+            {
+                return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 && WithinRange(creature, distance);
+            }
+
+            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
+                !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
+                !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && WithinRange(creature, distance);
+        }
+        internal List<Creature> GetAllNearbyMonsters(int distance = 12)
+        {
+            List<Creature> list = new List<Creature>();
+            if (Monitor.TryEnter(Server.SyncObj, 1000))
+            {
+                try
+                {
+                    foreach (Creature creature in GetNearbyObjects().OfType<Creature>())
+                    {
+                        if (IsValidCreature(creature, distance))
+                        {
+                            list.Add(creature);
+                        }
+                    }
+                    return list;
+                }
+                finally
+                {
+                    Monitor.Exit(Server.SyncObj);
+                }
+            }
+            return list;
+        }
+        internal List<Location> GetAdjacentPoints(Creature creature)
+        {
+            return new List<Location>
+            {
+                new Location(creature.Location.MapID, (short)(creature.Location.X - 1), creature.Location.Y),
+                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y + 1)),
+                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y - 1)),
+                new Location(creature.Location.MapID, (short)(creature.Location.X + 1), creature.Location.Y)
+            };
+        }
+        private Location GetValidLocationNearTarget(Location targetLocation, short followDistance)
+        {
+            List<Location> potentialLocations = new List<Location>();
+
+            // Check exactly followDistance tiles away in each direction (Up, Down, Left, Right)
+            short[] dx = { followDistance, (short)-followDistance, 0, 0 };
+            short[] dy = { 0, 0, followDistance, (short)-followDistance };
+
+            //Console.WriteLine($"Checking cardinal directions around target: {targetLocation}, followDistance: {followDistance}");
+
+            // Try to find valid locations in the cardinal directions
+            for (int i = 0; i < 4; i++)
+            {
+                Location potentialLocation = new Location(
+                    targetLocation.MapID,
+                    (short)(targetLocation.X + dx[i]),
+                    (short)(targetLocation.Y + dy[i])
+                );
+
+
+                //Console.WriteLine($"Checking cardinal direction location: {potentialLocation}");
+
+                // Check if the location is valid and walkable
+                if (IsWalkable(potentialLocation))
+                {
+                    //Console.WriteLine($"Location {potentialLocation} is walkable.");
+                    potentialLocations.Add(potentialLocation);
+                }
+                else
+                {
+                    //Console.WriteLine($"Location {potentialLocation} is NOT walkable.");
+                }
+            }
+
+            // Return the first valid location found in the cardinal directions
+            if (potentialLocations.Any())
+            {
+                //Console.WriteLine($"Returning valid cardinal direction location: {potentialLocations.First()}");
+                return potentialLocations.First();
+            }
+
+            // As a fallback, calculate diagonal movements exactly followDistance away
+            //Console.WriteLine($"No valid cardinal locations found. Checking diagonals...");
+
+            for (short xOffset = (short)-followDistance; xOffset <= followDistance; xOffset++)
+            {
+                for (short yOffset = (short)-followDistance; yOffset <= followDistance; yOffset++)
+                {
+                    if (Math.Abs(xOffset) == followDistance || Math.Abs(yOffset) == followDistance)
+                    {
+                        Location diagonalLocation = new Location(
+                            targetLocation.MapID,
+                            (short)(targetLocation.X + xOffset),
+                            (short)(targetLocation.Y + yOffset)
+                        );
+
+
+                        //Console.WriteLine($"Checking diagonal location: {diagonalLocation}");
+
+                        // Check if the diagonal location is walkable
+                        if (IsWalkable(diagonalLocation))
+                        {
+                            //Console.WriteLine($"Diagonal location {diagonalLocation} is walkable.");
+                            potentialLocations.Add(diagonalLocation);
+                        }
+                        else
+                        {
+                            //Console.WriteLine($"Diagonal location {diagonalLocation} is NOT walkable.");
+                        }
+                    }
+                }
+            }
+
+            // If valid diagonal locations were found, return the first one
+            if (potentialLocations.Any())
+            {
+                //Console.WriteLine($"Returning valid diagonal location: {potentialLocations.First()}");
+                return potentialLocations.First();
+            }
+
+            // If no valid locations were found, return the original target location
+            //Console.WriteLine($"No valid locations found. Returning original target location: {targetLocation}");
+            return targetLocation;
+        }
+        internal List<Location> GetCreatureCoverage(Creature creature)
+        {
+            if (HasEffect(Enumerations.EffectsBar.Hide))
+            {
+                return new List<Location>();
+            }
+            return new List<Location>
+            {
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 2), creature.Location.Y)),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), (short)(creature.Location.Y + 1))),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), creature.Location.Y)),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), (short)(creature.Location.Y - 1))),
+                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y + 2))),
+                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y + 1))),
+                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y - 1))),
+                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y - 2))),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), (short)(creature.Location.Y + 1))),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), creature.Location.Y)),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), (short)(creature.Location.Y - 1))),
+                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 2), creature.Location.Y))
+            };
+        }
+        internal List<Creature> GetAllNearbyMonsters(int distance = 12, params ushort[] creatureArray)
+        {
+            var creatureList = new List<Creature>();
+            var hashSet = new HashSet<ushort>(creatureArray);
+
+            lock (Server.SyncObj)
+            {
+                foreach (var creature in GetNearbyObjects().OfType<Creature>())
+                {
+                    // Allow sprite 492 only on map 6999
+                    if (creature.SpriteID == 492 && _map.MapID != 6999)
+                    {
+                        continue;
+                    }
+
+                    if ((creature.Type == CreatureType.Normal || creature.Type == CreatureType.WalkThrough)
+                        && WithinRange(creature, distance)
+                        && creature.SpriteID > 0 && creature.SpriteID <= 1000
+                        && !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID)
+                        && !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID)
+                        && hashSet.Contains(creature.SpriteID))
+                    {
+                        creatureList.Add(creature);
+                    }
+                }
+            }
+
+            return creatureList;
+        }
+
+        internal bool ClickNPCDialog(Creature creature, string dialogText, bool click)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            if (creature != null)
+            {
+                if (!_server.PursuitIDs.Values.Contains(dialogText))
+                {
+                    bool flag = false;
+                    ClickObject(creature.ID);
+                    while (Dialog == null)
+                    {
+                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds > 2.0)
+                        {
+                            if (flag)
+                            {
+                                return false;
+                            }
+                            ClickObject(creature.ID);
+                            flag = true;
+                        }
+                        Thread.Sleep(10);
+                    }
+                    Dialog.Reply();
+                }
+                utcNow = DateTime.UtcNow;
+                Dialog = null;
+                PursuitRequest(1, creature.ID, _server.PursuitIDs.FirstOrDefault((KeyValuePair<ushort, string> keyValuePair_0) => keyValuePair_0.Value == dialogText).Key);
+                if (click)
+                {
+                    while (Dialog == null)
+                    {
+                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
+                        {
+                            Thread.Sleep(10);
+                            continue;
+                        }
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+        internal bool WaitForDialog()
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            while (true)
+            {
+                if (Dialog == null)
+                {
+                    if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 3.0))
+                    {
+                        break;
+                    }
+                    Thread.Sleep(10);
+                    continue;
+                }
+                return true;
+            }
+            return false;
+        }
+        internal bool RouteFindByMapID(short mapID)
+        {
+            return RouteFind(new Location(mapID, 0, 0), 0, true);
+        }
+        internal bool WithinRange(VisibleObject obj, int range = 12)
+        {
+            return NearbyObjects.Contains(obj.ID) && _serverLocation.DistanceFrom(obj.Location) <= range;
+        }
+        internal bool IsLocationSurrounded(Location location)
+        {
+            if (Player == null) return false;
+
+            // Early return if the player is too close to the location.
+            if (Player.Location.DistanceFrom(location) <= 1)
+            {
+                return false;
+            }
+
+            // Gather all relevant creatures' locations within the same map to avoid repeated enumeration.
+            var creatureLocations = GetNearbyObjects()
+                .OfType<Creature>()
+                .Where(creature => (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && !creature.Location.Equals(location))
+                .Select(creature => creature.Location)
+                .ToHashSet(); // Using HashSet for O(1) lookups.
+
+            // Get obstacle locations within the same map once to avoid repeated calls.
+            var obstacleLocations = GetWarpPoints(location).Where(obstacle => obstacle.MapID == location.MapID).ToHashSet(); // Using HashSet for O(1) lookups.
+
+            // Define adjacent locations based on cardinal directions.
+            var adjacentLocations = new[]
+            {
+                location.TranslateLocationByDirection(Direction.North),
+                location.TranslateLocationByDirection(Direction.West),
+                location.TranslateLocationByDirection(Direction.South),
+                location.TranslateLocationByDirection(Direction.East)
+            };
+
+            // Check each adjacent location for being surrounded conditions.
+            foreach (var loc in adjacentLocations)
+            {
+                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || _map.IsWall(loc);
+
+                // If any adjacent location is not occupied or within bounds, the location is not surrounded.
+                if (!isOccupiedOrBound)
+                {
+                    return false;
+                }
+            }
+
+            // All adjacent locations are occupied or within bounds, so the location is surrounded.
+            return true;
+        }
         internal void UseExperienceGem(byte choice)
         {
             Bot._dontWalk = true;
@@ -889,7 +1115,6 @@ namespace Talos.Base
             Bot._lastUsedGem = DateTime.UtcNow;
             Bot._dontWalk = false;
         }
-
         private bool IsValidSpell(Client client, string spellName, Creature creature)
         {
             // Guard clause: Reject spell if Suain effect is active and spell is not allowed
@@ -918,7 +1143,6 @@ namespace Talos.Base
             //Console.WriteLine($"[IsValidSpell] Spell {spellName} on Creature ID: {creature?.ID} is valid.");
             return true;
         }
-
         internal bool ReadyToSpell(string spell)
         {
             try
@@ -1210,81 +1434,6 @@ namespace Talos.Base
             CastedSpell = null;
             return false;
         }
-
-        //internal void UpdateCurseTargets(Client invokingClient, int creatureID, string curseName)
-        //{
-        //    if (!invokingClient._map.Name.Contains("Plamit"))
-        //    {
-        //        return;
-        //    }
-
-        //    try
-        //    {
-        //        foreach (Client targetClient in _server._clientList)
-        //        {
-        //            if (targetClient.WorldObjects.TryGetValue(creatureID, out WorldObject worldObject) && worldObject is Creature creature)
-        //            {
-        //                creature.CurseDuration = Spell.GetSpellDuration(curseName);
-        //                creature.LastCursed = DateTime.UtcNow;
-        //                creature.Curse = curseName;
-        //                Console.WriteLine($"[UpdateCurseTargets] Updated existing creature in targetClient. Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, IsCursed: {creature.IsCursed}");
-        //            }
-        //            else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
-        //            {
-        //                Creature targetCreature = _server.GetOrCreateCreature(targetClient, creatureID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
-
-        //                targetCreature.CurseDuration = Spell.GetSpellDuration(curseName);
-        //                targetCreature.LastCursed = DateTime.UtcNow;
-        //                targetCreature.Curse = curseName;
-        //                Console.WriteLine($"[UpdateCurseTargets] Created and updated creature in targetClient. Creature ID: {targetCreature.ID}, {targetCreature.GetHashCode()}, IsCursed: {targetCreature.IsCursed}");
-
-        //            }
-
-        //            break;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"An error occurred when trying to update curse targets: {ex.Message}");
-        //    }
-        //}
-
-
-        //internal void UpdateFasTargets(Client invokingClient, int creatureID, double fasDuration)
-        //{
-        //    if (!invokingClient._map.Name.Contains("Plamit"))
-        //    {
-        //        return;
-        //    }
-
-        //    try
-        //    {
-        //        foreach (Client targetClient in _server._clientList)
-        //        {
-        //            if (targetClient.WorldObjects.TryGetValue(creatureID, out WorldObject worldObject) && worldObject is Creature creature)
-        //            {
-        //                creature.FasDuration = fasDuration;
-        //                creature.LastFassed = DateTime.UtcNow;
-        //                Console.WriteLine($"[UpdateFasTargets] Updated existing creature in targetClient. Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, IsFassed: {creature.IsFassed}");
-
-        //            }
-        //            else if (invokingClient.WorldObjects.TryGetValue(creatureID, out WorldObject originalObject) && originalObject is Creature originalCreature)
-        //            {
-        //                Creature targetCreature = _server.GetOrCreateCreature(targetClient, creatureID, originalCreature.Name, originalCreature.SpriteID, (byte)originalCreature.Type, originalCreature.Location, originalCreature.Direction);
-
-        //                targetCreature.FasDuration = fasDuration;
-        //                targetCreature.LastFassed = DateTime.UtcNow;
-        //                Console.WriteLine($"[UpdateFasTargets] Created and updated creature in targetClient. Creature ID: {targetCreature.ID}, Hash: {targetCreature.GetHashCode()}, IsFassed: {targetCreature.IsFassed}");
-        //            }
-
-        //            break;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"An error occurred when trying to update fas targets: {ex.Message}");
-        //    }
-        //}
         internal void SeeGhosts(Player player)
         {
             player.NakedPlayer();
@@ -1293,7 +1442,6 @@ namespace Talos.Base
             DisplayAisling(player);
             DisplayEntityRequest(player.ID);
         }
-
         private void UpdateClientActionText(string text)
         {
             if (ClientTab.InvokeRequired)
@@ -1305,7 +1453,6 @@ namespace Talos.Base
                 ClientTab.currentAction.Text = text;
             }
         }
-
         private bool UseOptimalStaff(Spell spell, out byte castLines)
         {
             bool swappingWeapons = false;
@@ -1642,7 +1789,6 @@ namespace Talos.Base
             _staffList.Add(new Staff("Blackstar Night Claw", AvailableSpellsAndCastLines, 95, 99, true, TemuairClass.Monk));
             //Adam Add Arsaid Aon weapons
         }
-
         internal void CheckWeaponType(Item item)
         {
             if (_staffList.Any(Staff => Staff.Name == item.Name))
@@ -1661,7 +1807,6 @@ namespace Talos.Base
                 item.Melee = _meleeList.First(MeleeWeapon => MeleeWeapon.Name == item.Name);
             }
         }
-
         private string[] LoadSavedChants(string spellName)
         {
             string[] chants = new string[10];
@@ -1702,7 +1847,6 @@ namespace Talos.Base
 
             return chants;
         }
-
         private string ParseCustomSpellLines()
         {
             string[] array = Regex.Split(ClientTab.customLinesBox.Text, "\r\n");
@@ -1713,7 +1857,6 @@ namespace Talos.Base
             }
             return array[_customSpellLineCounter];
         }
-
         internal bool TryUseAnySpell(string[] spellNames, Creature target, bool autoStaffSwitch, bool keepSpellAfterUse)
         {
             foreach (string spellName in spellNames)
@@ -1731,117 +1874,30 @@ namespace Talos.Base
             }
             return false;
         }
-
         internal void SleepFighting()
         {
             Thread.Sleep(3000);
             Dialog?.DialogNext(2);
         }
-
         internal void ReEquipItem(string itemName)
         {
-            while (!Inventory.HasItem(itemName))
+            while (!Inventory.Contains(itemName))
             {
                 Thread.Sleep(100);
             }
             UseItem(itemName);
         }
-
-        internal List<Creature> GetNearbyValidCreatures(int distance = 12)
-        {
-            var whiteList = new HashSet<ushort>();
-            List<Creature> creatureList = new List<Creature>();
-            if (!Monitor.TryEnter(Server.SyncObj, 1000))
-            {
-                return creatureList;
-            }
-
-            try
-            {
-                var validCreatures = GetNearbyObjects().OfType<Creature>().Where(creature => IsValidCreature(creature, distance));
-                creatureList.AddRange(validCreatures);
-
-                if (creatureList.Count == 0) return creatureList;
-
-                if (CONSTANTS.WHITELIST_BY_MAP_ID.ContainsKey((ushort)_map.MapID) ||
-                    CONSTANTS.WHITELIST_BY_MAP_NAME.Any(kv => _map.Name.StartsWith(kv.Key)))
-                {
-                    whiteList = GetWhiteLists();
-                    creatureList = creatureList.Where(creature => IsCreatureAllowed(creature, whiteList)).ToList();
-                }
-
-                return creatureList;
-            }
-            finally
-            {
-                Monitor.Exit(Server.SyncObj);
-            }
-        }
-
-
-        private HashSet<ushort> GetWhiteLists()
-        {
-            var whiteList = new HashSet<ushort>();
-            if (CONSTANTS.WHITELIST_BY_MAP_ID.TryGetValue((ushort)_map.MapID, out var whiteListByMapID))
-            {
-                whiteList.UnionWith(whiteListByMapID);
-            }
-
-            var whiteListByMapName = CONSTANTS.WHITELIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
-            if (whiteListByMapName != null)
-            {
-                whiteList.UnionWith(whiteListByMapName);
-            }
-
-            return whiteList;
-        }
-
-        private bool IsValidCreature(Creature creature, int distance)
-        {
-            return creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
-                !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
-                !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && WithinRange(creature, distance);
-        }
-
-        internal List<Creature> GetAllNearbyMonsters(int distance = 12)
-        {
-            List<Creature> list = new List<Creature>();
-            if (Monitor.TryEnter(Server.SyncObj, 1000))
-            {
-                try
-                {
-                    foreach (Creature creature in GetNearbyObjects().OfType<Creature>())
-                    {
-                        if (creature.Type < CreatureType.Merchant && creature.SpriteID > 0 && creature.SpriteID <= 1000 &&
-                            !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) &&
-                            !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) && WithinRange(creature, distance)) ;
-                        {
-                            list.Add(creature);
-                        }
-                    }
-                    return list;
-                }
-                finally
-                {
-                    Monitor.Exit(Server.SyncObj);
-                }
-            }
-            return list;
-        }
-
-
-        internal List<Location> GetAdjacentPoints(Creature creature)
-        {
-            return new List<Location>
-            {
-                new Location(creature.Location.MapID, (short)(creature.Location.X - 1), creature.Location.Y),
-                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y + 1)),
-                new Location(creature.Location.MapID, creature.Location.X, (short)(creature.Location.Y - 1)),
-                new Location(creature.Location.MapID, (short)(creature.Location.X + 1), creature.Location.Y)
-            };
-        }
         private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)
         {
+
+            int mapID = _map.MapID;
+
+            // Allow sprite 492 only on map 6999
+            if (creature.SpriteID == 492 && mapID == 6999)
+            {
+                return true;
+            }
+
             if (creature.Type == CreatureType.WalkThrough || CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID) || CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID))
             {
                 return false;
@@ -1855,8 +1911,6 @@ namespace Talos.Base
 
             return whiteList.Contains(creature.SpriteID);
         }
-
-
         internal void ResetExchangeVars()
         {
             _exchangeClosing = true;
@@ -1864,7 +1918,6 @@ namespace Talos.Base
             _exchangeOpen = false;
             _exchangeClosing = false;
         }
-
         internal void LoadUnmaxedSkills()
         {
             short num = 15;
@@ -1885,7 +1938,6 @@ namespace Talos.Base
             }
             _unmaxedSkillsLoaded = true;
         }
-
         internal void LoadBashingSkills()
         {
             short num = 15;
@@ -1906,7 +1958,6 @@ namespace Talos.Base
             }
             _bashingSkillsLoaded = true;
         }
-
         internal void LoadUnmaxedSpells()
         {
             short num = 15;
@@ -1926,10 +1977,607 @@ namespace Talos.Base
             }
             _unmaxedSpellsLoaded = true;
         }
+        internal void EscapeKey()
+        {
+            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 256, 27, MakeLParam(1, NativeMethods.MapVirtualKey(27, 0)));
+            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 257, 27, MakeLParam(1, NativeMethods.MapVirtualKey(27, 0)));
+        }
+        internal void EnterKey()
+        {
+            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 256, 13, MakeLParam(1, NativeMethods.MapVirtualKey(13, 0)));
+            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 257, 13, MakeLParam(1, NativeMethods.MapVirtualKey(13, 0)));
+        }
+        internal int MakeLParam(int LoWord, int HiWord)
+        {
+            return (HiWord << 16) | (LoWord & 0xFFFF);
+        }
+
+        internal bool Pathfind(Location destination, short distance = 1, bool shouldBlock = true, bool avoidWarps = true)
+        {
+
+            if (NearbyHiddenPlayers.Count > 0 || _isCasting)
+            {
+                Console.WriteLine($"[Pathfind] [{this.Name}] Cannot walk because NearbyHiddenPlayers count is {NearbyHiddenPlayers.Count} or is casting {_isCasting}");
+                if (!_isWalking)
+                {
+                    Console.WriteLine($"[Pathfind] [{this.Name}] Not currently walking.");
+                    return false;
+                }
+                _isCasting = false;
+            }
+
+            bool isWall = _map.IsWall(_clientLocation);
+            bool isStuck = GetNearbyObjects().OfType<Creature>()
+                .Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && creature.Location == _clientLocation);
+
+            //Console.WriteLine($"[Pathfind] [{this.Name}] value of isStuck = " + isStuck);
+
+            if ((isWall || isStuck) && (_hasWalked || _clientLocation.X == 0 && _clientLocation.Y == 0 || _serverLocation.X == 0 && _serverLocation.Y == 0))
+            {
+                Console.WriteLine($"[Pathfind] [{this.Name}] isWall or isStuck, refreshing. Setting _hasWalked to false and returning false");
+                RefreshRequest();
+                _hasWalked = false;
+                return false;
+            }
 
 
+            if (_clientLocation == destination)
+            {
+                if (_hasWalked || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
+                {
+                    if (_stuckCounter == 0)
+                    {
+                        Console.WriteLine($"[Pathfind] [{this.Name}] Refreshing client due to timeout or refresh needed.");
+                        RefreshRequest();
+                    }
+                    _hasWalked = false;
+                }
+                return true;
+            }
 
-        #region Packet methods
+            double elapsedMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+            double waitThreshold = (Bot.IsStrangerNearby() && !ClientTab.chkSpeedStrangers.Checked) || Bot._rangerNear
+                ? 420.0
+                : _walkSpeed;
+
+            // Continue looping until elapsed time meets or exceeds the threshold
+            while (elapsedMilliseconds < waitThreshold)
+            {
+                Thread.Sleep(10);
+                elapsedMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+            }
+
+            if (Equals(_clientLocation, destination))
+            {
+                Console.WriteLine($"[Pathfind] [{this.Name}] Destination reached.");
+                RefreshRequest();
+                return true;
+            }
+
+            if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
+            {
+                Console.WriteLine($"[Pathfind] [{this.Name}] New destination or empty path stack. Calculating new path.");
+                _lastDestination = destination;
+                pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
+
+            }
+
+            if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _hasWalked)
+            {
+                pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidWarps);
+                if (pathStack.Count == 0)
+                {
+                    return false;
+                }
+                Console.WriteLine($"[Pathfind] [{this.Name}] Location difference detected, requesting refresh.");
+                RefreshRequest();
+                _hasWalked = false;
+                return false;
+            }
+
+            if (pathStack.Count == 0)
+            {
+                Console.WriteLine($"[Pathfind] [{this.Name}] Path stack is empty, no further movement possible.");
+                RefreshRequest();
+                return false;
+            }
+
+
+            List<Creature> nearbyCreatures = (from creature in GetNearbyObjects().OfType<Creature>()
+                                              where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(_serverLocation) <= 11
+                                              select creature).ToList();
+
+            foreach (Location loc in pathStack)
+            {
+                Door door = Doors.Values.FirstOrDefault(d => d.Location.Equals(loc));
+                if (door != null)
+                {
+                    Console.WriteLine($"[Pathfind] [{this.Name}] Door at {loc}, Closed: {door.Closed}, RecentlyClicked: {door.RecentlyClicked}");
+                    if (door.Closed && !door.RecentlyClicked)
+                    {
+                        Console.WriteLine($"[Pathfind] [{this.Name}] Attempting to click door.");
+                        ClickObject(loc);
+                        door.LastClicked = DateTime.UtcNow;
+                    }
+                }
+                if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(creature => Location.NotEquals(loc, destination) && Location.Equals(creature.Location, loc) || (!HasEffect(Enumerations.EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID) && GetCreatureCoverage(creature).Contains(loc))))
+                {
+                    if (isStuck)
+                    {
+                        Console.WriteLine($"[Pathfind] [{this.Name}] Stuck in creature intreaction if statement.");
+                        break;
+                    }
+                    Console.WriteLine($"[Pathfind] [{this.Name}] Creature interaction required at {loc}, recalculating path.");
+                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
+                    return false;
+                }
+            }
+
+            Location nextPosition = pathStack.Peek();
+            if (nextPosition.Equals(_clientLocation))
+            {
+                pathStack.Pop();
+                if (pathStack.Count == 0)
+                {
+                    Console.WriteLine($"[Pathfind] [{this.Name}] Path complete. Destination reached.");
+                    return true;
+                }
+                nextPosition = pathStack.Peek();
+            }
+
+
+            if (nextPosition.DistanceFrom(_clientLocation) != 1)
+            {
+                Console.WriteLine($"[Pathfind] [{this.Name}] Unexpected distance to next position {nextPosition}, recalculating path.");
+                if (nextPosition.DistanceFrom(_clientLocation) > 2 && _hasWalked)
+                {
+                    if (_stuckCounter == 0)
+                    {
+                        Console.WriteLine($"[Pathfind] [{this.Name}] Refreshing client due to unexpected position distance.");
+                        RefreshRequest();
+                    }
+                    _hasWalked = false;
+                }
+                pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
+                return false;
+            }
+
+            Direction directionToWalk = nextPosition.GetDirection(_clientLocation);
+            if (shouldBlock)
+            {
+                lock (CastLock)
+                {
+                    if (!HasEffect(Enumerations.EffectsBar.Pramh))
+                    {
+                        if (!HasEffect(Enumerations.EffectsBar.Suain))
+                        {
+                            if (HasEffect(Enumerations.EffectsBar.Skull))
+                            {
+                                if (ClientTab.ascendBtn.Text != "Ascending")
+                                {
+                                    return true;
+                                }
+                            }
+                            Walk(directionToWalk);
+                        }
+                    }
+                }
+            }
+            else if (!HasEffect(Enumerations.EffectsBar.Pramh) && !HasEffect(Enumerations.EffectsBar.Suain) && (!HasEffect(Enumerations.EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
+            {
+                Walk(directionToWalk);
+            }
+
+            return true;
+        }
+        internal bool RouteFind(Location destination, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)
+        {
+            try
+            {
+                Console.WriteLine($"[RouteFind] [{this.Name}] Starting RouteFind to {destination}");
+                if (_server._stopWalking)
+                {
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Not supposed to walk.");
+                    return false;
+                }
+
+                Location currentLocation = new Location(_map.MapID, _clientLocation.X, _clientLocation.Y);
+                Console.WriteLine($"[RouteFind] [{this.Name}] Current location: {currentLocation}");
+                Location adjustedDestination;
+                //adjust for followdistance?
+                if (ClientTab.followCbox.Checked)
+                {
+                    adjustedDestination = GetValidLocationNearTarget(destination, (short)ClientTab.followDistanceNum.Value);
+                }
+                else
+                {
+                    adjustedDestination = destination;
+                }
+
+                if (Location.Equals(currentLocation, adjustedDestination))
+                {
+                    if (Location.Equals(adjustedDestination, new Location(395, 6, 6))) //Path Temple 1
+                    {
+                        Bot._circle1 = true;
+                    }
+                    else if (Location.Equals(adjustedDestination, new Location(344, 6, 6))) //Path Temple 6
+                    {
+                        Bot._circle2 = true;
+                    }
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Already at destination.");
+                    routeStack.Clear();
+                    return false;
+                }
+
+                if (routeStack.Count == 1 && adjustedDestination.MapID == _map.MapID && mapOnly)
+                {
+                    routeStack.Clear();
+                    return false;
+                }
+
+                if (Location.NotEquals(_routeDestination, adjustedDestination) || routeStack.Count == 0)
+                {
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Finding new route.");
+                    _routeDestination = adjustedDestination;
+                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
+                }
+
+                if (_map.Name.Contains("Plamit"))
+                {
+                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
+                }
+
+                if (routeStack.Count == 0)
+                {
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Route not found, initializing new RouteFinder.");
+                    RouteFinder = new RouteFinder(_server, this);
+                    _routeDestination = adjustedDestination;
+                    _lastClickedWorldMap = DateTime.MinValue;
+                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
+                    return false;
+                }
+
+                Location nextLocation = routeStack.Peek();
+
+                //if (routeStack.Count != 1)
+                //{
+                //Console.WriteLine("***routeStack.Count != 1");
+                //    distance = 0;
+                //}
+
+                if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
+                {
+                    Console.WriteLine($"[RouteFind] [{this.Name}] routeStack.Count > 1 & nextLocaiton = _serverLocation");
+                    routeStack.Pop();
+                    nextLocation = routeStack.Peek();
+                }
+
+                if (_worldMap != null)
+                {
+                    Console.WriteLine($"[RouteFind] [{this.Name}] World map is not null, processing world map navigation.");
+                    List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
+                    if (DateTime.UtcNow.Subtract(_lastClickedWorldMap).TotalSeconds < 1.0)
+                    {
+                        return false;
+                    }
+                    foreach (Location location in list)
+                    {
+                        Console.WriteLine($"[RouteFind] [{this.Name}] Checking world map node for location {location}");
+
+                        foreach (WorldMapNode node in _worldMap.Nodes)
+                        {
+                            Console.WriteLine($"[RouteFind] [{this.Name}] Checking node {node.Location}");
+                            if (node.MapID == location.MapID)
+                            {
+                                Console.WriteLine($"[RouteFind] [{this.Name}] Need to click world map");
+                                _lastClickedWorldMap = DateTime.UtcNow;
+                                ClickWorldMap(node.MapID, node.Location);
+                                return true;
+                            }
+                        }
+                    }
+                    foreach (WorldMapNode node in _worldMap.Nodes)
+                    {
+                        Console.WriteLine($"[RouteFind] [{this.Name}] [2]Checking node {node.Location}");
+
+                        if (node.MapID == nextLocation.MapID)
+                        {
+                            Console.WriteLine($"[RouteFind] [{this.Name}] [2]Need to click world map");
+                            _lastClickedWorldMap = DateTime.UtcNow;
+                            ClickWorldMap(node.MapID, node.Location);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                if (nextLocation.MapID != _map.MapID)
+                {
+                    if (!_server._maps.TryGetValue(_map.MapID, out Map value))
+                    {
+                        Console.WriteLine($"[RouteFind] [{this.Name}] Map not found in server maps. Clearing routeStack.");
+                        routeStack.Clear();
+                        return false;
+                    }
+                    if (value.WorldMaps.TryGetValue(_clientLocation.Point, out WorldMap _worldMapNodeList))
+                    {
+                        if (!value.WorldMaps.TryGetValue(_serverLocation.Point, out _worldMapNodeList))
+                        {
+                            Console.WriteLine($"[RouteFind] [{this.Name}] Need to refresh");
+                            RefreshRequest();
+                            return false;
+                        }
+                        foreach (WorldMapNode worldMapNode in _worldMapNodeList.Nodes)
+                        {
+                            if (worldMapNode.MapID == nextLocation.MapID)
+                            {
+                                Console.WriteLine($"[RouteFind] [{this.Name}] maps are equal");
+                                return false;
+                            }
+                        }
+                    }
+                    if (value.Exits.TryGetValue(_clientLocation.Point, out Warp warp) && warp.TargetMapID == nextLocation.MapID)
+                    {
+                        Console.WriteLine($"[RouteFind] [{this.Name}] Warping with NPC");
+                        WarpWithNPC(nextLocation);
+                        RefreshRequest();
+                        return true;
+                    }
+                    routeStack.Clear();
+                    return false;
+                }
+                Console.WriteLine($"[RouteFind] [{this.Name}] About to call TryWalkLocation with distance value of: {distance}");
+                if (!Pathfind(nextLocation, distance, shouldBlock, avoidWarps = true))
+                {
+                    if (_map.Name.Contains("Threshold"))
+                    {
+                        Console.WriteLine($"[RouteFind] [{this.Name}] Threshold map detected, attempting to walk south.");
+                        Walk(Direction.South);
+                        Thread.Sleep(1000);
+                        return true;
+                    }
+                    Console.WriteLine($"[RouteFind] [{this.Name}] TryWalkToLocation failed, returning false.");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RouteFind] [{this.Name}] Exception in RouteFind. Refreshing.");
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine("***");
+                RefreshRequest();
+                return false;
+            }
+            if (routeStack.Count <= 0)
+            {
+                Console.WriteLine($"[RouteFind] [{this.Name}] Route stack empty, returning false.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool IsWalkable(Location location)
+        {
+            // Check if the location is walkable (not blocked)
+            if (_map.Tiles.TryGetValue(location.Point, out Tile tile))
+            {
+                return !tile.IsWall;
+            }
+            return false;
+        }
+        private void WarpWithNPC(Location nextLocation)
+        {
+            if (ClientTab != null)
+            {
+                try
+                {
+                    if (Location.Equals(_clientLocation, new Location(5220, 0, 6)) && nextLocation.MapID == 5210 && Dialog != null)
+                    {
+                        Dialog.DialogNext(2);
+                    }
+                    if (Location.Equals(_clientLocation, new Location(6926, 8, 9)) && nextLocation.MapID == 10028)
+                    {
+                        Creature creature = GetNearbyNPC("Quard");
+                        ClickNPCDialog(creature, "Express Ship", true);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+
+                        if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
+                        }
+                        if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = ClientTab.followText.Text;
+                        }
+                        if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                        if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = "bugEvent";
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = "vDayEvent";
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
+                    {
+                        PublicMessage(3, "Enter Sewer Maze");
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(10000, 29, 31)) && nextLocation.MapID == 10999)
+                    {
+                        Creature creature = GetNearbyNPC("Lenoa");
+                        ClickNPCDialog(creature, "Caravan to Noam", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(10055, 46, 23)) && nextLocation.MapID == 10999)
+                    {
+                        Creature creature = GetNearbyNPC("Habab");
+                        ClickNPCDialog(creature, "Caravan to Asilon or Hwarone", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(10265, 87, 47)) && nextLocation.MapID == 10998)
+                    {
+                        Creature creature = GetNearbyNPC("Mank");
+                        ClickNPCDialog(creature, "Caravan to Noam", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(10055, 46, 24)) && nextLocation.MapID == 1960)
+                    {
+                        Creature creature = GetNearbyNPC("Habab");
+                        ClickNPCDialog(creature, "Carpet Merchant", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                        ReplyDialog(1, creature.ID, 0, 2);
+
+                        if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
+                        }
+                        if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = ClientTab.followText.Text;
+                        }
+                        if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                        if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = "bugEvent";
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        {
+                            _server._medTask[Name] = "vDayEvent";
+                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                        }
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(3634, 16, 6)) && nextLocation.MapID == 8420)
+                    {
+                        Creature creature = GetNearbyNPC("Fallen Soldier");
+                        ClickNPCDialog(creature, "ChadulEntry", true);
+                        ReplyDialog(1, creature.ID, 0, 2, 1);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(8318, 50, 95)) && nextLocation.MapID == 8345)
+                    {
+                        Creature class7 = GetNearbyNPC("Ashlee");
+                        ClickObject(class7.ID);
+                        ReplyDialog(1, class7.ID, 0, 2);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(8355, 32, 5)) && nextLocation.MapID == 8356)
+                    {
+                        Creature class8 = GetNearbyNPC("Norrie");
+                        PublicMessage(0, "let me through");
+                        while (Dialog == null)
+                        {
+                            Thread.Sleep(25);
+                        }
+                        if (!Dialog.Message.Contains("Sorry, I forgot..."))
+                        {
+                            ReplyDialog(1, class8.ID, 0, 2, 1);
+                            ReplyDialog(1, class8.ID, 0, 2, 1);
+                            Thread.Sleep(1000);
+                            PublicMessage(0, "let me through");
+                        }
+                        ReplyDialog(1, class8.ID, 0, 2);
+                        ReplyDialog(1, class8.ID, 0, 2);
+                        ReplyDialog(1, class8.ID, 0, 2);
+                        Thread.Sleep(1000);
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(8361, 32, 7)) && nextLocation.MapID == 8362)
+                    {
+                        Creature class9 = GetNearbyNPC("Yowien Guard");
+                        if (class9 != null && Inventory.Contains("Yowien Costume"))
+                        {
+                            UseSkill("Assail");
+                            UseItem("Yowien Costume");
+                            UseItem("Yowien Headgear");
+                            Thread.Sleep(1000);
+                        }
+                        PublicMessage(0, "graauuloow");
+                        DateTime utcNow = DateTime.UtcNow;
+                        while (Dialog == null)
+                        {
+                            if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0))
+                            {
+                                return;
+                            }
+                            Thread.Sleep(25);
+                        }
+                        if (Dialog.Message == "*The Yowien Guard sniffs you, then suddenly attacks you. You run back to a safe distance*")
+                        {
+                            Thread.Sleep(1000);
+                        }
+                        else
+                        {
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, class9.ID, 0, 2);
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    else if (_map.MapID == 3052 && _clientLocation.X == 44 && _clientLocation.Y >= 18 && _clientLocation.Y <= 25)
+                    {
+                        Creature class10 = GetNearbyNPC("Celesta");
+                        ClickNPCDialog(class10, "Enter Balanced Arena", true);
+                        ReplyDialog(1, class10.ID, 0, 2);
+                        while (Dialog == null)
+                        {
+                            Thread.Sleep(10);
+                        }
+                        Thread.Sleep(1000);
+                        if (Dialog != null && Dialog.Message.Contains("Lumen Amulet"))
+                        {
+                            ServerMessage(0, "Deposit your lumen, then re-enable bot. damn nub");
+                            Bot.Stop();
+                        }
+                    }
+                    else if (_map.MapID == 393 && _clientLocation.DistanceFrom(new Location(393, 7, 6)) <= 1)
+                    {
+                        Creature npc = GetNearbyNPC("Aoife");
+                        PursuitRequest(1, npc.ID, 1171);
+                        if (WaitForDialog())
+                        {
+                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 1);
+                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, (ushort)((Player.BodySprite == 16) ? 6 : 3));
+                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 8, 1);
+                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 15, 1);
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    else if (Location.Equals(_clientLocation, new Location(503, 41, 59)) && nextLocation.MapID == 3014)
+                    {
+                        Creature npc = GetNearbyNPC("Keane");
+                        ClickNPCDialog(npc, "Suomi Help", true);
+                        ReplyDialog(1, npc.ID, 0, 2, 1);
+                        ReplyDialog(1, npc.ID, 0, 2);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[WarpWithNPC] Exception occurred: {ex.ToString()}");
+                }
+            }
+        }
+
+
+        #region ClientPacket methods
 
         internal void Pickup(byte inventorySlot, Location location)
         {
@@ -1938,7 +2586,6 @@ namespace Talos.Base
             clientPacket.WriteStruct(location.Point);
             Enqueue(clientPacket);
         }
-
         internal void Drop(byte inventorySlot, Location location, int count = 1)
         {
             ClientPacket clientPacket = new ClientPacket(8);
@@ -1953,7 +2600,21 @@ namespace Talos.Base
             clientPacket.WriteInt32(id);
             Enqueue(clientPacket);
         }
-
+        internal void PublicMessage(byte type, string message)
+        {
+            ClientPacket clientPacket = new ClientPacket(14);
+            clientPacket.WriteByte(type);
+            clientPacket.WriteString8(message);
+            Enqueue(clientPacket);
+        }
+        internal void Turn(Direction direction)
+        {
+            LastTurned = DateTime.UtcNow;
+            ClientPacket clientPacket = new ClientPacket(17);
+            clientPacket.WriteByte((byte)direction);
+            Enqueue(clientPacket);
+            _serverDirection = direction;
+        }
         internal void Whisper(string targetName, string message)
         {
             ClientPacket clientPacket = new ClientPacket(25);
@@ -1989,7 +2650,7 @@ namespace Talos.Base
                 Enqueue(clientPacket);
                 if (itemName == "Two Move Combo")
                 {
-                    if ((uint)_comboScrollCounter <= 1u)
+                    if (_comboScrollCounter <= 1u)
                     {
                         _comboScrollCounter++;
                         _comboScrollLastUsed = DateTime.UtcNow;
@@ -1997,7 +2658,7 @@ namespace Talos.Base
                 }
                 else if (itemName == "Three Move Combo")
                 {
-                    if ((uint)_comboScrollCounter <= 2u)
+                    if (_comboScrollCounter <= 2u)
                     {
                         _comboScrollCounter++;
                         _comboScrollLastUsed = DateTime.UtcNow;
@@ -2007,6 +2668,197 @@ namespace Talos.Base
                 return true;
             }
             return false;
+        }
+
+        internal void RequestProfile()
+        {
+            Enqueue(new ClientPacket(45));
+        }
+
+        internal void RequestGroup(string playerName)
+        {
+            ClientPacket clientPacket = new ClientPacket(46);
+            clientPacket.WriteByte(2);
+            clientPacket.WriteString8(playerName);
+            Enqueue(clientPacket);
+        }
+        internal void RequestGroupForced(string playerName)
+        {
+            ClientPacket clientPacket = new ClientPacket(46);
+            clientPacket.WriteByte(3);
+            clientPacket.WriteString8(playerName);
+            Enqueue(clientPacket);
+        }
+
+        internal void RefreshRequest(bool waitForCompletion = true)
+        {
+            if (Interlocked.CompareExchange(ref _isRefreshing, 1, 0) == 0)
+            {
+                this.Enqueue(new ClientPacket(56));
+                this.Bot._lastRefresh = DateTime.UtcNow;
+            }
+
+            var expirationTime = DateTime.UtcNow.AddMilliseconds(1500);
+
+            if (waitForCompletion)
+            {
+                try
+                {
+                    while (DateTime.UtcNow < expirationTime)
+                    {
+                        if (this._mapChanged || this._isRefreshing == 0)
+                        {
+                            this._mapChanged = false;
+                            break;
+                        }
+
+                        Thread.Sleep(10);
+                    }
+                }
+                catch (ThreadInterruptedException ex)
+                {
+                    Console.WriteLine("Thread was interrupted.");
+                }
+                finally
+                {
+                    this._isRefreshing = 0;
+                }
+            }
+            else
+                this._isRefreshing = 0;
+        }
+
+        internal void PursuitRequest(byte objType, int objID, ushort pursuitID, params object[] args)
+        {
+            ClientPacket clientPacket = new ClientPacket(57);
+            clientPacket.WriteByte(objType);
+            clientPacket.WriteInt32(objID);
+            clientPacket.WriteUInt16(pursuitID);
+            clientPacket.WriteArray(args);
+            Enqueue(clientPacket);
+        }
+
+        internal void WithdrawMoney(int objID, int quantity)
+        {
+            ClientPacket clientPacket = new ClientPacket(57);
+            clientPacket.WriteByte(1);
+            clientPacket.WriteInt32(objID);
+            clientPacket.WriteUInt16(85);
+            clientPacket.WriteString8(quantity.ToString());
+            Enqueue(clientPacket);
+        }
+
+        internal void DepositMoney(int objID, int quantity)
+        {
+            ClientPacket clientPacket = new ClientPacket(57);
+            clientPacket.WriteByte(1);
+            clientPacket.WriteInt32(objID);
+            clientPacket.WriteInt16(82);
+            clientPacket.WriteString8(quantity.ToString());
+            Enqueue(clientPacket);
+        }
+
+        internal void WithdrawItem(int npcID, string item, int quantity = 0)
+        {
+            ClientPacket clientPacket = new ClientPacket(57);
+            clientPacket.WriteByte(1);
+            clientPacket.WriteInt32(npcID);
+            clientPacket.WriteInt16(quantity > 0 ? (short)87 : (short)86);
+            clientPacket.WriteString8(item);
+            if (quantity > 0)
+                clientPacket.WriteString8(quantity.ToString());
+            Enqueue(clientPacket);
+        }
+
+        internal void DepositItem(int npcID, string item, int quantity = 1)
+        {
+            byte num = 0;
+            if (!Inventory.Contains(item))
+                ServerMessage((byte)ServerMessageType.ActiveMessage, "You don't own that item.");
+            else
+                num = Inventory[item].Slot;
+            ClientPacket clientPacket = new ClientPacket((byte)57);
+            clientPacket.WriteByte((byte)1);
+            clientPacket.WriteInt32(npcID);
+            clientPacket.WriteInt16(quantity > 1 ? (short)84 : (short)83);
+            if (quantity > 1)
+                clientPacket.WriteByte((byte)1);
+            clientPacket.WriteByte(num);
+            if (quantity > 1)
+                clientPacket.WriteString8(quantity.ToString());
+            Enqueue((Packet)clientPacket);
+        }
+
+
+
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId)
+        {
+            ClientPacket clientPacket = new ClientPacket(58);
+            clientPacket.WriteByte(objType);
+            clientPacket.WriteInt32(objId);
+            clientPacket.WriteUInt16(pursuitId);
+            clientPacket.WriteUInt16(dialogId);
+            Enqueue(clientPacket);
+        }
+
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, byte optionToClick)
+        {
+            ClientPacket clientPacket = new ClientPacket(58);
+            clientPacket.WriteByte(objType);
+            clientPacket.WriteInt32(objId);
+            clientPacket.WriteUInt16(pursuitId);
+            clientPacket.WriteUInt16(dialogId);
+            clientPacket.WriteByte(1);
+            clientPacket.WriteByte(optionToClick);
+            Enqueue(clientPacket);
+        }
+
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, string response)
+        {
+            ClientPacket clientPacket = new ClientPacket(58);
+            clientPacket.WriteByte(objType);
+            clientPacket.WriteInt32(objId);
+            clientPacket.WriteUInt16(pursuitId);
+            clientPacket.WriteUInt16(dialogId);
+            clientPacket.WriteByte(2);
+            clientPacket.WriteString8(response);
+            Enqueue(clientPacket);
+        }
+
+        internal bool UseSkill(string skillName)
+        {
+            Skill skill = Skillbook[skillName];
+            if (skill != null && CanUseSkill(skill))
+            {
+                ClientPacket clientPacket = new ClientPacket(62);
+                clientPacket.WriteByte(skill.Slot);
+                skill.LastUsed = DateTime.UtcNow;
+                if (_currentSkill != skillName)
+                {
+                    _currentSkill = skillName;
+                    if (skillName == "Charge")
+                    {
+                        ThreadPool.QueueUserWorkItem(_ => ClientTab.DelayedUpdateStrangerList());
+                    }
+                }
+                Enqueue(clientPacket);
+                return true;
+            }
+            return false;
+        }
+        internal void ClickWorldMap(short mapId, Point point)
+        {
+            ClientPacket clientPacket = new ClientPacket(63);
+            clientPacket.WriteInt32(mapId);
+            clientPacket.WriteStruct(point);
+            Enqueue(clientPacket);
+        }
+
+        internal void RemoveShield()
+        {
+            ClientPacket clientPacket = new ClientPacket(68);
+            clientPacket.WriteByte(3);
+            Enqueue(clientPacket);
         }
 
         internal bool UseSpell(string spellName, Creature target = null, bool staffSwitch = true, bool wait = true)
@@ -2176,7 +3028,7 @@ namespace Talos.Base
                 {
                     if (!int.TryParse(ClientTab.safeFSTbox.Text, out int result))
                     {
-                        if ((double)Stats.CurrentHP < (double)Stats.MaximumMP * 0.5)
+                        if (Stats.CurrentHP < Stats.MaximumMP * 0.5)
                         {
                             _isCasting = false;
                             return false;
@@ -2204,72 +3056,13 @@ namespace Talos.Base
             }
         }
 
-        internal void RequestProfile()
-        {
-            Enqueue(new ClientPacket(45));
-        }
-
-        internal void RequestGroup(string playerName)
-        {
-            ClientPacket clientPacket = new ClientPacket(46);
-            clientPacket.WriteByte(2);
-            clientPacket.WriteString8(playerName);
-            Enqueue(clientPacket);
-        }
-        internal void RequestGroupForced(string playerName)
-        {
-            ClientPacket clientPacket = new ClientPacket(46);
-            clientPacket.WriteByte(3);
-            clientPacket.WriteString8(playerName);
-            Enqueue(clientPacket);
-        }
-
-        internal bool UseSkill(string skillName)
-        {
-            Skill skill = Skillbook[skillName];
-            if (skill != null && CanUseSkill(skill))
-            {
-                ClientPacket clientPacket = new ClientPacket(62);
-                clientPacket.WriteByte(skill.Slot);
-                skill.LastUsed = DateTime.UtcNow;
-                if (_currentSkill != skillName)
-                {
-                    _currentSkill = skillName;
-                    if (skillName == "Charge")
-                    {
-                        ThreadPool.QueueUserWorkItem(_ => ClientTab.DelayedUpdateStrangerList());
-                    }
-                }
-                Enqueue(clientPacket);
-                return true;
-            }
-            return false;
-        }
-
-        internal void RemoveShield()
-        {
-            ClientPacket clientPacket = new ClientPacket(68);
-            clientPacket.WriteByte(3);
-            Enqueue(clientPacket);
-        }
-
-
         internal void DisplayChant(string chant)
         {
             ClientPacket clientPacket = new ClientPacket(78);
             clientPacket.WriteString8(chant);
             Enqueue(clientPacket);
         }
-        internal void ServerMessage(byte type, string message)
-        {
-            if (!_safeScreen)
-            {
-                ServerPacket serverPacket = new ServerPacket(10);
-                serverPacket.WriteByte(type);
-                serverPacket.WriteString16(message);
-                Enqueue(serverPacket);
-            }
-        }
+
         internal void ClickObject(int objectId)
         {
             ClientPacket clientPacket = new ClientPacket(67);
@@ -2277,7 +3070,6 @@ namespace Talos.Base
             clientPacket.WriteInt32(objectId);
             Enqueue(clientPacket);
         }
-
         internal void ClickObject(Location location)
         {
             Point point = new Point(location.X, location.Y);
@@ -2288,22 +3080,17 @@ namespace Talos.Base
             clientPacket.WriteByte(1);
             Enqueue(clientPacket);
         }
-
-        internal void EscapeKey()
+        internal void RaiseStrStat()
         {
-            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 256, 27, MakeLParam(1, NativeMethods.MapVirtualKey(27, 0)));
-            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 257, 27, MakeLParam(1, NativeMethods.MapVirtualKey(27, 0)));
+            ClientPacket clientPacket = new ClientPacket((byte)71);
+            clientPacket.WriteByte((byte)1);
+            Enqueue((Packet)clientPacket);
         }
 
-        internal void EnterKey()
-        {
-            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 256, 13, MakeLParam(1, NativeMethods.MapVirtualKey(13, 0)));
-            NativeMethods.PostMessage(Process.GetProcessById(processId).MainWindowHandle, 257, 13, MakeLParam(1, NativeMethods.MapVirtualKey(13, 0)));
-        }
-        internal int MakeLParam(int LoWord, int HiWord)
-        {
-            return (HiWord << 16) | (LoWord & 0xFFFF);
-        }
+
+        #endregion
+
+        #region SereverPacket methods
         internal void EnableMapZoom()
         {
             ServerPacket serverPacket = new ServerPacket(5);
@@ -2312,957 +3099,6 @@ namespace Talos.Base
             serverPacket.WriteByte((byte)(GetCheats(Cheats.ZoomableMap) ? 2 : Path));
             serverPacket.WriteUInt16(0);
             Enqueue(serverPacket);
-        }
-
-        internal void DisplayTextOverTarget(byte type, int id, string message)
-        {
-            ServerPacket serverPacket = new ServerPacket(13);
-            serverPacket.WriteByte(type);
-            serverPacket.WriteInt32(id);
-            serverPacket.WriteString8(message);
-            this.Enqueue((Packet)serverPacket);
-        }
-
-
-        internal void RemoveObject(int objId)
-        {
-            ServerPacket serverPacket = new ServerPacket(14);
-            serverPacket.WriteUInt32((uint)objId);
-            Enqueue(serverPacket);
-        }
-        internal void ServerDialog(byte dialogType, byte objectType, int objectID, byte unknown1, ushort sprite1, byte color1, byte unknown2, ushort sprite2, byte color2,
-            ushort pursuitID, ushort dialogID, bool previousButton, bool nextButton, byte unknown3, string objectName, string message)
-        {
-            ServerPacket serverPacket = new ServerPacket(48);
-            serverPacket.WriteByte(dialogType);
-            serverPacket.WriteByte(objectType);
-            serverPacket.WriteInt32(objectID);
-            serverPacket.WriteByte(unknown1);
-            serverPacket.WriteUInt16(sprite1);
-            serverPacket.WriteByte(color1);
-            serverPacket.WriteByte(unknown2);
-            serverPacket.WriteUInt16(sprite2);
-            serverPacket.WriteByte(color2);
-            serverPacket.WriteUInt16(pursuitID);
-            serverPacket.WriteUInt16(dialogID);
-            serverPacket.WriteBoolean(previousButton);
-            serverPacket.WriteBoolean(nextButton);
-            serverPacket.WriteByte(unknown3);
-            serverPacket.WriteString8(objectName);
-            serverPacket.WriteString16(message);
-            Enqueue(serverPacket);
-        }
-
-        internal void DisplayAisling(Player player)
-        {
-            _ = player.Location;
-            ushort spriteID = player.SpriteID;
-            if (player == Player && InMonsterForm)
-            {
-                spriteID = _monsterFormID;
-            }
-            ServerPacket serverPacket = new ServerPacket(51);
-            serverPacket.WriteStruct(player.Location);
-            serverPacket.WriteByte((byte)player.Direction);
-            serverPacket.WriteInt32(player.ID);
-            if (spriteID == 0)
-            {
-                serverPacket.WriteUInt16(player.HeadSprite);
-                if (player.BodySprite == 0 && GetCheats(Cheats.SeeHidden) && !InArena)
-                {
-                    serverPacket.WriteByte(80);
-                }
-                else
-                {
-                    serverPacket.WriteByte(player.BodySprite);
-                }
-                serverPacket.WriteUInt16(player.ArmorSprite1);
-                serverPacket.WriteByte(player.BootsSprite);
-                serverPacket.WriteUInt16(player.ArmorSprite2);
-                serverPacket.WriteByte(player.ShieldSprite);
-                serverPacket.WriteUInt16(player.WeaponSprite);
-                serverPacket.WriteByte(player.HeadColor);
-                serverPacket.WriteByte(player.BootColor);
-                serverPacket.WriteByte(player.AccessoryColor1);
-                serverPacket.WriteUInt16(player.AccessorySprite1);
-                serverPacket.WriteByte(player.AccessoryColor2);
-                serverPacket.WriteUInt16(player.AccessorySprite2);
-                serverPacket.WriteByte(player.AccessoryColor3);
-                serverPacket.WriteUInt16(player.AccessorySprite3);
-                serverPacket.WriteByte(player.LanternSize);
-                serverPacket.WriteByte(player.RestPosition);
-                serverPacket.WriteUInt16(player.OvercoatSprite);
-                serverPacket.WriteByte(player.OvercoatColor);
-                serverPacket.WriteByte(player.BodyColor);
-                serverPacket.WriteBoolean(player._isHidden);
-                serverPacket.WriteByte(player.FaceSprite);
-            }
-            else
-            {
-                serverPacket.WriteUInt16(ushort.MaxValue);
-                serverPacket.WriteUInt16((ushort)(spriteID + 16384));
-                serverPacket.WriteByte(player.HeadColor);
-                serverPacket.WriteByte(player.BootColor);
-                serverPacket.WriteUInt16(0);
-                serverPacket.WriteUInt32(0u);
-            }
-            serverPacket.WriteByte(player.NameTagStyle);
-            if (player.BodySprite == 0 && !GetCheats(Cheats.SeeHidden))
-            {
-                Map map = _map;
-                if (map != null && map.Name?.Contains("Arena") == false && !InArena)
-                    serverPacket.WriteString8(string.Empty);
-                else
-                    serverPacket.WriteString8(player.Name);
-            }
-            else
-            {
-                serverPacket.WriteString8(player.Name);
-            }
-            serverPacket.WriteString8(player.GroupName);
-            Enqueue(serverPacket);
-        }
-
-
-
-        internal void Walk(Direction dir)
-        {
-
-            //Console.WriteLine($"Attempting to walk in direction: {dir}"); // Log the direction
-
-            if (Dialog == null || !_server._stopWalking || dir != Direction.Invalid || _isRefreshing == 1)
-            {
-                _walkCallCount++;
-                //Console.WriteLine($"Walk method called {walkCallCount} times");
-
-                //Console.WriteLine("Walk conditions met. Proceeding..."); // Debugging: Log that conditions are met
-
-                LastStep = DateTime.UtcNow;
-                //Console.WriteLine($"LastStep set to: {LastStep}"); // Debugging: Log LastStep update
-
-                if (_serverDirection != dir)
-                {
-                    //Console.WriteLine($"Turning from {_serverDirection} to {dir}"); // Debugging: Log direction change
-                    Turn(dir);
-                }
-
-                _hasWalked = true;
-                //Console.WriteLine("shouldRefresh set to true"); // Debugging: Log shouldRefresh update
-
-
-                //Console.WriteLine($"Preparing packets for PlayerID: {PlayerID} at {_clientLocation} moving {dir}"); // Debugging: Log enqueueing of server packet
-                ClientPacket clientPacket = new ClientPacket(6); // walk
-                clientPacket.WriteByte((byte)dir);
-                clientPacket.WriteByte(StepCount++);
-                //Console.WriteLine($"Client packet prepared. StepCount: {StepCount - 1}"); // Debugging: Log ClientPacket preparation
-                Enqueue(clientPacket);
-
-
-                ServerPacket serverPacket = new ServerPacket(12); // creaturewalk
-                serverPacket.WriteUInt32(PlayerID);
-                serverPacket.WriteStruct(_clientLocation);
-                serverPacket.WriteByte((byte)dir);
-
-                Enqueue(serverPacket);
-
-
-                _clientLocation = _clientLocation.TranslateLocationByDirection(dir);
-                //Console.WriteLine($"Client location updated to: {_clientLocation}"); // Debugging: Log client location update
-
-                LastMoved = DateTime.UtcNow;
-                //Console.WriteLine($"[WalkLastMoved set to: {LastMoved}"); // Debugging: Log LastMoved update
-
-                UpdateClientActionText($"{_action} Walking {dir}");
-            }
-            else
-            {
-                _isWalking = false;
-                //Console.WriteLine("Walk aborted due to conditions not met. _isWalking set to false."); // Debugging: Log abort and _isWalking update
-                Thread.Sleep(100); // Consider logging this delay for clarity if necessary
-            }
-        }
-
-
-        internal bool Pathfind(Location destination, short distance = 1, bool shouldBlock = true, bool avoidWarps = true)
-        {
-
-            if (NearbyHiddenPlayers.Count > 0 || _isCasting)
-            {
-                Console.WriteLine($"[Pathfind] [{this.Name}] Cannot walk because NearbyHiddenPlayers count is {NearbyHiddenPlayers.Count} or is casting {_isCasting}");
-                if (!_isWalking)
-                {
-                    Console.WriteLine($"[Pathfind] [{this.Name}] Not currently walking.");
-                    return false;
-                }
-                _isCasting = false;
-            }
-
-            bool isWall = _map.IsWall(_clientLocation);
-            bool isStuck = GetNearbyObjects().OfType<Creature>()
-                .Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && creature.Location == _clientLocation);
-
-            //Console.WriteLine($"[Pathfind] [{this.Name}] value of isStuck = " + isStuck);
-
-            if ((isWall || isStuck) && (_hasWalked || _clientLocation.X == (short)0 && _clientLocation.Y == (short)0 || _serverLocation.X == (short)0 && _serverLocation.Y == (short)0))
-            {
-                Console.WriteLine($"[Pathfind] [{this.Name}] isWall or isStuck, refreshing. Setting _hasWalked to false and returning false");
-                RequestRefresh();
-                _hasWalked = false;
-                return false;
-            }
-
-
-            if (_clientLocation == destination)
-            {
-                if (_hasWalked || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
-                {
-                    if (_stuckCounter == 0)
-                    {
-                        Console.WriteLine($"[Pathfind] [{this.Name}] Refreshing client due to timeout or refresh needed.");
-                        RequestRefresh();
-                    }
-                    _hasWalked = false;
-                }
-                return true;
-            }
-
-            double elapsedMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
-            double waitThreshold = (Bot.IsStrangerNearby() && !ClientTab.chkSpeedStrangers.Checked) || Bot._rangerNear
-                ? 420.0
-                : _walkSpeed;
-
-            // Continue looping until elapsed time meets or exceeds the threshold
-            while (elapsedMilliseconds < waitThreshold)
-            {
-                Thread.Sleep(10);
-                elapsedMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
-            }
-
-            if (Equals(_clientLocation, destination))
-            {
-                Console.WriteLine($"[Pathfind] [{this.Name}] Destination reached.");
-                RequestRefresh();
-                return true;
-            }
-
-            if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
-            {
-                Console.WriteLine($"[Pathfind] [{this.Name}] New destination or empty path stack. Calculating new path.");
-                _lastDestination = destination;
-                pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
-
-            }
-
-            if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _hasWalked)
-            {
-                pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidWarps);
-                if (pathStack.Count == 0)
-                {
-                    return false;
-                }
-                Console.WriteLine($"[Pathfind] [{this.Name}] Location difference detected, requesting refresh.");
-                RequestRefresh();
-                _hasWalked = false;
-                return false;
-            }
-
-            if (pathStack.Count == 0)
-            {
-                Console.WriteLine($"[Pathfind] [{this.Name}] Path stack is empty, no further movement possible.");
-                RequestRefresh();
-                return false;
-            }
-
-
-            List<Creature> nearbyCreatures = (from creature in GetNearbyObjects().OfType<Creature>()
-                                              where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(_serverLocation) <= 11
-                                              select creature).ToList();
-
-            foreach (Location loc in pathStack)
-            {
-                Door door = Doors.Values.FirstOrDefault(d => d.Location.Equals(loc));
-                if (door != null)
-                {
-                    Console.WriteLine($"[Pathfind] [{this.Name}] Door at {loc}, Closed: {door.Closed}, RecentlyClicked: {door.RecentlyClicked}");
-                    if (door.Closed && !door.RecentlyClicked)
-                    {
-                        Console.WriteLine($"[Pathfind] [{this.Name}] Attempting to click door.");
-                        ClickObject(loc);
-                        door.LastClicked = DateTime.UtcNow;
-                    }
-                }
-                if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(creature => Location.NotEquals(loc, destination) && Location.Equals(creature.Location, loc) || (!HasEffect(Enumerations.EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID) && GetCreatureCoverage(creature).Contains(loc))))
-                {
-                    if (isStuck)
-                    {
-                        Console.WriteLine($"[Pathfind] [{this.Name}] Stuck in creature intreaction if statement.");
-                        break;
-                    }
-                    Console.WriteLine($"[Pathfind] [{this.Name}] Creature interaction required at {loc}, recalculating path.");
-                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
-                    return false;
-                }
-            }
-
-            Location nextPosition = pathStack.Peek();
-            if (nextPosition.Equals(_clientLocation))
-            {
-                pathStack.Pop();
-                if (pathStack.Count == 0)
-                {
-                    Console.WriteLine($"[Pathfind] [{this.Name}] Path complete. Destination reached.");
-                    return true;
-                }
-                nextPosition = pathStack.Peek();
-            }
-
-
-            if (nextPosition.DistanceFrom(_clientLocation) != 1)
-            {
-                Console.WriteLine($"[Pathfind] [{this.Name}] Unexpected distance to next position {nextPosition}, recalculating path.");
-                if (nextPosition.DistanceFrom(_clientLocation) > 2 && _hasWalked)
-                {
-                    if (_stuckCounter == 0)
-                    {
-                        Console.WriteLine($"[Pathfind] [{this.Name}] Refreshing client due to unexpected position distance.");
-                        RequestRefresh();
-                    }
-                    _hasWalked = false;
-                }
-                pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
-                return false;
-            }
-
-            Direction directionToWalk = nextPosition.GetDirection(_clientLocation);
-            if (shouldBlock)
-            {
-                lock (CastLock)
-                {
-                    if (!HasEffect(Enumerations.EffectsBar.Pramh))
-                    {
-                        if (!HasEffect(Enumerations.EffectsBar.Suain))
-                        {
-                            if (HasEffect(Enumerations.EffectsBar.Skull))
-                            {
-                                if (ClientTab.ascendBtn.Text != "Ascending")
-                                {
-                                    return true;
-                                }
-                            }
-                            Walk(directionToWalk);
-                        }
-                    }
-                }
-            }
-            else if (!HasEffect(Enumerations.EffectsBar.Pramh) && !HasEffect(Enumerations.EffectsBar.Suain) && (!HasEffect(Enumerations.EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
-            {
-                Walk(directionToWalk);              
-            }
-
-            return true;
-        }
-
-        internal bool RouteFind(Location destination, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)
-        {
-            try
-            {
-                Console.WriteLine($"[RouteFind] [{this.Name}] Starting RouteFind to {destination}");
-                if (_server._stopWalking)
-                {
-                    Console.WriteLine($"[RouteFind] [{this.Name}] Not supposed to walk.");
-                    return false;
-                }
-
-                Location currentLocation = new Location(_map.MapID, _clientLocation.X, _clientLocation.Y);
-                Console.WriteLine($"[RouteFind] [{this.Name}] Current location: {currentLocation}");
-                Location adjustedDestination;
-                //adjust for followdistance?
-                if (ClientTab.followCbox.Checked)
-                {
-                    adjustedDestination = GetValidLocationNearTarget(destination, (short)ClientTab.followDistanceNum.Value);
-                }
-                else
-                {
-                    adjustedDestination = destination;
-                }
-
-                if (Location.Equals(currentLocation, adjustedDestination))
-                {
-                    if (Location.Equals(adjustedDestination, new Location(395, 6, 6))) //Path Temple 1
-                    {
-                        Bot._circle1 = true;
-                    }
-                    else if (Location.Equals(adjustedDestination, new Location(344, 6, 6))) //Path Temple 6
-                    {
-                        Bot._circle2 = true;
-                    }
-                    Console.WriteLine($"[RouteFind] [{this.Name}] Already at destination.");
-                    routeStack.Clear();
-                    return false;
-                }
-
-                if (routeStack.Count == 1 && adjustedDestination.MapID == _map.MapID && mapOnly)
-                {
-                    routeStack.Clear();
-                    return false;
-                }
-
-                if (Location.NotEquals(_routeDestination, adjustedDestination) || routeStack.Count == 0)
-                {
-                    Console.WriteLine($"[RouteFind] [{this.Name}] Finding new route.");
-                    _routeDestination = adjustedDestination;
-                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
-                }
-
-                if (_map.Name.Contains("Plamit"))
-                {
-                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
-                }
-
-                if (routeStack.Count == 0)
-                {
-                    Console.WriteLine($"[RouteFind] [{this.Name}] Route not found, initializing new RouteFinder.");
-                    RouteFinder = new RouteFinder(_server, this);
-                    _routeDestination = adjustedDestination;
-                    _lastClickedWorldMap = DateTime.MinValue;
-                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
-                    return false;
-                }
-
-                Location nextLocation = routeStack.Peek();
-
-                //if (routeStack.Count != 1)
-                //{
-                //Console.WriteLine("***routeStack.Count != 1");
-                //    distance = 0;
-                //}
-
-                if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
-                {
-                    Console.WriteLine($"[RouteFind] [{this.Name}] routeStack.Count > 1 & nextLocaiton = _serverLocation");
-                    routeStack.Pop();
-                    nextLocation = routeStack.Peek();
-                }
-
-                if (_worldMap != null)
-                {
-                    Console.WriteLine($"[RouteFind] [{this.Name}] World map is not null, processing world map navigation.");
-                    List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
-                    if (DateTime.UtcNow.Subtract(_lastClickedWorldMap).TotalSeconds < 1.0)
-                    {
-                        return false;
-                    }
-                    foreach (Location location in list)
-                    {
-                        Console.WriteLine($"[RouteFind] [{this.Name}] Checking world map node for location {location}");
-
-                        foreach (WorldMapNode node in _worldMap.Nodes)
-                        {
-                            Console.WriteLine($"[RouteFind] [{this.Name}] Checking node {node.Location}");
-                            if (node.MapID == location.MapID)
-                            {
-                                Console.WriteLine($"[RouteFind] [{this.Name}] Need to click world map");
-                                _lastClickedWorldMap = DateTime.UtcNow;
-                                ClickWorldMap(node.MapID, node.Location);
-                                return true;
-                            }
-                        }
-                    }
-                    foreach (WorldMapNode node in _worldMap.Nodes)
-                    {
-                        Console.WriteLine($"[RouteFind] [{this.Name}] [2]Checking node {node.Location}");
-
-                        if (node.MapID == nextLocation.MapID)
-                        {
-                            Console.WriteLine($"[RouteFind] [{this.Name}] [2]Need to click world map");
-                            _lastClickedWorldMap = DateTime.UtcNow;
-                            ClickWorldMap(node.MapID, node.Location);
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-                if (nextLocation.MapID != _map.MapID)
-                {
-                    if (!_server._maps.TryGetValue(_map.MapID, out Map value))
-                    {
-                        Console.WriteLine($"[RouteFind] [{this.Name}] Map not found in server maps. Clearing routeStack.");
-                        routeStack.Clear();
-                        return false;
-                    }
-                    if (value.WorldMaps.TryGetValue(_clientLocation.Point, out WorldMap _worldMapNodeList))
-                    {
-                        if (!value.WorldMaps.TryGetValue(_serverLocation.Point, out _worldMapNodeList))
-                        {
-                            Console.WriteLine($"[RouteFind] [{this.Name}] Need to refresh");
-                            RequestRefresh();
-                            return false;
-                        }
-                        foreach (WorldMapNode worldMapNode in _worldMapNodeList.Nodes)
-                        {
-                            if (worldMapNode.MapID == nextLocation.MapID)
-                            {
-                                Console.WriteLine($"[RouteFind] [{this.Name}] maps are equal");
-                                return false;
-                            }
-                        }
-                    }
-                    if (value.Exits.TryGetValue(_clientLocation.Point, out Warp warp) && warp.TargetMapID == nextLocation.MapID)
-                    {
-                        Console.WriteLine($"[RouteFind] [{this.Name}] Warping with NPC");
-                        WarpWithNPC(nextLocation);
-                        RequestRefresh();
-                        return true;
-                    }
-                    routeStack.Clear();
-                    return false;
-                }
-                Console.WriteLine($"[RouteFind] [{this.Name}] About to call TryWalkLocation with distance value of: {distance}");
-                if (!Pathfind(nextLocation, distance, shouldBlock, avoidWarps = true))
-                {
-                    if (_map.Name.Contains("Threshold"))
-                    {
-                        Console.WriteLine($"[RouteFind] [{this.Name}] Threshold map detected, attempting to walk south.");
-                        Walk(Direction.South);
-                        Thread.Sleep(1000);
-                        return true;
-                    }
-                    Console.WriteLine($"[RouteFind] [{this.Name}] TryWalkToLocation failed, returning false.");
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[RouteFind] [{this.Name}] Exception in RouteFind. Refreshing.");
-                Console.WriteLine(ex.ToString());
-                Console.WriteLine("***");
-                RequestRefresh();
-                return false;
-            }
-            if (routeStack.Count <= 0)
-            {
-                Console.WriteLine($"[RouteFind] [{this.Name}] Route stack empty, returning false.");
-                return false;
-            }
-
-            return true;
-        }
-        private Location GetValidLocationNearTarget(Location targetLocation, short followDistance)
-        {
-            List<Location> potentialLocations = new List<Location>();
-
-            // Check exactly followDistance tiles away in each direction (Up, Down, Left, Right)
-            short[] dx = { followDistance, (short)-followDistance, 0, 0 };
-            short[] dy = { 0, 0, followDistance, (short)-followDistance };
-
-            //Console.WriteLine($"Checking cardinal directions around target: {targetLocation}, followDistance: {followDistance}");
-
-            // Try to find valid locations in the cardinal directions
-            for (int i = 0; i < 4; i++)
-            {
-                Location potentialLocation = new Location(
-                    targetLocation.MapID,
-                    (short)(targetLocation.X + dx[i]),
-                    (short)(targetLocation.Y + dy[i])
-                );
-
-
-                //Console.WriteLine($"Checking cardinal direction location: {potentialLocation}");
-
-                // Check if the location is valid and walkable
-                if (IsWalkable(potentialLocation))
-                {
-                    //Console.WriteLine($"Location {potentialLocation} is walkable.");
-                    potentialLocations.Add(potentialLocation);
-                }
-                else
-                {
-                    //Console.WriteLine($"Location {potentialLocation} is NOT walkable.");
-                }
-            }
-
-            // Return the first valid location found in the cardinal directions
-            if (potentialLocations.Any())
-            {
-                //Console.WriteLine($"Returning valid cardinal direction location: {potentialLocations.First()}");
-                return potentialLocations.First();
-            }
-
-            // As a fallback, calculate diagonal movements exactly followDistance away
-            //Console.WriteLine($"No valid cardinal locations found. Checking diagonals...");
-
-            for (short xOffset = (short)-followDistance; xOffset <= followDistance; xOffset++)
-            {
-                for (short yOffset = (short)-followDistance; yOffset <= followDistance; yOffset++)
-                {
-                    if (Math.Abs(xOffset) == followDistance || Math.Abs(yOffset) == followDistance)
-                    {
-                        Location diagonalLocation = new Location(
-                            targetLocation.MapID,
-                            (short)(targetLocation.X + xOffset),
-                            (short)(targetLocation.Y + yOffset)
-                        );
-
-
-                        //Console.WriteLine($"Checking diagonal location: {diagonalLocation}");
-
-                        // Check if the diagonal location is walkable
-                        if (IsWalkable(diagonalLocation))
-                        {
-                            //Console.WriteLine($"Diagonal location {diagonalLocation} is walkable.");
-                            potentialLocations.Add(diagonalLocation);
-                        }
-                        else
-                        {
-                            //Console.WriteLine($"Diagonal location {diagonalLocation} is NOT walkable.");
-                        }
-                    }
-                }
-            }
-
-            // If valid diagonal locations were found, return the first one
-            if (potentialLocations.Any())
-            {
-                //Console.WriteLine($"Returning valid diagonal location: {potentialLocations.First()}");
-                return potentialLocations.First();
-            }
-
-            // If no valid locations were found, return the original target location
-            //Console.WriteLine($"No valid locations found. Returning original target location: {targetLocation}");
-            return targetLocation;
-        }
-
-        private bool IsWalkable(Location location)
-        {
-            // Check if the location is walkable (not blocked)
-            if (_map.Tiles.TryGetValue(location.Point, out Tile tile))
-            {
-                return !tile.IsWall;
-            }
-            return false;
-        }
-
-        private void WarpWithNPC(Location nextLocation)
-        {
-            if (ClientTab != null)
-            {
-                try
-                {
-                    if (Location.Equals(_clientLocation, new Location(5220, 0, 6)) && nextLocation.MapID == 5210 && Dialog != null)
-                    {
-                        Dialog.DialogNext(2);
-                    }
-                    if (Location.Equals(_clientLocation, new Location(6926, 8, 9)) && nextLocation.MapID == 10028)
-                    {
-                        Creature creature = GetNearyByNPC("Quard");
-                        ClickNPCDialog(creature, "Express Ship", true);
-                        ReplyDialog(1, creature.ID, 0, 2, 1);
-                        ReplyDialog(1, creature.ID, 0, 2);
-
-                        if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
-                        }
-                        if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medTask[Name] = ClientTab.followText.Text;
-                        }
-                        if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
-                        }
-                        if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medTask[Name] = "bugEvent";
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
-                        }
-                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medTask[Name] = "vDayEvent";
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
-                        }
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
-                    {
-                        PublicMessage(3, "Enter Sewer Maze");
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(10000, 29, 31)) && nextLocation.MapID == 10999)
-                    {
-                        Creature creature = GetNearyByNPC("Lenoa");
-                        ClickNPCDialog(creature, "Caravan to Noam", true);
-                        ReplyDialog(1, creature.ID, 0, 2);
-                        ReplyDialog(1, creature.ID, 0, 2, 1);
-                        ReplyDialog(1, creature.ID, 0, 2);
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(10055, 46, 23)) && nextLocation.MapID == 10999)
-                    {
-                        Creature creature = GetNearyByNPC("Habab");
-                        ClickNPCDialog(creature, "Caravan to Asilon or Hwarone", true);
-                        ReplyDialog(1, creature.ID, 0, 2);
-                        ReplyDialog(1, creature.ID, 0, 2, 1);
-                        ReplyDialog(1, creature.ID, 0, 2);
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(10265, 87, 47)) && nextLocation.MapID == 10998)
-                    {
-                        Creature creature = GetNearyByNPC("Mank");
-                        ClickNPCDialog(creature, "Caravan to Noam", true);
-                        ReplyDialog(1, creature.ID, 0, 2);
-                        ReplyDialog(1, creature.ID, 0, 2, 1);
-                        ReplyDialog(1, creature.ID, 0, 2);
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(10055, 46, 24)) && nextLocation.MapID == 1960)
-                    {
-                        Creature creature = GetNearyByNPC("Habab");
-                        ClickNPCDialog(creature, "Carpet Merchant", true);
-                        ReplyDialog(1, creature.ID, 0, 2);
-                        ReplyDialog(1, creature.ID, 0, 2, 1);
-                        ReplyDialog(1, creature.ID, 0, 2, 1);
-                        ReplyDialog(1, creature.ID, 0, 2);
-
-                        if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
-                        }
-                        if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medTask[Name] = ClientTab.followText.Text;
-                        }
-                        if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
-                        }
-                        if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medTask[Name] = "bugEvent";
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
-                        }
-                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
-                        {
-                            _server._medTask[Name] = "vDayEvent";
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
-                        }
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(3634, 16, 6)) && nextLocation.MapID == 8420)
-                    {
-                        Creature creature = GetNearyByNPC("Fallen Soldier");
-                        ClickNPCDialog(creature, "ChadulEntry", true);
-                        ReplyDialog(1, creature.ID, 0, 2, 1);
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(8318, 50, 95)) && nextLocation.MapID == 8345)
-                    {
-                        Creature class7 = GetNearyByNPC("Ashlee");
-                        ClickObject(class7.ID);
-                        ReplyDialog(1, class7.ID, 0, 2);
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(8355, 32, 5)) && nextLocation.MapID == 8356)
-                    {
-                        Creature class8 = GetNearyByNPC("Norrie");
-                        PublicMessage(0, "let me through");
-                        while (Dialog == null)
-                        {
-                            Thread.Sleep(25);
-                        }
-                        if (!Dialog.Message.Contains("Sorry, I forgot..."))
-                        {
-                            ReplyDialog(1, class8.ID, 0, 2, 1);
-                            ReplyDialog(1, class8.ID, 0, 2, 1);
-                            Thread.Sleep(1000);
-                            PublicMessage(0, "let me through");
-                        }
-                        ReplyDialog(1, class8.ID, 0, 2);
-                        ReplyDialog(1, class8.ID, 0, 2);
-                        ReplyDialog(1, class8.ID, 0, 2);
-                        Thread.Sleep(1000);
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(8361, 32, 7)) && nextLocation.MapID == 8362)
-                    {
-                        Creature class9 = GetNearyByNPC("Yowien Guard");
-                        if (class9 != null && Inventory.HasItem("Yowien Costume"))
-                        {
-                            UseSkill("Assail");
-                            UseItem("Yowien Costume");
-                            UseItem("Yowien Headgear");
-                            Thread.Sleep(1000);
-                        }
-                        PublicMessage(0, "graauuloow");
-                        DateTime utcNow = DateTime.UtcNow;
-                        while (Dialog == null)
-                        {
-                            if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0))
-                            {
-                                return;
-                            }
-                            Thread.Sleep(25);
-                        }
-                        if (Dialog.Message == "*The Yowien Guard sniffs you, then suddenly attacks you. You run back to a safe distance*")
-                        {
-                            Thread.Sleep(1000);
-                        }
-                        else
-                        {
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            Thread.Sleep(1000);
-                        }
-                    }
-                    else if (_map.MapID == 3052 && _clientLocation.X == 44 && _clientLocation.Y >= 18 && _clientLocation.Y <= 25)
-                    {
-                        Creature class10 = GetNearyByNPC("Celesta");
-                        ClickNPCDialog(class10, "Enter Balanced Arena", true);
-                        ReplyDialog(1, class10.ID, 0, 2);
-                        while (Dialog == null)
-                        {
-                            Thread.Sleep(10);
-                        }
-                        Thread.Sleep(1000);
-                        if (Dialog != null && Dialog.Message.Contains("Lumen Amulet"))
-                        {
-                            ServerMessage(0, "Deposit your lumen, then re-enable bot. damn nub");
-                            Bot.Stop();
-                        }
-                    }
-                    else if (_map.MapID == 393 && _clientLocation.DistanceFrom(new Location(393, 7, 6)) <= 1)
-                    {
-                        Creature npc = GetNearyByNPC("Aoife");
-                        RequestDialog(1, npc.ID, 1171);
-                        if (WaitForDialog())
-                        {
-                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 1);
-                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, (ushort)((Player.BodySprite == 16) ? 6 : 3));
-                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 8, 1);
-                            ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, 15, 1);
-                            Thread.Sleep(1000);
-                        }
-                    }
-                    else if (Location.Equals(_clientLocation, new Location(503, 41, 59)) && nextLocation.MapID == 3014)
-                    {
-                        Creature npc = GetNearyByNPC("Keane");
-                        ClickNPCDialog(npc, "Suomi Help", true);
-                        ReplyDialog(1, npc.ID, 0, 2, 1);
-                        ReplyDialog(1, npc.ID, 0, 2);
-                    }
-
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine($"[WarpWithNPC] Exception occurred: {ex.ToString()}");
-                }
-            }
-        }
-
-        internal List<Location> GetCreatureCoverage(Creature creature)
-        {
-            if (HasEffect(Enumerations.EffectsBar.Hide))
-            {
-                return new List<Location>();
-            }
-            return new List<Location>
-            {
-                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 2), creature.Location.Y)),
-                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), (short)(creature.Location.Y + 1))),
-                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), creature.Location.Y)),
-                new Location(creature.Location.MapID, new Point((short)(creature.Location.X - 1), (short)(creature.Location.Y - 1))),
-                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y + 2))),
-                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y + 1))),
-                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y - 1))),
-                new Location(creature.Location.MapID, new Point(creature.Location.X, (short)(creature.Location.Y - 2))),
-                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), (short)(creature.Location.Y + 1))),
-                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), creature.Location.Y)),
-                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 1), (short)(creature.Location.Y - 1))),
-                new Location(creature.Location.MapID, new Point((short)(creature.Location.X + 2), creature.Location.Y))
-            };
-        }
-
-
-
-        internal List<Creature> GetAllNearbyMonsters(int distance = 12, params ushort[] creatureArray)
-        {
-            var creatureList = new List<Creature>();
-            var hashSet = new HashSet<ushort>(creatureArray);
-
-            lock (Server.SyncObj)
-            {
-                foreach (var creature in GetNearbyObjects().OfType<Creature>())
-                {
-                    if ((creature.Type == CreatureType.Normal || creature.Type == CreatureType.WalkThrough)
-                        && WithinRange(creature, distance)
-                        && creature.SpriteID > 0 && creature.SpriteID <= 1000
-                        && !CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID)
-                        && !CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID)
-                        && hashSet.Contains(creature.SpriteID))
-                    {
-                        creatureList.Add(creature);
-                    }
-                }
-            }
-
-            return creatureList;
-        }
-
-        internal void Turn(Direction direction)
-        {
-            LastTurned = DateTime.UtcNow;
-            ClientPacket clientPacket = new ClientPacket(17);
-            clientPacket.WriteByte((byte)direction);
-            Enqueue(clientPacket);
-            _serverDirection = direction;
-        }
-
-        internal void RequestRefresh(bool waitForCompletion = true)
-        {
-            if (Interlocked.CompareExchange(ref _isRefreshing, 1, 0) == 0)
-            {
-                this.Enqueue((Packet)new ClientPacket((byte)56));
-                this.Bot._lastRefresh = DateTime.UtcNow;
-            }
-
-            var expirationTime = DateTime.UtcNow.AddMilliseconds(1500);
-
-            if (waitForCompletion)
-            {
-                try
-                {
-                    while (DateTime.UtcNow < expirationTime)
-                    {
-                        if (this._mapChanged || this._isRefreshing == 0)
-                        {
-                            this._mapChanged = false;
-                            break;
-                        }
-
-                        Thread.Sleep(10);
-                    }
-                }
-                catch (ThreadInterruptedException ex)
-                {
-                    Console.WriteLine("Thread was interrupted.");
-                }
-                finally
-                {
-                    this._isRefreshing = 0;
-                }
-            }
-            else
-                this._isRefreshing = 0;
-        }
-
-        private void LogPerformanceMetrics(string phase)
-        {
-            // Log memory usage and thread count
-            long memoryUsage = GC.GetTotalMemory(forceFullCollection: false);
-            int threadCount = Process.GetCurrentProcess().Threads.Count;
-            Console.WriteLine($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff} - {phase}: Memory Usage = {memoryUsage} bytes, Thread Count = {threadCount}");
-        }
-
-        internal void ClickWorldMap(short mapId, Point point)
-        {
-            ClientPacket clientPacket = new ClientPacket(63);
-            clientPacket.WriteInt32(mapId);
-            clientPacket.WriteStruct(point);
-            Enqueue(clientPacket);
         }
         internal void Attributes(StatUpdateFlags value, Statistics stats)
         {
@@ -3330,41 +3166,196 @@ namespace Talos.Base
             }
             Enqueue(serverPacket);
         }
-
-        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId)
+        internal void ServerMessage(byte type, string message)
         {
-            ClientPacket clientPacket = new ClientPacket(58);
-            clientPacket.WriteByte(objType);
-            clientPacket.WriteInt32(objId);
-            clientPacket.WriteUInt16(pursuitId);
-            clientPacket.WriteUInt16(dialogId);
-            Enqueue(clientPacket);
+            if (!_safeScreen)
+            {
+                ServerPacket serverPacket = new ServerPacket(10);
+                serverPacket.WriteByte(type);
+                serverPacket.WriteString16(message);
+                Enqueue(serverPacket);
+            }
         }
-
-        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, byte optionToClick)
+        internal void DisplayTextOverTarget(byte type, int id, string message)
         {
-            ClientPacket clientPacket = new ClientPacket(58);
-            clientPacket.WriteByte(objType);
-            clientPacket.WriteInt32(objId);
-            clientPacket.WriteUInt16(pursuitId);
-            clientPacket.WriteUInt16(dialogId);
-            clientPacket.WriteByte(1);
-            clientPacket.WriteByte(optionToClick);
-            Enqueue(clientPacket);
+            ServerPacket serverPacket = new ServerPacket(13);
+            serverPacket.WriteByte(type);
+            serverPacket.WriteInt32(id);
+            serverPacket.WriteString8(message);
+            this.Enqueue(serverPacket);
         }
-
-        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, string response)
+        internal void RemoveObject(int objId)
         {
-            ClientPacket clientPacket = new ClientPacket(58);
-            clientPacket.WriteByte(objType);
-            clientPacket.WriteInt32(objId);
-            clientPacket.WriteUInt16(pursuitId);
-            clientPacket.WriteUInt16(dialogId);
-            clientPacket.WriteByte(2);
-            clientPacket.WriteString8(response);
-            Enqueue(clientPacket);
+            ServerPacket serverPacket = new ServerPacket(14);
+            serverPacket.WriteUInt32((uint)objId);
+            Enqueue(serverPacket);
         }
+        internal void SendAnimation(ushort animation, short speed)
+        {
+            ServerPacket serverPacket = new ServerPacket(41);
+            serverPacket.WriteUInt32(this.PlayerID);
+            serverPacket.WriteUInt32(this.PlayerID);
+            serverPacket.WriteUInt16(animation);
+            serverPacket.WriteUInt16(animation);
+            serverPacket.WriteInt16(speed);
+            Enqueue(serverPacket);
 
+        }
+        internal void AddSkill(Skill skill)
+        {
+            ServerPacket serverPacket = new ServerPacket(44);
+            serverPacket.WriteByte(skill.Slot);
+            serverPacket.WriteUInt16(skill.Sprite);
+            serverPacket.WriteString8(skill.Name);
+            Enqueue(serverPacket);
+        }
+        internal void ServerDialog(byte dialogType, byte objectType, int objectID, byte unknown1, ushort sprite1, byte color1, byte unknown2, ushort sprite2, byte color2,
+            ushort pursuitID, ushort dialogID, bool previousButton, bool nextButton, byte unknown3, string objectName, string message)
+        {
+            ServerPacket serverPacket = new ServerPacket(48);
+            serverPacket.WriteByte(dialogType);
+            serverPacket.WriteByte(objectType);
+            serverPacket.WriteInt32(objectID);
+            serverPacket.WriteByte(unknown1);
+            serverPacket.WriteUInt16(sprite1);
+            serverPacket.WriteByte(color1);
+            serverPacket.WriteByte(unknown2);
+            serverPacket.WriteUInt16(sprite2);
+            serverPacket.WriteByte(color2);
+            serverPacket.WriteUInt16(pursuitID);
+            serverPacket.WriteUInt16(dialogID);
+            serverPacket.WriteBoolean(previousButton);
+            serverPacket.WriteBoolean(nextButton);
+            serverPacket.WriteByte(unknown3);
+            serverPacket.WriteString8(objectName);
+            serverPacket.WriteString16(message);
+            Enqueue(serverPacket);
+        }
+        internal void DisplayAisling(Player player)
+        {
+            _ = player.Location;
+            ushort spriteID = player.SpriteID;
+            if (player == Player && SpriteOverrideEnabled)
+            {
+                spriteID = _spriteOverride;
+            }
+            ServerPacket serverPacket = new ServerPacket(51);
+            serverPacket.WriteStruct(player.Location);
+            serverPacket.WriteByte((byte)player.Direction);
+            serverPacket.WriteInt32(player.ID);
+            if (spriteID == 0)
+            {
+                serverPacket.WriteUInt16(player.HeadSprite);
+                if (player.BodySprite == 0 && GetCheats(Cheats.SeeHidden) && !InArena)
+                {
+                    serverPacket.WriteByte(80);
+                }
+                else
+                {
+                    serverPacket.WriteByte(player.BodySprite);
+                }
+                serverPacket.WriteUInt16(player.ArmorSprite1);
+                serverPacket.WriteByte(player.BootsSprite);
+                serverPacket.WriteUInt16(player.ArmorSprite2);
+                serverPacket.WriteByte(player.ShieldSprite);
+                serverPacket.WriteUInt16(player.WeaponSprite);
+                serverPacket.WriteByte(player.HeadColor);
+                serverPacket.WriteByte(player.BootColor);
+                serverPacket.WriteByte(player.AccessoryColor1);
+                serverPacket.WriteUInt16(player.AccessorySprite1);
+                serverPacket.WriteByte(player.AccessoryColor2);
+                serverPacket.WriteUInt16(player.AccessorySprite2);
+                serverPacket.WriteByte(player.AccessoryColor3);
+                serverPacket.WriteUInt16(player.AccessorySprite3);
+                serverPacket.WriteByte(player.LanternSize);
+                serverPacket.WriteByte(player.RestPosition);
+                serverPacket.WriteUInt16(player.OvercoatSprite);
+                serverPacket.WriteByte(player.OvercoatColor);
+                serverPacket.WriteByte(player.BodyColor);
+                serverPacket.WriteBoolean(player._isHidden);
+                serverPacket.WriteByte(player.FaceSprite);
+            }
+            else
+            {
+                serverPacket.WriteUInt16(ushort.MaxValue);
+                serverPacket.WriteUInt16((ushort)(spriteID + 16384));
+                serverPacket.WriteByte(player.HeadColor);
+                serverPacket.WriteByte(player.BootColor);
+                serverPacket.WriteUInt16(0);
+                serverPacket.WriteUInt32(0u);
+            }
+            serverPacket.WriteByte(player.NameTagStyle);
+            if (player.BodySprite == 0 && !GetCheats(Cheats.SeeHidden))
+            {
+                Map map = _map;
+                if (map != null && map.Name?.Contains("Arena") == false && !InArena)
+                    serverPacket.WriteString8(string.Empty);
+                else
+                    serverPacket.WriteString8(player.Name);
+            }
+            else
+            {
+                serverPacket.WriteString8(player.Name);
+            }
+            serverPacket.WriteString8(player.GroupName);
+            Enqueue(serverPacket);
+        }
+        internal void Walk(Direction dir)
+        {
+
+            //Console.WriteLine($"Attempting to walk in direction: {dir}"); // Log the direction
+
+            if (Dialog == null || !_server._stopWalking || dir != Direction.Invalid || _isRefreshing == 1)
+            {
+                _walkCallCount++;
+                //Console.WriteLine($"Walk method called {walkCallCount} times");
+
+                //Console.WriteLine("Walk conditions met. Proceeding..."); // Debugging: Log that conditions are met
+
+                LastStep = DateTime.UtcNow;
+                //Console.WriteLine($"LastStep set to: {LastStep}"); // Debugging: Log LastStep update
+
+                if (_serverDirection != dir)
+                {
+                    //Console.WriteLine($"Turning from {_serverDirection} to {dir}"); // Debugging: Log direction change
+                    Turn(dir);
+                }
+
+                _hasWalked = true;
+                //Console.WriteLine("shouldRefresh set to true"); // Debugging: Log shouldRefresh update
+
+
+                //Console.WriteLine($"Preparing packets for PlayerID: {PlayerID} at {_clientLocation} moving {dir}"); // Debugging: Log enqueueing of server packet
+                ClientPacket clientPacket = new ClientPacket(6); // walk
+                clientPacket.WriteByte((byte)dir);
+                clientPacket.WriteByte(StepCount++);
+                //Console.WriteLine($"Client packet prepared. StepCount: {StepCount - 1}"); // Debugging: Log ClientPacket preparation
+                Enqueue(clientPacket);
+
+
+                ServerPacket serverPacket = new ServerPacket(12); // creaturewalk
+                serverPacket.WriteUInt32(PlayerID);
+                serverPacket.WriteStruct(_clientLocation);
+                serverPacket.WriteByte((byte)dir);
+
+                Enqueue(serverPacket);
+
+
+                _clientLocation = _clientLocation.TranslateLocationByDirection(dir);
+                //Console.WriteLine($"Client location updated to: {_clientLocation}"); // Debugging: Log client location update
+
+                LastMoved = DateTime.UtcNow;
+                //Console.WriteLine($"[WalkLastMoved set to: {LastMoved}"); // Debugging: Log LastMoved update
+
+                UpdateClientActionText($"{_action} Walking {dir}");
+            }
+            else
+            {
+                _isWalking = false;
+                //Console.WriteLine("Walk aborted due to conditions not met. _isWalking set to false."); // Debugging: Log abort and _isWalking update
+                Thread.Sleep(100); // Consider logging this delay for clarity if necessary
+            }
+        }
         internal void Cooldown(bool isSkill, byte slot, uint ticks)
         {
             ServerPacket serverPacket = new ServerPacket(63);
@@ -3373,9 +3364,9 @@ namespace Talos.Base
             serverPacket.WriteUInt32(ticks);
             Enqueue(serverPacket);
         }
-
-
         #endregion
+
+
 
         #region Networking
         /// <summary>
@@ -3631,7 +3622,7 @@ namespace Talos.Base
                 _server._clientList.Remove(this);
             }
             Thread.Sleep(100);
-            _server._mainForm.RemoveClient(this);
+            _server._mainForm.RemoveClientTab(this);
         }
 
 

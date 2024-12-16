@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Talos.Definitions;
 using Talos.Objects;
-
 internal sealed class Inventory : IEnumerable<Item>, IEnumerable
 {
 
@@ -13,6 +13,21 @@ internal sealed class Inventory : IEnumerable<Item>, IEnumerable
     {
         get;
         private set;
+    }
+    internal int Count
+    {
+        get
+        {
+            int count = 0;
+            for (int i = 0; i < MAX_ITEMS; i++)
+            {
+                if (item[i] != null)
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
     }
 
     internal Item this[byte slot]
@@ -35,8 +50,6 @@ internal sealed class Inventory : IEnumerable<Item>, IEnumerable
             }
         }
     }
-    internal Item this[string itemName] => HasItemReturnSlot(itemName);
-
 
     internal Inventory(int max)
     {
@@ -44,25 +57,49 @@ internal sealed class Inventory : IEnumerable<Item>, IEnumerable
         item = new Item[max];
     }
 
-    internal bool FullInventory => item.Count((Item item) => item != null) == 59;
-    internal bool HasItem(string itemName)
+    internal bool IsFull => item.Count((Item item) => item != null) == 59;
+    internal Item this[string itemName] => Find(itemName);
+    internal bool Contains(string itemName)
     {
         for (int i = 0; i < MAX_ITEMS; i++)
+        {
             if (item[i] != null && item[i].Name.Equals(itemName, StringComparison.CurrentCultureIgnoreCase))
+            {
                 return true;
+            }
+        }
         return false;
     }
 
-    internal int HasItemReturnCount(string string_0, bool bool_0 = true)
+    internal int CountOf(ushort sprite, bool includeStack = true)
     {
         int totalCount = 0;
-        for (int i = 0; i < MAX_ITEMS; i++)
-            if (item[i] != null && item[i].Name.Equals(string_0, StringComparison.CurrentCultureIgnoreCase))
-                totalCount += ((!bool_0) ? 1 : item[i].Quantity);
+        for (int index = 0; index < MAX_ITEMS; ++index)
+        {
+            if (item[index] != null && (int)item[index].Sprite - CONSTANTS.ITEM_SPRITE_OFFSET == (int)sprite)
+            {
+                totalCount += includeStack ? item[index].Quantity : 1;
+            }
+        }
         return totalCount;
     }
 
-    internal Item HasItemReturnSlot(string itemName)
+
+    internal int CountOf(string name, bool includeStack = true)
+    {
+        int totalCount = 0;
+        for (int index = 0; index < MAX_ITEMS; ++index)
+        {
+            if (item[index] != null && item[index].Name.Equals(name, StringComparison.CurrentCultureIgnoreCase))
+            {
+                totalCount += includeStack ? item[index].Quantity : 1;
+            }
+        }
+        return totalCount;
+    }
+
+
+    internal Item Find(string itemName)
     {
         for (int i = 0; i < MAX_ITEMS; i++)
             if (item[i] != null && item[i].Name.Equals(itemName, StringComparison.CurrentCultureIgnoreCase))
@@ -81,8 +118,5 @@ internal sealed class Inventory : IEnumerable<Item>, IEnumerable
         }
     }
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

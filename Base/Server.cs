@@ -75,6 +75,8 @@ namespace Talos
 
         // Create a single instance of ActiveMessageHandler
         ActiveMessageHandler activeMessageHandler = ActiveMessageHandler.Instance;
+        // Create a singel isntance of CommandManager
+        CommandManager commandManager = CommandManager.Instance;
 
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
@@ -209,7 +211,7 @@ namespace Talos
             ClientMessage[(int)ClientOpCode.ToggleGroup] = new ClientMessageHandler(ClientMessage_0x2F_ToggleGroup);
             ClientMessage[(int)ClientOpCode.SwapSlot] = new ClientMessageHandler(ClientMessage_0x30_SwapSlot);
             ClientMessage[(int)ClientOpCode.RefreshRequest] = new ClientMessageHandler(ClientMessage_0x38_RefreshRequest);
-            ClientMessage[(int)ClientOpCode.PursuitRequest] = new ClientMessageHandler(ClientMessage_0x39_MenuInteraction);
+            ClientMessage[(int)ClientOpCode.PursuitRequest] = new ClientMessageHandler(ClientMessage_0x39_PersuitRequest);
             ClientMessage[(int)ClientOpCode.DialogResponse] = new ClientMessageHandler(ClientMessage_0x3A_DialogResponse);
             ClientMessage[(int)ClientOpCode.BoardRequest] = new ClientMessageHandler(ClientMessage_0x3B_BoardRequest);
             ClientMessage[(int)ClientOpCode.UseSkill] = new ClientMessageHandler(ClientMessage_0x3E_UseSkill);
@@ -412,11 +414,14 @@ namespace Talos
             PublicMessageType type = (PublicMessageType)clientPacket.ReadByte();
             string message = clientPacket.ReadString8();
 
-            if (!message.StartsWith("/"))
+            // If we aren't trying to read a slash command return true
+            // to handle the packed and send the message
+            if ((!message.StartsWith("/")))
                 return true;
-            //
-            //ThreadPool.QueueUserWorkItem(_ => ParseSlashCommands));
 
+            // Otherwise we are calling the command manager and returning
+            // false to not handle the packet
+            commandManager.ExecuteCommand(client, message);
             return false;
         }
 
@@ -642,7 +647,7 @@ namespace Talos
             return true;
         }
 
-        private bool ClientMessage_0x39_MenuInteraction(Client client, ClientPacket clientPacket)
+        private bool ClientMessage_0x39_PersuitRequest(Client client, ClientPacket clientPacket)
         {
             byte objectType = clientPacket.ReadByte();
             uint objectID = clientPacket.ReadUInt32();
@@ -690,7 +695,7 @@ namespace Talos
                 {
                     ThreadPool.QueueUserWorkItem(_ => client.ClientTab.DelayedUpdateStrangerList());
 
-                    if (client.Inventory.HasItem("Sprint Potion") && client.UseItem("Sprint Potion"))
+                    if (client.Inventory.Contains("Sprint Potion") && client.UseItem("Sprint Potion"))
                     {
                         Skill skill = client.Skillbook["Charge"];
                         skill.Cooldown = DateTime.UtcNow;
@@ -946,7 +951,7 @@ namespace Talos
             client.PlayerID = id;
             client.Path = path;
             client.RequestProfile();
-            _mainForm.AddClient(client);
+            _mainForm.AddClientTab(client);
 
             return true;
         }
@@ -1032,7 +1037,7 @@ namespace Talos
             }
             catch
             {
-                client.RequestRefresh(false);   
+                client.RefreshRequest(false);   
             }
 
             return true;
@@ -1718,9 +1723,8 @@ namespace Talos
 
         private bool ServerMessage_0x19_Sound(Client client, ServerPacket serverPacket)
         {
-            byte index = serverPacket.ReadByte();
-
-            return true;
+            byte num = serverPacket.ReadByte();
+            return !client._assailNoise || num != (byte)1 && num != (byte)101 && num != (byte)16;
         }
 
         private bool ServerMessage_0x1A_BodyAnimation(Client client, ServerPacket serverPacket)
@@ -1899,12 +1903,12 @@ namespace Talos
             if (serverPacket.Data.Length >= 0x10)//16
             {
                 byte menuType = serverPacket.ReadByte();
-                int merchant = (int)serverPacket.ReadByte();
+                int merchant = serverPacket.ReadByte();
                 uint merchantID = serverPacket.ReadUInt32();
                 serverPacket.ReadByte();
-                int menuSprite1 = (int)serverPacket.ReadInt16();
+                int menuSprite1 = serverPacket.ReadInt16();
                 serverPacket.Read(2);
-                int menutSprite2 = (int)serverPacket.ReadInt16();
+                int menutSprite2 = serverPacket.ReadInt16();
                 serverPacket.Read(2);
                 string merchantName = serverPacket.ReadString8();
                 string merchantText = serverPacket.ReadString16();
@@ -2419,7 +2423,7 @@ namespace Talos
                 client.NearbyHiddenPlayers.AddOrUpdate(id, player, (key, oldValue) => player);
                 _shouldCloseProfile = true;
                 client.ClickObject(id);
-                client.RequestRefresh(false);
+                client.RefreshRequest(false);
             }
 
 
@@ -2428,14 +2432,14 @@ namespace Talos
                 client.Player = player;
                 client._clientDirection = direction;
                 client._clientLocation = location;
-                if (client.InMonsterForm)
+                if (client.SpriteOverrideEnabled)
                 {
                     serverPacket.Clear();
                     serverPacket.WriteStruct(location);
                     serverPacket.WriteByte((byte)direction);
                     serverPacket.WriteUInt32((uint)id);
-                    serverPacket.WriteUInt16(65535);//maxvalue
-                    serverPacket.WriteUInt16((ushort)(client._monsterFormID + CONSTANTS.CREATURE_SPRITE_OFFSET));
+                    serverPacket.WriteUInt16(ushort.MaxValue);
+                    serverPacket.WriteUInt16((ushort)(client._spriteOverride + CONSTANTS.CREATURE_SPRITE_OFFSET));
                     serverPacket.WriteByte(headColor);
                     serverPacket.WriteByte(bootsColor);
                     serverPacket.Write(new byte[6]);

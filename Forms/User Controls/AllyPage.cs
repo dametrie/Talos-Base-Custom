@@ -99,6 +99,7 @@ namespace Talos.Forms
                     _client.Bot.RemoveAlly(ally.Name);
                 }
             }
+
             if (_ally.Name == "group")
             {
                 _client.Bot.AllyPage = null;
@@ -106,13 +107,36 @@ namespace Talos.Forms
             else if (_ally.Name == "alts")
             {
                 _client.Bot.AllyPage = null;
-                if (_client.Bot.AllyPage != null)
+
+                // Ensure thread-safe access to RemoveAllyPage
+                if (_client.ClientTab.InvokeRequired)
+                {
+                    _client.ClientTab.Invoke(new Action(() =>
+                    {
+                        _client.ClientTab.RemoveAllyPage();
+                    }));
+                }
+                else
                 {
                     _client.ClientTab.RemoveAllyPage();
                 }
             }
-            Parent.Dispose();
-            _client.RequestRefresh(false);
+
+            // Dispose the parent safely
+            if (Parent != null)
+            {
+                if (Parent.InvokeRequired)
+                {
+                    Parent.Invoke(new Action(() => Parent.Dispose()));
+                }
+                else
+                {
+                    Parent.Dispose();
+                }
+            }
+
+            _client.RefreshRequest(false);
         }
+
     }
 }

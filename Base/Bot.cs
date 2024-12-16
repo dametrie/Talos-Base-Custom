@@ -104,6 +104,7 @@ namespace Talos.Base
         internal object _mushroomBonusElapsedTime;
         internal bool _netRepair = false;
         internal DateTime _hammerTimer = DateTime.MinValue;
+        internal bool _spikeGameToggle;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -239,7 +240,7 @@ namespace Talos.Base
                         // Check if we are on the target map and close to the target location
                         if (Client._map.MapID == targetMapID && Client._serverLocation.DistanceFrom(targetLocation) <= 2)
                         {
-                            Creature creature = Client.GetNearyByNPC(npcName);
+                            Creature creature = Client.GetNearbyNPC(npcName);
                             if (creature != null)
                             {
                                 Console.WriteLine($"[HolidayEvents] Retrieved NPC Name: {creature.Name}, ID: {creature.ID}");
@@ -299,12 +300,12 @@ namespace Talos.Base
             if (Client.ClientTab.chkTavWallStranger.Checked && IsStrangerNearby() && Client.ClientTab.chkTavWallHacks.Checked && !Client._map.IsWall(Client._serverLocation))
             {
                 Client.ClientTab.chkTavWallHacks.Checked = false;
-                Client.RequestRefresh();
+                Client.RefreshRequest();
             }
             if (Client.ClientTab.chkTavWallStranger.Checked && !IsStrangerNearby() && !Client.ClientTab.chkTavWallHacks.Checked)
             {
                 Client.ClientTab.chkTavWallHacks.Checked = true;
-                Client.RequestRefresh();
+                Client.RefreshRequest();
             }
         }
 
@@ -1009,7 +1010,7 @@ namespace Talos.Base
                             {
                                 Console.WriteLine($"[FollowWalking] [{Client.Name}] Client position differs from server, requesting refresh.");
                                 Client._confirmBubble = false;
-                                Client.RequestRefresh(true);
+                                Client.RefreshRequest(true);
                             }
                             else if (Client._map.Name.Contains("Lost Ruins") || Client._map.Name.Contains("Assassin Dungeon")
                                      || _nearbyValidCreatures.Any(c => Client._serverLocation.DistanceFrom(c.Location) <= 6))
@@ -1110,7 +1111,7 @@ namespace Talos.Base
                 Direction direction = Utility.RandomEnumValue<Direction>();
                 Client.Walk(direction);
                 Thread.Sleep(300);
-                Client.RequestRefresh(false);
+                Client.RefreshRequest(false);
             }
         }
 
@@ -1148,7 +1149,7 @@ namespace Talos.Base
 
             if (lastStepF5 && exceededStepTime)
             {
-                Client.RequestRefresh(true);
+                Client.RefreshRequest(true);
             }
         }
 
@@ -1195,7 +1196,7 @@ namespace Talos.Base
                 if (currentWay < ways.Count)
                 {
 
-                    Client._walkSpeed = (double)Client.ClientTab.walkSpeedSldr.Value;
+                    Client._walkSpeed = Client.ClientTab.walkSpeedSldr.Value;
 
 
                     if (skip && Client.GetNearbyObjects().OfType<Creature>()
@@ -1347,7 +1348,7 @@ namespace Talos.Base
                                     }
                                 }
 
-                                if (itemsToPickUp.Count != 1 && itemsToPickUp[0] != (ushort)140 && !Client._inventoryFull)
+                                if (itemsToPickUp.Count != 1 && itemsToPickUp[0] != 140 && !Client._inventoryFull)
                                     return;
 
 
@@ -1382,7 +1383,7 @@ namespace Talos.Base
 
                                     if (Client._clientLocation.DistanceFrom(closestItem.Location) <= 2 && Client._serverLocation.DistanceFrom(closestItem.Location) > 2)
                                     {
-                                        Client.RequestRefresh(true);
+                                        Client.RefreshRequest(true);
                                     }
 
                                     // Pick up the item if nearby
@@ -1390,7 +1391,7 @@ namespace Talos.Base
                                     {
                                         try
                                         {
-                                            Client.Pickup((byte)0, closestItem.Location);
+                                            Client.Pickup(0, closestItem.Location);
                                             Console.WriteLine("Picked up item.");
                                         }
                                         finally
@@ -1468,7 +1469,7 @@ namespace Talos.Base
                                     if (this.Client._serverLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
                                     {
                                         Console.WriteLine($"[Waypoints] [{Client.Name}] Server's location is beyond the allowed distance. Requesting position refresh.");
-                                        this.Client.RequestRefresh();
+                                        this.Client.RefreshRequest();
                                     }
                                     else
                                     {
@@ -1534,7 +1535,7 @@ namespace Talos.Base
                 // If the clients have been apart for more than 5 seconds, backtrack to the client
                 else if (!_together && DateTime.UtcNow.Subtract(this._followerTimer).TotalSeconds > 5.0)
                 {
-                    Client._walkSpeed = (double)Client.ClientTab.walkSpeedSldr.Value;
+                    Client._walkSpeed = Client.ClientTab.walkSpeedSldr.Value;
                     if (clientToFollow != null)
                     {
                         Client._isWalking = Client.RouteFind(clientToFollow._serverLocation, 3, shouldBlock: false);
@@ -1726,7 +1727,7 @@ namespace Talos.Base
 
                         if (ShouldRequestRefresh())
                         {
-                            Client.RequestRefresh(false);
+                            Client.RefreshRequest(false);
                             _lastRefresh = DateTime.UtcNow;
                             continue;
                         }
@@ -1890,9 +1891,9 @@ namespace Talos.Base
                 Console.WriteLine($"[BotLoop] Target player: {player?.Name}, HealthPercent: {player?.HealthPercent}");
 
                 var inventory = Client.Inventory;
-                bool canUseBeetleAid = inventory.HasItem("Beetle Aid") && Client._isRegistered &&
+                bool canUseBeetleAid = inventory.Contains("Beetle Aid") && Client._isRegistered &&
                                        DateTime.UtcNow.Subtract(_lastUsedBeetleAid).TotalMinutes > 2.0;
-                bool canUseOtherItems = inventory.HasItem("Komadium") || inventory.HasItem("beothaich deum");
+                bool canUseOtherItems = inventory.Contains("Komadium") || inventory.Contains("beothaich deum");
 
                 Console.WriteLine($"[BotLoop] Can use Beetle Aid: {canUseBeetleAid}, Can use other items: {canUseOtherItems}");
 
@@ -1909,7 +1910,7 @@ namespace Talos.Base
                         if (Client._clientLocation.DistanceFrom(player.Location) == 1)
                         {
                             Console.WriteLine("[BotLoop] Client distance from player = 1, requesting refresh");
-                            Client.RequestRefresh(true);
+                            Client.RefreshRequest(true);
                         }
 
                         Console.WriteLine("[BotLoop] Pathfinding to player location");
@@ -2039,7 +2040,7 @@ namespace Talos.Base
             }
 
             byte? castLinesCount = castLinesCountNullable;
-            int? castLines = (castLinesCount != null) ? new int?((int)castLinesCount.GetValueOrDefault()) : null;
+            int? castLines = (castLinesCount != null) ? new int?(castLinesCount.GetValueOrDefault()) : null;
 
             if (castLines.GetValueOrDefault() <= 0 & castLines != null)
             {
@@ -2333,7 +2334,7 @@ namespace Talos.Base
                 return false;
             }
 
-            if (clientTab.equipmentrepairCbox.Checked && Client.needsToRepairHammer && DateTime.UtcNow.Subtract(_hammerTimer).TotalMinutes > 40.0)
+            if (clientTab.equipmentrepairCbox.Checked && Client._needsToRepairHammer && DateTime.UtcNow.Subtract(_hammerTimer).TotalMinutes > 40.0)
             {
                 Client.UseHammer();
             }
@@ -4242,7 +4243,7 @@ namespace Talos.Base
             }
         }
 
-        internal void UpdateAllyList(Ally ally)
+        internal void AddAlly(Ally ally)
         {
             lock (_lock)
             {

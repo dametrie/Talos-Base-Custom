@@ -94,7 +94,7 @@ namespace Talos.Networking
             WriteByte(array3[3]);
             WriteByte(array3[11]);
             WriteByte(array3[7]);
-            WriteByte((byte)(((int)num % 256) ^ 0x70));
+            WriteByte((byte)((num % 256) ^ 0x70));
             WriteByte((byte)(b ^ 0x23));
             WriteByte((byte)(((num >> 8) % 256) ^ 0x74));
         }
@@ -140,8 +140,8 @@ namespace Talos.Networking
             _data[1] = (byte)Utility.Random();
             _data[2] = (byte)((_data.Length - 4) / 256);
             _data[3] = (byte)((_data.Length - 4) % 256);
-            _data[4] = (byte)((int)num / 256);
-            _data[5] = (byte)((int)num % 256);
+            _data[4] = (byte)(num / 256);
+            _data[5] = (byte)(num % 256);
         }
 
         internal void EncryptDialog()
