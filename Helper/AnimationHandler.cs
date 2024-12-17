@@ -443,7 +443,8 @@ namespace Talos.Helper
                 case (ushort)SpellAnimation.CreatureAsgall:
                     if (_targetCreature == _client.Player && _sourceCreature == _client.Player && _client.ClientTab._isBashing)
                     {
-                        Creature target = _client.Bot.BashingBase.Target;
+                        Creature target = _targetCreature;
+                        //Creature target = _client.Bot.BashingBase.Target;
                         if (target != null && !target.IsDioned) // We treated asgall as a special case of dion
                         {
                             var asgallStateUpdates = new Dictionary<CreatureState, object>

@@ -40,12 +40,6 @@ C:\Users\Games\Documents\GitHub\Talos\bin\Debug\WindowsInput.xml
 C:\Users\Games\Documents\GitHub\Talos\obj\Debug\Talos.csproj.CopyComplete
 C:\Users\Games\Documents\GitHub\Talos\obj\Debug\Talos.exe
 C:\Users\Games\Documents\GitHub\Talos\obj\Debug\Talos.pdb
-C:\Users\Gaming\Documents\GitHub\Talos\bin\Debug\Talos.exe.config
-C:\Users\Gaming\Documents\GitHub\Talos\bin\Debug\Talos.exe
-C:\Users\Gaming\Documents\GitHub\Talos\bin\Debug\Talos.pdb
-C:\Users\Gaming\Documents\GitHub\Talos\bin\Debug\MapsCacheEditor.exe
-C:\Users\Gaming\Documents\GitHub\Talos\bin\Debug\WindowsInput.dll
-C:\Users\Gaming\Documents\GitHub\Talos\bin\Debug\WindowsInput.xml
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.csproj.AssemblyReference.cache
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.Forms.InputDialog.resources
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.Forms.AllyPage.resources
@@ -59,6 +53,3 @@ C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.Forms.WayForm.resources
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.Properties.Resources.resources
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.csproj.GenerateResource.cache
 C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.csproj.CoreCompileInputs.cache
-C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.csproj.Up2Date
-C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.exe
-C:\Users\Gaming\Documents\GitHub\Talos\obj\Debug\Talos.pdb

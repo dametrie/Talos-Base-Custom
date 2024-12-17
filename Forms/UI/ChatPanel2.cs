@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 using System.Windows.Forms;
 
+#nullable disable
 namespace Talos.Forms.UI
 {
-    public class ChatPanel : RichTextBox
+    public class ChatPanel2 : RichTextBox
     {
         [StructLayout(LayoutKind.Sequential)]
         private struct ScrollInfo
@@ -41,7 +37,7 @@ namespace Talos.Forms.UI
         [DllImport("user32.dll")]
         private static extern int GetScrollInfo(IntPtr hwnd, int fnBar, ref ScrollInfo lpsi);
 
-        public ChatPanel()
+        public ChatPanel2()
         {
             AutoDetectUrls = false;
         }

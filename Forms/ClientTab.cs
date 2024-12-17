@@ -737,7 +737,7 @@ namespace Talos.Forms
                 });
                 return;
             }
-            if (chatPanel.TextLength != 0)
+            if (chatPanel2.TextLength != 0)
             {
                 message = Environment.NewLine + message;
             }
@@ -755,23 +755,23 @@ namespace Talos.Forms
                     }
                 }
             }
-            _ = chatPanel.Text.Length;
-            bool atBottom = chatPanel.IsScrollBarAtBottom();
+            _ = chatPanel2.Text.Length;
+            bool atBottom = chatPanel2.IsScrollBarAtBottom();
             SetChatPanelTextColor(color);
             if (!string.IsNullOrWhiteSpace(message))
             {
-                chatPanel.AppendText(message);
+                chatPanel2.AppendText(message);
             }
-            SetChatPanelTextColor(chatPanel.ForeColor);
+            SetChatPanelTextColor(chatPanel2.ForeColor);
             if (atBottom)
             {
-                chatPanel.ScrollToCaret();
+                chatPanel2.ScrollToCaret();
             }
         }
 
         internal void UpdateChatPanelMaxLength(Client client)
         {
-            chatPanel.MaxLength = 65 - client.Name.Length;
+            chatPanel2.MaxLength = 65 - client.Name.Length;
         }
         internal void UpdateChatPanel(string input)
         {
@@ -812,9 +812,9 @@ namespace Talos.Forms
 
         internal void SetChatPanelTextColor(System.Drawing.Color color)
         {
-            chatPanel.SelectionStart = chatPanel.TextLength;
-            chatPanel.SelectionLength = 0;
-            chatPanel.SelectionColor = color;
+            chatPanel2.SelectionStart = chatPanel2.TextLength;
+            chatPanel2.SelectionLength = 0;
+            chatPanel2.SelectionColor = color;
         }
         private void unifiedGuildChatCbox_CheckedChanged(object sender, EventArgs e)
         {
