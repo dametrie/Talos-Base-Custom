@@ -64,6 +64,7 @@
     <Compile Include="Base\Program.cs" />
     <Compile Include="Base\Server.cs" />
     <Compile Include="Base\Bot.cs" />
+    <Compile Include="Bashing\BashingBase.cs" />
     <Compile Include="Capricorn\Drawing\DAGraphics.cs" />
     <Compile Include="Capricorn\Drawing\EPF.cs" />
     <Compile Include="Capricorn\Drawing\HPF.cs" />
@@ -290,5 +291,6 @@
   <ItemGroup>
     <None Include="Resources\itemCap.wav" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -438,6 +438,7 @@ namespace Talos.Enumerations
         Cradh = 258,
         BeagCradh = 259,
         PND = 263,
+        CreatureAsgall = 268,
         DeireasFaileas = 271,
         Fas = 273,
         Rescue = 274,
@@ -446,6 +447,7 @@ namespace Talos.Enumerations
         CursedTunePoison = 295,
         PerfectDefense = 301,
         FrostStrike = 377,
+        HealthTo1PCT = 393,
 
     }
     internal enum StatUpdateFlags : byte

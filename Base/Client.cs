@@ -101,7 +101,7 @@ namespace Talos.Base
         internal PreviousClass _previousClass;
         internal Dugon _dugon;
         internal Element _element;
-        internal Animation _animation;
+        internal Animation _lastAnimation;
         internal string _npcDialog;
         internal string _currentSkill = "";
         internal string _currentItem = "";
@@ -688,36 +688,7 @@ namespace Talos.Base
         {
             return WorldObjects.Values.Where(wo => NearbyObjects.Contains(wo.ID)).ToList();
         }
-        internal List<Location> GetWarpPoints(Location destination)
-        {
-            List<Location> obstacles = new List<Location>();
-
-            if (_server._maps.TryGetValue(destination.MapID, out Map map))
-            {
-                // Process Exits as obstacles
-                foreach (var exit in map.Exits)
-                {
-                    var exitLocation = new Location(destination.MapID, exit.Key.X, exit.Key.Y);
-                    if (!Location.Equals(exitLocation, destination))
-                    {
-                        obstacles.Add(exitLocation);
-                    }
-                }
-
-                // Process WorldMaps as obstacles
-                foreach (var worldMap in map.WorldMaps)
-                {
-                    var worldMapLocation = new Location(destination.MapID, worldMap.Key.X, worldMap.Key.Y);
-                    if (!Location.Equals(worldMapLocation, destination))
-                    {
-                        obstacles.Add(worldMapLocation);
-                    }
-                }
-            }
-
-            return obstacles;
-        }
-        internal List<Location> GetAllWarpPoints(Location location)
+        internal List<Location> GetWarpPoints(Location location)
         {
             if (!_server._maps.TryGetValue(location.MapID, out Map value))
             {
@@ -735,6 +706,29 @@ namespace Talos.Base
 
             return exits;
         }
+
+        internal HashSet<Location> GetAllWarpPoints()
+        {
+            HashSet<Location> allWarpPoints = new HashSet<Location>();
+
+            if (_server._maps.TryGetValue(_map.MapID, out Map map))
+            {
+                foreach (var exit in map.Exits)
+                {
+                    allWarpPoints.Add(new Location(_map.MapID, exit.Key));
+                }
+
+                foreach (var worldMap in map.WorldMaps)
+                {
+                    allWarpPoints.Add(new Location(_map.MapID, worldMap.Key));
+                }
+            }
+
+            return allWarpPoints;
+        }
+
+
+
         internal List<Creature> GetNearbyValidCreatures(int distance = 12)
         {
             var whiteList = new HashSet<ushort>();
@@ -1180,15 +1174,15 @@ namespace Talos.Base
                         {
                             foreach (Player player in GetNearbyAllies())
                             {
-                                player.SpellAnimationHistory[(ushort)SpellAnimation.Mesmerize] = DateTime.MinValue;
-                                player.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
+                                player.LastAnimation[(ushort)SpellAnimation.Mesmerize] = DateTime.MinValue;
+                                player.LastAnimation[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
                             }
                         }
                         return false;
 
                     case 810175405: // ao suain
                     case 894297607: // Leafhopper Chirp
-                        CastedTarget.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.MinValue;
+                        CastedTarget.LastAnimation[(ushort)SpellAnimation.Suain] = DateTime.MinValue;
                         return false;
 
                     case 1046347411: // suain
@@ -1225,9 +1219,9 @@ namespace Talos.Base
                     case 2756163491: // Fungus Beetle Extract
                         foreach (Player player in GetNearbyAllies())
                         {
-                            player.SpellAnimationHistory[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
-                            player.SpellAnimationHistory[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
-                            player.SpellAnimationHistory[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
+                            player.LastAnimation[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
+                            player.LastAnimation[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
+                            player.LastAnimation[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
                         }
                         return false;
 
@@ -1238,9 +1232,9 @@ namespace Talos.Base
 
                     case 2996522388: //ao puinsein
                         {
-                            CastedTarget.SpellAnimationHistory[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
-                            CastedTarget.SpellAnimationHistory[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
-                            CastedTarget.SpellAnimationHistory[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
+                            CastedTarget.LastAnimation[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
+                            CastedTarget.LastAnimation[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
+                            CastedTarget.LastAnimation[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
                         }
                         return false;
 

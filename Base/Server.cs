@@ -1564,8 +1564,8 @@ namespace Talos
 
                 creature.HealthPercent = percent;
                 creature._hitCounter++;
-                creature.SpellAnimationHistory[(ushort)SpellAnimation.Net] = DateTime.MinValue;
-                creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
+                creature.LastAnimation[(ushort)SpellAnimation.Net] = DateTime.MinValue;
+                creature.LastAnimation[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
             }
             return true;
         }
@@ -1786,7 +1786,7 @@ namespace Talos
                     sourceAnimation = serverPacket.ReadUInt16();
                     animationSpeed = serverPacket.ReadInt16();
 
-                    client._animation = new Animation(targetID, sourceID, sourceAnimation, targetAnimation, animationSpeed);
+                    client._lastAnimation = new Animation(targetID, sourceID, targetAnimation, sourceAnimation, animationSpeed);
 
                     if (!client.WorldObjects.ContainsKey(targetID))
                     {
@@ -1797,12 +1797,12 @@ namespace Talos
                     Creature targetCreature = client.WorldObjects[targetID] as Creature;
                     Creature sourceCreature = client.WorldObjects.ContainsKey(sourceID) ? client.WorldObjects[sourceID] as Creature : null;
 
-                    targetCreature.SpellAnimationHistory[targetAnimation] = DateTime.UtcNow;
-                    targetCreature._animation = targetAnimation;
-                    targetCreature._lastUpdate = DateTime.UtcNow;
+                    targetCreature.LastAnimation[targetAnimation] = DateTime.UtcNow;
+                    targetCreature._lastAnimation = targetAnimation;
+                    targetCreature._lastAnimationTime = DateTime.UtcNow;
 
                     if (sourceID != 0)
-                        targetCreature.SourceAnimationHistory[sourceAnimation] = DateTime.UtcNow;
+                        targetCreature.LastForeignAnimation[targetAnimation] = DateTime.UtcNow;
 
                     AnimationHandler animationHandler = new AnimationHandler(client, this, targetCreature, sourceCreature, targetAnimation, targetID, sourceID);
                     animationHandler.HandleAnimation();
@@ -1823,7 +1823,20 @@ namespace Talos
             {
                 return false;
             }
-
+            /* if (Settings.Instance.DisableSprites)
+                 return false;
+             if (Settings.Instance.NormalSprites || !Settings.Instance.OverrideSprites || !m_mainForm.spriteOverrides.ContainsKey((int)targetAnimation) && !m_mainForm.spriteOverrides.ContainsKey((int)sourceAnimation))
+                 return true;
+             ushort num1 = m_mainForm.spriteOverrides.ContainsKey((int)targetAnimation) ? (ushort)m_mainForm.spriteOverrides[(int)targetAnimation] : targetAnimation;
+             ushort num2 = m_mainForm.spriteOverrides.ContainsKey((int)sourceAnimation) ? (ushort)m_mainForm.spriteOverrides[(int)sourceAnimation] : sourceAnimation;
+             ServerPacket serverPacket = new ServerPacket((byte)41);
+             serverPacket.WriteInt32(targetID);
+             serverPacket.WriteInt32(sourceId);
+             serverPacket.WriteUInt16(num1);
+             serverPacket.WriteUInt16(num2);
+             serverPacket.WriteInt16(speed);
+             client.Enqueue((Packet)serverPacket);
+             return false;*/
             return true;
         }
 
@@ -3507,14 +3520,15 @@ namespace Talos
                 {CreatureState.CurseDuration, 0.0 },
                 {CreatureState.FasDuration, 0.0 },
                 {CreatureState.AiteDuration, 0.0 },
-                {CreatureState.DionDuration, 0.0 }
+                {CreatureState.DionDuration, 0.0 },
+                {CreatureState.DionName, string.Empty }
             };
 
             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, stateUpdates);
 
-            if (creature.SpellAnimationHistory.ContainsKey(20))
+            if (creature.LastAnimation.ContainsKey((byte)SpellAnimation.Armachd))
             {
-                creature.SpellAnimationHistory[20] = DateTime.MinValue;
+                creature.LastAnimation[(byte)SpellAnimation.Armachd] = DateTime.MinValue;
             }
 
             if (ReferenceEquals(creature, client.Player))

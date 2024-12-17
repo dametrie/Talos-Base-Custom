@@ -623,52 +623,58 @@ namespace Talos.Helper
 
         private void CommandHandler_Help(Client client, string fullMessage, string[] args)
         {
-            client.ServerMessage((byte)ServerMessageType.Whisper, "Available commands:");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "Available commands: ");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------");
+
             // General Gameplay
             client.ServerMessage((byte)ServerMessageType.Whisper, "General Gameplay:");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/form      <number>          Toggle or sets a monster form.");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/sprint       -              Sprint potion becomes a Charge skill");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/load      <name> [all]      Load single profile or for all clients");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/clr        [all]            Clear profile or for all clients");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/load      <name> [all]     Load profile for one or all clients");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/clr       [all]            Clear profile for self or all clients");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/form      [number]         Toggle or set a monster form");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/sprint       -             Use sprint potion as Charge skill");
+
+            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------");
+
             // Movement and Groups
             client.ServerMessage((byte)ServerMessageType.Whisper, "Movement and Groups:");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/f         <name> [dist]      Follow target at a specific distance");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/af        <name>             All clients follow the given target");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/g         <name>, 'alts'     Invite target or all alts to a group");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/fg        <name>             Force group invite to the target");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/f         <name> [dist]    Follow target at specific distance");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/af        <name>           All clients follow target");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/g         <name|alts>      Invite target or all alts to group");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/fg        <name>           Force group invite to target");
+
+            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------");
+
             // Inventory Management
-            client.ServerMessage((byte)ServerMessageType.Whisper, "Inventory Management: (all but search requires an NPC on screen)");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/repair    <item>, 'all'      Repairs specific item or all items");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/withdraw  'money', 'items'   Withdraw money or items from bank");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/deposit   'money', 'items'   Deposit money or items to the bank");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/send        -                Open the send items menu");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/receive     -                Open the receive menu");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/search    <item>             Search inventory and bank for an item");//MAX at 67 chars
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "Inventory Management: (NPC required except /search)");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/repair    <item|all>       Repair specific item or all items");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/search    <item>           Search inventory and bank for item");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/send         -             Open send items menu");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/receive      -             Open receive items menu");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/withdraw  <money|items>    Withdraw money/items (optional qty)");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/deposit   <money|items>    Deposit money/items (optional qty)");
+
+            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------");
+
             // Stats and Progression
             client.ServerMessage((byte)ServerMessageType.Whisper, "Stats and Progression:");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/stat      <stat>             Increase a stat by 1 in the ToC");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/hp        <num>, 'all'       Raise HP # of times or max possible");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/mp        <num>, 'all'       Raise MP # of times or max possible");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/strup     <number>           Allocate # of points to Strength");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/stat      <stat>           Buy stat: str, int, wis, con, dex");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/hp        <num|all>        Raise HP specified times or max");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/mp        <num|all>        Raise MP specified times or max");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/strup     <num>            Allocate points to Strength");
+
+            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------");
+
             // Miscellaneous
             client.ServerMessage((byte)ServerMessageType.Whisper, "Miscellaneous:");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/assails     -                Toggle assail sounds on or off");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/effect    <number>           Displays a visual effect animation.");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/ladder      -                Toggle auto-click for ladders");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/wd        'all', 'exit'      Move alts to next floor or exit WD");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "/kills       -                Show your top five kills");
-            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------------");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/assails      -             Toggle assail sounds");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/effect    <number>         Display visual effect animation");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/ladder       -             Toggle auto-click for ladders");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/wd        <all|exit>       Move alts to next floor or exit WD");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/kills        -             Show your top five kills");
+
+            client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------");
         }
+
 
         private void CommandHandler_Send(Client client, string fullMessage, string[] args)
         {

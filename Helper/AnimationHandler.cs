@@ -40,8 +40,24 @@ namespace Talos.Helper
                     _targetCreature.HealthPercent = 0;
                     break;
 
-                case (ushort)SpellAnimation.PerfectDefense:
+                case (ushort)SpellAnimation.AsgallFaileas:
                     if (_targetCreature is Player)
+                    {
+                        var dionStateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.IsDioned, true },
+                            { CreatureState.LastDioned, DateTime.UtcNow },
+                            { CreatureState.DionName, "Perfect Defense" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("Perfect Defense") }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
+
+                    }
+                    break;
+
+                case (ushort)SpellAnimation.PerfectDefense:
+                    if (!(_targetCreature is Player))
                     {
                         var dionStateUpdates = new Dictionary<CreatureState, object> 
                         {
@@ -68,8 +84,8 @@ namespace Talos.Helper
                         {
                             { CreatureState.IsDioned, true },
                             { CreatureState.LastDioned, DateTime.UtcNow },
-                            { CreatureState.DionName, "Dion" },
-                            { CreatureState.DionDuration, Spell.GetSpellDuration("Dion") }
+                            { CreatureState.DionName, "mor dion" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("mor dion") }
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
@@ -149,7 +165,20 @@ namespace Talos.Helper
                     }
                     break;
 
-                case (ushort)SpellAnimation.DeireasFaileas:
+                case (ushort)SpellAnimation.DeireasFaileas: // If not a player we are treating DF as a special case of dion
+                    if (_targetID == _sourceID && !(_targetCreature is Player))
+                    {
+                        var dionStateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.IsDioned, true },
+                            { CreatureState.LastDioned, DateTime.UtcNow },
+                            { CreatureState.DionName, "mor dion" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("mor dion") }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
+                    }
+                                        
                     break;
 
                 case (ushort)SpellAnimation.Fas:
@@ -199,6 +228,7 @@ namespace Talos.Helper
                         _client.Bot._hasRescue = true;
                     }
                     break;
+
                 case (ushort)SpellAnimation.AoSith:
                     if ((_sourceCreature != null) && !(_sourceCreature is Player))
                     {
@@ -400,7 +430,7 @@ namespace Talos.Helper
                         Player targetPlayer = _targetCreature as Player;
                         if (targetPlayer.IsSkulled)
                         {
-                            targetPlayer.SpellAnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.MinValue;
+                            targetPlayer.LastAnimation[(ushort)SpellAnimation.Skull] = DateTime.MinValue;
                         }
                         if (_targetID == _client.Player.ID)
                         {
@@ -408,6 +438,42 @@ namespace Talos.Helper
                         }
                         targetPlayer.NeedsHeal = true;
                     }
+                    break;
+
+                case (ushort)SpellAnimation.CreatureAsgall:
+                    if (_targetCreature == _client.Player && _sourceCreature == _client.Player && _client.ClientTab._isBashing)
+                    {
+                        Creature target = _client.Bot.BashingBase.Target;
+                        if (target != null && !target.IsDioned) // We treated asgall as a special case of dion
+                        {
+                            var asgallStateUpdates = new Dictionary<CreatureState, object>
+                            {
+                                { CreatureState.IsDioned, true },
+                                { CreatureState.LastDioned, DateTime.UtcNow },
+                                { CreatureState.DionName, "Asgall Faileas" },
+                                { CreatureState.DionDuration, 7.0 }
+                            };
+
+                            CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, asgallStateUpdates);
+                        }
+                    }
+
+                    break;
+
+                case (ushort)SpellAnimation.HealthTo1PCT:
+                    if (_sourceCreature != null && _sourceCreature == _targetCreature)
+                    {
+                        _sourceCreature.HealthPercent = 1;
+                    }
+
+                    break;
+
+                case (ushort)SpellAnimation.FrostStrike:
+                    if (_sourceID == _client.Player.ID && _client._spellHistory.Count > 0)
+                    {
+                        _client._spellHistory.RemoveAt(0);
+                    }
+
                     break;
 
             }

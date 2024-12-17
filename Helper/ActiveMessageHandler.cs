@@ -290,7 +290,7 @@ namespace Talos.Helper
                     case "io dia armachd comlhaLR":
                         if (creature != null)
                         {
-                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
+                            creature.LastAnimation[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
 
                             var armachdStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -322,7 +322,7 @@ namespace Talos.Helper
                     case "armachd":
                         if (creature != null)
                         {
-                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
+                            creature.LastAnimation[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
 
                             var armachdStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -340,7 +340,7 @@ namespace Talos.Helper
                     case "suain":
                         if (creature != null)
                         {
-                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
+                            creature.LastAnimation[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
 
                             var suainStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -363,7 +363,7 @@ namespace Talos.Helper
                     case "Mesmerize":
                         if (creature != null)
                         {
-                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
+                            creature.LastAnimation[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
 
                             var pramhStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -391,7 +391,7 @@ namespace Talos.Helper
                     case "Frost Arrow 11":
                         if (creature != null)
                         {
-                            creature.SpellAnimationHistory[(ushort)SpellAnimation.FrostArrow] = DateTime.UtcNow;
+                            creature.LastAnimation[(ushort)SpellAnimation.FrostArrow] = DateTime.UtcNow;
 
                             var frostArrowStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -420,7 +420,7 @@ namespace Talos.Helper
                     case "Cursed Tune 12":
                         if (creature != null)
                         {
-                            creature.SpellAnimationHistory[(ushort)SpellAnimation.CursedTunePoison] = DateTime.UtcNow;
+                            creature.LastAnimation[(ushort)SpellAnimation.CursedTunePoison] = DateTime.UtcNow;
 
                             var cursedTuneStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -447,7 +447,7 @@ namespace Talos.Helper
                     case "Regeneration 10":
                         if (creature != null)
                         {
-                            creature.SpellAnimationHistory[(ushort)SpellAnimation.Regeneration] = DateTime.UtcNow;
+                            creature.LastAnimation[(ushort)SpellAnimation.Regeneration] = DateTime.UtcNow;
 
                             var regenStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -464,7 +464,7 @@ namespace Talos.Helper
                     case "Increased Regeneration":
                         if (creature != null)
                         {
-                            creature.SpellAnimationHistory[(ushort)SpellAnimation.IncreasedRegeneration] = DateTime.UtcNow;
+                            creature.LastAnimation[(ushort)SpellAnimation.IncreasedRegeneration] = DateTime.UtcNow;
 
                             var increasedRegenStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -779,13 +779,13 @@ namespace Talos.Helper
                 }
                 if (client.CastedSpell != null && client.CastedSpell.Name.Contains("pramh"))
                 {
-                    client._spellHistory[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
+                    client._spellHistory[0].Creature.LastAnimation[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client.CastedSpell = null;
                 }
                 if (client.CastedSpell != null && client.CastedSpell.Name.Contains("suain"))
                 {
-                    client._spellHistory[0].Creature.SpellAnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
+                    client._spellHistory[0].Creature.LastAnimation[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client.CastedSpell = null;
                 }

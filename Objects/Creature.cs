@@ -15,15 +15,15 @@ namespace Talos.Objects
         private string _dion;
         internal int _clickCounter;
         internal int _hitCounter;
-        internal DateTime _lastUpdate = DateTime.Now;
-        internal ushort _animation;
+        internal DateTime _lastAnimationTime = DateTime.Now;
+        internal ushort _lastAnimation;
         public bool IsActive { get; set; } = true; // Default to active when created
         public DateTime LastSeen { get; set; } = DateTime.UtcNow;
         internal Direction Direction { get; set; }
         internal DateTime LastStep { get; set; }
 
-        internal Dictionary<ushort, DateTime> SpellAnimationHistory { get; set; }
-        internal Dictionary<ushort, DateTime> SourceAnimationHistory { get; set; }
+        internal Dictionary<ushort, DateTime> LastAnimation { get; set; }
+        internal Dictionary<ushort, DateTime> LastForeignAnimation { get; set; }
         internal CreatureType Type { get; set; }
 
         internal bool CanPND
@@ -57,7 +57,7 @@ namespace Talos.Objects
             get
             {
                 // Check for 'Mesmerize' animation within the last 1.5 seconds
-                bool isMesmerized = SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.Mesmerize, out DateTime lastMesmerizeTime) &&
+                bool isMesmerized = LastAnimation.TryGetValue((ushort)SpellAnimation.Mesmerize, out DateTime lastMesmerizeTime) &&
                                     DateTime.UtcNow - lastMesmerizeTime < TimeSpan.FromSeconds(2.5);
 
                 if (isMesmerized)
@@ -66,7 +66,7 @@ namespace Talos.Objects
                 }
 
                 // Check for 'Pramh' animation within the last 3 seconds
-                bool isPramhActive = SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.Pramh, out DateTime lastPramhTime) &&
+                bool isPramhActive = LastAnimation.TryGetValue((ushort)SpellAnimation.Pramh, out DateTime lastPramhTime) &&
                                      DateTime.UtcNow - lastPramhTime < TimeSpan.FromSeconds(3.0);
 
                 return isPramhActive;
@@ -77,7 +77,7 @@ namespace Talos.Objects
         {
             get
             {
-                bool isSuained = SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.Suain, out DateTime lastSuainTime) &&
+                bool isSuained = LastAnimation.TryGetValue((ushort)SpellAnimation.Suain, out DateTime lastSuainTime) &&
                                 DateTime.UtcNow - lastSuainTime < TimeSpan.FromSeconds(2.0);
 
                 return isSuained;
@@ -88,19 +88,19 @@ namespace Talos.Objects
         {
             get
             {
-                if (SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.PinkPoison, out DateTime lastPinkPoisonTime) &&
+                if (LastAnimation.TryGetValue((ushort)SpellAnimation.PinkPoison, out DateTime lastPinkPoisonTime) &&
                     DateTime.UtcNow - lastPinkPoisonTime < TimeSpan.FromSeconds(1.5))
                 {
                     return true;
                 }
 
-                if (SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.GreenBubblePoison, out DateTime lastGreenBubblePoisonTime) &&
+                if (LastAnimation.TryGetValue((ushort)SpellAnimation.GreenBubblePoison, out DateTime lastGreenBubblePoisonTime) &&
                     DateTime.UtcNow - lastGreenBubblePoisonTime < TimeSpan.FromSeconds(3.0))
                 {
                     return true;
                 }
 
-                return SpellAnimationHistory.TryGetValue((ushort)SpellAnimation.MedeniaPoison, out DateTime lastMedeniaPoisonTime) &&
+                return LastAnimation.TryGetValue((ushort)SpellAnimation.MedeniaPoison, out DateTime lastMedeniaPoisonTime) &&
                        DateTime.UtcNow - lastMedeniaPoisonTime < TimeSpan.FromSeconds(3.0);
             }
         }
@@ -321,8 +321,8 @@ namespace Talos.Objects
             : base(id, name, sprite, location)
         {
             Direction = direction;
-            SpellAnimationHistory = new Dictionary<ushort, DateTime>();
-            SourceAnimationHistory = new Dictionary<ushort, DateTime>();
+            LastAnimation = new Dictionary<ushort, DateTime>();
+            LastForeignAnimation = new Dictionary<ushort, DateTime>();
             HealthPercent = 100;
             Type = (CreatureType)type;
 

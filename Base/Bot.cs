@@ -1050,7 +1050,7 @@ namespace Talos.Base
                                                   select c.Location).ToHashSet<Location>();
 
                 // Get warp points
-                List<Location> warps = Client.GetAllWarpPoints(leader.Location);
+                List<Location> warps = Client.GetWarpPoints(leader.Location);
 
                 // Build a list of all reachable (non-wall) tiles on the leader's current map, excluding warp tiles,
                 // object-occupied tiles, and the leader's own current position.
@@ -1927,12 +1927,12 @@ namespace Talos.Base
                         {
                             _lastUsedBeetleAid = DateTime.UtcNow;
                             Console.WriteLine("[BotLoop] Used Beetle Aid, updated lastUsedBeetleAid");
-                            player.SpellAnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
+                            player.LastAnimation[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
                         }
                         else if (canUseOtherItems && (Client.UseItem("Komadium") || Client.UseItem("beothaich deum")))
                         {
                             Console.WriteLine("[BotLoop] Used other item (Komadium or beothaich deum)");
-                            player.SpellAnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
+                            player.LastAnimation[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
                             Thread.Sleep(1000); // Consider async/await pattern if possible
                         }
 
@@ -1942,7 +1942,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                else if (player == null || !Client.GetNearbyPlayers().Contains(player) || player.HealthPercent > 30 || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds > 5.0)
+                else if (player == null || !Client.GetNearbyPlayers().Contains(player) || player.HealthPercent > 30 || DateTime.UtcNow.Subtract(player.LastAnimation[(ushort)SpellAnimation.Skull]).TotalSeconds > 5.0)
                 {
                     Console.WriteLine("[BotLoop] Conditions for ending red-skull action met, resetting player and dontWalk flag");
                     player = null;
@@ -2305,13 +2305,13 @@ namespace Talos.Base
                             else
                             {
                                 // Fallback to using spells on the player directly if the client for the ally wasn't found
-                                if ((!player.SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.IncreasedRegeneration) || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.IncreasedRegeneration]).TotalSeconds > 1.5) && Client.UseSpell("Increased Regeneration", player, _autoStaffSwitch, true))
+                                if ((!player.LastAnimation.ContainsKey((ushort)SpellAnimation.IncreasedRegeneration) || DateTime.UtcNow.Subtract(player.LastAnimation[(ushort)SpellAnimation.IncreasedRegeneration]).TotalSeconds > 1.5) && Client.UseSpell("Increased Regeneration", player, _autoStaffSwitch, true))
                                 {
                                     return false;
                                 }
                                 if (Client.Spellbook.Any(s => s.Name != "Increased Regeneration" && s.Name.Contains("Regeneration"))
-                                    && (!player.SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Regeneration)
-                                        || DateTime.UtcNow.Subtract(player.SpellAnimationHistory[(ushort)SpellAnimation.Regeneration]).TotalSeconds > 1.5)
+                                    && (!player.LastAnimation.ContainsKey((ushort)SpellAnimation.Regeneration)
+                                        || DateTime.UtcNow.Subtract(player.LastAnimation[(ushort)SpellAnimation.Regeneration]).TotalSeconds > 1.5)
                                     && TryCastAnyRank("Regeneration", player, _autoStaffSwitch, true))
                                 {
                                     return false;
@@ -4044,7 +4044,7 @@ namespace Talos.Base
 
         internal bool CalculateHitCounter(Creature creature, EnemyPage enemyPage)
         {
-            if (creature.HealthPercent == 0 && creature.SpellAnimationHistory.Count != 0 && creature._animation != (byte)SpellAnimation.Miss && DateTime.UtcNow.Subtract(creature._lastUpdate).TotalSeconds <= 1.5)
+            if (creature.HealthPercent == 0 && creature.LastAnimation.Count != 0 && creature._lastAnimation != (byte)SpellAnimation.Miss && DateTime.UtcNow.Subtract(creature._lastAnimationTime).TotalSeconds <= 1.5)
             {
                 return creature._hitCounter < enemyPage.expectedHitsNum.Value;
             }

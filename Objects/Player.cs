@@ -37,7 +37,7 @@ namespace Talos.Objects
         {
             get
             {
-               return SpellAnimationHistory.ContainsKey((ushort)SpellAnimation.Skull) && DateTime.UtcNow.Subtract(SpellAnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds < 2.0;
+               return LastAnimation.ContainsKey((ushort)SpellAnimation.Skull) && DateTime.UtcNow.Subtract(LastAnimation[(ushort)SpellAnimation.Skull]).TotalSeconds < 2.0;
             }
         }
 
