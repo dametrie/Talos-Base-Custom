@@ -43,6 +43,16 @@ namespace Talos.Objects
         }
 
 
+        public bool IsNear(Player player, int range = 1)
+        {
+            return this.Location.DistanceFrom(player.Location) <= range;
+        }
+
+        public bool IsNear(Location loctation, int range = 1)
+        {
+            return this.Location.DistanceFrom(loctation) <= range;
+        }
+
         // This implementation of IsAsleep is correct. However, it assumes that the sleep is not broken by any other action.
         // That is, if sleep is broken it will still wait until the original sleep duration has passed.
         // internal bool IsAsleep => DateTime.UtcNow.Subtract(LastPramhed).TotalSeconds < PramhDuration;
@@ -178,6 +188,19 @@ namespace Talos.Objects
                     return false;
                 }
             }
+        }
+
+        internal double GetRemainingDionTime()
+        {
+            DateTime lastDioned = GetState<DateTime>(CreatureState.LastDioned);
+            double dionDuration = GetState<double>(CreatureState.DionDuration);
+
+            if (dionDuration <= 0 || lastDioned == DateTime.MinValue)
+                return 0;
+
+            // Calculate the remaining time
+            double elapsedTime = (DateTime.UtcNow - lastDioned).TotalSeconds;
+            return dionDuration - elapsedTime;
         }
 
         internal bool IsAsgalled

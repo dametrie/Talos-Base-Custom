@@ -37,11 +37,13 @@ namespace Talos.Base
         internal Client _client;
         internal Server _server;
         internal Creature creature;
+        internal Creature target;
         internal BashingBase BashingBase;
 
         private bool _autoStaffSwitch;
         private bool _fasSpiorad;
         private bool _isSilenced;
+        private bool bashClassSet;
         internal bool _needFasSpiorad = true;
         internal bool _manaLessThanEightyPct = true;
         internal bool _rangerNear = false;
@@ -73,11 +75,12 @@ namespace Talos.Base
         private DateTime _lastUsedFungusBeetle = DateTime.MinValue;
         private DateTime _lastUsedBeetleAid = DateTime.MinValue;
         internal TimeSpan _expBonusElapsedTime = TimeSpan.Zero;
+        internal DateTime _lastUnstick = DateTime.MinValue;
 
         internal List<Ally> _allyList = new List<Ally>();
         internal List<Enemy> _enemyList = new List<Enemy>();
         internal List<Player> _playersExistingOver250ms = new List<Player>();
-        internal List<Player> _playersNeedingRed = new List<Player>();
+        internal List<Player> _skulledPlayers = new List<Player>();
         internal List<Player> _nearbyAllies = new List<Player>();
         internal List<Creature> _nearbyValidCreatures = new List<Creature>();
         internal List<Location> ways = new List<Location>();
@@ -107,6 +110,8 @@ namespace Talos.Base
         internal bool _netRepair = false;
         internal DateTime _hammerTimer = DateTime.MinValue;
         internal bool _spikeGameToggle;
+        private DateTime _animationTimer = DateTime.MinValue;
+        private bool generaterandom;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -164,42 +169,469 @@ namespace Talos.Base
             AddTask(new BotLoop(BotLoop));
             AddTask(new BotLoop(SoundLoop));
             AddTask(new BotLoop(WalkLoop));
-            AddTask(new BotLoop(AutomatedTasks));
+            AddTask(new BotLoop(MultiLoop));
         }
 
-        private void AutomatedTasks()
+        private void MultiLoop()
         {
             while (!_shouldThreadStop)
             {
-                //Console.WriteLine("[AutomatedTasks] Pulse");
-                //TavalyWallHacks(); //Adam Fix
                 try
                 {
-                    Client client = this.Client;
-                    if (client != null)
-                    {
-                        if (client.ClientTab != null)
-                        {
-                            MonsterForm();
-                            //Bashing();
+                    // Block if Client or ClientTab is null
+                    if (Client == null || Client.ClientTab == null)
+                        continue;
 
-                            if ((!_rangerNear || !Client.ClientTab.rangerStopCbox.Checked) && !Client._exchangeOpen)
-                            {
-                                HolidayEvents();
-                                //ItemFinding();
-                                //TreasureChests();
-                                Thread.Sleep(80);
-                            }
-                            Thread.Sleep(100);
-                        }
+                    Client._inventoryFull = Client.Inventory.IsFull;
+
+
+                    CheckScrollTimers();
+                    HandleBashingCycle();
+                    //DojoLoop();
+
+                    // Block if conditions for ranger or exchange are not met
+                    if ((_rangerNear && Client.ClientTab.rangerStopCbox.Checked) || Client._exchangeOpen)
+                    {
+                        Thread.Sleep(100);
+                        continue;
                     }
+
+
+                    HolidayEvents();
+                    // ItemFinding();
+                    // TreasureChests();
+                    // Raffles()
+                    // Other Tasks();
+                    // TavalyWallHacks();
+                    MonsterForm();
+
+                    // Sleep before the next iteration
+                    Thread.Sleep(100);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[AutomatedTasks] Exception occurred: {ex.ToString()}");
+                    Console.WriteLine($"[MultiLoop] Exception occurred: {ex}");
                 }
             }
         }
+
+        private void HandleBashingCycle()
+        {
+            try
+            {
+                if (!bashClassSet)
+                    SetBashClass();
+
+                if (!Client?.ClientTab?._isBashing ?? true)
+                    return;
+
+                if (_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked)
+                    return;
+
+                EnsureOneLineWalkEnabled();
+
+                if (!BashingBase.DoBashing())
+                    WayPointWalking(true);
+
+                if (Client?.ClientTab?._isBashing ?? false && !(_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked))
+                {
+                    EnsureOneLineWalkEnabled();
+                    ProcessBashingTargets();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("HandleBashingCycle", ex);
+            }
+        }
+
+        private void ProcessBashingTargets()
+        {
+            try
+            {
+                if (Client.ClientTab?.btnBashingNew.Text != "Stop Bashing")
+                    return;
+
+                if (_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked || Client.IsSkulled)
+                    return;
+
+                EnsureOneLineWalkEnabled();
+
+                if (!Client.ClientTab.assistBasherChk.Checked)
+                {
+                    HandleProtectionAndBashing();
+                }
+                else
+                {
+                    AssistBasherLogic();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("ProcessBashingTargets", ex);
+            }
+        }
+
+        private void AssistBasherLogic()
+        {
+            string leadBasherName = Client.ClientTab.leadBasherTxt.Text;
+
+            // Get valid monsters near the lead basher
+            var nearbyMonsters = Client.GetNearbyValidCreatures(8)
+                .Where(mob => !Client.IsLocationSurrounded(mob.Location) && !Client._map.IsWall(mob.Location))
+                .Where(mob => mob.Location.DistanceFrom(Server.GetClient(leadBasherName)._clientLocation) <= Client.ClientTab.numAssitantStray.Value)
+                .ToList();
+
+            // Assign the target
+            target = Client.ClientTab.radioAssitantStray.Checked
+                ? nearbyMonsters
+                    .OrderBy(mob => mob.Location.DistanceFrom(Client._clientLocation))
+                    .FirstOrDefault(mob => ShouldEngageTarget(mob))
+                : Server.GetClient(leadBasherName).Bot.target;
+
+            if (target != null)
+            {
+                HandleAssistTargetMovement(target);
+            }
+            else
+            {
+                HandleAssistIdleState();
+            }
+        }
+
+        private bool ShouldEngageTarget(Creature mob)
+        {
+            return (!Client.ClientTab.chkWaitForCradh.Checked || mob.IsCursed)
+                   && (!Client.ClientTab.chkWaitForFas.Checked || mob.IsFassed);
+        }
+        private void HandleAssistTargetMovement(Creature target)
+        {
+            if (target.Location.DistanceFrom(Client._clientLocation) > 1)
+            {
+                // Pathfind towards the target
+                Client.Pathfind(target.Location, shouldBlock: false);
+
+                // Check if we can use skills from range
+                if (Client.ClientTab.chkUseSkillsFromRange.Checked &&
+                    (target.Location.X == Client._clientLocation.X || target.Location.Y == Client._clientLocation.Y))
+                {
+                    // Face the target
+                    Direction direction = target.Location.GetDirection(Client._clientLocation);
+                    if (Client._clientDirection != direction)
+                        Client.Turn(direction);
+
+                    // Use skills
+                    InitiateBashing();
+                }
+            }
+            else
+            {
+                // Handle close-range interactions
+                HandleCloseRangeMovement(target);
+            }
+        }
+
+        private void HandleAssistIdleState()
+        {
+            // Enable follow mode if no valid targets exist
+            if (!Client.ClientTab.followCbox.Checked)
+            {
+                Client.ClientTab.followCbox.Checked = true; // Start following the lead basher or group
+                Client.ServerMessage((byte)ServerMessageType.TopRight, "No valid targets. Enabling follow mode...");
+                return;
+            }
+
+            // Handle random waypoints if enabled
+            if (Client.ClientTab.chkRandomWaypoints.Checked)
+            {
+                HandleRandomWaypoints();
+                return;
+            }
+
+            // Check if the bot is stuck and needs to refresh or move randomly
+            if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
+            {
+                Client.RefreshRequest(false);
+                Client.Walk(Utility.RandomEnumValue<Direction>());
+                _lastUnstick = DateTime.UtcNow;
+                Client.ServerMessage((byte)ServerMessageType.TopRight, "No valid actions. Unsticking...");
+            }
+        }
+
+
+        private void HandleProtectionAndBashing()
+        {
+            var nearbyPlayers = Client.GetNearbyPlayers();
+            var nearbyMonsters = Client.GetNearbyValidCreatures(10);
+
+            Player whoToProtect = FindWhoToProtect(nearbyPlayers, nearbyMonsters);
+
+            var validTargets = FilterValidTargets(nearbyMonsters, whoToProtect);
+
+            if (validTargets.Any())
+            {
+                HandleTargetingAndMovement(validTargets, whoToProtect);
+            }
+            else
+            {
+                HandleRandomWaypoints();
+            }
+        }
+
+        private void HandleTargetingAndMovement(List<Creature> validTargets, Player whoToProtect)
+        {
+            target = validTargets.FirstOrDefault(mob =>
+                ShouldEngageTarget(mob) ||
+                (whoToProtect != null && mob.Location.DistanceFrom(whoToProtect.Location) < 5)) ?? target;
+
+            if (target == null)
+                return;
+
+            if (target.Location.DistanceFrom(Client._clientLocation) > 1)
+            {
+                if (target.Location.DistanceFrom(Client._clientLocation) > 4 && IsAnyGroupMemberPramhed())
+                {
+                    Client.ServerMessage((byte)ServerMessageType.TopRight, "Waiting for pramh...");
+                    return;
+                }
+
+                MoveTowardsTarget(target);
+            }
+            else
+            {
+                FaceAndBashTarget(target);
+            }
+        }
+
+        private bool IsAnyGroupMemberPramhed()
+        {
+            return _nearbyAllies != null && _nearbyAllies.Any(member => member.IsAsleep);
+        }
+
+        private void MoveTowardsTarget(Creature target)
+        {
+            Direction direction = target.Location.GetDirection(Client._clientLocation);
+            Client.Pathfind(target.Location);
+
+            if (Client.ClientTab.chkUseSkillsFromRange.Checked &&
+                (target.Location.X == Client._clientLocation.X || target.Location.Y == Client._clientLocation.Y))
+            {
+                if (Client._clientDirection != direction)
+                    Client.Turn(direction);
+
+                InitiateBashing();
+            }
+        }
+
+        private void FaceAndBashTarget(Creature target)
+        {
+            if (target.Location == Client._clientLocation && !Client.HasEffect(EffectsBar.BeagSuain) &&
+                !Client.HasEffect(EffectsBar.Pramh) && !Client.HasEffect(EffectsBar.Suain))
+            {
+                if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
+                {
+                    Client.RefreshRequest(false);
+                    Client.Walk(Utility.RandomEnumValue<Direction>());
+                    _lastUnstick = DateTime.UtcNow;
+                    return;
+                }
+            }
+
+            Direction direction = target.Location.GetDirection(Client._clientLocation);
+            if (Client._clientDirection != direction)
+                Client.Turn(direction);
+
+            InitiateBashing();
+        }
+
+
+
+
+        private void HandleRandomWaypoints()
+        {
+            if (!Client.ClientTab.chkRandomWaypoints.Checked)
+                return;
+
+            if (!generaterandom)
+            {
+                GenerateRandomWaypoints();
+                generaterandom = true;
+            }
+            else
+            {
+                if (!NavigateToRandomWaypoint())
+                {
+                    generaterandom = false; // Regenerate if navigation fails
+                }
+            }
+        }
+
+        private bool NavigateToRandomWaypoint()
+        {
+            Location location = new Location(Client._map.MapID, (short)randomX, (short)randomY);
+
+            if (Client._map.IsWall(location))
+                return false;
+
+            if (Client.Pathfinder.FindPath(Client._serverLocation, location).Count > 0)
+            {
+                Client.Pathfind(location);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void GenerateRandomWaypoints()
+        {
+            Client.ClientTab._wayForm.waypointsLBox.Items.Clear();
+            Client.Bot.ways.Clear();
+
+            foreach (var map in Server._maps.Values.Where(m => m.MapID == Client._map.MapID))
+            {
+                int waypointsToGenerate = Utility.Clamp((map.Height + map.Width) / 8, 5, 12);
+
+                for (int i = 0; i < waypointsToGenerate; i++)
+                {
+                    Location location;
+                    do
+                    {
+                        location = new Location(map.MapID,
+                            (short)Utility.Random(1, Client._map.Width - 2),
+                            (short)Utility.Random(1, Client._map.Height - 2));
+                    }
+                    while (Client._map.IsWall(location) || Client.Pathfinder.FindPath(Client._serverLocation, location).Count == 0);
+
+                    Client.Bot.ways.Add(location);
+                    Client.ClientTab._wayForm.waypointsLBox.Items.Add($"({location.X}, {location.Y}) {map.Name}: {map.MapID}");
+                }
+            }
+        }
+
+        private void HandleCloseRangeMovement(Creature target)
+        {
+            // Ensure the bot is not stuck or standing on the same point as the target
+            if (target.Location == Client._clientLocation && !Client.HasEffect(EffectsBar.BeagSuain) &&
+                !Client.HasEffect(EffectsBar.Pramh) && !Client.HasEffect(EffectsBar.Suain))
+            {
+                // Unstick logic
+                if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
+                {
+                    Client.RefreshRequest(false);
+                    Client.Walk(Utility.RandomEnumValue<Direction>());
+                    _lastUnstick = DateTime.UtcNow;
+                    return;
+                }
+            }
+
+            // Face the target
+            Direction direction = target.Location.GetDirection(Client._clientLocation);
+            if (Client._clientDirection != direction)
+                Client.Turn(direction);
+
+            // Initiate bashing
+            InitiateBashing();
+        }
+
+
+
+        private Player FindWhoToProtect(List<Player> users, List<Creature> monsters)
+        {
+            Player protect1 = Client.ClientTab.Protect1Cbx.Checked
+                ? users.FirstOrDefault(u => u.Name.Equals(Client.ClientTab.Protected1Tbx.Text, StringComparison.OrdinalIgnoreCase))
+                : null;
+
+            Player protect2 = Client.ClientTab.Protect2Cbx.Checked
+                ? users.FirstOrDefault(u => u.Name.Equals(Client.ClientTab.Protected2Tbx.Text, StringComparison.OrdinalIgnoreCase))
+                : null;
+
+            return protect1 != null && monsters.Any(mob => mob.IsNear(protect1))
+                ? protect1
+                : protect2;
+        }
+
+        private List<Creature> FilterValidTargets(List<Creature> monsters, Player whoToProtect)
+        {
+            return monsters
+                .Where(mob => !Client.IsLocationSurrounded(mob.Location) &&
+                              mob.PathIsValid(Client._serverLocation) &&
+                              !Client.HasNearbyUsersBlocking(mob.Location) &&
+                              (whoToProtect == null || mob.IsNear(whoToProtect)))
+                .OrderBy(mob => mob.Point.Distance(Client._clientLocation))
+                .ToList();
+        }
+
+
+
+
+        private void SetBashClass()
+        {
+            if (Client.classFlag.HasFlag(TemClass.Warrior) && Client.medClassFlag.HasFlag(MedClass.Gladiator))
+                BashingBase = new PureWarriorTavalyBashLogic(this);
+
+            else if (Client.medClassFlag.HasFlag(MedClass.Druid))
+            {
+                if (Client.druidFlag.HasFlag(DruidForm.Wolf))
+                    BashingBase = new PureFeralTavalyBashLogic(this);
+                else if (Client.druidFlag.HasFlag(DruidForm.Bird))
+                    BashingBase = new PureKaruraTavalyBashLogic(this);
+            }
+            else if (Client.classFlag.HasFlag(TemClass.Monk) && Client.medClassFlag.HasFlag(MedClass.Gladiator))
+                BashingBase = new MonkWarriorTavalyBashLogic(this);
+
+            else if (Client.medClassFlag.HasFlag(MedClass.Archer))
+                BashingBase = new RogueTavalyBashLogic(this);
+
+            bashClassSet = BashingBase != null;
+        }
+
+        private void EnsureOneLineWalkEnabled()
+        {
+            if (!Client.ClientTab.oneLineWalkCbox.Checked)
+                Client.ClientTab.oneLineWalkCbox.Checked = true;
+        }
+
+
+        private void LogException(string methodName, Exception ex)
+        {
+            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bashCrashLogs");
+            if (!Directory.Exists(logPath))
+                Directory.CreateDirectory(logPath);
+
+            string filePath = Path.Combine(logPath, $"{DateTime.Now:MM-dd-HH-yyyy_hh-mm-ss}.log");
+            File.WriteAllText(filePath, $"{methodName}: {ex}");
+        }
+
+
+
+
+        private void CheckScrollTimers()
+        {
+            if (Client._comboScrollCounter > 0)
+            {
+                TimeSpan remainingTime = GetScrollRemainingTime();
+                if (remainingTime < TimeSpan.FromSeconds(1))
+                {
+                    Client._comboScrollCounter = 0;
+                }
+                else if (!Client._safeScreen)
+                {
+                    Client.ServerMessage((byte)ServerMessageType.TopRight, $"Scroll in: {remainingTime:m\\:ss}");
+                }
+            }
+            else if (Client._medeniaClass == MedeniaClass.Druid && !Client._safeScreen)
+            {
+                Client.ServerMessage((byte)ServerMessageType.TopRight, "Scroll Ready.");
+            }
+        }
+
+        private TimeSpan GetScrollRemainingTime()
+        {
+            int scrollMinutes = (Client._comboScrollCounter == (Client._previousClass == PreviousClass.Pure ? 3 : 2)) ? 2 : 1;
+            TimeSpan totalScrollTime = new TimeSpan(0, scrollMinutes, 2);
+            return totalScrollTime - (DateTime.UtcNow - Client._comboScrollLastUsed);
+        }
+
 
         private void HolidayEvents()
         {
@@ -298,7 +730,6 @@ namespace Talos.Base
         }
         private void TavalyWallHacks()
         {
-            //Adam Fix
             if (Client.ClientTab.chkTavWallStranger.Checked && IsStrangerNearby() && Client.ClientTab.chkTavWallHacks.Checked && !Client._map.IsWall(Client._serverLocation))
             {
                 Client.ClientTab.chkTavWallHacks.Checked = false;
@@ -1798,7 +2229,7 @@ namespace Talos.Base
             _playersExistingOver250ms = nearbyPlayers?
                 .Where(p => (DateTime.UtcNow - p.Creation).TotalMilliseconds > 250)
                 .ToList();
-            _playersNeedingRed.Clear();
+            _skulledPlayers.Clear();
         }
         private void HandleSkullStatus()
         {
@@ -1874,9 +2305,9 @@ namespace Talos.Base
                 _playersExistingOver250ms.RemoveAll(p => p.IsSkulled);
                 foreach (Player player in Client.GetNearbyPlayers().Where(IsSkulledFriendOrGroupMember))
                 {
-                    _playersNeedingRed.Add(player);
+                    _skulledPlayers.Add(player);
                 }
-                return _playersNeedingRed = _playersNeedingRed.OrderBy(DistanceFromPlayer).ToList();
+                return _skulledPlayers = _skulledPlayers.OrderBy(DistanceFromPlayer).ToList();
             }
             return new List<Player>();
         }
@@ -1885,11 +2316,11 @@ namespace Talos.Base
         {
             Console.WriteLine("[BotLoop] RedSkulledPlayers called");
 
-            if (_playersNeedingRed.Count > 0 && Client.ClientTab.autoRedCbox.Checked)
+            if (_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked)
             {
                 Console.WriteLine("[BotLoop] Players needing red > 0 and autoRed checked");
 
-                Player player = _playersNeedingRed[0];
+                Player player = _skulledPlayers[0];
                 Console.WriteLine($"[BotLoop] Target player: {player?.Name}, HealthPercent: {player?.HealthPercent}");
 
                 var inventory = Client.Inventory;
