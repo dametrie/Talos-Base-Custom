@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using Talos.Bashing;
 using Talos.Definitions;
 using Talos.Enumerations;
 using Talos.Extensions;
@@ -36,6 +37,7 @@ namespace Talos.Base
         internal Client _client;
         internal Server _server;
         internal Creature creature;
+        internal BashingBase BashingBase;
 
         private bool _autoStaffSwitch;
         private bool _fasSpiorad;

@@ -180,6 +180,15 @@ namespace Talos.Objects
             }
         }
 
+        internal bool IsAsgalled
+        {
+            get
+            {
+                // We treat Asgall as a special case of Dion 
+                return IsDioned && GetState<string>(CreatureState.DionName) == "Asgall Faileas";
+            }
+        }
+
         internal bool IsAited
         {
             get

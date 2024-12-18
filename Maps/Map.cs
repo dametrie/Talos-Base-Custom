@@ -111,7 +111,7 @@ namespace Talos.Maps
 
 
 
-        internal bool IsLocationOpenForInteraction(Client client, Location location)
+        internal bool IsWalkable(Client client, Location location)
         {
             if (!IsWall(location))
             {

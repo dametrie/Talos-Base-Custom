@@ -2596,7 +2596,7 @@ namespace Talos.Forms
             healPctNum.Value = 80M;
             fasSpioradText.Text = "5000";
             walkBtn.Text = "Walk";
-            btnBashing.Text = "Start Bashing";
+            btnBashingNew.Text = "Start Bashing";
             //btnBashingNew.Text = "Start Bashing";
 
             // Clear combo lists
@@ -3803,6 +3803,51 @@ namespace Talos.Forms
         }
 
         private void ChatBox_Leave(object sender, EventArgs e) => chatBox.BackColor = Color.White;
+
+        private void btnBashing_Click(object sender, EventArgs e)
+        {
+            if (btnBashingNew.Text == "Start Bashing")
+            {
+                btnBashingNew.Text = "Stop Bashing";
+                btnBashingNew.Image = (Image)Resources.grumblade;
+                btnBashingNew.ImageAlign = ContentAlignment.MiddleLeft;
+                chkBashAsgall.Enabled = true;
+            }
+            else
+            {
+                btnBashingNew.Text = "Start Bashing";
+                btnBashingNew.Image = (Image)Resources.bruneblade;
+                btnBashingNew.ImageAlign = ContentAlignment.MiddleLeft;
+            }
+        }
+
+        private void priorityAddBtn_Click(object sender, EventArgs e)
+        {
+            if (!ushort.TryParse(priorityTBox.Text, out ushort parsedPriority) || parsedPriority < 1 || parsedPriority > 1000)
+            {
+                MessageDialog.Show(_client._server._mainForm, "Your sprite must be a number between 1-1000");
+                priorityTBox.Clear();
+                return;
+            }
+
+            string priorityStr = parsedPriority.ToString();
+
+            if (priorityLBox.Items.Contains(priorityStr))
+            {
+                MessageDialog.Show(_client._server._mainForm, "\tEnemy already in list\t");
+                priorityTBox.Clear();
+                return;
+            }
+
+            priorityLBox.Items.Add(priorityStr);
+            priorityTBox.Clear();
+        }
+
+        private void priorityRemoveBtn_Click(object sender, EventArgs e)
+        {
+            while (priorityLBox.SelectedItems.Count > 0)
+                priorityLBox.Items.RemoveAt(priorityLBox.SelectedIndex);
+        }
     }
 }
 

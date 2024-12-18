@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Talos.Definitions
 {
@@ -289,6 +290,224 @@ namespace Talos.Definitions
         public const int CREATURE_SPRITE_OFFSET = 16384;
         public const int ITEM_SPRITE_OFFSET = 32768;
 
+        public static readonly IReadOnlyCollection<string> ASSAILS = new string[]
+        {
+            "Assail",
+            "Assault",
+            "Clobber",
+            "Double Punch",
+            "Wallop",
+            "Long Strike",
+            "Thrash",
+            "Two-handed Attack",
+            "Thrust Attack",
+            "Midnight Slash",
+            "Triple Kick",
+            "Elemental Bless",
+            "Instrumental",
+            "Arrow Shot",
+            "Throw Surigum"
+        };
+
+        public static readonly IReadOnlyCollection<string> THREE_TILE_ATTACKS_TEM = new string[]
+        {
+            "Eagle Strike",
+            "Wind Blade",
+            "Sever",
+            "Precision Shot"
+        };
+
+        public static readonly IReadOnlyCollection<string> TWO_TILE_ATTACKS_MED = new string[]
+        {
+            "Talon Kick"
+        };
+
+        public static readonly IReadOnlyCollection<string> THREE_TILE_ATTACKS_MED = new string[]
+        {
+            "Strikedown",
+            "Instrumental Attack"
+        };
+
+        public static readonly IReadOnlyCollection<string> FIVE_TILE_ATTACKS_MED = new string[]
+        {
+            "Pounce",
+            "Rear Strike"
+        };
+
+        public static readonly IReadOnlyCollection<string> AMBUSH_ATTACKS_TEM = new string[]
+        {
+            "Ambush",
+            "Shadow Figure",
+            "Sneak Attack"
+        };
+
+        public static readonly IReadOnlyCollection<string> AMBUSH_ATTACKS_MED = new string[]
+        {
+            "Sneak Flight",
+            "Shadow Strike",
+            "Sneak Attack"
+        };
+
+        public static readonly IReadOnlyCollection<string> PF_SKILLS = new string[]
+        {
+            "Paralyze Force",
+            "Ground Stomp",
+            "Animal Roar"
+        };
+
+        public static readonly IReadOnlyCollection<string> ONE_TILE_ATTACKS_MED = new string[]
+        {
+            "Cyclone Kick",
+            "Dune Swipe",
+            "Wheel Kick"
+        };
+
+        public static readonly IReadOnlyCollection<string> ONE_TILE_ATTACKS = new string[]
+        {
+            "Raging Attack",
+            "Cyclone Blade",
+            "Furious Bash"
+        };
+
+        public static readonly IReadOnlyCollection<int> SHINEWOOD_HOLY = new int[]
+        {
+            272,
+            266,
+            87
+        };
+
+        public static readonly IReadOnlyCollection<int> SHINEWOOD_DARK = new int[]
+        {
+            273,
+            240
+        };
+
+        public static readonly IReadOnlyCollection<int> FOWL_SPRITE = new int[]
+        {
+            529
+        };
+
+        public static readonly IReadOnlyList<ushort> BUG_NUMBERS = new ushort[]
+        {
+            8127, 8129, 8128, 8125, 8126, 8130, 8132, 8134, 8131, 8133,
+            8135, 8136, 8137, 8138, 8139, 8140, 8141, 8142, 8143, 8144
+        };
+
+        public static readonly IReadOnlyList<string> ARCHER_SPELLS = new List<string>
+        {
+            "Star Arrow",
+            "Frost Arrow",
+            "Shock Arrow",
+            "Volley",
+            "Barrage"
+        };
+
+        public static readonly IReadOnlyList<string> DOJOBLACKLIST_1 = new List<string>
+        {
+            "Hairstyle",
+            "Throw Smoke Bomb",
+            "Unlock",
+            "Mind Hymn",
+            "Two-handed Attack",
+            "swimming",
+            "Lumberjack",
+            "Appraise",
+            "Wise Touch",
+            "Look",
+            "Wield Staff",
+            "Nis",
+            "Learning Spell",
+            "Zombie Defender",
+            "Fiery Defender",
+            "Disenchanter",
+            "Gem Polishing",
+            "Set Volley"
+        };
+
+        public static readonly IReadOnlyList<string> DOJOBLACKLIST_2 = new List<string>
+        {
+            "Hairstyle",
+            "Throw Smoke Bomb",
+            "Unlock",
+            "Mind Hymn",
+            "Two-handed Attack",
+            "swimming",
+            "Lumberjack",
+            "Appraise",
+            "Wise Touch",
+            "Look",
+            "Wield Staff",
+            "Nis",
+            "Learning Spell",
+            "Zombie Defender",
+            "Fiery Defender",
+            "Disenchanter",
+            "Gem Polishing",
+            "Set Volley",
+            "Unlock",
+            "Mend Soori",
+            "Mend Weapon",
+            "Mend Garment",
+            "Study Creature",
+            "Tailoring",
+            "Throw Surigum",
+            "Evaluate Item",
+            "Sense",
+            "Peek",
+            "Double Punch",
+            "Martial Awareness",
+            "Wise Touch",
+            "Lucky Hand",
+            "Triple Kick",
+            "Eco Sense",
+            "Animal Feast",
+            "Auto Hemloch",
+            "ao beag suain",
+            "Assail",
+            "Assault",
+            "Melee Lore",
+            "Clobber",
+            "Long Strike",
+            "Combat Senses",
+            "Wallop",
+            "Crasher",
+            "Execute",
+            "Thrash",
+            "Mad Soul",
+            "Sacrifice",
+            "Throw",
+            "Rescue",
+            "Mend Staff",
+            "Frost Strike",
+            "Arrow Shot",
+            "Archery",
+            "Midnight Slash",
+            "TransferBlood",
+            "Charge"
+        };
+
+        public static readonly Dictionary<string, (int Ability, int Level)> DARK_NECKS = new Dictionary<string, (int, int)>
+        {
+            { "Dark Necklace", (0, 11) },
+            { "Dark Gold Jade Necklace", (0, 11) },
+            { "Dark Amber Necklace", (0, 14) },
+            { "Thief's Dark Necklace", (60, 99) },
+            { "Royal Baem Scale Pendant", (95, 99) },
+            { "Chadul Dark Skull Necklace", (99, 99) },
+
+        };
+
+
+        public static readonly Dictionary<string, (int Ability, int Level)> LIGHT_NCEKS = new Dictionary<string, (int, int)>
+        {
+            { "Light Necklace", (0, 11) },
+            { "Lumen Amulet", (0, 25) },
+            { "Ragged Holy Danaan", (95, 99) },
+            { "Lannair Amulet", (96, 99) }, // From here on they all only require AB 95
+            { "Lionnear Amulet", (97, 99) },// However we are labeling them as higher
+            { "Solas Amulet", (98, 99) },   // So that we can prioritize them over one another
+            { "Laise Amulet", (99, 99) },   // This will need to change when a new light necklace comes out for AB 99
+        };
 
 
     }

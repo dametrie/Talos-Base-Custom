@@ -35,7 +35,7 @@ namespace Talos.Structs
             Y = y;
         }
 
-        internal Location TranslateLocationByDirection(Direction dir)
+        internal Location Offset(Direction dir)
         {
             Location result = new Location(MapID, new Point(X, Y));
 
@@ -61,23 +61,16 @@ namespace Talos.Structs
 
         internal Direction GetDirection(Location loc)
         {
-            if (Y >= loc.Y)
-            {
-                if (X <= loc.X)
-                {
-                    if (Y <= loc.Y)
-                    {
-                        if (X >= loc.X)
-                        {
-                            return Direction.Invalid;
-                        }
-                        return Direction.West;
-                    }
-                    return Direction.South;
-                }
+            if (Y < loc.Y)
+                return Direction.North;
+            if (X > loc.X)
                 return Direction.East;
-            }
-            return Direction.North;
+            if (Y > loc.Y)
+                return Direction.South;
+            if (X < loc.X)
+                return Direction.West;
+
+            return Direction.Invalid;
         }
 
         internal int DistanceFrom(Location other)

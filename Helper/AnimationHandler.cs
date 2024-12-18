@@ -47,8 +47,8 @@ namespace Talos.Helper
                         {
                             { CreatureState.IsDioned, true },
                             { CreatureState.LastDioned, DateTime.UtcNow },
-                            { CreatureState.DionName, "Perfect Defense" },
-                            { CreatureState.DionDuration, Spell.GetSpellDuration("Perfect Defense") }
+                            { CreatureState.DionName, "Asgall Faileas" },
+                            { CreatureState.DionDuration, Spell.GetSpellDuration("Asgall Faileas") }
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, dionStateUpdates);
@@ -443,13 +443,12 @@ namespace Talos.Helper
                 case (ushort)SpellAnimation.CreatureAsgall:
                     if (_targetCreature == _client.Player && _sourceCreature == _client.Player && _client.ClientTab._isBashing)
                     {
-                        Creature target = _targetCreature;
-                        //Creature target = _client.Bot.BashingBase.Target;
-                        if (target != null && !target.IsDioned) // We treated asgall as a special case of dion
+                        Creature target = _client.Bot.BashingBase.Target;
+                        if (target != null && !target.IsAsgalled) 
                         {
                             var asgallStateUpdates = new Dictionary<CreatureState, object>
                             {
-                                { CreatureState.IsDioned, true },
+                                { CreatureState.IsDioned, true }, // We treated asgall as a special case of dion
                                 { CreatureState.LastDioned, DateTime.UtcNow },
                                 { CreatureState.DionName, "Asgall Faileas" },
                                 { CreatureState.DionDuration, 7.0 }

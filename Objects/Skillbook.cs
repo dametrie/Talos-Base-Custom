@@ -26,6 +26,11 @@ namespace Talos.Objects
             SkillArray = new Skill[90];
         }
 
+        internal Skill GetNumberedSkill(string name)
+        {
+            return SkillbookDictionary.Values.FirstOrDefault(skill => skill.Name.Contains(name));
+        }
+
         internal void AddOrUpdateSkill(Skill skill)
         {
             if (skill == null)

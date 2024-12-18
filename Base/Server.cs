@@ -345,7 +345,7 @@ namespace Talos
             byte stepCount = client.StepCount;
             client.StepCount = stepCount++;
             clientPacket.Data[1] = stepCount;
-            client._clientLocation = client._clientLocation.TranslateLocationByDirection(facing);
+            client._clientLocation = client._clientLocation.Offset(facing);
             //Console.WriteLine("[ClientWalk] Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
             client.LastStep = DateTime.UtcNow;
             //Console.WriteLine("[ClientWalk] Last step = " + client.LastStep);
@@ -1902,7 +1902,7 @@ namespace Talos
             if (_isMapping && (client._clientWalkPending && _maps.ContainsKey(client._map.MapID)))
             {
                 Location loc = client._clientLocation;
-                loc.TranslateLocationByDirection(client._clientDirection);
+                loc.Offset(client._clientDirection);
                 _maps[client._map.MapID].WorldMaps[loc.Point] = newWorldMap;
             }
 

@@ -53,10 +53,10 @@ namespace Talos.Extensions
         internal static IEnumerable<Location> GetNeighbors(Location location, HashSet<Location> localAllLocations)
         {
             // Offset the location by direction to get neighbors
-            Location north = location.TranslateLocationByDirection(Direction.North);
-            Location east = location.TranslateLocationByDirection(Direction.East);
-            Location south = location.TranslateLocationByDirection(Direction.South);
-            Location west = location.TranslateLocationByDirection(Direction.West);
+            Location north = location.Offset(Direction.North);
+            Location east = location.Offset(Direction.East);
+            Location south = location.Offset(Direction.South);
+            Location west = location.Offset(Direction.West);
 
             // Check each direction and yield the valid neighbors if they exist in the set
             Location resultLocation;

@@ -172,98 +172,7 @@ namespace Talos.Base
         internal BindingList<string> _friendBindingList = new BindingList<string>();
         internal BindingList<string> _groupBindingList = new BindingList<string>();
 
-        private readonly List<string> _archerSpells = new List<string>
-        {
-        "Star Arrow",
-        "Frost Arrow",
-        "Shock Arrow",
-        "Volley",
-        "Barrage"
-        };
 
-        internal List<string> _dojoBlackList1 = new List<string>
-        {
-            "Hairstyle",
-            "Throw Smoke Bomb",
-            "Unlock",
-            "Mind Hymn",
-            "Two-handed Attack",
-            "swimming",
-            "Lumberjack",
-            "Appraise",
-            "Wise Touch",
-            "Look",
-            "Wield Staff",
-            "Nis",
-            "Learning Spell",
-            "Zombie Defender",
-            "Fiery Defender",
-            "Disenchanter",
-            "Gem Polishing",
-            "Set Volley"
-        };
-
-        internal List<string> _dojoBlackList2 = new List<string>
-        {
-            "Hairstyle",
-            "Throw Smoke Bomb",
-            "Unlock",
-            "Mind Hymn",
-            "Two-handed Attack",
-            "swimming",
-            "Lumberjack",
-            "Appraise",
-            "Wise Touch",
-            "Look",
-            "Wield Staff",
-            "Nis",
-            "Learning Spell",
-            "Zombie Defender",
-            "Fiery Defender",
-            "Disenchanter",
-            "Gem Polishing",
-            "Set Volley",
-            "Unlock",
-            "Mend Soori",
-            "Mend Weapon",
-            "Mend Garment",
-            "Study Creature",
-            "Tailoring",
-            "Throw Surigum",
-            "Evaluate Item",
-            "Sense",
-            "Peek",
-            "Double Punch",
-            "Martial Awareness",
-            "Wise Touch",
-            "Lucky Hand",
-            "Triple Kick",
-            "Eco Sense",
-            "Animal Feast",
-            "Auto Hemloch",
-            "ao beag suain",
-            "Assail",
-            "Assault",
-            "Melee Lore",
-            "Clobber",
-            "Long Strike",
-            "Combat Senses",
-            "Wallop",
-            "Crasher",
-            "Execute",
-            "Thrash",
-            "Mad Soul",
-            "Sacrifice",
-            "Throw",
-            "Rescue",
-            "Mend Staff",
-            "Frost Strike",
-            "Arrow Shot",
-            "Archery",
-            "Midnight Slash",
-            "TransferBlood",
-            "Charge"
-        };
 
         internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
 
@@ -510,6 +419,15 @@ namespace Talos.Base
                     return AoSuainHashSet.Contains(spell.Name);
 
                 return true; // If neither Pramh nor Suain is active, always return true
+            }
+            return false;
+        }
+        internal bool NumberedSkill(string skillName)
+        {
+            for (int i = 20; i > 0; i--)
+            {
+                if (UseSkill($"{skillName} {i}"))
+                    return true;
             }
             return false;
         }
@@ -958,119 +876,7 @@ namespace Talos.Base
             return creatureList;
         }
 
-        internal bool ClickNPCDialog(Creature creature, string dialogText, bool click)
-        {
-            DateTime utcNow = DateTime.UtcNow;
-            if (creature != null)
-            {
-                if (!_server.PursuitIDs.Values.Contains(dialogText))
-                {
-                    bool flag = false;
-                    ClickObject(creature.ID);
-                    while (Dialog == null)
-                    {
-                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds > 2.0)
-                        {
-                            if (flag)
-                            {
-                                return false;
-                            }
-                            ClickObject(creature.ID);
-                            flag = true;
-                        }
-                        Thread.Sleep(10);
-                    }
-                    Dialog.Reply();
-                }
-                utcNow = DateTime.UtcNow;
-                Dialog = null;
-                PursuitRequest(1, creature.ID, _server.PursuitIDs.FirstOrDefault((KeyValuePair<ushort, string> keyValuePair_0) => keyValuePair_0.Value == dialogText).Key);
-                if (click)
-                {
-                    while (Dialog == null)
-                    {
-                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
-                        {
-                            Thread.Sleep(10);
-                            continue;
-                        }
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
-        internal bool WaitForDialog()
-        {
-            DateTime utcNow = DateTime.UtcNow;
-            while (true)
-            {
-                if (Dialog == null)
-                {
-                    if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 3.0))
-                    {
-                        break;
-                    }
-                    Thread.Sleep(10);
-                    continue;
-                }
-                return true;
-            }
-            return false;
-        }
-        internal bool RouteFindByMapID(short mapID)
-        {
-            return RouteFind(new Location(mapID, 0, 0), 0, true);
-        }
-        internal bool WithinRange(VisibleObject obj, int range = 12)
-        {
-            return NearbyObjects.Contains(obj.ID) && _serverLocation.DistanceFrom(obj.Location) <= range;
-        }
-        internal bool IsLocationSurrounded(Location location)
-        {
-            if (Player == null) return false;
 
-            // Early return if the player is too close to the location.
-            if (Player.Location.DistanceFrom(location) <= 1)
-            {
-                return false;
-            }
-
-            // Gather all relevant creatures' locations within the same map to avoid repeated enumeration.
-            var creatureLocations = GetNearbyObjects()
-                .OfType<Creature>()
-                .Where(creature => (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && !creature.Location.Equals(location))
-                .Select(creature => creature.Location)
-                .ToHashSet(); // Using HashSet for O(1) lookups.
-
-            // Get obstacle locations within the same map once to avoid repeated calls.
-            var obstacleLocations = GetWarpPoints(location).Where(obstacle => obstacle.MapID == location.MapID).ToHashSet(); // Using HashSet for O(1) lookups.
-
-            // Define adjacent locations based on cardinal directions.
-            var adjacentLocations = new[]
-            {
-                location.TranslateLocationByDirection(Direction.North),
-                location.TranslateLocationByDirection(Direction.West),
-                location.TranslateLocationByDirection(Direction.South),
-                location.TranslateLocationByDirection(Direction.East)
-            };
-
-            // Check each adjacent location for being surrounded conditions.
-            foreach (var loc in adjacentLocations)
-            {
-                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || _map.IsWall(loc);
-
-                // If any adjacent location is not occupied or within bounds, the location is not surrounded.
-                if (!isOccupiedOrBound)
-                {
-                    return false;
-                }
-            }
-
-            // All adjacent locations are occupied or within bounds, so the location is surrounded.
-            return true;
-        }
         internal void UseExperienceGem(byte choice)
         {
             Bot._dontWalk = true;
@@ -1457,7 +1263,7 @@ namespace Talos.Base
             Staff staff = (obj != null && obj.IsStaff) ? EquippedItems[1].Staff : new Staff();
             MeleeWeapon meleeWeapon = (obj != null && obj.IsMeleeWeapon) ? EquippedItems[1].Melee : new MeleeWeapon();
 
-            bool hasArcherSpells = _archerSpells.Any(spellName => spell.Name.Contains(spellName) || spell.Name.Equals(spellName, StringComparison.InvariantCultureIgnoreCase));
+            bool hasArcherSpells = CONSTANTS.ARCHER_SPELLS.Any(spellName => spell.Name.Contains(spellName) || spell.Name.Equals(spellName, StringComparison.InvariantCultureIgnoreCase));
             DateTime utcNow = DateTime.UtcNow;
             if (hasArcherSpells && int.TryParse(Skillbook.SkillbookDictionary.Keys.FirstOrDefault((string string_0) => string_0.Contains("Archery ")).Replace("Archery ", ""), out int currentArcherySkill))
             {
@@ -1881,6 +1687,50 @@ namespace Talos.Base
             }
             UseItem(itemName);
         }
+        internal bool EquipDarkNeck()
+        {
+            return EquipNecklace("Dark", CONSTANTS.DARK_NECKS);
+        }
+        internal bool EquipLightNeck()
+        {
+            return EquipNecklace("Light", CONSTANTS.LIGHT_NCEKS);
+        }
+        private bool EquipNecklace(string elementName, Dictionary<string, (int Ability, int Level)> necklaceList)
+        {
+            lock (BashLock)
+            {
+                if (necklaceList.ContainsKey(EquippedItems[6].Name))
+                {
+                    _offenseElement = elementName;
+                    return true;
+                }
+                var bestNecklace = Inventory
+                    .Where(item => necklaceList.ContainsKey(item.Name)) // Item exists in the list
+                    .Where(item => necklaceList[item.Name].Ability <= Ability && necklaceList[item.Name].Level <= Level) // Usability check
+                    .OrderByDescending(item => necklaceList[item.Name].Level)   // Prioritize higher levels
+                    .ThenByDescending(item => necklaceList[item.Name].Ability)  // Break ties with ability
+                    .FirstOrDefault();
+
+                if (bestNecklace == null)
+                    return false; // No usable necklace found
+
+                UseItem(bestNecklace.Name);
+
+                // Verify if the necklace is equipped
+                Timer timer = Timer.FromMilliseconds(1500);
+                while (!timer.IsTimeExpired)
+                {
+                    if (EquippedItems[6].Name == bestNecklace.Name)
+                    {
+                        _offenseElement = elementName;
+                        return true;
+                    }
+                    Thread.Sleep(50);
+                }
+
+                return false;
+            }
+        }
         private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)
         {
 
@@ -1919,7 +1769,7 @@ namespace Talos.Base
             foreach (KeyValuePair<string, Skill> entry in Skillbook)
             {
                 Skill skill = entry.Value;
-                if (skill != null && !_dojoBlackList1.Contains(skill.Name) && !skill.Name.Contains("Lore") && !skill.Name.Contains("Inner Beast") && !skill.Name.Contains("Item") && !skill.Name.Contains("Archery") && !skill.Name.Contains("Thrust Attack") && skill.CurrentLevel < skill.MaxLevel)
+                if (skill != null && !CONSTANTS.DOJOBLACKLIST_1.Contains(skill.Name) && !skill.Name.Contains("Lore") && !skill.Name.Contains("Inner Beast") && !skill.Name.Contains("Item") && !skill.Name.Contains("Archery") && !skill.Name.Contains("Thrust Attack") && skill.CurrentLevel < skill.MaxLevel)
                 {
                     ClientTab.RenderUnmaxedSkills(skill.Name, skill.Sprite, new System.Drawing.Point(num, num2));
                     num = (short)(num + 40);
@@ -1939,7 +1789,7 @@ namespace Talos.Base
             foreach (KeyValuePair<string, Skill> entry in Skillbook)
             {
                 Skill skill = entry.Value;
-                if (skill != null && !_dojoBlackList2.Contains(skill.Name) && !skill.Name.Contains("Lore") && !skill.Name.Contains("Inner Beast") && !skill.Name.Contains("Item") && !skill.Name.Contains("Archery") && !skill.Name.Contains("Thrust Attack") && !skill.Name.Contains("Arrow Shot") && skill != null)
+                if (skill != null && !CONSTANTS.DOJOBLACKLIST_2.Contains(skill.Name) && !skill.Name.Contains("Lore") && !skill.Name.Contains("Inner Beast") && !skill.Name.Contains("Item") && !skill.Name.Contains("Archery") && !skill.Name.Contains("Thrust Attack") && !skill.Name.Contains("Arrow Shot") && skill != null)
                 {
                     ClientTab.RenderBashingSkills(skill.Name, skill.Sprite, new System.Drawing.Point(num, num2));
                     num = (short)(num + 40);
@@ -1958,7 +1808,7 @@ namespace Talos.Base
             short num2 = 20;
             foreach (Spell spell in Spellbook.Where((Spell sp) => sp != null))
             {
-                if (!_dojoBlackList1.Contains(spell.Name) && !spell.Name.Contains("Lore") && !spell.Name.Contains("Inner Beast") && !spell.Name.Contains("Item") && !spell.Name.Contains("Archery") && !spell.Name.Contains("Thrust Attack") && spell.CurrentLevel < spell.MaximumLevel)
+                if (!CONSTANTS.DOJOBLACKLIST_1.Contains(spell.Name) && !spell.Name.Contains("Lore") && !spell.Name.Contains("Inner Beast") && !spell.Name.Contains("Item") && !spell.Name.Contains("Archery") && !spell.Name.Contains("Thrust Attack") && spell.CurrentLevel < spell.MaximumLevel)
                 {
                     ClientTab.RenderUnmaxedSpells(spell.Name, spell.Sprite, new System.Drawing.Point(num, num2));
                     num = (short)(num + 40);
@@ -1985,6 +1835,7 @@ namespace Talos.Base
         {
             return (HiWord << 16) | (LoWord & 0xFFFF);
         }
+
 
         internal bool Pathfind(Location destination, short distance = 1, bool shouldBlock = true, bool avoidWarps = true)
         {
@@ -2349,7 +2200,6 @@ namespace Talos.Base
 
             return true;
         }
-
         private bool IsWalkable(Location location)
         {
             // Check if the location is walkable (not blocked)
@@ -2569,6 +2419,121 @@ namespace Talos.Base
                 }
             }
         }
+        internal bool ClickNPCDialog(Creature creature, string dialogText, bool click)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            if (creature != null)
+            {
+                if (!_server.PursuitIDs.Values.Contains(dialogText))
+                {
+                    bool flag = false;
+                    ClickObject(creature.ID);
+                    while (Dialog == null)
+                    {
+                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds > 2.0)
+                        {
+                            if (flag)
+                            {
+                                return false;
+                            }
+                            ClickObject(creature.ID);
+                            flag = true;
+                        }
+                        Thread.Sleep(10);
+                    }
+                    Dialog.Reply();
+                }
+                utcNow = DateTime.UtcNow;
+                Dialog = null;
+                PursuitRequest(1, creature.ID, _server.PursuitIDs.FirstOrDefault((KeyValuePair<ushort, string> keyValuePair_0) => keyValuePair_0.Value == dialogText).Key);
+                if (click)
+                {
+                    while (Dialog == null)
+                    {
+                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
+                        {
+                            Thread.Sleep(10);
+                            continue;
+                        }
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+        internal bool WaitForDialog()
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            while (true)
+            {
+                if (Dialog == null)
+                {
+                    if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 3.0))
+                    {
+                        break;
+                    }
+                    Thread.Sleep(10);
+                    continue;
+                }
+                return true;
+            }
+            return false;
+        }
+        internal bool RouteFindByMapID(short mapID)
+        {
+            return RouteFind(new Location(mapID, 0, 0), 0, true);
+        }
+        internal bool WithinRange(VisibleObject obj, int range = 12)
+        {
+            return NearbyObjects.Contains(obj.ID) && _serverLocation.DistanceFrom(obj.Location) <= range;
+        }
+        internal bool IsLocationSurrounded(Location location)
+        {
+            if (Player == null) return false;
+
+            // Early return if the player is too close to the location.
+            if (Player.Location.DistanceFrom(location) <= 1)
+            {
+                return false;
+            }
+
+            // Gather all relevant creatures' locations within the same map to avoid repeated enumeration.
+            var creatureLocations = GetNearbyObjects()
+                .OfType<Creature>()
+                .Where(creature => (creature.Type == CreatureType.Aisling || creature.Type == CreatureType.Merchant || creature.Type == CreatureType.Normal) && !creature.Location.Equals(location))
+                .Select(creature => creature.Location)
+                .ToHashSet(); // Using HashSet for O(1) lookups.
+
+            // Get obstacle locations within the same map once to avoid repeated calls.
+            var obstacleLocations = GetWarpPoints(location).Where(obstacle => obstacle.MapID == location.MapID).ToHashSet(); // Using HashSet for O(1) lookups.
+
+            // Define adjacent locations based on cardinal directions.
+            var adjacentLocations = new[]
+            {
+                location.Offset(Direction.North),
+                location.Offset(Direction.West),
+                location.Offset(Direction.South),
+                location.Offset(Direction.East)
+            };
+
+            // Check each adjacent location for being surrounded conditions.
+            foreach (var loc in adjacentLocations)
+            {
+                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || _map.IsWall(loc);
+
+                // If any adjacent location is not occupied or within bounds, the location is not surrounded.
+                if (!isOccupiedOrBound)
+                {
+                    return false;
+                }
+            }
+
+            // All adjacent locations are occupied or within bounds, so the location is surrounded.
+            return true;
+        }
+
+
 
 
         #region ClientPacket methods
@@ -2663,12 +2628,10 @@ namespace Talos.Base
             }
             return false;
         }
-
         internal void RequestProfile()
         {
             Enqueue(new ClientPacket(45));
         }
-
         internal void RequestGroup(string playerName)
         {
             ClientPacket clientPacket = new ClientPacket(46);
@@ -2683,7 +2646,6 @@ namespace Talos.Base
             clientPacket.WriteString8(playerName);
             Enqueue(clientPacket);
         }
-
         internal void RefreshRequest(bool waitForCompletion = true)
         {
             if (Interlocked.CompareExchange(ref _isRefreshing, 1, 0) == 0)
@@ -2721,7 +2683,6 @@ namespace Talos.Base
             else
                 this._isRefreshing = 0;
         }
-
         internal void PursuitRequest(byte objType, int objID, ushort pursuitID, params object[] args)
         {
             ClientPacket clientPacket = new ClientPacket(57);
@@ -2731,7 +2692,6 @@ namespace Talos.Base
             clientPacket.WriteArray(args);
             Enqueue(clientPacket);
         }
-
         internal void WithdrawMoney(int objID, int quantity)
         {
             ClientPacket clientPacket = new ClientPacket(57);
@@ -2741,7 +2701,6 @@ namespace Talos.Base
             clientPacket.WriteString8(quantity.ToString());
             Enqueue(clientPacket);
         }
-
         internal void DepositMoney(int objID, int quantity)
         {
             ClientPacket clientPacket = new ClientPacket(57);
@@ -2751,7 +2710,6 @@ namespace Talos.Base
             clientPacket.WriteString8(quantity.ToString());
             Enqueue(clientPacket);
         }
-
         internal void WithdrawItem(int npcID, string item, int quantity = 0)
         {
             ClientPacket clientPacket = new ClientPacket(57);
@@ -2763,7 +2721,6 @@ namespace Talos.Base
                 clientPacket.WriteString8(quantity.ToString());
             Enqueue(clientPacket);
         }
-
         internal void DepositItem(int npcID, string item, int quantity = 1)
         {
             byte num = 0;
@@ -2782,9 +2739,6 @@ namespace Talos.Base
                 clientPacket.WriteString8(quantity.ToString());
             Enqueue((Packet)clientPacket);
         }
-
-
-
         internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId)
         {
             ClientPacket clientPacket = new ClientPacket(58);
@@ -2794,7 +2748,6 @@ namespace Talos.Base
             clientPacket.WriteUInt16(dialogId);
             Enqueue(clientPacket);
         }
-
         internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, byte optionToClick)
         {
             ClientPacket clientPacket = new ClientPacket(58);
@@ -2806,7 +2759,6 @@ namespace Talos.Base
             clientPacket.WriteByte(optionToClick);
             Enqueue(clientPacket);
         }
-
         internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, string response)
         {
             ClientPacket clientPacket = new ClientPacket(58);
@@ -2818,7 +2770,6 @@ namespace Talos.Base
             clientPacket.WriteString8(response);
             Enqueue(clientPacket);
         }
-
         internal bool UseSkill(string skillName)
         {
             Skill skill = Skillbook[skillName];
@@ -2847,14 +2798,12 @@ namespace Talos.Base
             clientPacket.WriteStruct(point);
             Enqueue(clientPacket);
         }
-
         internal void RemoveShield()
         {
             ClientPacket clientPacket = new ClientPacket(68);
             clientPacket.WriteByte(3);
             Enqueue(clientPacket);
         }
-
         internal bool UseSpell(string spellName, Creature target = null, bool staffSwitch = true, bool wait = true)
         {
 
@@ -3049,14 +2998,12 @@ namespace Talos.Base
                 return !wait || WaitForSpellChant();
             }
         }
-
         internal void DisplayChant(string chant)
         {
             ClientPacket clientPacket = new ClientPacket(78);
             clientPacket.WriteString8(chant);
             Enqueue(clientPacket);
         }
-
         internal void ClickObject(int objectId)
         {
             ClientPacket clientPacket = new ClientPacket(67);
@@ -3335,7 +3282,7 @@ namespace Talos.Base
                 Enqueue(serverPacket);
 
 
-                _clientLocation = _clientLocation.TranslateLocationByDirection(dir);
+                _clientLocation = _clientLocation.Offset(dir);
                 //Console.WriteLine($"Client location updated to: {_clientLocation}"); // Debugging: Log client location update
 
                 LastMoved = DateTime.UtcNow;
