@@ -913,7 +913,7 @@ namespace Talos
 
             client.ClientTab.DisplayMapInfoOnCover(client._map);
 
-            if (client._staffList.Count == 0 || client._bowList.Count == 0 || client._meleeList.Count == 0)
+            if (client.Staffs.Count == 0 || client.Bows.Count == 0 || client.Weapons.Count == 0)
             {
                 client.LoadStavesAndBows();
                 client.LoadMeleeWeapons();
@@ -1706,9 +1706,9 @@ namespace Talos
                 client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name].Dispose();
             }
             
-            if (!client.AvailableSpellsAndCastLines.ContainsKey(name))
+            if (!client.StaffSpells.ContainsKey(name))
             {
-                client.AvailableSpellsAndCastLines.Add(name, castLines);
+                client.StaffSpells.Add(name, castLines);
             }
 
             return true;
@@ -2736,19 +2736,19 @@ namespace Talos
             client.EquippedItems[slot] = item;
 
             // Find the staff or bow in the respective lists
-            Staff foundStaff = client._staffList.FirstOrDefault(staff => staff.Name == itemName);
-            Bow foundBow = client._bowList.FirstOrDefault(bow => bow.Name == itemName);
+            Staff foundStaff = client.Staffs.FirstOrDefault(staff => staff.Name == itemName);
+            Bow foundBow = client.Bows.FirstOrDefault(bow => bow.Name == itemName);
 
             // Update the item properties based on what was found
             if (foundStaff != null)
             {
                 item.IsStaff = true;
-                item.Staff = foundStaff;
+                item.ThisStaff = foundStaff;
             }
             else if (foundBow != null)
             {
                 item.IsBow = true;
-                item.Bow = foundBow;
+                item.ThisBow = foundBow;
             }
 
             return true;

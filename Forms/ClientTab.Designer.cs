@@ -91,6 +91,8 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
+            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
+            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -557,8 +559,16 @@ namespace Talos.Forms
             this.currentAction = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
-            this.chatBox = new Talos.Forms.UI.ChatBox();
+            this.chkBashDion = new System.Windows.Forms.CheckBox();
+            this.groupBox11 = new System.Windows.Forms.GroupBox();
+            this.lblUseSkills = new System.Windows.Forms.Label();
+            this.numBashSkillDelay = new System.Windows.Forms.NumericUpDown();
+            this.label7 = new System.Windows.Forms.Label();
+            this.groupBox12 = new System.Windows.Forms.GroupBox();
+            this.numCrasherHealth = new System.Windows.Forms.NumericUpDown();
+            this.chkCrasherAboveHP = new System.Windows.Forms.CheckBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.chkCrasherOnlyAsgall = new System.Windows.Forms.CheckBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -682,6 +692,10 @@ namespace Talos.Forms
             this.packetStrip.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.menuStrip.SuspendLayout();
+            this.groupBox11.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numBashSkillDelay)).BeginInit();
+            this.groupBox12.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numCrasherHealth)).BeginInit();
             this.SuspendLayout();
             // 
             // clientTabControl
@@ -1374,6 +1388,35 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chatPanel2
+            // 
+            this.chatPanel2.AutoDetectUrls = true;
+            this.chatPanel2.BackColor = System.Drawing.Color.White;
+            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel2.Name = "chatPanel2";
+            this.chatPanel2.ReadOnly = true;
+            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel2.TabIndex = 0;
+            this.chatPanel2.Text = "";
+            // 
+            // chatBox
+            // 
+            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatBox.ForeColor = System.Drawing.Color.Black;
+            this.chatBox.Location = new System.Drawing.Point(121, 484);
+            this.chatBox.MaxLength = 53;
+            this.chatBox.Name = "chatBox";
+            this.chatBox.Size = new System.Drawing.Size(508, 23);
+            this.chatBox.TabIndex = 13;
+            this.chatBox.TabStop = false;
+            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
+            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
+            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
+            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
             // mainAislingsTab
             // 
@@ -2911,9 +2954,11 @@ namespace Talos.Forms
             // 
             // bashingTab
             // 
+            this.bashingTab.Controls.Add(this.groupBox6);
+            this.bashingTab.Controls.Add(this.groupBox12);
+            this.bashingTab.Controls.Add(this.groupBox11);
             this.bashingTab.Controls.Add(this.grpBoxGeneralOptions);
             this.bashingTab.Controls.Add(this.groupBox4);
-            this.bashingTab.Controls.Add(this.groupBox6);
             this.bashingTab.Controls.Add(this.riskySkillsGBx);
             this.bashingTab.Controls.Add(this.priorityGrpBx);
             this.bashingTab.Controls.Add(this.groupBox7);
@@ -2942,9 +2987,9 @@ namespace Talos.Forms
             this.grpBoxGeneralOptions.Controls.Add(this.pingCompensationNum1);
             this.grpBoxGeneralOptions.Controls.Add(this.label1);
             this.grpBoxGeneralOptions.Controls.Add(this.numSkillInt);
-            this.grpBoxGeneralOptions.Location = new System.Drawing.Point(520, 233);
+            this.grpBoxGeneralOptions.Location = new System.Drawing.Point(595, 229);
             this.grpBoxGeneralOptions.Name = "grpBoxGeneralOptions";
-            this.grpBoxGeneralOptions.Size = new System.Drawing.Size(273, 143);
+            this.grpBoxGeneralOptions.Size = new System.Drawing.Size(244, 143);
             this.grpBoxGeneralOptions.TabIndex = 190;
             this.grpBoxGeneralOptions.TabStop = false;
             this.grpBoxGeneralOptions.Text = "General Options";
@@ -3166,9 +3211,9 @@ namespace Talos.Forms
             this.groupBox6.Controls.Add(this.numLbl);
             this.groupBox6.Controls.Add(this.numExHeal);
             this.groupBox6.Controls.Add(this.chkExkuranum);
-            this.groupBox6.Location = new System.Drawing.Point(356, 316);
+            this.groupBox6.Location = new System.Drawing.Point(477, 229);
             this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Size = new System.Drawing.Size(158, 82);
+            this.groupBox6.Size = new System.Drawing.Size(112, 82);
             this.groupBox6.TabIndex = 189;
             this.groupBox6.TabStop = false;
             this.groupBox6.Text = "Items";
@@ -3176,17 +3221,17 @@ namespace Talos.Forms
             // numLbl
             // 
             this.numLbl.AutoSize = true;
-            this.numLbl.Location = new System.Drawing.Point(16, 48);
+            this.numLbl.Location = new System.Drawing.Point(13, 48);
             this.numLbl.Name = "numLbl";
-            this.numLbl.Size = new System.Drawing.Size(68, 15);
+            this.numLbl.Size = new System.Drawing.Size(47, 15);
             this.numLbl.TabIndex = 181;
-            this.numLbl.Text = "at Health %";
+            this.numLbl.Text = "at % hp";
             this.numLbl.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // numExHeal
             // 
             this.numExHeal.ForeColor = System.Drawing.Color.Black;
-            this.numExHeal.Location = new System.Drawing.Point(89, 46);
+            this.numExHeal.Location = new System.Drawing.Point(60, 46);
             this.numExHeal.Maximum = new decimal(new int[] {
             50,
             0,
@@ -3210,11 +3255,11 @@ namespace Talos.Forms
             // chkExkuranum
             // 
             this.chkExkuranum.AutoSize = true;
-            this.chkExkuranum.Location = new System.Drawing.Point(13, 22);
+            this.chkExkuranum.Location = new System.Drawing.Point(10, 22);
             this.chkExkuranum.Name = "chkExkuranum";
-            this.chkExkuranum.Size = new System.Drawing.Size(126, 19);
+            this.chkExkuranum.Size = new System.Drawing.Size(101, 19);
             this.chkExkuranum.TabIndex = 179;
-            this.chkExkuranum.Text = "Exkuranum/hydele";
+            this.chkExkuranum.Text = "Exkura/hydele";
             this.chkExkuranum.UseVisualStyleBackColor = true;
             // 
             // riskySkillsGBx
@@ -3267,9 +3312,9 @@ namespace Talos.Forms
             this.priorityGrpBx.Controls.Add(this.priorityOnlyCbox);
             this.priorityGrpBx.Controls.Add(this.priorityCbox);
             this.priorityGrpBx.Controls.Add(this.priorityLBox);
-            this.priorityGrpBx.Location = new System.Drawing.Point(6, 294);
+            this.priorityGrpBx.Location = new System.Drawing.Point(6, 352);
             this.priorityGrpBx.Name = "priorityGrpBx";
-            this.priorityGrpBx.Size = new System.Drawing.Size(153, 158);
+            this.priorityGrpBx.Size = new System.Drawing.Size(153, 157);
             this.priorityGrpBx.TabIndex = 187;
             this.priorityGrpBx.TabStop = false;
             this.priorityGrpBx.Text = "Priority";
@@ -3335,12 +3380,13 @@ namespace Talos.Forms
             // groupBox7
             // 
             this.groupBox7.Controls.Add(this.chkRandomWaypoints);
-            this.groupBox7.Location = new System.Drawing.Point(6, 458);
+            this.groupBox7.Location = new System.Drawing.Point(686, 393);
             this.groupBox7.Name = "groupBox7";
             this.groupBox7.Size = new System.Drawing.Size(153, 51);
             this.groupBox7.TabIndex = 186;
             this.groupBox7.TabStop = false;
             this.groupBox7.Text = "Random Waypoints";
+            this.groupBox7.Enter += new System.EventHandler(this.groupBox7_Enter);
             // 
             // chkRandomWaypoints
             // 
@@ -3372,16 +3418,16 @@ namespace Talos.Forms
             this.ProtectGbx.Controls.Add(this.Protect1Cbx);
             this.ProtectGbx.Location = new System.Drawing.Point(165, 229);
             this.ProtectGbx.Name = "ProtectGbx";
-            this.ProtectGbx.Size = new System.Drawing.Size(213, 82);
+            this.ProtectGbx.Size = new System.Drawing.Size(169, 82);
             this.ProtectGbx.TabIndex = 183;
             this.ProtectGbx.TabStop = false;
             this.ProtectGbx.Text = "Protect";
             // 
             // Protected2Tbx
             // 
-            this.Protected2Tbx.Location = new System.Drawing.Point(82, 49);
+            this.Protected2Tbx.Location = new System.Drawing.Point(77, 49);
             this.Protected2Tbx.Name = "Protected2Tbx";
-            this.Protected2Tbx.Size = new System.Drawing.Size(118, 23);
+            this.Protected2Tbx.Size = new System.Drawing.Size(87, 23);
             this.Protected2Tbx.TabIndex = 183;
             // 
             // Protect2Cbx
@@ -3396,9 +3442,9 @@ namespace Talos.Forms
             // 
             // Protected1Tbx
             // 
-            this.Protected1Tbx.Location = new System.Drawing.Point(82, 20);
+            this.Protected1Tbx.Location = new System.Drawing.Point(77, 20);
             this.Protected1Tbx.Name = "Protected1Tbx";
-            this.Protected1Tbx.Size = new System.Drawing.Size(118, 23);
+            this.Protected1Tbx.Size = new System.Drawing.Size(87, 23);
             this.Protected1Tbx.TabIndex = 181;
             // 
             // Protect1Cbx
@@ -3413,15 +3459,16 @@ namespace Talos.Forms
             // 
             // groupBox5
             // 
+            this.groupBox5.Controls.Add(this.label7);
+            this.groupBox5.Controls.Add(this.numBashSkillDelay);
+            this.groupBox5.Controls.Add(this.lblUseSkills);
+            this.groupBox5.Controls.Add(this.chkBashDion);
             this.groupBox5.Controls.Add(this.chkBashAssails);
-            this.groupBox5.Controls.Add(this.btnRepairAuto);
-            this.groupBox5.Controls.Add(this.chkAutoRepairBash);
-            this.groupBox5.Controls.Add(this.chkCrasher);
             this.groupBox5.Controls.Add(this.chkUseSkillsFromRange);
             this.groupBox5.Controls.Add(this.ChargeToTargetCbx);
-            this.groupBox5.Location = new System.Drawing.Point(6, 89);
+            this.groupBox5.Location = new System.Drawing.Point(6, 86);
             this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(153, 199);
+            this.groupBox5.Size = new System.Drawing.Size(153, 267);
             this.groupBox5.TabIndex = 182;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "Misc Options";
@@ -3443,9 +3490,9 @@ namespace Talos.Forms
             this.btnRepairAuto.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRepairAuto.Image = global::Talos.Properties.Resources.hammer;
             this.btnRepairAuto.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnRepairAuto.Location = new System.Drawing.Point(6, 152);
+            this.btnRepairAuto.Location = new System.Drawing.Point(8, 45);
             this.btnRepairAuto.Name = "btnRepairAuto";
-            this.btnRepairAuto.Size = new System.Drawing.Size(138, 35);
+            this.btnRepairAuto.Size = new System.Drawing.Size(138, 36);
             this.btnRepairAuto.TabIndex = 186;
             this.btnRepairAuto.Text = "Trigger Repair";
             this.btnRepairAuto.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -3454,7 +3501,7 @@ namespace Talos.Forms
             // chkAutoRepairBash
             // 
             this.chkAutoRepairBash.AutoSize = true;
-            this.chkAutoRepairBash.Location = new System.Drawing.Point(11, 129);
+            this.chkAutoRepairBash.Location = new System.Drawing.Point(13, 22);
             this.chkAutoRepairBash.Name = "chkAutoRepairBash";
             this.chkAutoRepairBash.Size = new System.Drawing.Size(118, 19);
             this.chkAutoRepairBash.TabIndex = 185;
@@ -3464,11 +3511,11 @@ namespace Talos.Forms
             // chkCrasher
             // 
             this.chkCrasher.AutoSize = true;
-            this.chkCrasher.Location = new System.Drawing.Point(11, 72);
+            this.chkCrasher.Location = new System.Drawing.Point(11, 22);
             this.chkCrasher.Name = "chkCrasher";
-            this.chkCrasher.Size = new System.Drawing.Size(71, 19);
+            this.chkCrasher.Size = new System.Drawing.Size(93, 19);
             this.chkCrasher.TabIndex = 178;
-            this.chkCrasher.Text = "Crashers\r\n";
+            this.chkCrasher.Text = "Use Crashers";
             this.chkCrasher.UseVisualStyleBackColor = true;
             // 
             // chkUseSkillsFromRange
@@ -3547,7 +3594,7 @@ namespace Talos.Forms
             // 
             this.groupBox2.Controls.Add(this.chkWaitForCradh);
             this.groupBox2.Controls.Add(this.chkWaitForFas);
-            this.groupBox2.Location = new System.Drawing.Point(384, 229);
+            this.groupBox2.Location = new System.Drawing.Point(340, 229);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(130, 82);
             this.groupBox2.TabIndex = 179;
@@ -6997,34 +7044,135 @@ namespace Talos.Forms
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
-            // chatPanel2
+            // chkBashDion
             // 
-            this.chatPanel2.AutoDetectUrls = true;
-            this.chatPanel2.BackColor = System.Drawing.Color.White;
-            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel2.Name = "chatPanel2";
-            this.chatPanel2.ReadOnly = true;
-            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel2.TabIndex = 0;
-            this.chatPanel2.Text = "";
+            this.chkBashDion.AutoSize = true;
+            this.chkBashDion.Checked = true;
+            this.chkBashDion.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkBashDion.Location = new System.Drawing.Point(11, 122);
+            this.chkBashDion.Name = "chkBashDion";
+            this.chkBashDion.Size = new System.Drawing.Size(116, 34);
+            this.chkBashDion.TabIndex = 188;
+            this.chkBashDion.Text = "Don\'t waste skills\r\non dioned mobs";
+            this.chkBashDion.UseVisualStyleBackColor = true;
             // 
-            // chatBox
+            // groupBox11
             // 
-            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatBox.ForeColor = System.Drawing.Color.Black;
-            this.chatBox.Location = new System.Drawing.Point(121, 484);
-            this.chatBox.MaxLength = 53;
-            this.chatBox.Name = "chatBox";
-            this.chatBox.Size = new System.Drawing.Size(508, 23);
-            this.chatBox.TabIndex = 13;
-            this.chatBox.TabStop = false;
-            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
-            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
-            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
-            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
+            this.groupBox11.Controls.Add(this.chkAutoRepairBash);
+            this.groupBox11.Controls.Add(this.btnRepairAuto);
+            this.groupBox11.Location = new System.Drawing.Point(469, 412);
+            this.groupBox11.Name = "groupBox11";
+            this.groupBox11.Size = new System.Drawing.Size(153, 98);
+            this.groupBox11.TabIndex = 187;
+            this.groupBox11.TabStop = false;
+            this.groupBox11.Text = "Repair";
+            // 
+            // lblUseSkills
+            // 
+            this.lblUseSkills.AutoSize = true;
+            this.lblUseSkills.Location = new System.Drawing.Point(25, 217);
+            this.lblUseSkills.Name = "lblUseSkills";
+            this.lblUseSkills.Size = new System.Drawing.Size(89, 15);
+            this.lblUseSkills.TabIndex = 188;
+            this.lblUseSkills.Text = "Use Skills Every:";
+            this.lblUseSkills.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // numBashSkillDelay
+            // 
+            this.numBashSkillDelay.ForeColor = System.Drawing.Color.Black;
+            this.numBashSkillDelay.Location = new System.Drawing.Point(29, 234);
+            this.numBashSkillDelay.Maximum = new decimal(new int[] {
+            5000,
+            0,
+            0,
+            0});
+            this.numBashSkillDelay.Minimum = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            this.numBashSkillDelay.Name = "numBashSkillDelay";
+            this.numBashSkillDelay.Size = new System.Drawing.Size(73, 23);
+            this.numBashSkillDelay.TabIndex = 188;
+            this.numBashSkillDelay.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.numBashSkillDelay.Value = new decimal(new int[] {
+            500,
+            0,
+            0,
+            0});
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(105, 239);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(23, 15);
+            this.label7.TabIndex = 189;
+            this.label7.Text = "ms";
+            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // groupBox12
+            // 
+            this.groupBox12.Controls.Add(this.chkCrasherOnlyAsgall);
+            this.groupBox12.Controls.Add(this.label14);
+            this.groupBox12.Controls.Add(this.chkCrasherAboveHP);
+            this.groupBox12.Controls.Add(this.numCrasherHealth);
+            this.groupBox12.Controls.Add(this.chkCrasher);
+            this.groupBox12.Location = new System.Drawing.Point(340, 315);
+            this.groupBox12.Name = "groupBox12";
+            this.groupBox12.Size = new System.Drawing.Size(221, 95);
+            this.groupBox12.TabIndex = 189;
+            this.groupBox12.TabStop = false;
+            this.groupBox12.Text = "Crasher Logic";
+            // 
+            // numCrasherHealth
+            // 
+            this.numCrasherHealth.ForeColor = System.Drawing.Color.Black;
+            this.numCrasherHealth.Location = new System.Drawing.Point(124, 68);
+            this.numCrasherHealth.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numCrasherHealth.Name = "numCrasherHealth";
+            this.numCrasherHealth.Size = new System.Drawing.Size(43, 23);
+            this.numCrasherHealth.TabIndex = 182;
+            this.numCrasherHealth.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.numCrasherHealth.Value = new decimal(new int[] {
+            60,
+            0,
+            0,
+            0});
+            // 
+            // chkCrasherAboveHP
+            // 
+            this.chkCrasherAboveHP.AutoSize = true;
+            this.chkCrasherAboveHP.Location = new System.Drawing.Point(11, 72);
+            this.chkCrasherAboveHP.Name = "chkCrasherAboveHP";
+            this.chkCrasherAboveHP.Size = new System.Drawing.Size(107, 19);
+            this.chkCrasherAboveHP.TabIndex = 183;
+            this.chkCrasherAboveHP.Text = "Only use above";
+            this.chkCrasherAboveHP.UseVisualStyleBackColor = true;
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(175, 73);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(34, 15);
+            this.label14.TabIndex = 182;
+            this.label14.Text = "% hp";
+            this.label14.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // chkCrasherOnlyAsgall
+            // 
+            this.chkCrasherOnlyAsgall.AutoSize = true;
+            this.chkCrasherOnlyAsgall.Location = new System.Drawing.Point(11, 47);
+            this.chkCrasherOnlyAsgall.Name = "chkCrasherOnlyAsgall";
+            this.chkCrasherOnlyAsgall.Size = new System.Drawing.Size(168, 19);
+            this.chkCrasherOnlyAsgall.TabIndex = 184;
+            this.chkCrasherOnlyAsgall.Text = "Only use on asgalled mobs";
+            this.chkCrasherOnlyAsgall.UseVisualStyleBackColor = true;
             // 
             // ClientTab
             // 
@@ -7227,6 +7375,12 @@ namespace Talos.Forms
             this.tabPage1.PerformLayout();
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
+            this.groupBox11.ResumeLayout(false);
+            this.groupBox11.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numBashSkillDelay)).EndInit();
+            this.groupBox12.ResumeLayout(false);
+            this.groupBox12.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numCrasherHealth)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -7758,5 +7912,15 @@ namespace Talos.Forms
         internal CheckBox priorityCbox;
         internal ListBox priorityLBox;
         internal TextBox priorityTBox;
+        internal CheckBox chkBashDion;
+        private GroupBox groupBox11;
+        internal Label label7;
+        internal NumericUpDown numBashSkillDelay;
+        internal Label lblUseSkills;
+        private GroupBox groupBox12;
+        internal NumericUpDown numCrasherHealth;
+        internal CheckBox chkCrasherOnlyAsgall;
+        internal Label label14;
+        internal CheckBox chkCrasherAboveHP;
     }
 }

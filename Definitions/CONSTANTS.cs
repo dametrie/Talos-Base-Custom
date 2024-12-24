@@ -509,6 +509,96 @@ namespace Talos.Definitions
             { "Laise Amulet", (99, 99) },   // This will need to change when a new light necklace comes out for AB 99
         };
 
+        public static readonly Dictionary<string, (int AbilityRequired, int InsightRequired)> MONK_WEAPONS = new Dictionary<string, (int AbilityRequired, int InsightRequired)>()
+        {
+            { "Wolf Claws", (0, 50) },
+            { "Wolf Clas", (0, 50) },
+            { "Kalkuri", (0, 99) },
+            { "Empowered Kalkuri", (0, 99) },
+            { "Enchanted Kalkuri", (0, 99) },
+            { "Nunchaku", (0, 99) },
+            { "Tilian Claw", (0, 99) },
+            { "Phoenix Claws", (0, 99) },
+            { "Stone Fists", (0, 99) },
+            { "Obsidian", (0, 99) },
+            { "Yowien's Claw", (65, 99) },
+            { "Yowien's Claw1", (65, 99) },
+            { "Yowien's Fist", (80, 99) },
+            { "Yowien's Fist1", (80, 99) },
+            { "Eagles Grasp", (90, 99) },
+            { "Blackstar Night Claw", (95, 99) },
+            { "Ancient Hy-brasyl Tonfa", (99, 99) }
+        };
+
+        public static readonly Dictionary<string, (int AbilityRequired, int InsightRequired)> GLAD_WEAPONS = new Dictionary<string, (int AbilityRequired, int InsightRequired)>()
+        {
+            { "Stick", (0, 1) },
+            { "Dirk", (0, 2) },
+            { "Loures Saber", (0, 7) },
+            { "Hatchet", (0, 13) },
+            { "Claidheamh", (0, 14) },
+            { "Broad Sword", (0, 17) },
+            { "Dragon Scale Sword", (0, 20) },
+            { "Wooden Club", (0, 50) },
+            { "Two-Handed Claidhmore", (0, 71) },
+            { "Two-Handed Emerald Sword", (0, 77) },
+            { "Amber Saber", (0, 99) },
+            { "Diamond Saber", (0, 99) },
+            { "Emerald Saber", (0, 99) },
+            { "Ruby Saber", (0, 99) },
+            { "Sapphire Saber", (0, 99) },
+            { "Master Falcata", (0, 99) },
+            { "Master Saber", (0, 99) },
+            { "Gold Kindjal", (0, 99) },
+            { "Eclipse", (0, 99) },
+            { "Master Battle Axe", (0, 99) },
+            { "Blazed Veltain Sword", (15, 99) },
+            { "Andor Saber", (30, 99) },
+            { "Hwarone Guandao", (45, 99) },
+            { "Empowered Hwarone Guandao", (55, 99) },
+            { "Crystal Saber", (65, 99) },
+            { "Crystal Saber1", (65, 99) },
+            { "Yowien Hatchet", (80, 99) },
+            { "Yowien Hatchet1", (80, 99) },
+            { "Defiled Ruby Saber", (94, 99) },
+            { "Hellreavers Blade", (95, 99) },
+            { "Ancient Hy-brasyl Axe", (99, 99) }
+        };
+
+        public static readonly Dictionary<string, (int AbilityRequired, int ArcherySkillRequired)> ARCHER_WEAPONS = new Dictionary<string, (int AbilityRequired, int ArcherySkillRequired)>()
+        {
+            { "Hy-Braysl Azoth", (1, 1) },
+            { "Enchanted Azoth", (1, 1) },
+            { "Empowered Azoth", (1, 1) },
+            { "Desert Skewer", (2, 2) },
+            { "Scurvy Dagger", (2, 2) },
+            { "Master Skean", (3, 3) },
+            { "Master Kris", (3, 3) },
+            { "Andor Bow", (30, 4) },
+            { "Andor Whip", (30, 4) },
+            { "Yumi Bow", (45, 5) },
+            { "Empowered Yumi Bow", (55, 6) },
+            { "Thunderfury", (90, 6) },
+            { "Inferno Blade", (90, 6) },
+            { "Ancient Hy-brasyl Azoth", (99, 99) }
+        };
+
+        public static readonly List<string> DRUID_FORMS = new List<string>()
+        {
+            "Feral Form",
+            "Wild Feral Form",
+            "Fierce Feral Form",
+            "Master Feral Form",
+            "Karura Form",
+            "Wild Karura Form",
+            "Fierce Karura Form",
+            "Master Karura Form",
+            "Komodas Form",
+            "Wild Komodas Form",
+            "Fierce Komodas Form",
+            "Master Komodas Form"
+        };
+
 
     }
 }

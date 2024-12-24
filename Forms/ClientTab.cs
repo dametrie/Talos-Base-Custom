@@ -1300,7 +1300,7 @@ namespace Talos.Forms
             try
             {
                 _client.ClientTab._isLoading = true;
-                _client._staffList.Clear();
+                _client.Staffs.Clear();
                 _client.LoadStavesAndBows();
                 _unmaxedSkills.Clear();
                 _unmaxedSpells.Clear();
@@ -3847,6 +3847,11 @@ namespace Talos.Forms
         {
             while (priorityLBox.SelectedItems.Count > 0)
                 priorityLBox.Items.RemoveAt(priorityLBox.SelectedIndex);
+        }
+
+        private void groupBox7_Enter(object sender, EventArgs e)
+        {
+
         }
     }
 }

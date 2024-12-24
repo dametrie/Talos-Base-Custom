@@ -19,9 +19,9 @@ namespace Talos.Objects
         internal bool IsStaff { get; set; }
         internal bool IsMeleeWeapon { get; set; }
         internal bool IsBow { get; set; }
-        internal Bow Bow { get; set; }
-        internal Staff Staff { get; set; }
-        internal MeleeWeapon Melee { get; set; }
+        internal Bow ThisBow { get; set; }
+        internal Staff ThisStaff { get; set; }
+        internal MeleeWeapon ThisWeapon { get; set; }
 
         internal Item(byte slot, ushort sprite, byte color, string name, int quantity, bool stackable, int maximumDurability, int currentDurability)
         {

@@ -263,8 +263,8 @@ namespace Talos.Enumerations
         CounterAttack = 150,
         IncreasedRegeneration = 181, //incorrect on Vorlof
         FeralForm = 183,
-        BirdForm = 184,
-        LizardForm = 185,
+        KaruraForm = 184,
+        KomodasForm = 185,
 
         //find these out
         //doesnt hurt since they are different numbers

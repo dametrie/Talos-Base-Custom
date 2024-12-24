@@ -112,6 +112,14 @@ namespace Talos.Base
         internal bool _spikeGameToggle;
         private DateTime _animationTimer = DateTime.MinValue;
         private bool generaterandom;
+        private bool equipattempted;
+        private DateTime neckSwap;
+        private bool autoForm;
+        private DateTime LastPointInSync = DateTime.MinValue;
+        private DateTime LastDirectionInSync = DateTime.MinValue;
+        private bool bashWffUsed;
+        private DateTime assailUse = DateTime.MinValue;
+        private DateTime skillUse = DateTime.MinValue;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -460,28 +468,35 @@ namespace Talos.Base
             }
             else
             {
-                if (!NavigateToRandomWaypoint())
+                if (!NavigateToNextWaypoint())
                 {
                     generaterandom = false; // Regenerate if navigation fails
                 }
             }
         }
 
-        private bool NavigateToRandomWaypoint()
+        private bool NavigateToNextWaypoint()
         {
-            Location location = new Location(Client._map.MapID, (short)randomX, (short)randomY);
-
-            if (Client._map.IsWall(location))
+            // Ensure there are waypoints to navigate
+            if (!Client.Bot.ways.Any())
                 return false;
 
-            if (Client.Pathfinder.FindPath(Client._serverLocation, location).Count > 0)
+            // Take the first waypoint
+            var nextWaypoint = Client.Bot.ways.First();
+
+            // Check if the path to the waypoint is valid
+            if (Client.Pathfinder.FindPath(Client._serverLocation, nextWaypoint).Count > 0)
             {
-                Client.Pathfind(location);
+                Client.Pathfind(nextWaypoint);
+
+                // Remove the waypoint after successful navigation
+                Client.Bot.ways.RemoveAt(0);
                 return true;
             }
 
             return false;
         }
+
 
         private void GenerateRandomWaypoints()
         {
@@ -503,8 +518,11 @@ namespace Talos.Base
                     }
                     while (Client._map.IsWall(location) || Client.Pathfinder.FindPath(Client._serverLocation, location).Count == 0);
 
-                    Client.Bot.ways.Add(location);
-                    Client.ClientTab._wayForm.waypointsLBox.Items.Add($"({location.X}, {location.Y}) {map.Name}: {map.MapID}");
+                    if (!Client.Bot.ways.Contains(location))
+                    {
+                        Client.Bot.ways.Add(location);
+                        Client.ClientTab._wayForm.waypointsLBox.Items.Add($"({location.X}, {location.Y}) {map.Name}: {map.MapID}");
+                    }
                 }
             }
         }
@@ -555,12 +573,41 @@ namespace Talos.Base
         {
             return monsters
                 .Where(mob => !Client.IsLocationSurrounded(mob.Location) &&
-                              mob.PathIsValid(Client._serverLocation) &&
-                              !Client.HasNearbyUsersBlocking(mob.Location) &&
+                              PathIsValid(mob) &&
+                              !HasNearbyUsersBlocking(mob.Location) &&
                               (whoToProtect == null || mob.IsNear(whoToProtect)))
-                .OrderBy(mob => mob.Point.Distance(Client._clientLocation))
+                .OrderBy(mob => mob.Location.DistanceFrom(Client._clientLocation))
                 .ToList();
         }
+
+        private bool PathIsValid(Creature mob)
+        {
+            try
+            {
+                // Use the Pathfinder to find a path to the creature's location
+                Stack<Location> path = Client.Pathfinder.FindPath(Client._serverLocation, mob.Location);
+
+                // Validate the path
+                return path.Count > 0 && path.Count < 15;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PathIsValid] Exception: {ex.Message}");
+                return false;
+            }
+        }
+
+
+        private bool HasNearbyUsersBlocking(Location monsterLocation, int blockingRange = 4)
+        {
+            // Check for any nearby users blocking the monster's location
+            return Client.GetNearbyPlayers().Any(p =>
+                p.Location.DistanceFrom(monsterLocation) <= blockingRange || // User is within the blocking range
+                p.Location == monsterLocation // User is exactly at the monster's location
+            );
+        }
+
+
 
         private void SetBashClass()
         {
@@ -599,6 +646,349 @@ namespace Talos.Base
             string filePath = Path.Combine(logPath, $"{DateTime.Now:MM-dd-HH-yyyy_hh-mm-ss}.log");
             File.WriteAllText(filePath, $"{methodName}: {ex}");
         }
+
+        private void InitiateBashing()
+        {
+            if (_dontBash || target == null || Client.HasEffect(EffectsBar.Pramh))
+            {
+                Thread.Sleep(50);
+                return;
+            }
+
+            if (!EnsureWeaponEquipped())
+                return;
+
+            HandleNecklaceSwapping();
+            SyncWithServer();
+
+            if (!IsTargetInRange())
+                return;
+
+            UseSkillsOnTarget();
+        }
+
+        private bool EnsureWeaponEquipped()
+        {
+            string equippedWeapName = Client.EquippedItems[1]?.Name;
+            bool hasValidWeapon = Client.Weapons.Any(w => equippedWeapName != null && equippedWeapName.Equals(w.Name));
+
+            if (hasValidWeapon)
+                return true;
+
+            if (!equipattempted)
+            {
+                if (!Client._safeScreen)
+                    Client.ServerMessage((byte)ServerMessageType.TopRight, "Equipping Weapon");
+
+                string weaponToEquip = EquipWeaponForClass(Client._temuairClassFlag);
+                WaitForWeaponToEquip(weaponToEquip);
+                equipattempted = true;
+            }
+            else
+            {
+                ShowWeaponErrorAndStop();
+            }
+
+            return false;
+        }
+
+        private string EquipWeaponForClass(TemuairClass classFlag)
+        {
+            return classFlag switch
+            {
+                TemuairClass.Warrior => Client.EquipGlad(),
+                TemuairClass.Rogue => Client.EquipArcher(),
+                TemuairClass.Monk => Client.EquipMonk(),
+                _ => string.Empty
+            };
+        }
+
+
+        private void WaitForWeaponToEquip(string weaponToEquip)
+        {
+            var timer = Timer.FromMilliseconds(1500);
+            while (!timer.IsTimeExpired && Client.EquippedItems[1]?.Name != weaponToEquip)
+            {
+                Thread.Sleep(100);
+            }
+        }
+
+        private void ShowWeaponErrorAndStop()
+        {
+            MessageBox.Show("A supported weapon is not equipped. Bashing stopped.");
+            if (Client.ClientTab?.btnBashingNew.Text == "Stop Bashing")
+            {
+                Client.ClientTab.btnBashingNew.Text = "Start Bashing";
+            }
+        }
+
+        private void HandleNecklaceSwapping()
+        {
+            if (!Client._map.Name.Contains("Shinewood Forest"))
+                return;
+
+            TimeSpan sinceLastSwap = DateTime.UtcNow.Subtract(neckSwap);
+
+            if (CONSTANTS.SHINEWOOD_HOLY.Contains(target.SpriteID) && Client._offenseElement != "Light" && sinceLastSwap.TotalSeconds > 2.0 && !autoForm)
+            {
+                SwapNecklace("Light");
+            }
+            else if (CONSTANTS.SHINEWOOD_DARK.Contains((int)target.SpriteID) && Client._offenseElement != "Dark" && sinceLastSwap.TotalSeconds > 2.0 && !autoForm)
+            {
+                SwapNecklace("Dark");
+            }
+        }
+
+        private void SwapNecklace(string element)
+        {
+            autoForm = true;
+            RemoveDruidForm();
+
+            if (element == "Light")
+                Client.EquipLightNeck();
+            else if (element == "Dark")
+                Client.EquipDarkNeck(); 
+
+            neckSwap = DateTime.UtcNow;
+            EnterDruidForm();
+            autoForm = false;
+        }
+        private void EnterDruidForm()
+        {
+            if (!Client.ClientTab.druidFormCbox.Checked)
+                return;
+
+            if (Client._temuairClassFlag == TemuairClass.Monk &&
+                Client._medeniaClassFlag == MedeniaClass.Druid &&
+                !Client.HasEffect(EffectsBar.FeralForm) &&
+                !Client.HasEffect(EffectsBar.KaruraForm) &&
+                !Client.HasEffect(EffectsBar.KomodasForm))
+            {
+                foreach (var spell in CONSTANTS.DRUID_FORMS)
+                {
+                    if (Client.UseSpell(spell, null, _autoStaffSwitch))
+                        break;
+                }
+            }
+
+            Thread.Sleep(80);
+        }
+
+        private void RemoveDruidForm()
+        {
+            if (!Client.ClientTab.druidFormCbox.Checked)
+                return;
+
+            if (Client._temuairClassFlag == TemuairClass.Monk &&
+                Client._medeniaClassFlag == MedeniaClass.Druid &&
+                Client.HasEffect(EffectsBar.FeralForm) ||
+                Client.HasEffect(EffectsBar.KaruraForm) ||
+                Client.HasEffect(EffectsBar.KomodasForm))
+            {
+                foreach (var spell in CONSTANTS.DRUID_FORMS)
+                {
+                    if (Client.UseSpell(spell, null, _autoStaffSwitch))
+                        break;
+                }
+            }
+
+            Thread.Sleep(80);
+        }
+        private void SyncWithServer()
+        {
+            if (Client._clientLocation != Client._serverLocation)
+            {
+                if (!Client._safeScreen)
+                    Client.ServerMessage((byte)ServerMessageType.TopRight, "Syncing with server");
+
+                TimeSpan sinceLastSync = DateTime.UtcNow.Subtract(LastPointInSync);
+
+                if (sinceLastSync.TotalMilliseconds > 1000.0)
+                {
+                    Client.RefreshRequest(false);
+                    Client._clientDirection = Client._serverDirection;
+                    LastPointInSync = DateTime.UtcNow;
+                    LastDirectionInSync = DateTime.UtcNow;
+
+                    Direction targetDirection = target.Location.GetDirection(Client._clientLocation);
+                    if (targetDirection != Client._clientDirection)
+                        Client.Turn(targetDirection);
+                }
+            }
+            else
+            {
+                LastPointInSync = DateTime.UtcNow;
+            }
+        }
+
+        private bool IsTargetInRange()
+        {
+            int? distanceToTarget = target?.Location.DistanceFrom(Client._clientLocation);
+            Direction? targetDirection = target?.Location.GetDirection(Client._clientLocation);
+
+            return distanceToTarget == 1 && targetDirection == Client._clientDirection;
+        }
+
+        private void UseSkillsOnTarget()
+        {
+            if (Client.ClientTab.chkFrostStrike.Checked && target.HealthPercent > 30)
+            {
+                Client.UseSkill("Frost Strike");
+            }
+
+            if (Client.ClientTab.chkBashAssails.Checked && !bashWffUsed)
+            {
+                UseAssails();
+            }
+
+            if (Client.ClientTab.chkBashDion.Checked)
+            {
+                if (!ShouldUseSkills())
+                    return;
+
+                CrasherDionTargets();
+            }
+            else
+            {
+                UseBashingSkills();
+            }
+        }
+
+        private void UseAssails()
+        {
+            TimeSpan sinceLastAssail = DateTime.UtcNow.Subtract(assailUse);
+
+            if (sinceLastAssail.TotalMilliseconds > 250.0)
+            {
+                foreach (var assail in CONSTANTS.ASSAILS)
+                {
+                    foreach (var skill in Client.Skillbook.SkillbookDictionary)
+                    {
+                        if (skill.Key.Contains(assail))
+                            Client.UseSkill(skill.Key);
+                    }
+                }
+
+                assailUse = DateTime.UtcNow;
+            }
+        }
+        private bool ShouldUseCrasher()
+        {
+            // Use the configured health threshold if available, otherwise fallback to 60
+            int healthThreshold = Client.ClientTab.chkCrasherAboveHP.Checked
+                ? (int)Client.ClientTab.numCrasherHealth.Value
+                : 60;
+
+            // Ensure health is above the threshold and user is Dioned
+            if (target.HealthPercent < healthThreshold || !Client.Player.IsDioned)
+                return false;
+
+            // Check if any of the skills are available and usable
+            string[] skills = { "Crasher", "Execute", "Animal Feast" };
+            if (skills.Any(skill => Client.HasSkill(skill) && Client.CanUseSkill(Client.Skillbook[skill])))
+                return true;
+
+            // Check if the Damage Scroll item is available and usable
+            if (Client.HasItem("Damage Scroll") &&
+                Client.CanUseItem(Client.Inventory["Damage Scroll"]) &&
+                DateTime.UtcNow.Subtract(Client.Inventory["Damage Scroll"].LastUsed).TotalSeconds > 28)
+            {
+                return true;
+            }
+
+            return false;
+        }
+        private void CrasherDionTargets()
+        {
+            if (!ShouldUseCrasher())
+                return;
+
+            if (Client.ClientTab.chkCrasherAboveHP.Checked &&
+                Client.HealthPct > Client.ClientTab.numCrasherHealth.Value &&
+                (!target.IsAsgalled || Client.ClientTab.chkCrasherOnlyAsgall.Checked))
+            {
+                ExecuteCrasher();
+            }
+            else
+            {
+                UseBashingSkills();
+            }
+        }
+        private void ExecuteCrasher()
+        {
+            Client.UseSkill("Sacrifice");
+            Client.UseSkill("Mad Soul");
+            Client.UseSkill("Auto Hemloch");
+            Client.UseSkill("Crasher");
+            Client.UseSkill("Animal Feast");
+            Client.UseSkill("Execute");
+            Client.UseItem("Damage Scroll");
+            skillUse = DateTime.UtcNow;
+        }
+
+
+
+
+        private bool ShouldUseSkills()
+        {
+            bool waitForCradh = Client.ClientTab.chkWaitForCradh.Checked;
+            bool waitForFas = Client.ClientTab.chkWaitForFas.Checked;
+
+            // Check conditions for Cradh and Fas
+            bool cradhReady = !waitForCradh || target.IsCursed;
+            bool fasReady = !waitForFas || target.IsFassed;
+
+            // Ensure the target is in the correct direction and the skill delay has passed
+            bool isDirectionAligned = Client._clientDirection == target.Location.GetDirection(Client._clientLocation);
+            bool isSkillDelayElapsed = DateTime.UtcNow.Subtract(skillUse).TotalMilliseconds > (double)(Client.ClientTab?.numBashSkillDelay.Value ?? 0);
+
+            return cradhReady && fasReady && isDirectionAligned && isSkillDelayElapsed;
+        }
+
+        private void UseBashingSkills()
+        {
+            foreach (string skillName in Client.ClientTab._bashingSkillList)
+            {
+                if (skillName.Equals("Sprint Potion", StringComparison.OrdinalIgnoreCase) && Client._isRegistered)
+                {
+                    if (DateTime.UtcNow.Subtract(Client._sprintPotionLastUsed).TotalSeconds > 16.0)
+                    {
+                        Client.UseItem(skillName);
+                        Client._sprintPotionLastUsed = DateTime.UtcNow;
+                        return; // Prioritize this item and exit
+                    }
+                }
+
+                if (skillName.Equals("Two Move Combo", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (DateTime.UtcNow.Subtract(Client._comboScrollLastUsed).TotalMinutes > 1.0 && Client.CurrentMP > 1500U)
+                    {
+                        Client.UseItem(skillName);
+                        Client._comboScrollLastUsed = DateTime.UtcNow;
+                        return; // Prioritize this item and exit
+                    }
+                }
+
+                if (skillName.Equals("Three Move Combo", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (DateTime.UtcNow.Subtract(Client._comboScrollLastUsed).TotalMinutes > 2.0 && Client.CurrentMP > 1500U)
+                    {
+                        Client.UseItem(skillName);
+                        Client._comboScrollLastUsed = DateTime.UtcNow;
+                        return; // Prioritize this item and exit
+                    }
+                }
+
+                // Standard skill handling
+                if (Client.Skillbook.SkillbookDictionary.ContainsKey(skillName) && Client.Skillbook[skillName].CanUse)
+                {
+                    Client.UseSkill(skillName);
+                    return;
+                }
+            }
+        }
+
+
 
 
 
@@ -2571,7 +2961,7 @@ namespace Talos.Base
                 Client.UseItem("Dragon's Fire");
             }
 
-            if (clientTab.druidFormCbox.Checked && !Client.HasEffect(EffectsBar.FeralForm) && !Client.HasEffect(EffectsBar.BirdForm) && !Client.HasEffect(EffectsBar.LizardForm) && !_swappingNecklace)
+            if (clientTab.druidFormCbox.Checked && !Client.HasEffect(EffectsBar.FeralForm) && !Client.HasEffect(EffectsBar.KaruraForm) && !Client.HasEffect(EffectsBar.KomodasForm) && !_swappingNecklace)
             {
                 if (!Client.UseSpell("Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Feral form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Master Feral Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Master Karura Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Komodas Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Wild Komodas Form", null, _autoStaffSwitch, true) && !Client.UseSpell("Fierce Komodas Form", null, _autoStaffSwitch, true))
                 {
