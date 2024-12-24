@@ -96,8 +96,9 @@ namespace Talos.Base
         internal Direction _serverDirection;
         internal MapFlags _mapFlags;
         internal EffectsBar _status;
-        internal TemuairClass _temuairClass;
-        internal MedeniaClass _medeniaClass;
+        internal TemuairClass _temuairClassFlag;
+        internal MedeniaClass _medeniaClassFlag;
+        internal DruidForm _druidFormFlag;
         internal PreviousClass _previousClass;
         internal Dugon _dugon;
         internal Element _element;
@@ -136,6 +137,9 @@ namespace Talos.Base
         internal bool _bashingSkillsLoaded = false;
         internal bool _unmaxedSpellsLoaded = false;
         internal bool _unmaxedSkillsLoaded = false;
+        internal bool _comboOneSet = false;
+        internal bool _comboTwoSet = false;
+        internal bool _comboThreeSet = false;
 
         internal double _walkSpeed = 150;
         internal ushort _spriteOverride = 1;
@@ -335,9 +339,10 @@ namespace Talos.Base
         internal void ClearEffect(EffectsBar effectID) => EffectsBar.Remove((ushort)effectID);
         internal bool GetMapFlags(MapFlags flagID) => _mapFlags.HasFlag(flagID);
         internal void SetMapFlags(MapFlags flagID) => _mapFlags |= flagID;
-        internal void SetTemuairClass(TemuairClass temClass) => _temuairClass |= temClass;
-        internal void SetMedeniaClass(MedeniaClass medClass) => _medeniaClass |= medClass;
+        internal void SetTemuairClass(TemuairClass temClass) => _temuairClassFlag |= temClass;
+        internal void SetMedeniaClass(MedeniaClass medClass) => _medeniaClassFlag |= medClass;
         internal void SetPreviousClass(PreviousClass previousClass) => _previousClass |= previousClass;
+        internal void SetDruidForm (DruidForm druidForm) => _druidFormFlag |= druidForm;
         internal void SetDugon(Dugon color) => _dugon |= color;
         internal bool GetCheats(Cheats value) => _cheats.HasFlag(value);
         internal void EnableCheats(Cheats value) => _cheats |= value;
@@ -1303,7 +1308,7 @@ namespace Talos.Base
             else
             {
                 var bestStaff = Inventory
-                    .Where(item => item.IsStaff && item.Staff.CanUse(Ability, Level, ToNextLevel, _temuairClass))
+                    .Where(item => item.IsStaff && item.Staff.CanUse(Ability, Level, ToNextLevel, _temuairClassFlag))
                     .FirstOrDefault(item => item.Staff.CastLines[spell.Name] < spell.CastLines &&
                         (item.Staff.AbilityRequired > staff.AbilityRequired ||
                         item.Staff.InsightRequired >= staff.InsightRequired ||

@@ -381,7 +381,7 @@ namespace Talos.Forms
 
         private void SetVisibilityBasedOnMedeniaClass()
         {
-            string medeniaClass = _client._medeniaClass.ToString();
+            string medeniaClass = _client._medeniaClassFlag.ToString();
 
             switch (medeniaClass)
             {
@@ -412,7 +412,7 @@ namespace Talos.Forms
 
         private void SetVisibilityBasedOnTemuairClass()
         {
-            string temuairClass = _client._temuairClass.ToString();
+            string temuairClass = _client._temuairClassFlag.ToString();
 
             switch (temuairClass)
             {
@@ -2718,8 +2718,8 @@ namespace Talos.Forms
         private void classDetectorBtn_Click(object sender, EventArgs e)
         {
             _client.ServerMessage((byte)ServerMessageType.Whisper, "Prev Class: " + _client._previousClass.ToString());
-            _client.ServerMessage((byte)ServerMessageType.Whisper, "Current Class: " + _client._temuairClass.ToString());
-            _client.ServerMessage((byte)ServerMessageType.Whisper, "Med Class: " + _client._medeniaClass.ToString());
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Current Class: " + _client._temuairClassFlag.ToString());
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Med Class: " + _client._medeniaClassFlag.ToString());
         }
 
         private void pursuitIdsBtn_Click(object sender, EventArgs e)

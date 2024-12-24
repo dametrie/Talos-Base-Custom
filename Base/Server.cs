@@ -92,6 +92,7 @@ namespace Talos
         private string _exchangeCancel;
         private string _exchangeAccept;
 
+
         public static object SyncObj { get; internal set; } = new object();
 
         internal IEnumerable<Client> Clients
@@ -2810,7 +2811,7 @@ namespace Talos
                 byte legendMarkIcon = serverPacket.ReadByte();
                 byte legendMarkColor = serverPacket.ReadByte();
                 string legendMarkKey = serverPacket.ReadString8();
-                //Console.WriteLine(legendText);
+                //Console.WriteLine(legendMarkKey);
                 if ((legendMarkKey != null) && legendMarkKey.StartsWith("C"))
                 {
                     SetPreviousClass(client, legendMarkKey);
@@ -2823,7 +2824,16 @@ namespace Talos
                 {
                     client._isRegistered = false;
                 }
+                if ((legendMarkKey != null) && legendMarkKey.StartsWith("LBeast"))
+                {
+                   SetDruidForm(client, legendMarkKey);
+                }
+
                 string legendMarkText = serverPacket.ReadString8();
+                if (legendMarkKey != null)
+                {
+                    SetComboSkill(client, legendMarkText, legendMarkKey);
+                }
             }
             client.Nation = (Nation)((byte)nation);
             client.GroupedPlayers.Clear();
@@ -3313,6 +3323,7 @@ namespace Talos
                 ? mappedDugon
                 : defaultDugon;
 
+            Console.WriteLine($"[SetDugon] Setting dugon to: {dugon}");
             client.SetDugon(dugon);
 
         }
@@ -3336,6 +3347,7 @@ namespace Talos
                 ? mappedClass
                 : defaultClass;
 
+            Console.WriteLine($"[SetTemuairClass] Setting temauirClass to: {temClass}");
             client.SetTemuairClass(temuairClass);
         }
         internal void SetMedeniaClass(Client client, string className)
@@ -3358,6 +3370,7 @@ namespace Talos
                 ? mappedClass
                 : defaultClass;
 
+            Console.WriteLine($"[SetMedeniaClass] Setting medeniaClass to: {medeniaClass}");
             client.SetMedeniaClass(medeniaClass);
         }
         internal void SetPreviousClass(Client client, string className)
@@ -3367,6 +3380,7 @@ namespace Talos
                 { "CMonk", PreviousClass.Monk },
                 { "CPriest", PreviousClass.Priest },
                 { "CMage", PreviousClass.Wizard },
+                { "CWizard", PreviousClass.Wizard },
                 { "CWarrior", PreviousClass.Warrior },
                 { "CWarror", PreviousClass.Warrior },
                 { "CRogue", PreviousClass.Rogue },
@@ -3381,8 +3395,99 @@ namespace Talos
                 ? mappedClass
                 : defaultClass;
 
+            //Console.WriteLine($"[SetPreviousClass] Setting previousClass to: {previousClass}");
             client.SetPreviousClass(previousClass);
         }
+
+        internal void SetDruidForm(Client client, string formName)
+        {
+            Dictionary<string, DruidForm> formMappings = new Dictionary<string, DruidForm>
+            {
+                { "LBeast1", DruidForm.Feral },
+                { "LBeast2", DruidForm.Karura },
+                { "LBeast3", DruidForm.Komodas }
+            };
+
+            // Default MedeniaClass if no match found
+            DruidForm defaultForm = DruidForm.None;
+
+            // Check if className matches any mapping, otherwise use defaultClass
+            DruidForm druidForm = formMappings.TryGetValue(formName, out DruidForm mappedForm)
+                ? mappedForm
+                : defaultForm;
+
+            Console.WriteLine($"[SetDruidForm] Setting druid form to: {druidForm}");
+            client.SetDruidForm(druidForm);
+        }
+
+        internal void SetComboSkill(Client client, string mark, string comboType)
+        {
+            // Map combo type to flags and scroll names
+            var comboMapping = new Dictionary<string, (string ComboScrollName, Func<Client, bool> GetFlag, Action<Client, bool> SetFlag)>
+            {
+                { "Combo1", ("Combo Scroll 1", c => c._comboOneSet, (c, v) => c._comboOneSet = v) },
+                { "Combo2", ("Combo Scroll 2", c => c._comboTwoSet, (c, v) => c._comboTwoSet = v) },
+                { "Combo3", ("Combo Scroll 3", c => c._comboThreeSet, (c, v) => c._comboThreeSet = v) }
+            };
+
+            if (!comboMapping.TryGetValue(comboType, out var comboInfo))
+                return;
+
+            // Check if the combo has already been set
+            if (comboInfo.GetFlag(client))
+                return;
+
+            string startMarker = "Set ";
+            string endMarker = $" as {GetComboOrdinal(comboType)} move -";
+
+            // Extract the skill name from the mark string
+            int startIndex = mark.IndexOf(startMarker);
+            int endIndex = mark.IndexOf(endMarker, startIndex + startMarker.Length);
+            if (startIndex == -1 || endIndex == -1)
+                return;
+
+            int skillNameStart = startIndex + startMarker.Length;
+            string skillName = mark.Substring(skillNameStart, endIndex - skillNameStart);
+
+            // Check if the required combo scroll is present
+            if (!client.Inventory.Contains("Two Move Combo") &&
+                (!client.Inventory.Contains("Three Move Combo") || client.HasSkill(comboInfo.ComboScrollName)))
+                return;
+
+            // Find the first available skill slot
+            byte slot = 37;
+            Dictionary<byte, Skill> skillSlots = client.Skillbook.SkillbookDictionary
+                .ToDictionary(kv => kv.Value.Slot, kv => kv.Value);
+
+            while (skillSlots.ContainsKey(slot))
+                ++slot;
+
+            // Create and add the new combo skill
+            Skill skill = new Skill(slot, comboInfo.ComboScrollName, (ushort)101, (byte)100, (byte)100)
+            {
+                Ticks = 1.0
+            };
+            Console.WriteLine($"[SetComboSkill] Adding combo skill {skill.Name}");
+            client.Skillbook.AddOrUpdateSkill(skill);
+            client.AddSkill(skill);
+
+
+            // Mark the combo as set
+            comboInfo.SetFlag(client, true);
+        }
+
+        // Helper method to get the ordinal string for the combo type
+        private string GetComboOrdinal(string comboType)
+        {
+            return comboType switch
+            {
+                "Combo1" => "first",
+                "Combo2" => "second",
+                "Combo3" => "third",
+                _ => comboType
+            };
+        }
+
 
         /// <summary>
         /// Function to load the map cache from the resources maps.dat

@@ -2,6 +2,8 @@
 
 
 
+using System;
+
 namespace Talos.Enumerations
 {
     public enum CreatureState
@@ -312,6 +314,7 @@ namespace Talos.Enumerations
         Snowing = 32,
     }
 
+    [Flags]
     internal enum MedeniaClass : byte
     {
         NonMed = 0,
@@ -322,6 +325,8 @@ namespace Talos.Enumerations
         Summoner = 5,
         Unknown = 6
     }
+
+    [Flags]
     internal enum TemuairClass : byte
     {
         Peasant = 0,
@@ -333,6 +338,7 @@ namespace Talos.Enumerations
         Admin = 6
     }
 
+    [Flags]
     internal enum PreviousClass : byte
     {
         Pure = 0,
@@ -341,6 +347,15 @@ namespace Talos.Enumerations
         Wizard = 3,
         Priest = 4,
         Monk = 5
+    }
+
+    [Flags]
+    internal enum DruidForm : byte
+    {
+        Feral = 0,
+        Komodas = 1,
+        Karura = 2,
+        None = 3
     }
 
     internal enum MessageColor : byte

@@ -304,6 +304,7 @@ namespace Talos.Base
             return (!Client.ClientTab.chkWaitForCradh.Checked || mob.IsCursed)
                    && (!Client.ClientTab.chkWaitForFas.Checked || mob.IsFassed);
         }
+
         private void HandleAssistTargetMovement(Creature target)
         {
             if (target.Location.DistanceFrom(Client._clientLocation) > 1)
@@ -561,25 +562,22 @@ namespace Talos.Base
                 .ToList();
         }
 
-
-
-
         private void SetBashClass()
         {
-            if (Client.classFlag.HasFlag(TemClass.Warrior) && Client.medClassFlag.HasFlag(MedClass.Gladiator))
+            if (Client._temuairClassFlag.HasFlag(TemuairClass.Warrior) && Client._medeniaClassFlag.HasFlag(MedeniaClass.Gladiator))
                 BashingBase = new PureWarriorTavalyBashLogic(this);
 
-            else if (Client.medClassFlag.HasFlag(MedClass.Druid))
+            else if (Client._medeniaClassFlag.HasFlag(MedeniaClass.Druid))
             {
-                if (Client.druidFlag.HasFlag(DruidForm.Wolf))
+                if (Client._druidFormFlag.HasFlag(DruidForm.Feral))
                     BashingBase = new PureFeralTavalyBashLogic(this);
-                else if (Client.druidFlag.HasFlag(DruidForm.Bird))
+                else if (Client._druidFormFlag.HasFlag(DruidForm.Karura))
                     BashingBase = new PureKaruraTavalyBashLogic(this);
             }
-            else if (Client.classFlag.HasFlag(TemClass.Monk) && Client.medClassFlag.HasFlag(MedClass.Gladiator))
+            else if (Client._temuairClassFlag.HasFlag(TemuairClass.Monk) && Client._medeniaClassFlag.HasFlag(MedeniaClass.Gladiator))
                 BashingBase = new MonkWarriorTavalyBashLogic(this);
 
-            else if (Client.medClassFlag.HasFlag(MedClass.Archer))
+            else if (Client._medeniaClassFlag.HasFlag(MedeniaClass.Archer))
                 BashingBase = new RogueTavalyBashLogic(this);
 
             bashClassSet = BashingBase != null;
@@ -619,7 +617,7 @@ namespace Talos.Base
                     Client.ServerMessage((byte)ServerMessageType.TopRight, $"Scroll in: {remainingTime:m\\:ss}");
                 }
             }
-            else if (Client._medeniaClass == MedeniaClass.Druid && !Client._safeScreen)
+            else if (Client._medeniaClassFlag.HasFlag(MedeniaClass.Druid) && !Client._safeScreen)
             {
                 Client.ServerMessage((byte)ServerMessageType.TopRight, "Scroll Ready.");
             }
@@ -1469,7 +1467,7 @@ namespace Talos.Base
             {
                 return false;
             }
-            
+
             if (DateTime.UtcNow.Subtract(leader.GetState<DateTime>(CreatureState.LastStep)).TotalSeconds > 5.0
                 && leader.Location.MapID == Client._map.MapID
                 && (DateTime.UtcNow.Subtract(_lastEXP).TotalSeconds > 5.0
@@ -1872,7 +1870,7 @@ namespace Talos.Base
 
 
                             Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
-                                
+
                             bool routeFindResult = this.Client.RouteFind(targetWay, (short)waysForm.distanceUpDwn.Value);
                             Console.WriteLine($"[Waypoints] [{Client.Name}] RouteFind to {targetWay} returned: {routeFindResult}");
 
@@ -1992,7 +1990,7 @@ namespace Talos.Base
 
 
 
-       
+
         private void UpdateWalkButton(Location targetLocation)
         {
             var clientTab = Client.ClientTab;
@@ -2180,12 +2178,12 @@ namespace Talos.Base
                             FilterStrangerPlayers();
                         }
 
-/*                        double botCheckSeconds = DateTime.UtcNow.Subtract(_botChecks).TotalSeconds;
+                        /*                        double botCheckSeconds = DateTime.UtcNow.Subtract(_botChecks).TotalSeconds;
 
-                        if (botCheckSeconds < 2.5)
-                        {
-                            continue;
-                        }*/
+                                                if (botCheckSeconds < 2.5)
+                                                {
+                                                    continue;
+                                                }*/
 
                         PerformActions();
                     }
@@ -2668,7 +2666,7 @@ namespace Talos.Base
                     clientTab.UseDouble(itemText);
                 }
 
-               clientTab.UpdateExpBonusTimer();
+                clientTab.UpdateExpBonusTimer();
             }
 
             if (clientTab.autoMushroomCbox.Checked && !Client.HasEffect(EffectsBar.BonusMushroom) && Client._isRegistered && Client.CurrentMP > 100)
@@ -2773,15 +2771,15 @@ namespace Talos.Base
             }
 
             //Adam this shit breaks casting
-/*            Timer dialogWaitTime = Timer.FromSeconds(5);
-            while (Client.Dialog == null)
-            {
-                if (dialogWaitTime.IsTimeExpired)
-                    return false;
-                Thread.Sleep(10);
-            }
+            /*            Timer dialogWaitTime = Timer.FromSeconds(5);
+                        while (Client.Dialog == null)
+                        {
+                            if (dialogWaitTime.IsTimeExpired)
+                                return false;
+                            Thread.Sleep(10);
+                        }
 
-            Client.Dialog.DialogNext();*/
+                        Client.Dialog.DialogNext();*/
 
             return false;
         }
@@ -4594,9 +4592,9 @@ namespace Talos.Base
         private void AutoGem()
         {
             var clientTab = Client.ClientTab;
-            if (clientTab == null) 
-            { 
-                return; 
+            if (clientTab == null)
+            {
+                return;
             }
 
             bool shouldUseGem = clientTab.autoGemCbox.Checked &&
