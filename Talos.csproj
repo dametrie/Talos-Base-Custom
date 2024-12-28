@@ -124,6 +124,11 @@
     <Compile Include="Base\Server.cs" />
     <Compile Include="Base\Bot.cs" />
     <Compile Include="Bashing\BashingBase.cs" />
+    <Compile Include="Bashing\MonkWarriorBashing.cs" />
+    <Compile Include="Bashing\FeralBashing.cs" />
+    <Compile Include="Bashing\KaruraBashing.cs" />
+    <Compile Include="Bashing\PureWarriorBashing.cs" />
+    <Compile Include="Bashing\RogueBashing.cs" />
     <Compile Include="Capricorn\Drawing\DAGraphics.cs" />
     <Compile Include="Capricorn\Drawing\EPF.cs" />
     <Compile Include="Capricorn\Drawing\HPF.cs" />

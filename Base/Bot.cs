@@ -31,6 +31,7 @@ namespace Talos.Base
         private static object _lock { get; set; } = new object();
         private Dictionary<int, bool> routeFindPerformed = new Dictionary<int, bool>();
         private int _dropCounter;
+        private int currentWaypointIndex = 0;
 
 
 
@@ -193,7 +194,7 @@ namespace Talos.Base
                     Client._inventoryFull = Client.Inventory.IsFull;
 
 
-                    CheckScrollTimers();
+                    //CheckScrollTimers();
                     HandleBashingCycle();
                     //DojoLoop();
 
@@ -230,7 +231,8 @@ namespace Talos.Base
                 if (!bashClassSet)
                     SetBashClass();
 
-                if (!Client?.ClientTab?._isBashing ?? true)
+
+                if (!Client?.ClientTab?.IsBashing ?? true)
                     return;
 
                 if (_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked)
@@ -241,7 +243,7 @@ namespace Talos.Base
                 if (!BashingBase.DoBashing())
                     WayPointWalking(true);
 
-                if (Client?.ClientTab?._isBashing ?? false && !(_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked))
+                if (Client?.ClientTab?.IsBashing ?? false && !(_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked))
                 {
                     EnsureOneLineWalkEnabled();
                     ProcessBashingTargets();
@@ -475,23 +477,45 @@ namespace Talos.Base
             }
         }
 
+
         private bool NavigateToNextWaypoint()
         {
             // Ensure there are waypoints to navigate
             if (!Client.Bot.ways.Any())
                 return false;
 
-            // Take the first waypoint
-            var nextWaypoint = Client.Bot.ways.First();
+            // Reset index if out of bounds
+            if (currentWaypointIndex >= Client.Bot.ways.Count)
+                currentWaypointIndex = 0; // Wrap around
 
-            // Check if the path to the waypoint is valid
-            if (Client.Pathfinder.FindPath(Client._serverLocation, nextWaypoint).Count > 0)
+            // Get the next waypoint
+            var nextWaypoint = Client.Bot.ways[currentWaypointIndex];
+            //Console.WriteLine($"[NavigateToNextWaypoint] Attempting to navigate to waypoint: {nextWaypoint}");
+
+            // Check if pathfinding is valid
+            var path = Client.Pathfinder.FindPath(Client._serverLocation, nextWaypoint);
+            if (path.Count > 0)
             {
+                // Path exists; attempt to move
                 Client.Pathfind(nextWaypoint);
 
-                // Remove the waypoint after successful navigation
-                Client.Bot.ways.RemoveAt(0);
+                // Verify if we've reached the waypoint
+                if (Client._clientLocation == nextWaypoint)
+                {
+                    //Console.WriteLine($"[NavigateToNextWaypoint] Successfully reached waypoint: {nextWaypoint}");
+                    currentWaypointIndex++; // Move to the next waypoint
+                }
+                else
+                {
+                    //Console.WriteLine($"[NavigateToNextWaypoint] Pathfinding incomplete; still moving towards: {nextWaypoint}");
+                }
                 return true;
+            }
+            else
+            {
+                // Pathfinding failed; log and skip this waypoint
+                //Console.WriteLine($"[NavigateToNextWaypoint] Cannot find valid path to waypoint: {nextWaypoint}. Skipping...");
+                currentWaypointIndex++;
             }
 
             return false;
@@ -571,14 +595,31 @@ namespace Talos.Base
 
         private List<Creature> FilterValidTargets(List<Creature> monsters, Player whoToProtect)
         {
-            return monsters
-                .Where(mob => !Client.IsLocationSurrounded(mob.Location) &&
-                              PathIsValid(mob) &&
-                              !HasNearbyUsersBlocking(mob.Location) &&
-                              (whoToProtect == null || mob.IsNear(whoToProtect)))
-                .OrderBy(mob => mob.Location.DistanceFrom(Client._clientLocation))
+            var filteredPlayers = Client.GetNearbyPlayers()
+                .Where(p => p != Client.Player &&
+                               !Client.ClientTab.friendList.Items.Contains(p.Name))
                 .ToList();
+
+            var validMonsters = monsters
+                .Where(mob =>
+                    !Client.IsLocationSurrounded(mob.Location) &&                 // Not surrounded
+                    !Client.IsWalledIn(mob.Location) &&                          // Not walled in
+                    !filteredPlayers.Any(user => user.Location.DistanceFrom(mob.Location) <= 4) &&  // No blocking players nearby
+                    !Client.GetNearbyPlayers().Any(user => user.Location == mob.Location) &&      // No users on top
+                    PathIsValid(mob) &&                                          // Path exists
+                    (whoToProtect == null || mob.IsNear(whoToProtect))           // Protect logic
+                )
+                .OrderBy(mob =>
+                    whoToProtect != null
+                        ? mob.Location.DistanceFrom(Client._clientLocation) / 6.0
+                          + mob.Location.DistanceFrom(whoToProtect.Location)
+                        : mob.Location.DistanceFrom(Client._clientLocation))     // Priority adjustment
+                .ToList();
+
+            return validMonsters;
         }
+
+
 
         private bool PathIsValid(Creature mob)
         {
@@ -611,23 +652,43 @@ namespace Talos.Base
 
         private void SetBashClass()
         {
-            if (Client._temuairClassFlag.HasFlag(TemuairClass.Warrior) && Client._medeniaClassFlag.HasFlag(MedeniaClass.Gladiator))
-                BashingBase = new PureWarriorTavalyBashLogic(this);
 
-            else if (Client._medeniaClassFlag.HasFlag(MedeniaClass.Druid))
+            BashingBase = null; // Clear any previously set base
+
+            if (Client._previousClassFlag == PreviousClass.Pure &&
+                Client._temuairClassFlag == TemuairClass.Warrior &&
+                Client._medeniaClassFlag == (MedeniaClass.Gladiator))
             {
-                if (Client._druidFormFlag.HasFlag(DruidForm.Feral))
-                    BashingBase = new PureFeralTavalyBashLogic(this);
-                else if (Client._druidFormFlag.HasFlag(DruidForm.Karura))
-                    BashingBase = new PureKaruraTavalyBashLogic(this);
+                BashingBase = new PureWarriorBashing(this);
+                Console.WriteLine("Activated: PureWarriorTavalyBashing (Warrior + Gladiator).");
             }
-            else if (Client._temuairClassFlag.HasFlag(TemuairClass.Monk) && Client._medeniaClassFlag.HasFlag(MedeniaClass.Gladiator))
-                BashingBase = new MonkWarriorTavalyBashLogic(this);
+            else if (Client._medeniaClassFlag == MedeniaClass.Druid)
+            {
+                if (Client._druidFormFlag == DruidForm.Feral)
+                {
+                    BashingBase = new FeralBashing(this);
+                    Console.WriteLine("Activated: PureFeralTavalyBashing (Druid Feral).");
+                }
+                else if (Client._druidFormFlag == DruidForm.Karura)
+                {
+                    BashingBase = new KaruraBashing(this);
+                    Console.WriteLine("Activated: PureKaruraTavalyBashing (Druid Karura).");
+                }
+            }
+            else if (Client._previousClassFlag == PreviousClass.Monk &&
+                     Client._medeniaClassFlag == MedeniaClass.Gladiator)
+            {
+                BashingBase = new MonkWarriorBashing(this);
+                Console.WriteLine("Activated: MonkWarriorTavalyBashing (PreviousClass Monk + Gladiator).");
+            }
+            else if (Client._medeniaClassFlag == MedeniaClass.Archer)
+            {
+                BashingBase = new RogueBashing(this);
+                Console.WriteLine("Activated: RogueTavalyBashing (Archer).");
+            }
 
-            else if (Client._medeniaClassFlag.HasFlag(MedeniaClass.Archer))
-                BashingBase = new RogueTavalyBashLogic(this);
+            bashClassSet = (BashingBase != null);
 
-            bashClassSet = BashingBase != null;
         }
 
         private void EnsureOneLineWalkEnabled()
@@ -659,8 +720,12 @@ namespace Talos.Base
                 return;
 
             HandleNecklaceSwapping();
+
+            // Sync client and server positions if misaligned
             SyncWithServer();
 
+            // If the target isn't at a distance = 1 or the correct direction
+            // skip further bashing logic
             if (!IsTargetInRange())
                 return;
 
@@ -843,19 +908,19 @@ namespace Talos.Base
 
             if (Client.ClientTab.chkBashDion.Checked)
             {
-                if (!ShouldUseSkills())
-                    return;
-
                 CrasherDionTargets();
             }
-            else
-            {
-                UseBashingSkills();
-            }
+
+            if (!ShouldUseSkills())
+                return;
+
+            UseBashingSkills();
+
         }
 
         private void UseAssails()
         {
+
             TimeSpan sinceLastAssail = DateTime.UtcNow.Subtract(assailUse);
 
             if (sinceLastAssail.TotalMilliseconds > 250.0)
@@ -909,10 +974,7 @@ namespace Talos.Base
             {
                 ExecuteCrasher();
             }
-            else
-            {
-                UseBashingSkills();
-            }
+
         }
         private void ExecuteCrasher()
         {
@@ -951,42 +1013,161 @@ namespace Talos.Base
             {
                 if (skillName.Equals("Sprint Potion", StringComparison.OrdinalIgnoreCase) && Client._isRegistered)
                 {
-                    if (DateTime.UtcNow.Subtract(Client._sprintPotionLastUsed).TotalSeconds > 16.0)
+                    if ((DateTime.UtcNow - Client._sprintPotionLastUsed).TotalSeconds > 16.0)
                     {
+                        if (!Client._safeScreen)
+                            Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
                         Client.UseItem(skillName);
                         Client._sprintPotionLastUsed = DateTime.UtcNow;
-                        return; // Prioritize this item and exit
+                        return;
                     }
                 }
 
                 if (skillName.Equals("Two Move Combo", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (DateTime.UtcNow.Subtract(Client._comboScrollLastUsed).TotalMinutes > 1.0 && Client.CurrentMP > 1500U)
+                    if ((DateTime.UtcNow - Client._comboScrollLastUsed).TotalMinutes > 1.0 && Client.CurrentMP > 1500U)
                     {
+                        if (!Client._safeScreen)
+                            Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
                         Client.UseItem(skillName);
                         Client._comboScrollLastUsed = DateTime.UtcNow;
-                        return; // Prioritize this item and exit
+                        return;
                     }
                 }
 
                 if (skillName.Equals("Three Move Combo", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (DateTime.UtcNow.Subtract(Client._comboScrollLastUsed).TotalMinutes > 2.0 && Client.CurrentMP > 1500U)
+                    if ((DateTime.UtcNow - Client._comboScrollLastUsed).TotalMinutes > 2.0 && Client.CurrentMP > 1500U)
                     {
+                        if (!Client._safeScreen)
+                            Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
                         Client.UseItem(skillName);
                         Client._comboScrollLastUsed = DateTime.UtcNow;
-                        return; // Prioritize this item and exit
+                        return;
                     }
                 }
 
-                // Standard skill handling
-                if (Client.Skillbook.SkillbookDictionary.ContainsKey(skillName) && Client.Skillbook[skillName].CanUse)
+                if (!Client.Skillbook.SkillbookDictionary.TryGetValue(skillName, out var skill)
+                    || !skill.CanUse)
                 {
+                    // If we don't have it or can't use it, continue
+                    continue;
+                }
+
+                // For distance-based sets like fiveTileAttacksMed, threeTileAttacksMed, twoTileAttacksMed
+                int distance = target.Location.DistanceFrom(Client._clientLocation);
+
+                // --- PF Skills (e.g., "Paralyze Force") or "Perfect Defense" or other special conditions ---
+                bool isPFSkill = CONSTANTS.PF_SKILLS.Contains(skillName);
+
+                List<Creature> nearbyMobs = Client.GetNearbyValidCreatures(8)
+                    .Where(m => !Client.IsLocationSurrounded(m.Location))
+                    .Where(m => !Client._map.IsWall(m.Location))
+                    .ToList();
+
+                // Example: "PF" usage if aligned, and min mob count is met
+                if (isPFSkill)
+                {
+                    // Make sure direction is aligned (like original checks)
+                    if (Client._clientLocation.GetDirection(target.Location) == target.Location.GetDirection(Client._clientLocation))
+                    {
+                        // Check if we need a certain mob count to use PF
+                        if (nearbyMobs.Count >= (int)Client.ClientTab.numPFCounter.Value)
+                        {
+                            // If skill is "Paralyze Force," check last use < 27 ms or so
+                            if (skillName.Equals("Paralyze Force", StringComparison.OrdinalIgnoreCase))
+                            {
+                                TimeSpan sinceLastUse = DateTime.UtcNow - skill.LastUsed;
+                                if (sinceLastUse.TotalMilliseconds < 27.0)
+                                    continue;
+                            }
+
+                            if (!Client._safeScreen)
+                                Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
+                            Client.UseSkill(skillName);
+                            skillUse = DateTime.UtcNow;
+                            return;
+                        }
+                    }
+                    // If PF conditions fail, continue to next skill
+                    continue;
+                }
+
+                if (skillName.Equals("Special Arrow Attack", StringComparison.OrdinalIgnoreCase))
+                {
+                    TimeSpan timeSinceLastUse = DateTime.UtcNow - skill.LastUsed;
+                    if (timeSinceLastUse.TotalMilliseconds < 11.0)
+                        continue;
+                }
+
+                if (skillName.Equals("Perfect Defense", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (nearbyMobs.Count <= (int)Client.ClientTab.numPFCounter.Value)
+                    {
+                        if (!Client._safeScreen)
+                            Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
+                        Client.UseSkill(skillName);
+                        skillUse = DateTime.UtcNow;
+                        return;
+                    }
+                    // else, continue
+                    continue;
+                }
+
+                // Sneak Flight or Ambush type logic: Cancel if a wall is detected
+                if (skillName.StartsWith("Sneak Flight", StringComparison.OrdinalIgnoreCase)
+                    && Client._map.IsWall(target.Location))
+                {
+                    if (!Client._safeScreen)
+                        Client.ServerMessage((byte)ServerMessageType.TopRight, "Wall Detected: Cancel Ambush");
+                    continue;
+                }
+
+                // Wolf Fang Fist / Lullaby Punch logic 
+                if (skillName.Equals("Wolf Fang Fist", StringComparison.OrdinalIgnoreCase) ||
+                    skillName.Equals("Lullaby Punch", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!Client._safeScreen)
+                        Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
                     Client.UseSkill(skillName);
+                    bashWffUsed = true;
+                    skillUse = DateTime.UtcNow;
                     return;
                 }
+
+                // Distance-based checks for 5-, 3-, 2-tile attacks
+                bool inRange = false;
+
+                // Check if the skill is in any of the tile-based dictionaries
+                bool isTileBasedSkill = CONSTANTS.FIVE_TILE_ATTACKS_MED.Contains(skillName) ||
+                                        CONSTANTS.THREE_TILE_ATTACKS_MED.Contains(skillName) ||
+                                        CONSTANTS.TWO_TILE_ATTACKS_MED.Contains(skillName);
+
+                if (isTileBasedSkill)
+                {
+                    if (distance <= 5 && CONSTANTS.FIVE_TILE_ATTACKS_MED.Contains(skillName))
+                        inRange = true;
+                    else if (distance <= 3 && CONSTANTS.THREE_TILE_ATTACKS_MED.Contains(skillName))
+                        inRange = true;
+                    else if (distance <= 2 && CONSTANTS.TWO_TILE_ATTACKS_MED.Contains(skillName))
+                        inRange = true;
+
+                    if (!inRange)
+                        continue; // Skip the skill if it's a tile-based skill but not in range
+                }
+
+                // If we reached here, we can use the skill normally
+
+                if (!Client._safeScreen)
+                    Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
+                Client.UseSkill(skillName);
+                skillUse = DateTime.UtcNow;
+                bashWffUsed = false;
+   
+                continue;
             }
         }
+
 
 
 
@@ -1007,7 +1188,7 @@ namespace Talos.Base
                     Client.ServerMessage((byte)ServerMessageType.TopRight, $"Scroll in: {remainingTime:m\\:ss}");
                 }
             }
-            else if (Client._medeniaClassFlag.HasFlag(MedeniaClass.Druid) && !Client._safeScreen)
+            else if (Client._medeniaClassFlag == MedeniaClass.Druid && !Client._safeScreen)
             {
                 Client.ServerMessage((byte)ServerMessageType.TopRight, "Scroll Ready.");
             }
@@ -1015,7 +1196,7 @@ namespace Talos.Base
 
         private TimeSpan GetScrollRemainingTime()
         {
-            int scrollMinutes = (Client._comboScrollCounter == (Client._previousClass == PreviousClass.Pure ? 3 : 2)) ? 2 : 1;
+            int scrollMinutes = (Client._comboScrollCounter == (Client._previousClassFlag == PreviousClass.Pure ? 3 : 2)) ? 2 : 1;
             TimeSpan totalScrollTime = new TimeSpan(0, scrollMinutes, 2);
             return totalScrollTime - (DateTime.UtcNow - Client._comboScrollLastUsed);
         }
@@ -1753,7 +1934,7 @@ namespace Talos.Base
                 Player leader = botClientToFollow?.Player ?? Client.WorldObjects.Values.OfType<Player>()
                     .FirstOrDefault(p => p.Name.Equals(followName, StringComparison.CurrentCultureIgnoreCase));
 
-                if (_client != null && (_client.ClientTab._isBashing || !_client._stopped))
+                if (_client != null && (_client.ClientTab.IsBashing || !_client._stopped))
                 {
                     RefreshLastStep();
                 }
@@ -1765,14 +1946,14 @@ namespace Talos.Base
                     if (_leaderID.HasValue && Client.LastSeenLocations.TryGetValue(_leaderID.Value, out Location lastSeenLocation))
                     {
                         // If we have the last seen location, use it
-                        Console.WriteLine($"[FollowWalking] [{Client.Name}] Using last seen location for player {followName}: {lastSeenLocation}");
+                        //Console.WriteLine($"[FollowWalking] [{Client.Name}] Using last seen location for player {followName}: {lastSeenLocation}");
                         Client._isWalking = Client.RouteFind(lastSeenLocation)
                                             && !Client.ClientTab.oneLineWalkCbox.Checked
                                             && !Server._toggleWalk;
                     }
                     else
                     {
-                        Console.WriteLine($"[FollowWalking] [{Client.Name}] No known location for player.");
+                        //Console.WriteLine($"[FollowWalking] [{Client.Name}] No known location for player.");
                         Client._isWalking = false;
                         return;
                     }
@@ -1782,10 +1963,10 @@ namespace Talos.Base
                     // We have a visible leader, proceed with following logic
                     _leaderID = leader.ID;
                     Location leaderLocation = leader.Location;
-                    Console.WriteLine($"[FollowWalking] [{Client.Name}] Current leader name: {leader.Name}, ID: {_leaderID}, location: {leaderLocation}");
+                    //Console.WriteLine($"[FollowWalking] [{Client.Name}] Current leader name: {leader.Name}, ID: {_leaderID}, location: {leaderLocation}");
 
                     int distance = leaderLocation.DistanceFrom(Client._clientLocation);
-                    Console.WriteLine($"[FollowWalking] [{Client.Name}] is {distance} spaces from leader named: {leader.Name}");
+                    //Console.WriteLine($"[FollowWalking] [{Client.Name}] is {distance} spaces from leader named: {leader.Name}");
 
                     // UnStucker logic if necessary
                     if (!UnStucker(leader))
@@ -1800,7 +1981,7 @@ namespace Talos.Base
                         {
                             if (distance > followDistance)
                             {
-                                Console.WriteLine($"[FollowWalking] [{Client.Name}] Lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
+                                //Console.WriteLine($"[FollowWalking] [{Client.Name}] Lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
                                 Client._confirmBubble = false;
                                 Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                     && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -1809,7 +1990,7 @@ namespace Talos.Base
                         }
                         else if (distance > followDistance)
                         {
-                            Console.WriteLine($"[FollowWalking] [{Client.Name}] Non-lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
+                            //Console.WriteLine($"[FollowWalking] [{Client.Name}] Non-lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
                             Client._confirmBubble = false;
                             Client._isWalking = Client.RouteFind(leaderLocation, followDistance, true, true)
                                                 && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -1817,7 +1998,7 @@ namespace Talos.Base
                         }
                         else
                         {
-                            Console.WriteLine($"[FollowWalking] [{Client.Name}] else block triggered, setting _isWalking to false");
+                            //Console.WriteLine($"[FollowWalking] [{Client.Name}] else block triggered, setting _isWalking to false");
                             Client._isWalking = false;
                         }
 
@@ -1829,7 +2010,7 @@ namespace Talos.Base
                             //Console.WriteLine("Bubble conditions met, checking for refresh.");
                             if (Client._serverLocation != Client._clientLocation)
                             {
-                                Console.WriteLine($"[FollowWalking] [{Client.Name}] Client position differs from server, requesting refresh.");
+                                //Console.WriteLine($"[FollowWalking] [{Client.Name}] Client position differs from server, requesting refresh.");
                                 Client._confirmBubble = false;
                                 Client.RefreshRequest(true);
                             }
@@ -1846,7 +2027,7 @@ namespace Talos.Base
             catch (Exception ex)
             {
                 Client._isWalking = false;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"[FollowWalking] Exception occurred {ex.Message}");
             }
         }
 
@@ -1920,7 +2101,7 @@ namespace Talos.Base
 
         private void BasherWalking(Client client)
         {
-            bool? isBashing = client?.ClientTab?._isBashing;
+            bool? isBashing = client?.ClientTab?.IsBashing;
 
             if (isBashing.GetValueOrDefault()
                 && !_rangerNear
@@ -2010,7 +2191,7 @@ namespace Talos.Base
                     (_server.ClientStateList.ContainsKey(Client.Name)
                     && _server.ClientStateList[Client.Name] == CharacterState.WaitForSpells))
                 {
-                    Console.WriteLine($"[Waypoints] [{Client.Name}] No waypoints available or client in WaitForSpells state.");
+                    //Console.WriteLine($"[Waypoints] [{Client.Name}] No waypoints available or client in WaitForSpells state.");
                     return;
                 }
 
@@ -2023,7 +2204,7 @@ namespace Talos.Base
                     if (skip && Client.GetNearbyObjects().OfType<Creature>()
                         .Any(creature => creature.Type != CreatureType.WalkThrough && creature.Location.Point == ways[currentWay].Point))
                     {
-                        Console.WriteLine($"[Waypoints] [{Client.Name}] Skipping waypoint {currentWay} due to nearby creature.");
+                        //Console.WriteLine($"[Waypoints] [{Client.Name}] Skipping waypoint {currentWay} due to nearby creature.");
                         currentWay++;
                     }
                     else
@@ -2034,7 +2215,7 @@ namespace Talos.Base
                         if (DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 2.5 &&
                             Client._clientLocation.Point.Distance(_doorPoint) < 6)
                         {
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] Near door, adjusting walking speed.");
+                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Near door, adjusting walking speed.");
                             Client._walkSpeed = Client._walkSpeed > 350.0 ? 350.0 : Client._walkSpeed;
                         }
                         else
@@ -2067,7 +2248,7 @@ namespace Talos.Base
                             if (GetCheckBoxChecked(waysForm.condition1)
                                 && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn1)))
                                     >= GetNumericUpDownValue(waysForm.mobSizeUpDwn1)
-                                && !Client.ClientTab._isBashing)
+                                && !Client.ClientTab.IsBashing)
                             {
                                 Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn1);
                                 //Console.WriteLine("Condition 1 met, adjusting walking speed.");
@@ -2077,7 +2258,7 @@ namespace Talos.Base
                             if (GetCheckBoxChecked(waysForm.condition2)
                                 && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn2)))
                                     >= GetNumericUpDownValue(waysForm.mobSizeUpDwn2)
-                                && !Client.ClientTab._isBashing)
+                                && !Client.ClientTab.IsBashing)
                             {
                                 Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn2);
                                 //Console.WriteLine("Condition 2 met, adjusting walking speed.");
@@ -2087,7 +2268,7 @@ namespace Talos.Base
                             if (GetCheckBoxChecked(waysForm.condition3)
                                 && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn3)))
                                     >= GetNumericUpDownValue(waysForm.mobSizeUpDwn3)
-                                && !Client.ClientTab._isBashing)
+                                && !Client.ClientTab.IsBashing)
                             {
                                 Client._walkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn3);
                                 //Console.WriteLine("Condition 3 met, adjusting walking speed.");
@@ -2234,7 +2415,7 @@ namespace Talos.Base
 
                         Point currentPoint = this.Client._serverLocation.Point;
 
-                        if (this.Client.ClientTab._isBashing)
+                        if (this.Client.ClientTab.IsBashing)
                         {
                             Location currentWay = this.ways[this.currentWay];
                             Location nextWay = this.currentWay < this.ways.Count - 1 ? this.ways[this.currentWay + 1] : this.ways[0];
@@ -2256,45 +2437,45 @@ namespace Talos.Base
 
                         if (distanceToTarget > waysForm.distanceUpDwn.Value)
                         {
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target ({distanceToTarget}) is greater than allowed value ({waysForm.distanceUpDwn.Value}). Initiating RouteFind.");
+                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target ({distanceToTarget}) is greater than allowed value ({waysForm.distanceUpDwn.Value}). Initiating RouteFind.");
 
 
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
+                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
 
                             bool routeFindResult = this.Client.RouteFind(targetWay, (short)waysForm.distanceUpDwn.Value);
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] RouteFind to {targetWay} returned: {routeFindResult}");
+                            //Console.WriteLine($"[Waypoints] [{Client.Name}] RouteFind to {targetWay} returned: {routeFindResult}");
 
                             bool canWalk = !this.Client.ClientTab.oneLineWalkCbox.Checked && !this.Server._toggleWalk;
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] Can walk conditions - oneLineWalkCbox.Checked: {this.Client.ClientTab.oneLineWalkCbox.Checked}, _toggleWalk: {this.Server._toggleWalk}, Result: {canWalk}");
+                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Can walk conditions - oneLineWalkCbox.Checked: {this.Client.ClientTab.oneLineWalkCbox.Checked}, _toggleWalk: {this.Server._toggleWalk}, Result: {canWalk}");
 
                             this.Client._isWalking = routeFindResult && canWalk;
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
+                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
 
 
                         }
                         else
                         {
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target waypoint({distanceToTarget}) is within allowed value ({waysForm.distanceUpDwn.Value}). Stopping movement.");
+                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target waypoint({distanceToTarget}) is within allowed value ({waysForm.distanceUpDwn.Value}). Stopping movement.");
 
                             this.Client._isWalking = false;
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
+                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
 
                             if (this.Client._clientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
                             {
-                                Console.WriteLine($"[Waypoints] [{Client.Name}] Client is within the allowed distance to the target.");
+                                //Console.WriteLine($"[Waypoints] [{Client.Name}] Client is within the allowed distance to the target.");
 
                                 if (this.Client._map.MapID == targetWay.MapID)
                                 {
-                                    Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
+                                    //Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
 
                                     if (this.Client._serverLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
                                     {
-                                        Console.WriteLine($"[Waypoints] [{Client.Name}] Server's location is beyond the allowed distance. Requesting position refresh.");
+                                        //Console.WriteLine($"[Waypoints] [{Client.Name}] Server's location is beyond the allowed distance. Requesting position refresh.");
                                         this.Client.RefreshRequest();
                                     }
                                     else
                                     {
-                                        Console.WriteLine($"[Waypoints] [{Client.Name}] Both client and server positions are within the allowed distance. Advancing to the next waypoint.");
+                                        //Console.WriteLine($"[Waypoints] [{Client.Name}] Both client and server positions are within the allowed distance. Advancing to the next waypoint.");
                                         this.currentWay++;
                                     }
                                 }

@@ -691,7 +691,7 @@ namespace Talos
 
             try
             {
-                if (client._currentSkill == "Charge") //In the event the client is a monk thathas a "fake" skill named charge
+                if (client._currentSkill == "Charge") //In the event the client is a monk that has a "fake" skill named charge
                                                       //On their skill panel that is linked to sprint potion
                 {
                     ThreadPool.QueueUserWorkItem(_ => client.ClientTab.DelayedUpdateStrangerList());
@@ -1725,6 +1725,9 @@ namespace Talos
         private bool ServerMessage_0x19_Sound(Client client, ServerPacket serverPacket)
         {
             byte num = serverPacket.ReadByte();
+            Console.WriteLine($"[SERVER] Sound index: {num}");
+            if (num == (byte)19) // That god-awful sound that plays constantly in Tavaly
+                return false;
             return !client._assailNoise || num != (byte)1 && num != (byte)101 && num != (byte)16;
         }
 
@@ -2943,10 +2946,10 @@ namespace Talos
 
         private bool ServerMessage_0x3F_Cooldown(Client client, ServerPacket serverPacket)
         {
-            bool isSkill = serverPacket.ReadBoolean();
+            byte type = serverPacket.ReadByte();
             byte slot = serverPacket.ReadByte();
             uint ticks = serverPacket.ReadUInt32();
-            if (serverPacket.ReadByte() == 0)
+            if (type == 0)
             {
                 Spell spell = client.Spellbook[slot];
                 if (spell != null)

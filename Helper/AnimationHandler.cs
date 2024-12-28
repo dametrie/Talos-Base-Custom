@@ -441,7 +441,7 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.CreatureAsgall:
-                    if (_targetCreature == _client.Player && _sourceCreature == _client.Player && _client.ClientTab._isBashing)
+                    if (_targetCreature == _client.Player && _sourceCreature == _client.Player && _client.ClientTab.IsBashing)
                     {
                         Creature target = _client.Bot.BashingBase.Target;
                         if (target != null && !target.IsAsgalled) 

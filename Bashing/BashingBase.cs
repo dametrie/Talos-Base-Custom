@@ -22,71 +22,43 @@ namespace Talos.Bashing
         protected DateTime LastAssailed = DateTime.UtcNow;
         protected DateTime LastSendTarget = DateTime.UtcNow;
         protected DateTime LastUsedSkill { get; set; } = DateTime.Now;
+
         protected List<Player> NearbyPlayers { get; set; }
         protected List<Creature> NearbyMonsters { get; set; }
         protected List<Creature> KillableTargets { get; set; }
+
         protected Bot Bot { get; }
         protected Client Client => Bot.Client;
 
-        protected int MonsterWalkIntervalMs
-        {
-            get => Convert.ToInt32(Client.ClientTab.monsterWalkIntervalNum1.Value);
-        }
-
+        protected int MonsterWalkIntervalMs => Convert.ToInt32(Client.ClientTab.monsterWalkIntervalNum1.Value);
         protected int PingCompensation => Convert.ToInt32(Client.ClientTab.pingCompensationNum1.Value);
-
         protected bool BashAsgall => Client.ClientTab.chkBashAsgall.Checked;
-
         protected int SkillIntervalMs => Convert.ToInt32(Client.ClientTab.numSkillInt.Value);
-
         protected int SendTargetIntervalMs { get; set; } = 250;
 
         protected bool RequireDionForRiskySkills => Client.ClientTab.riskySkillsDionCbox.Checked;
-
         protected bool UseRiskySkills => Client.ClientTab.riskySkillsCbox.Checked;
-
         protected bool UseCrasher => Client.ClientTab.crasherCbox.Checked;
-
         protected HashSet<Location> Warps { get; set; }
-
         public Creature Target { get; set; }
-
         protected List<ushort> PrioritySprites { get; set; }
-
         protected bool PriorityOnly => Client.ClientTab.priorityOnlyCbox.Checked;
+
         protected virtual bool CanMove
-        {
-            get
-            {
-                return !Client.HasEffect(EffectsBar.BeagSuain) && !Client.HasEffect(EffectsBar.Pramh) && !Client.HasEffect(EffectsBar.Suain);
-            }
-        }
+            => !Client.HasEffect(EffectsBar.BeagSuain)
+               && !Client.HasEffect(EffectsBar.Pramh)
+               && !Client.HasEffect(EffectsBar.Suain);
 
         protected virtual bool CanPerformActions
+            => !Client.HasEffect(EffectsBar.Pramh)
+               && !Client.HasEffect(EffectsBar.Suain);
+
+
+        internal BashingBase(Bot bot)
         {
-            get => !Client.HasEffect(EffectsBar.Pramh) && !Client.HasEffect(EffectsBar.Suain);
+            Bot = bot;
         }
 
-        internal BashingBase(Bot bot) => Bot = bot;
-        internal void Update()
-        {
-            NearbyPlayers = Client.GetNearbyPlayers();
-            NearbyMonsters = Client.GetNearbyValidCreatures(10);
-            Warps = Client.GetAllWarpPoints();
-
-            if (!Client.ClientTab.priorityCbox.Checked)
-            {
-                PrioritySprites = new List<ushort>();
-            }
-            else
-            {
-                PrioritySprites = Client.ClientTab.priorityLBox.Items
-                                    .OfType<string>()
-                                    .Select(ushort.Parse)
-                                    .ToList();
-            }
-
-        }
 
         internal virtual bool DoBashing()
         {
@@ -136,6 +108,27 @@ namespace Talos.Bashing
             }
         }
 
+
+
+        internal void Update()
+        {
+            NearbyPlayers = Client.GetNearbyPlayers();
+            NearbyMonsters = Client.GetNearbyValidCreatures(10);
+            Warps = Client.GetAllWarpPoints();
+
+            if (!Client.ClientTab.priorityCbox.Checked)
+            {
+                PrioritySprites = new List<ushort>();
+            }
+            else
+            {
+                PrioritySprites = Client.ClientTab.priorityLBox.Items
+                                    .OfType<string>()
+                                    .Select(ushort.Parse)
+                                    .ToList();
+            }
+
+        }
         private bool ValidateKillableTargets()
         {
             if (KillableTargets == null)
@@ -254,12 +247,17 @@ namespace Talos.Bashing
         }
         internal bool CanUseRiskySkills()
         {
+            // Check if risky skills are enabled
             if (!UseRiskySkills)
+            {
                 return false;
+            }
 
             // Check for Dion requirement
             if (RequireDionForRiskySkills && !Client.Player.IsDioned)
+            {
                 return false;
+            }
 
             // Check for pramhed/suained status or low MP in follow chain
             bool hasDisabledFollowers = Client._server
@@ -267,14 +265,18 @@ namespace Talos.Bashing
                 .Any(cli => cli.Player.IsAsleep || cli.Player.IsSuained || cli.CurrentMP < 10000U);
 
             if (hasDisabledFollowers)
+            {
                 return false;
+            }
 
             // Check if too many surrounding creatures exist
             int surroundingCreaturesCount = GetSurroundingCreatures(NearbyMonsters)
                 .Count(mob => mob.Location != Client._clientLocation);
 
             if (surroundingCreaturesCount > 3)
+            {
                 return false;
+            }
 
             // Final Dion length check if required
             if (RequireDionForRiskySkills)
@@ -283,19 +285,29 @@ namespace Talos.Bashing
                 double dionDuration = Client.Player.GetState<double>(CreatureState.DionDuration);
                 double dionTimeRemaining = dionDuration - (DateTime.UtcNow - lastDioned).TotalSeconds;
 
+
                 if (dionTimeRemaining <= 2.0)
+                {
                     return false;
+                }
             }
 
             return true;
         }
+
         internal abstract void UseSkills(Creature target);
         internal virtual void UseAssails()
         {
-            foreach (string assail in CONSTANTS.ASSAILS)
+            if (!Client.ClientTab.chkBashAssails.Checked)
+                return;
+
+            foreach (var assail in CONSTANTS.ASSAILS)
             {
-                if (!Client.UseSkill(assail))
-                    Client.NumberedSkill(assail);
+                foreach (var skill in Client.Skillbook.SkillbookDictionary)
+                {
+                    if (skill.Key.Contains(assail))
+                        Client.UseSkill(skill.Key);
+                }
             }
         }
         protected virtual IEnumerable<Creature> GetOrderedPotentialTargets(IEnumerable<Creature> monsters = null)

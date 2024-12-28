@@ -228,7 +228,7 @@ internal class Pathfinder
             try
             {
                 InitializePathNodes(false, end, avoidWarps);
-                Console.WriteLine($"Starting pathfinding from {start} to {end}.");
+                //Console.WriteLine($"Starting pathfinding from {start} to {end}.");
 
                 //if (!_pathNodes[start.X, start.Y].Walkable)
                 //{
@@ -257,7 +257,7 @@ internal class Pathfinder
 
                     if (currentNode == endNode)
                     {
-                        Console.WriteLine("Constructing path.");
+                        //Console.WriteLine("Constructing path.");
                         return ConstructPath(currentNode);
                     }
 

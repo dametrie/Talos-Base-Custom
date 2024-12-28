@@ -22,17 +22,17 @@ namespace Talos.Objects
         {
             get
             {
-                Console.WriteLine($"[DEBUG] Checking CanUse for skill {Name}. Cooldown until: {Cooldown.AddSeconds(Ticks)}, Current Time: {DateTime.UtcNow}");
+                //Console.WriteLine($"[SKILL] Checking CanUse for skill {Name}. Cooldown until: {Cooldown.AddSeconds(Ticks)}, Current Time: {DateTime.UtcNow}");
 
                 // Check if the cooldown has expired
                 if (DateTime.UtcNow >= Cooldown.AddSeconds(Ticks))
                 {
-                    Console.WriteLine("[DEBUG] skill can be used. Cooldown period has passed.");
+                    //Console.WriteLine("[SKILL] skill can be used. Cooldown period has passed.");
                     return true;
                 }
                 else
                 {
-                    Console.WriteLine("[DEBUG] skill cannot be used yet. Still within cooldown period.");
+                    //Console.WriteLine($"[SKILL] skill {Name} cannot be used yet. Still within cooldown period.");
                     return false;
                 }
             }

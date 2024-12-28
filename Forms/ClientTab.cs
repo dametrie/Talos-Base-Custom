@@ -112,10 +112,18 @@ namespace Talos.Forms
         internal EPFImage skillImageArchive;
         internal EPFImage spellImageArchive;
         internal Palette256 iconPalette;
-        internal bool _isBashing;
+
         internal bool _isLoading;
         private string waypointsPath;
         private System.Windows.Forms.Timer mushroomBonusCooldownTimer;
+
+        internal bool IsBashing
+        {
+            get
+            {
+                return btnBashingNew.Text == "Stop Bashing";
+            }
+        }
 
         internal ClientTab(Client client)
         {
@@ -420,7 +428,7 @@ namespace Talos.Forms
                     SetControlVisibility(hideCbox, "Hide", spellBased: true);
                     break;
                 case "Warrior":
-                    if (_client._previousClass.ToString() == "Pure")
+                    if (_client._previousClassFlag.ToString() == "Pure")
                     {
                         SetPureClassSpells(asgallCbox, "asgall faileas");
                         SetPureClassSkills(perfectDefenseCbox, "Perfect Defense");
@@ -445,7 +453,7 @@ namespace Talos.Forms
         }
         private void SetVisibilityBasedOnPreviousClass()
         {
-            string previousClass = _client._previousClass.ToString();
+            string previousClass = _client._previousClassFlag.ToString();
 
             switch (previousClass)
             {
@@ -483,23 +491,23 @@ namespace Talos.Forms
 
         private void SetPureClassSkills(Control control, string skillName)
         {
-            if (_client._previousClass.ToString() == "Pure" && _client.Skillbook[skillName] != null)
+            if (_client._previousClassFlag.ToString() == "Pure" && _client.Skillbook[skillName] != null)
                 control.Visible = true;
         }
         private void SetPureClassSpells(Control control, string spellName)
         {
-            if (_client._previousClass.ToString() == "Pure" && _client.Spellbook[spellName] != null)
+            if (_client._previousClassFlag.ToString() == "Pure" && _client.Spellbook[spellName] != null)
                 control.Visible = true;
         }
         private void SetPureClassItems(Control control, string itemName)
         {
-            if (_client._previousClass.ToString() == "Pure" && _client.HasItem(itemName))
+            if (_client._previousClassFlag.ToString() == "Pure" && _client.HasItem(itemName))
                 control.Visible = true;
         }
 
         private void SetPureClassSpells(Control[] controls, string[] spellNames)
         {
-            if (_client._previousClass.ToString() == "Pure")
+            if (_client._previousClassFlag.ToString() == "Pure")
             {
                 for (int i = 0; i < spellNames.Length; i++)
                 {
@@ -525,7 +533,7 @@ namespace Talos.Forms
 
         private void SetVineyardVisibility()
         {
-            if (_client._previousClass.ToString() == "Pure" && _client.Spellbook["Lyliac Vineyard"] != null)
+            if (_client._previousClassFlag.ToString() == "Pure" && _client.Spellbook["Lyliac Vineyard"] != null)
             {
                 vineyardCbox.Visible = true;
                 vineCombox.Visible = true;
@@ -2717,7 +2725,7 @@ namespace Talos.Forms
 
         private void classDetectorBtn_Click(object sender, EventArgs e)
         {
-            _client.ServerMessage((byte)ServerMessageType.Whisper, "Prev Class: " + _client._previousClass.ToString());
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Prev Class: " + _client._previousClassFlag.ToString());
             _client.ServerMessage((byte)ServerMessageType.Whisper, "Current Class: " + _client._temuairClassFlag.ToString());
             _client.ServerMessage((byte)ServerMessageType.Whisper, "Med Class: " + _client._medeniaClassFlag.ToString());
         }
