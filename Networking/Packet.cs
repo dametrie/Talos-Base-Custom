@@ -76,6 +76,7 @@ namespace Talos.Networking
         {
             _position = 0;
             _data = new byte[0];
+
         }
 
         internal byte[] Read(int length)

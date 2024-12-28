@@ -343,16 +343,10 @@ namespace Talos
             Direction facing = (Direction)clientPacket.ReadByte();
             //Console.WriteLine("CLIENT Direction facing = " + facing);
             clientPacket.ReadByte();
-            byte stepCount = client.StepCount;
-            client.StepCount = stepCount++;
-            clientPacket.Data[1] = stepCount;
-            client._clientLocation = client._clientLocation.Offset(facing);
-            //Console.WriteLine("[ClientWalk] Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
+            clientPacket.Data[1] = client.StepCount++;
+            client._clientLocation.Offset(facing);
             client.LastStep = DateTime.UtcNow;
-            //Console.WriteLine("[ClientWalk] Last step = " + client.LastStep);
             client._isCasting = false;
-            client.LastMoved = DateTime.UtcNow;
-            //Console.WriteLine($"[ClientWalk] LastMoved set to: {client.LastMoved}"); // Debugging: Log LastMoved update
 
             if (client.ClientTab != null)
             {
@@ -366,7 +360,7 @@ namespace Talos
         {
             byte inventorySlot = clientPacket.ReadByte();
             Point groundPoint = clientPacket.ReadStruct();
-            Location location = new Location(client._clientLocation.MapID, groundPoint);
+            Location location = new Location(client._map.MapID, groundPoint);
 
             return true;
         }
@@ -376,7 +370,7 @@ namespace Talos
             byte inventorySlot = clientPacket.ReadByte();
             Point groundPoint = clientPacket.ReadStruct();
             int count = clientPacket.ReadInt32();
-            Location location = new Location(client._clientLocation.MapID, groundPoint);
+            Location location = new Location(client._map.MapID, groundPoint);
 
             return true;
         }
@@ -966,7 +960,7 @@ namespace Talos
                 while (count < length)
                 {
                     Point point = serverPacket.ReadStruct();
-                    Location location = new Location(client._clientLocation.MapID, point);
+                    Location location = new Location(client._map.MapID, point);
                     int id = serverPacket.ReadInt32();
                     ushort sprite = serverPacket.ReadUInt16();
 
@@ -1274,9 +1268,6 @@ namespace Talos
             Direction direction = (Direction)serverPacket.ReadByte();
             try { location = serverPacket.ReadStruct().TranslatePointByDirection(direction); } catch { return false; }
 
-            //client._clientLocation.X = location.X; // Uncommenting these makes pathfinding spazz
-            //client._clientLocation.Y = location.Y; // because the bot thinks we are at a location before we are
-
             Location playerLocation = client.Player.Location;
             playerLocation.X = location.X;
             playerLocation.Y = location.Y;
@@ -1287,15 +1278,12 @@ namespace Talos
             client._serverLocation.Y = location.Y;
             client._clientDirection = direction;
             client.LastStep = DateTime.UtcNow;
-            client.LastMoved = DateTime.UtcNow;
+
 
             client._stuckCounter = 0;
             client.ClientTab.DisplayMapInfoOnCover(client._map);
 
             //Console.WriteLine("[ConfirmClientWalk] Direction facing: " + client._clientDirection);
-            //Console.WriteLine("[ConfirmClientWalk] Direction facing: " + client._clientDirection);
-            //Console.WriteLine("[ConfirmClientWalk] Last moved: " + client.LastMoved);
-            //Console.WriteLine("[ConfirmClientWalk] Client Location-- Map ID: " + client._clientLocation.MapID + " X,Y: " + client._clientLocation.Point);
             //Console.WriteLine("[ConfirmClientWalk] Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
 
             return true;
@@ -1309,7 +1297,7 @@ namespace Talos
             Direction direction = (Direction)serverPacket.ReadByte();
             point.GetDirection(direction);
 
-            Location location = new Location(client._clientLocation.MapID, point);
+            Location location = new Location(client._map.MapID, point);
             client.LastSeenLocations[id] = location;
             if (!client.WorldObjects.ContainsKey(id))
             {
@@ -1631,10 +1619,7 @@ namespace Talos
                 client.Enqueue(requestMapData);
             }
             client._map = map;
-            client._clientLocation.MapID = mapID;
-            client._serverLocation.MapID = mapID;
-            //Console.WriteLine("Client Location Map ID: " + map.MapID);
-            //Console.WriteLine("Server Location Map ID: " + map.MapID);
+
             _maps[mapID].Tiles = client._map.Tiles;
 
 
@@ -1725,7 +1710,7 @@ namespace Talos
         private bool ServerMessage_0x19_Sound(Client client, ServerPacket serverPacket)
         {
             byte num = serverPacket.ReadByte();
-            Console.WriteLine($"[SERVER] Sound index: {num}");
+            //Console.WriteLine($"[SERVER] Sound index: {num}");
             if (num == (byte)19) // That god-awful sound that plays constantly in Tavaly
                 return false;
             return !client._assailNoise || num != (byte)1 && num != (byte)101 && num != (byte)16;
@@ -1905,7 +1890,7 @@ namespace Talos
 
             if (_isMapping && (client._clientWalkPending && _maps.ContainsKey(client._map.MapID)))
             {
-                Location loc = client._clientLocation;
+                Location loc = client._serverLocation;
                 loc.Offset(client._clientDirection);
                 _maps[client._map.MapID].WorldMaps[loc.Point] = newWorldMap;
             }
@@ -2317,7 +2302,7 @@ namespace Talos
 
 
             Point point = serverPacket.ReadStruct();
-            Location location = new Location(client._clientLocation.MapID, point);
+            Location location = new Location(client._map.MapID, point);
             Direction direction = (Direction)serverPacket.ReadByte();
             int id = serverPacket.ReadInt32();
             ushort headSprite = serverPacket.ReadUInt16();

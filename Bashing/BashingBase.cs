@@ -301,14 +301,7 @@ namespace Talos.Bashing
             if (!Client.ClientTab.chkBashAssails.Checked)
                 return;
 
-            foreach (var assail in CONSTANTS.ASSAILS)
-            {
-                foreach (var skill in Client.Skillbook.SkillbookDictionary)
-                {
-                    if (skill.Key.Contains(assail))
-                        Client.UseSkill(skill.Key);
-                }
-            }
+            Client.Assail();   
         }
         protected virtual IEnumerable<Creature> GetOrderedPotentialTargets(IEnumerable<Creature> monsters = null)
         {

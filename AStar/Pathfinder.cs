@@ -191,7 +191,7 @@ internal class Pathfinder
         {
             // Get the client instance of the creature
             Client client = _client._server.GetClient(c.Name);
-            if (client != null && DateTime.UtcNow.Subtract(client.LastMoved).TotalSeconds < 2.0)
+            if (client != null && DateTime.UtcNow.Subtract(client.LastStep).TotalSeconds < 2.0)
             {
                 _isLockstepWalking = true;
                 return false; // Exclude from obstacles

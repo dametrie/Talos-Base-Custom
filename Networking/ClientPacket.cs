@@ -187,72 +187,73 @@ namespace Talos.Networking
 
         public override string ToString()
         {
-            string opCode = GetHexString().Substring(0, 2);
+            string opcodeHex = GetHexString().Substring(0, 2);
+            byte opcode = Convert.ToByte(opcodeHex, 16); // Convert the hex string to a byte
 
-            //define a dictionary to map hash values to strings
-            Dictionary<uint, string> messageMap = new Dictionary<uint, string>
+            // Define a dictionary to map opcodes to strings
+            Dictionary<byte, string> messageMap = new Dictionary<byte, string>
             {
-                {569209421u, "[Version] Sent> "},
-                {535654183u, "[CreateCharRequest] Sent> "},
-                {518876564u, "[Login] Sent> "},
-                {502098945u, "[CreateCharFinalize] Sent> "},
-                {485321326u, "[MapDataRequest] Sent> "},
-                {468543707u, "[ClientWalk] Sent> "},
-                {451766088u, "[Pickup] Sent> "},
-                {434988469u, "[ItemDrop] Sent> "},
-                {1877863703u, "[ExitRequest] Sent> "},
-                {1861086084u, "[DisplayEntityRequest] Sent> "},
-                {1844308465u, "[Ignore] Sent> "},
-                {1827530846u, "[PublicMessage] Sent> "},
-                {1810753227u, "[UseSpell] Sent> "},
-                {468396612u, "[ClientJoin] Sent> "},
-                {485174231u, "[Turn] Sent> "},
-                {518729469u, "[SpaceBar] Sent> "},
-                {334175660u, "[WorldListRequest] Sent> "},
-                {350953279u, "[Whisper] Sent> "},
-                {1307277562u, "[UserOptionToggle] Sent> "},
-                {1324055181u, "[UseItem] Sent> "},
-                {1206611848u, "[Emote] Sent> "},
-                {2398264082u, "[SetNotepad] Sent> "},
-                {2314375987u, "[GoldDrop] Sent> "},
-                {2347931225u, "[PasswordChange] Sent> "},
-                {2498929796u, "[ItemDroppedOnCreature] Sent> "},
-                {1022499324u, "[GoldDroppedOnCreature] Sent> "},
-                {972166467u, "[ProfileRequest] Sent> "},
-                {955388848u, "[GroupRequest] Sent> "},
-                {1005721705u, "[ToggleGroup] Sent> "},
-                {2280673654u, "[SwapSlot] Sent> "},
-                {2414894606u, "[RefreshRequest] Sent> "},
-                {2431672225u, "[MenuIteraction] Sent> "},
-                {418357945u, "[DialogResponse] Sent> "},
-                {368025088u, "[BoardRequest] Sent> "},
-                {485468421u, "[UseSkill] Sent> "},
-                {435135564u, "[WorldMapClick] Sent> "},
-                {2263057392u, "[ClickObject] Sent> "},
-                {2380500725u, "[Unequip] Sent> "},
-                {2363723106u, "[HeartBeat] Sent> "},
-                {2330167868u, "[RaiseStat] Sent> "},
-                {1491286918u, "[Exchange] Sent> "},
-                {1474509299u, "[NoticeRequest] Sent> "},
-                {1575175013u, "[BeginChant] Sent> "},
-                {1558397394u, "[DisplayChant] Sent> "},
-                {1541619775u, "[Profile] Sent> "},
-                {2330020773u, "[ServerTableRequest] Sent> "},
-                {401139041u, "[SequenceChange] Sent> "},
-                {233362851u, "[HomePageRequest] Sent> "},
-                {2363870201u, "[SynchronizeTicks] Sent> "},
-                {2565201629u, "[SocialStatus] Sent> "},
-                {2112205916u, "[MetaDataRequest] Sent> "},
+                { 0x00, "[Version] Sent> " },
+                { 0x02, "[CreateCharRequest] Sent> " },
+                { 0x03, "[Login] Sent> " },
+                { 0x04, "[CreateCharFinalize] Sent> " },
+                { 0x05, "[MapDataRequest] Sent> " },
+                { 0x06, "[ClientWalk] Sent> " },
+                { 0x07, "[Pickup] Sent> " },
+                { 0x08, "[ItemDrop] Sent> " },
+                { 0x0B, "[ExitRequest] Sent> " },
+                { 0x0C, "[DisplayEntityRequest] Sent> " },
+                { 0x0D, "[Ignore] Sent> " },
+                { 0x0E, "[PublicMessage] Sent> " },
+                { 0x0F, "[UseSpell] Sent> " },
+                { 0x10, "[ClientJoin] Sent> " },
+                { 0x11, "[Turn] Sent> " },
+                { 0x13, "[SpaceBar] Sent> " },
+                { 0x18, "[WorldListRequest] Sent> " },
+                { 0x19, "[Whisper] Sent> " },
+                { 0x1B, "[UserOptionToggle] Sent> " },
+                { 0x1C, "[UseItem] Sent> " },
+                { 0x1D, "[Emote] Sent> " },
+                { 0x23, "[SetNotepad] Sent> " },
+                { 0x24, "[GoldDrop] Sent> " },
+                { 0x26, "[PasswordChange] Sent> " },
+                { 0x29, "[ItemDroppedOnCreature] Sent> " },
+                { 0x2A, "[GoldDroppedOnCreature] Sent> " },
+                { 0x2D, "[ProfileRequest] Sent> " },
+                { 0x2E, "[GroupRequest] Sent> " },
+                { 0x2F, "[ToggleGroup] Sent> " },
+                { 0x30, "[SwapSlot] Sent> " },
+                { 0x38, "[RefreshRequest] Sent> " },
+                { 0x39, "[MenuIteraction] Sent> " },
+                { 0x3A, "[DialogResponse] Sent> " },
+                { 0x3B, "[BoardRequest] Sent> " },
+                { 0x3E, "[UseSkill] Sent> " },
+                { 0x3F, "[WorldMapClick] Sent> " },
+                { 0x43, "[ClickObject] Sent> " },
+                { 0x44, "[Unequip] Sent> " },
+                { 0x45, "[HeartBeat] Sent> " },
+                { 0x47, "[RaiseStat] Sent> " },
+                { 0x4A, "[Exchange] Sent> " },
+                { 0x4B, "[NoticeRequest] Sent> " },
+                { 0x4D, "[BeginChant] Sent> " },
+                { 0x4E, "[DisplayChant] Sent> " },
+                { 0x4F, "[Profile] Sent> " },
+                { 0x57, "[ServerTableRequest] Sent> " },
+                { 0x62, "[SequenceChange] Sent> " },
+                { 0x68, "[HomePageRequest] Sent> " },
+                { 0x75, "[SynchronizeTicks] Sent> " },
+                { 0x79, "[SocialStatus] Sent> " },
+                { 0x7B, "[MetaDataRequest] Sent> " }
             };
 
 
             // Use the dictionary to get the corresponding string or a default value
-            if (messageMap.TryGetValue(Utility.CalculateFNV(opCode), out string result))
+            if (messageMap.TryGetValue(opcode, out string result))
             {
                 return result + GetHexString();
             }
 
-            // Default case for unknown hash values
+            // Default case for unknown opcodes
             return "[**Unknown**] Sent> " + GetHexString();
         }
 

@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Talos.Structs;
 
 namespace Talos.Definitions
 {
     internal class CONSTANTS
     {
+        public const int CREATURE_SPRITE_OFFSET = 16384;
+        public const int ITEM_SPRITE_OFFSET = 32768;
+
         public static readonly IReadOnlyDictionary<ushort, IReadOnlyCollection<ushort>> WHITELIST_BY_MAP_ID = new Dictionary<ushort, IReadOnlyCollection<ushort>>
         {
             { 7071, new ushort[] { 559, 246, 250, 929 } }, //Battle of Mount Merry
@@ -287,8 +291,7 @@ namespace Talos.Definitions
             "Holy Gaea"
         };
 
-        public const int CREATURE_SPRITE_OFFSET = 16384;
-        public const int ITEM_SPRITE_OFFSET = 32768;
+
 
         public static readonly IReadOnlyCollection<string> ASSAILS = new string[]
         {
@@ -486,7 +489,7 @@ namespace Talos.Definitions
             "Charge"
         };
 
-        public static readonly Dictionary<string, (int Ability, int Level)> DARK_NECKS = new Dictionary<string, (int, int)>
+        public static readonly IReadOnlyDictionary<string, (int Ability, int Level)> DARK_NECKS = new Dictionary<string, (int, int)>
         {
             { "Dark Necklace", (0, 11) },
             { "Dark Gold Jade Necklace", (0, 11) },
@@ -498,7 +501,7 @@ namespace Talos.Definitions
         };
 
 
-        public static readonly Dictionary<string, (int Ability, int Level)> LIGHT_NCEKS = new Dictionary<string, (int, int)>
+        public static readonly IReadOnlyDictionary<string, (int Ability, int Level)> LIGHT_NCEKS = new Dictionary<string, (int, int)>
         {
             { "Light Necklace", (0, 11) },
             { "Lumen Amulet", (0, 25) },
@@ -509,7 +512,7 @@ namespace Talos.Definitions
             { "Laise Amulet", (99, 99) },   // This will need to change when a new light necklace comes out for AB 99
         };
 
-        public static readonly Dictionary<string, (int AbilityRequired, int InsightRequired)> MONK_WEAPONS = new Dictionary<string, (int AbilityRequired, int InsightRequired)>()
+        public static readonly IReadOnlyDictionary<string, (int AbilityRequired, int InsightRequired)> MONK_WEAPONS = new Dictionary<string, (int AbilityRequired, int InsightRequired)>()
         {
             { "Wolf Claws", (0, 50) },
             { "Wolf Clas", (0, 50) },
@@ -530,7 +533,7 @@ namespace Talos.Definitions
             { "Ancient Hy-brasyl Tonfa", (99, 99) }
         };
 
-        public static readonly Dictionary<string, (int AbilityRequired, int InsightRequired)> GLAD_WEAPONS = new Dictionary<string, (int AbilityRequired, int InsightRequired)>()
+        public static readonly IReadOnlyDictionary<string, (int AbilityRequired, int InsightRequired)> GLAD_WEAPONS = new Dictionary<string, (int AbilityRequired, int InsightRequired)>()
         {
             { "Stick", (0, 1) },
             { "Dirk", (0, 2) },
@@ -565,7 +568,7 @@ namespace Talos.Definitions
             { "Ancient Hy-brasyl Axe", (99, 99) }
         };
 
-        public static readonly Dictionary<string, (int AbilityRequired, int ArcherySkillRequired)> ARCHER_WEAPONS = new Dictionary<string, (int AbilityRequired, int ArcherySkillRequired)>()
+        public static readonly IReadOnlyDictionary<string, (int AbilityRequired, int ArcherySkillRequired)> ARCHER_WEAPONS = new Dictionary<string, (int AbilityRequired, int ArcherySkillRequired)>()
         {
             { "Hy-Braysl Azoth", (1, 1) },
             { "Enchanted Azoth", (1, 1) },
@@ -583,7 +586,7 @@ namespace Talos.Definitions
             { "Ancient Hy-brasyl Azoth", (99, 99) }
         };
 
-        public static readonly List<string> DRUID_FORMS = new List<string>()
+        public static readonly IReadOnlyList<string> DRUID_FORMS = new List<string>()
         {
             "Feral Form",
             "Wild Feral Form",
@@ -597,6 +600,49 @@ namespace Talos.Definitions
             "Wild Komodas Form",
             "Fierce Komodas Form",
             "Master Komodas Form"
+        };
+
+        public static readonly IReadOnlyDictionary<uint, Location> DESTINATION_MAP = new Dictionary<uint, Location>
+        {
+            { 104857644U,  new Location(11500, 76, 90) }, // Tavaly
+            { 42952968U,   new Location(8995, 41, 36)  }, // Lost Ruins
+            { 197647056U,  new Location(8295, 12, 7)   }, // Aman Skills/Spells
+            { 140575268U,  new Location(10055, 0, 0)   }, // Noam
+            { 122196308U,  new Location(10240, 15, 15) }, // Andor 140
+            { 362565633U,  new Location(6718, 8, 8)    }, // Nobis Storage
+            { 270108063U,  new Location(8314, 9, 95)   }, // Crystal Caves
+            { 705191458U,  new Location(72, 23, 19)    }, // Succi Hair
+            { 656194412U,  new Location(3210, 69, 34)  }, // Blackstar
+            { 390284915U,  new Location(6537, 65, 1)   }, // Nobis 2-11 (Actually 2-4)
+            { 3045472732U, new Location(6534, 1, 36)   }, // Nobis 2-5 (Actually 2-1)
+            { 1434418274U, new Location(6541, 73, 4)   }, // Nobis 3-11 (Actually 3-4)
+            { 3002224923U, new Location(6538, 58, 73)  }, // Nobis 3-5 (Actually 3-1)
+            { 1054692617U, new Location(3938, 7, 13)   }, // Canals (Loures Storage 12)
+            { 1917735196U, new Location(3950, 13, 12)  }, // Glad Arena
+            { 1570042694U, new Location(8368, 48, 24)  }, // YT 24
+            { 2122966770U, new Location(6998, 11, 9)   }, // Water Dungeon
+            { 1936185911U, new Location(10101, 15, 10) }, // Andor Lobby
+            { 2510239379U, new Location(559, 43, 26)   }, // Shinewood
+            { 2487385400U, new Location(8358, 58, 1)   }, // YT Vine Rooms
+            { 2199457723U, new Location(3012, 15, 0)   }, // Loures
+            { 2543647522U, new Location(566, 28, 24)   }, // Shinewood 36
+            { 2529604651U, new Location(10265, 93, 48) }, // Fire Canyon (Hwarone City)
+            { 2728795543U, new Location(9376, 42, 47)  }, // Plamit Boss
+            { 2628668450U, new Location(573, 22, 26)   }, // Shinewood 43
+            { 2577202760U, new Location(568, 28, 38)   }, // Shinewood 38
+            { 2911405393U, new Location(8300, 121, 33) }, // Aman Jungle
+            { 3381421134U, new Location(9378, 40, 20)  }, // Plamit Lobby
+            { 3033542801U, new Location(10180, 20, 20) }, // Andor 80
+            { 3560321112U, new Location(2092, 79, 6)   }, // MTG 16
+            { 3660986826U, new Location(2096, 4, 7)    }, // MTG 10
+            { 3644209207U, new Location(2095, 55, 94)  }, // MTG 13
+            { 3610506874U, new Location(2092, 57, 93)  }, // MTG 25
+            { 3390820287U, new Location(2901, 15, 15)  }, // Mines
+            { 3826339036U, new Location(8318, 50, 93)  }, // Yowien Territory
+            { 3791705852U, new Location(424, 6, 6)     }, // Black Market
+            { 3770643204U, new Location(8432, 5, 8)    }, // Chadul Mileth 1
+            { 4189239892U, new Location(3634, 18, 10)  }, // Chaos 1
+            { 3848419112U, new Location(5031, 6, 34)   }, // CR 31
         };
 
 

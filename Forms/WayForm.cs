@@ -47,141 +47,159 @@ namespace Talos.Forms
 
         private async void loadBtn_Click(object sender, EventArgs e)
         {
-            if (Monitor.TryEnter(Server.SyncObj, 2000))
+            // Attempt to acquire the lock asynchronously
+            bool lockAcquired = false;
+
+            try
             {
-                try
+                lockAcquired = await Client.ClientTab._loadLock.WaitAsync(TimeSpan.FromSeconds(2));
+                if (!lockAcquired)
                 {
-                    // Stop the bot and set loading flag
-                    Client.ClientTab.StopBot();
-                    Client.ClientTab._isLoading = true;
-
-                    // Define local variables to hold results
-                    var waypointsData = await Task.Run(() =>
-                    {
-                        string basePath = AppDomain.CurrentDomain.BaseDirectory + "waypoints\\";
-                        string selectedFile = savedWaysLBox.SelectedItem?.ToString();
-
-                        if (string.IsNullOrEmpty(selectedFile) || !File.Exists(basePath + selectedFile))
-                            return (null, new List<(string, Location)>());
-
-                        // Read file lines
-                        var fileLines = File.ReadAllLines(basePath + selectedFile).ToList();
-
-                        // Parse the configuration line
-                        Match configMatch = Regex.Match(fileLines[0],
-                            @"(True|False) (True|False) (True|False) (True|False) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+)");
-
-                        if (!configMatch.Success)
-                            return (null, new List<(string, Location)>());
-
-                        // Extract configuration values
-                        var config = new
-                        {
-                            Conditions = new bool[4]
-                            {
-                            bool.Parse(configMatch.Groups[1].Value),
-                            bool.Parse(configMatch.Groups[2].Value),
-                            bool.Parse(configMatch.Groups[3].Value),
-                            bool.Parse(configMatch.Groups[4].Value)
-                            },
-                            MobSizes = new decimal[4]
-                            {
-                            decimal.Parse(configMatch.Groups[5].Value),
-                            decimal.Parse(configMatch.Groups[6].Value),
-                            decimal.Parse(configMatch.Groups[7].Value),
-                            decimal.Parse(configMatch.Groups[8].Value)
-                            },
-                            Proximities = new decimal[4]
-                            {
-                            decimal.Parse(configMatch.Groups[9].Value),
-                            decimal.Parse(configMatch.Groups[10].Value),
-                            decimal.Parse(configMatch.Groups[11].Value),
-                            decimal.Parse(configMatch.Groups[12].Value)
-                            },
-                            WalkSlows = new decimal[3]
-                            {
-                            decimal.Parse(configMatch.Groups[13].Value),
-                            decimal.Parse(configMatch.Groups[14].Value),
-                            decimal.Parse(configMatch.Groups[15].Value)
-                            },
-                            Distance = decimal.Parse(configMatch.Groups[17].Value)
-                        };
-
-                        // Parse waypoints
-                        var waypoints = new List<(string DisplayText, Location Location)>();
-                        for (int i = 1; i < fileLines.Count; i++)
-                        {
-                            Match waypointMatch = Regex.Match(fileLines[i],
-                                @"\(([0-9]+),([0-9]+)\) ([a-zA-Z0-9' -]+): ([0-9]+)");
-
-                            if (waypointMatch.Success)
-                            {
-                                var loc = new Location(
-                                    short.Parse(waypointMatch.Groups[4].Value),
-                                    short.Parse(waypointMatch.Groups[1].Value),
-                                    short.Parse(waypointMatch.Groups[2].Value)
-                                );
-                                waypoints.Add((fileLines[i], loc));
-                            }
-                        }
-
-                        return (config, waypoints);
-                    });
-
-                    if (waypointsData.Item1 == null)
-                    {
-                        Console.WriteLine("Error loading waypoints or configuration.");
-                        return;
-                    }
-
-                    // Update UI on the main thread
-                    Invoke((Action)(() =>
-                    {
-                        // Update conditions and settings
-                        condition1.Checked = waypointsData.Item1.Conditions[0];
-                        condition2.Checked = waypointsData.Item1.Conditions[1];
-                        condition3.Checked = waypointsData.Item1.Conditions[2];
-                        condition4.Checked = waypointsData.Item1.Conditions[3];
-
-                        mobSizeUpDwn1.Value = waypointsData.Item1.MobSizes[0];
-                        mobSizeUpDwn2.Value = waypointsData.Item1.MobSizes[1];
-                        mobSizeUpDwn3.Value = waypointsData.Item1.MobSizes[2];
-                        mobSizeUpDwn4.Value = waypointsData.Item1.MobSizes[3];
-
-                        proximityUpDwn1.Value = waypointsData.Item1.Proximities[0];
-                        proximityUpDwn2.Value = waypointsData.Item1.Proximities[1];
-                        proximityUpDwn3.Value = waypointsData.Item1.Proximities[2];
-                        proximityUpDwn4.Value = waypointsData.Item1.Proximities[3];
-
-                        walkSlowUpDwn1.Value = waypointsData.Item1.WalkSlows[0];
-                        walkSlowUpDwn2.Value = waypointsData.Item1.WalkSlows[1];
-                        walkSlowUpDwn3.Value = waypointsData.Item1.WalkSlows[2];
-
-                        distanceUpDwn.Value = waypointsData.Item1.Distance;
-
-                        // Clear and populate waypoints
-                        waypointsLBox.Items.Clear();
-                        Client.Bot.ways.Clear();
-                        foreach (var (displayText, loc) in waypointsData.Item2)
-                        {
-                            waypointsLBox.Items.Add(displayText);
-                            Client.Bot.ways.Add(loc);
-                        }
-                    }));
+                    Console.WriteLine("[Error] Unable to acquire lock for loading.");
+                    return;
                 }
-                finally
-                {
-                    Monitor.Exit(Server.SyncObj);
-                    Client.ClientTab._isLoading = false;
 
-                    // Restart the bot
-                    if (Client.ClientTab.startStrip.Text == "Stop")
+                // Stop the bot and set loading flag
+                Client.ClientTab.StopBot();
+                Client.ClientTab._isLoading = true;
+
+                // Perform the heavy task asynchronously
+                var waypointsData = await Task.Run(() =>
+                {
+                    string basePath = AppDomain.CurrentDomain.BaseDirectory + "waypoints\\";
+                    string selectedFile = savedWaysLBox.SelectedItem?.ToString();
+
+                    if (string.IsNullOrEmpty(selectedFile) || !File.Exists(basePath + selectedFile))
+                        return (null, new List<(string, Location)>());
+
+                    // Read file lines
+                    var fileLines = File.ReadAllLines(basePath + selectedFile).ToList();
+
+                    // Parse the configuration line
+                    Match configMatch = Regex.Match(fileLines[0],
+                        @"(True|False) (True|False) (True|False) (True|False) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+) ([0-9]+)");
+
+                    if (!configMatch.Success)
+                        return (null, new List<(string, Location)>());
+
+                    // Extract configuration values
+                    var config = new
                     {
-                        Client.BotBase.Start();
+                        Conditions = new bool[4]
+                        {
+                    bool.Parse(configMatch.Groups[1].Value),
+                    bool.Parse(configMatch.Groups[2].Value),
+                    bool.Parse(configMatch.Groups[3].Value),
+                    bool.Parse(configMatch.Groups[4].Value)
+                        },
+                        MobSizes = new decimal[4]
+                        {
+                    decimal.Parse(configMatch.Groups[5].Value),
+                    decimal.Parse(configMatch.Groups[6].Value),
+                    decimal.Parse(configMatch.Groups[7].Value),
+                    decimal.Parse(configMatch.Groups[8].Value)
+                        },
+                        Proximities = new decimal[4]
+                        {
+                    decimal.Parse(configMatch.Groups[9].Value),
+                    decimal.Parse(configMatch.Groups[10].Value),
+                    decimal.Parse(configMatch.Groups[11].Value),
+                    decimal.Parse(configMatch.Groups[12].Value)
+                        },
+                        WalkSlows = new decimal[3]
+                        {
+                    decimal.Parse(configMatch.Groups[13].Value),
+                    decimal.Parse(configMatch.Groups[14].Value),
+                    decimal.Parse(configMatch.Groups[15].Value)
+                        },
+                        Distance = decimal.Parse(configMatch.Groups[17].Value)
+                    };
+
+                    // Parse waypoints
+                    var waypoints = new List<(string DisplayText, Location Location)>();
+                    for (int i = 1; i < fileLines.Count; i++)
+                    {
+                        Match waypointMatch = Regex.Match(fileLines[i],
+                            @"\(([0-9]+),([0-9]+)\) ([a-zA-Z0-9' -]+): ([0-9]+)");
+
+                        if (waypointMatch.Success)
+                        {
+                            var loc = new Location(
+                                short.Parse(waypointMatch.Groups[4].Value),
+                                short.Parse(waypointMatch.Groups[1].Value),
+                                short.Parse(waypointMatch.Groups[2].Value)
+                            );
+                            waypoints.Add((fileLines[i], loc));
+                        }
                     }
+
+                    return (config, waypoints);
+                });
+
+                if (waypointsData.Item1 == null)
+                {
+                    Console.WriteLine("Error loading waypoints or configuration.");
+                    return;
+                }
+                // Update UI on the main thread
+                Invoke((Action)(() =>
+                {
+                    // Update UI on the main thread
+                    UpdateUIWithWaypoints(waypointsData);
+                }));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Error] Exception in loadBtn_Click: {ex.Message}");
+            }
+            finally
+            {
+                if (lockAcquired)
+                {
+                    Client.ClientTab._loadLock.Release();
+                }
+                Client.ClientTab._isLoading = false;
+
+                // Restart the bot if needed
+                if (Client.ClientTab.startStrip.Text == "Stop")
+                {
+                    Client.BotBase.Start();
                 }
             }
         }
+
+        private void UpdateUIWithWaypoints((dynamic Config, List<(string DisplayText, Location Location)> Waypoints) waypointsData)
+        {
+            condition1.Checked = waypointsData.Config.Conditions[0];
+            condition2.Checked = waypointsData.Config.Conditions[1];
+            condition3.Checked = waypointsData.Config.Conditions[2];
+            condition4.Checked = waypointsData.Config.Conditions[3];
+
+            mobSizeUpDwn1.Value = waypointsData.Config.MobSizes[0];
+            mobSizeUpDwn2.Value = waypointsData.Config.MobSizes[1];
+            mobSizeUpDwn3.Value = waypointsData.Config.MobSizes[2];
+            mobSizeUpDwn4.Value = waypointsData.Config.MobSizes[3];
+
+            proximityUpDwn1.Value = waypointsData.Config.Proximities[0];
+            proximityUpDwn2.Value = waypointsData.Config.Proximities[1];
+            proximityUpDwn3.Value = waypointsData.Config.Proximities[2];
+            proximityUpDwn4.Value = waypointsData.Config.Proximities[3];
+
+            walkSlowUpDwn1.Value = waypointsData.Config.WalkSlows[0];
+            walkSlowUpDwn2.Value = waypointsData.Config.WalkSlows[1];
+            walkSlowUpDwn3.Value = waypointsData.Config.WalkSlows[2];
+
+            distanceUpDwn.Value = waypointsData.Config.Distance;
+
+            waypointsLBox.Items.Clear();
+            Client.Bot.ways.Clear();
+            foreach (var (displayText, loc) in waypointsData.Waypoints)
+            {
+                waypointsLBox.Items.Add(displayText);
+                Client.Bot.ways.Add(loc);
+            }
+        }
+
 
 
 

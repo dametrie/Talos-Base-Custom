@@ -69,6 +69,9 @@ namespace Talos.Base
         internal List<byte> _fullServerBuffer = new List<byte>();
 
         private Thread _clientLoopThread = null;
+
+        private bool clientReceiving = false;
+        private bool serverReceiving = false;
         #endregion
 
 
@@ -155,7 +158,10 @@ namespace Talos.Base
         internal Stack<Location> routeStack = new Stack<Location>();
 
 
-
+        private static readonly object SkillQueueLock = new();
+        private static readonly Queue<(string SkillName, ClientPacket Packet)> SkillQueue = new Queue<(string SkillName, ClientPacket Packet)>();
+        private static DateTime LastPacketSentTime = DateTime.MinValue;
+        private static readonly TimeSpan PacketCooldown = TimeSpan.FromMilliseconds(100);
 
         internal readonly object Lock = new object();
         internal readonly object BashLock = new object();
@@ -212,6 +218,9 @@ namespace Talos.Base
         internal bool _ladder;
         internal bool _chestToggle = false;
         internal bool _raffleToggle = false;
+        private DateTime _lastAssail;
+        internal bool ascendTaskdone;
+        internal bool depositedwarbag;
 
         internal Pathfinder Pathfinder { get; set; }
         internal RouteFinder RouteFinder { get; set; }
@@ -231,7 +240,6 @@ namespace Talos.Base
         internal byte Path { get; set; }
         internal byte StepCount { get; set; }
         internal DateTime LastStep { get; set; } = DateTime.MinValue;
-        internal DateTime LastMoved { get; set; } = DateTime.MinValue;
         internal DateTime LastTurned { get; set; } = DateTime.MinValue;
         internal uint PlayerID { get; set; }
         internal bool SpriteOverrideEnabled { get; set; }
@@ -1347,7 +1355,7 @@ namespace Talos.Base
 
                     if (staff.Name != "Barehand")
                     {
-                        Console.WriteLine($"Equipping {staff.Name} to cast {spell.Name}");
+                        //Console.WriteLine($"Equipping {staff.Name} to cast {spell.Name}");
                         UseItem(staff.Name);
                     }
 
@@ -1647,7 +1655,7 @@ namespace Talos.Base
         }
 
         private string EquipBestWeapon(
-            Dictionary<string, (int AbilityRequired, int LevelRequired)> weaponCriteria,
+            IReadOnlyDictionary<string, (int AbilityRequired, int LevelRequired)> weaponCriteria,
             Func<string, bool> isCurrentlyEquipped,
             Func<string, bool> equipWeapon,
             int currentAbility,
@@ -1796,7 +1804,7 @@ namespace Talos.Base
         {
             return EquipNecklace("Light", CONSTANTS.LIGHT_NCEKS);
         }
-        private bool EquipNecklace(string elementName, Dictionary<string, (int Ability, int Level)> necklaceList)
+        private bool EquipNecklace(string elementName, IReadOnlyDictionary<string, (int Ability, int Level)> necklaceList)
         {
             lock (BashLock)
             {
@@ -2005,7 +2013,7 @@ namespace Talos.Base
                 return true;
             }
 
-            double elapsedMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+            double elapsedMilliseconds = DateTime.UtcNow.Subtract(LastStep).TotalMilliseconds;
             double waitThreshold = (Bot.IsStrangerNearby() && !ClientTab.chkSpeedStrangers.Checked) || Bot._rangerNear
                 ? 420.0
                 : _walkSpeed;
@@ -2014,7 +2022,7 @@ namespace Talos.Base
             while (elapsedMilliseconds < waitThreshold)
             {
                 Thread.Sleep(10);
-                elapsedMilliseconds = DateTime.UtcNow.Subtract(LastMoved).TotalMilliseconds;
+                elapsedMilliseconds = DateTime.UtcNow.Subtract(LastStep).TotalMilliseconds;
             }
 
             if (Equals(_clientLocation, destination))
@@ -2733,6 +2741,22 @@ namespace Talos.Base
             Enqueue(clientPacket);
             _serverDirection = direction;
         }
+
+        internal void Assail()
+        {
+            TimeSpan sinceLastAssail = DateTime.UtcNow.Subtract(_lastAssail);
+
+            if (sinceLastAssail.TotalMilliseconds > 250.0)
+            {
+                ClientPacket clientPacket = new ClientPacket(19);
+                clientPacket.WriteByte(0);
+                Enqueue(clientPacket);
+
+                _lastAssail = DateTime.UtcNow;
+            }
+
+        }
+
         internal void Whisper(string targetName, string message)
         {
             ClientPacket clientPacket = new ClientPacket(25);
@@ -2745,7 +2769,7 @@ namespace Talos.Base
             Item item = Inventory.FirstOrDefault((Item item2) => item2.Name.Equals(itemName, StringComparison.CurrentCultureIgnoreCase));
             if (item == null)
             {
-                ServerMessage(0, $"Item {item} not found in inventory");
+                ServerMessage(0, $"Item {itemName} not found in inventory");
                 return false;
             }
 
@@ -2824,15 +2848,17 @@ namespace Talos.Base
                         if (this._mapChanged || this._isRefreshing == 0)
                         {
                             this._mapChanged = false;
+                            //Console.WriteLine("[REFRESH] Can now refresh");
                             break;
                         }
 
+                        //Console.WriteLine("[REFRESH] Waiting for refresh completion");
                         Thread.Sleep(10);
                     }
                 }
                 catch (ThreadInterruptedException ex)
                 {
-                    Console.WriteLine("Thread was interrupted.");
+                    //Console.WriteLine("[REFRESH] Thread was interrupted.");
                 }
                 finally
                 {
@@ -2932,26 +2958,121 @@ namespace Talos.Base
         internal bool UseSkill(string skillName)
         {
             Skill skill = Skillbook[skillName];
-            if (skill != null && CanUseSkill(skill))
+            if (skill == null)
             {
-                ClientPacket clientPacket = new ClientPacket(62);
-                clientPacket.WriteByte(skill.Slot);
-                skill.LastUsed = DateTime.UtcNow;
-                if (_currentSkill != skillName)
-                {
-                    _currentSkill = skillName;
-                    if (skillName == "Charge")
-                    {
-                        ThreadPool.QueueUserWorkItem(_ => ClientTab.DelayedUpdateStrangerList());
-                    }
-                }
-                //Console.WriteLine($"[Client] Using skill {skillName}");
-                Enqueue(clientPacket);
-                return true;
+                Console.WriteLine($"[Client] You do not have skill {skillName}");
+                return false;
             }
-            //Console.WriteLine($"[Client] Unable to use skill {skillName}");
-            return false;
+
+            if (!CanUseSkill(skill))
+            {
+                Console.WriteLine($"[Client] Skill '{skillName}' cannot be used. Check conditions in CanUseSkill.");
+                return false;
+            }
+
+            ClientPacket clientPacket = new ClientPacket(62);
+            clientPacket.WriteByte(skill.Slot);
+            skill.LastUsed = DateTime.UtcNow;
+            if (_currentSkill != skillName)
+            {
+                _currentSkill = skillName;
+                if (skillName == "Charge")
+                {
+                    ThreadPool.QueueUserWorkItem(_ => ClientTab.DelayedUpdateStrangerList());
+                }
+            }
+            Console.WriteLine($"[Client] Using skill {skillName}");
+            Enqueue(clientPacket);
+
+            return true;
         }
+
+       /* internal bool UseSkill(string skillName)
+        {
+            Console.WriteLine($"[Debug] Attempting to use skill: {skillName}");
+
+            Skill skill = Skillbook.SkillbookDictionary.ContainsKey(skillName) ? Skillbook[skillName] : null;
+
+            if (skill == null)
+            {
+                Console.WriteLine($"[Error] Skill '{skillName}' not found in Skillbook.");
+                return false;
+            }
+
+            if (!CanUseSkill(skill))
+            {
+                Console.WriteLine($"[Debug] Skill '{skillName}' cannot be used. Check conditions in CanUseSkill.");
+                return false;
+            }
+
+            lock (SkillQueueLock)
+            {
+                try
+                {
+                    ClientPacket clientPacket = new ClientPacket(62);
+                    clientPacket.WriteByte(skill.Slot);
+                    skill.LastUsed = DateTime.UtcNow;
+
+                    if (_currentSkill != skillName)
+                    {
+                        _currentSkill = skillName;
+
+                        if (skillName == "Charge")
+                        {
+                            Console.WriteLine($"[Debug] Skill 'Charge' detected. Triggering DelayedUpdateStrangerList.");
+                            ThreadPool.QueueUserWorkItem(_ => ClientTab.DelayedUpdateStrangerList());
+                        }
+                    }
+
+                    SkillQueue.Enqueue((skillName, clientPacket));
+                    Console.WriteLine($"[Debug] Skill '{skillName}' queued successfully (Slot: {skill.Slot}).");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Error] Exception while queuing skill '{skillName}': {ex.Message}");
+                    return false;
+                }
+            }
+
+            ProcessSkillQueue();
+
+            return true;
+        }
+
+        private void ProcessSkillQueue()
+        {
+            lock (SkillQueueLock)
+            {
+                try
+                {
+                    if (SkillQueue.Count == 0)
+                    {
+                        Console.WriteLine("[Debug] SkillQueue is empty. Nothing to process.");
+                        return;
+                    }
+
+                    DateTime now = DateTime.UtcNow;
+
+                    if (now - LastPacketSentTime < PacketCooldown)
+                    {
+                        Console.WriteLine($"[Debug] Packet cooldown in effect. Next packet allowed in {(PacketCooldown - (now - LastPacketSentTime)).TotalMilliseconds} ms.");
+                        return;
+                    }
+
+                    var (skillName, packet) = SkillQueue.Dequeue();
+                    Enqueue(packet);
+                    LastPacketSentTime = now;
+
+                    Console.WriteLine($"[Debug] Skill '{skillName}' sent successfully at {now:O}.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Error] Exception while processing skill queue: {ex.Message}");
+                }
+            }
+        }*/
+
+
         internal void ClickWorldMap(short mapId, Point point)
         {
             ClientPacket clientPacket = new ClientPacket(63);
@@ -3446,8 +3567,8 @@ namespace Talos.Base
                 _clientLocation = _clientLocation.Offset(dir);
                 //Console.WriteLine($"Client location updated to: {_clientLocation}"); // Debugging: Log client location update
 
-                LastMoved = DateTime.UtcNow;
-                //Console.WriteLine($"[WalkLastMoved set to: {LastMoved}"); // Debugging: Log LastMoved update
+                LastStep = DateTime.UtcNow;
+                //Console.WriteLine($"[WalkLastStep set to: {LastStep}"); // Debugging: Log LastStep update
 
                 UpdateClientActionText($"{_action} Walking {dir}");
             }
@@ -3482,7 +3603,10 @@ namespace Talos.Base
             _connected = true;
             _clientSocket.BeginReceive(_clientBuffer, 0, _clientBuffer.Length, SocketFlags.None, new AsyncCallback(ClientEndReceive), this);
             _serverSocket.BeginReceive(_serverBuffer, 0, _serverBuffer.Length, SocketFlags.None, new AsyncCallback(ServerEndReceive), this);
-            _clientLoopThread = new Thread(ClientLoop);
+            _clientLoopThread = new Thread(ClientLoop)
+            {
+                IsBackground = true
+            };
             _clientLoopThread.Start();
         }
 
@@ -3492,11 +3616,21 @@ namespace Talos.Base
         private void ClientLoop()
         {
             Thread.GetDomain().UnhandledException += Program.ExceptionHandler;
+            _connected = true;
 
             while (_connected)
             {
-                ProcessSendQueue();
-                ProcessReceiveQueue();
+                try
+                {
+                    ProcessSendQueue();
+                    ProcessReceiveQueue();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ClientLoop] Exception: {ex}");
+                    _connected = false;
+                }
+
                 Thread.Sleep(5);
             }
 
@@ -3573,6 +3707,8 @@ namespace Talos.Base
 
         private void LogClientPacket(ClientPacket clientPacket)
         {
+            //Console.WriteLine($"[DEBUG] ({Name}) Sending ClientPacket. Opcode: {clientPacket.Opcode} ({clientPacket.ToString()}), Length: {clientPacket.Data.Length}");
+
             ClientPacket? clientPacketToLog = clientPacket.Copy();
             if (clientPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
             {
@@ -3582,6 +3718,8 @@ namespace Talos.Base
 
         private void LogServerPacket(ServerPacket serverPacket)
         {
+            //Console.WriteLine($"[DEBUG] ({Name}) Received ServerPacket. Opcode: {serverPacket.Opcode} ({serverPacket.ToString()}), Length: {serverPacket.Data.Length}");
+
             ServerPacket? serverPacketToLog = serverPacket.Copy();
             if (serverPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
             {
@@ -3827,25 +3965,45 @@ namespace Talos.Base
             try
             {
                 int length = _clientSocket.EndReceive(ar);
+                //Console.WriteLine($"[Client] {Name} Data received: {length} bytes.");
+
                 if (length == 0)
                 {
+                    //Console.WriteLine($"[Client] {Name} Zero bytes received. Buffer content for inspection:");
+                    //Console.WriteLine($"[Client] {Name} Raw buffer: {BitConverter.ToString(_clientBuffer)}");
+
+                    //Console.WriteLine($"[Client] {Name} Zero bytes received, disconnecting...");
                     DisconnectWait();
                 }
                 else
                 {
                     byte[] data = new byte[length];
                     Buffer.BlockCopy(_clientBuffer, 0, data, 0, length);
+                    //Console.WriteLine($"[Client] {Name} Raw data received: {BitConverter.ToString(data)}");
+
                     _fullClientBuffer.AddRange(data);
+
+                    //Console.WriteLine($"[Client] {Name} Full buffer size: {_fullClientBuffer.Count} bytes.");
+
                     while (_fullClientBuffer.Count > 3)
                     {
                         int count = (_fullClientBuffer[1] << 8) + _fullClientBuffer[2] + 3;
+                        //Console.WriteLine($"[Client] {Name} Packet size detected: {count} bytes.");
+
                         if (count > _fullClientBuffer.Count)
                         {
+                            //Console.WriteLine($"[Client] {Name} Incomplete packet, waiting for more data...");
                             break;
                         }
+
                         List<byte> range = _fullClientBuffer.GetRange(0, count);
                         _fullClientBuffer.RemoveRange(0, count);
+                        //Console.WriteLine($"[Client] {Name} Processed packet of size: {range.Count} bytes. Remaining buffer size: {_fullClientBuffer.Count} bytes.");
+
                         ClientPacket clientPacket = new ClientPacket(range.ToArray());
+
+                        //Console.WriteLine($"[Client] {Name} Processed packet Opcode: {clientPacket.Opcode} ({clientPacket.ToString()}), Length: {clientPacket.Data.Length}");
+
                         lock (_receiveQueue)
                         {
                             _receiveQueue.Enqueue(clientPacket);
@@ -3855,13 +4013,33 @@ namespace Talos.Base
             }
             catch (Exception ex)
             {
-                Console.WriteLine("CLIENT ENDRECEIVE EXCEPTION + ", ex.ToString());
+                Console.WriteLine($"[Client] {Name} Exception in EndReceive: {ex}");
                 DisconnectWait();
             }
             finally
             {
-                _clientSocket.BeginReceive(_clientBuffer, 0, _clientBuffer.Length, SocketFlags.None, ClientEndReceive, null);
+                clientReceiving = false;
+
+                if (_connected && !clientReceiving)
+                {
+                    try
+                    {
+                        clientReceiving = true;
+                        _clientSocket.BeginReceive(_clientBuffer, 0, _clientBuffer.Length, SocketFlags.None, ClientEndReceive, null);
+                    }
+                    catch (SocketException ex)
+                    {
+                        Console.WriteLine($"[Client] {Name} SocketException in BeginReceive: {ex.SocketErrorCode} - {ex.Message}");
+                        DisconnectWait();
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        Console.WriteLine($"[Client] {Name} ObjectDisposedException in BeginReceive: {ex.Message}");
+                        // Socket already disposed, nothing more to do
+                    }
+                }
             }
+
         }
 
         /// <summary>
@@ -3873,25 +4051,45 @@ namespace Talos.Base
             try
             {
                 int length = _serverSocket.EndReceive(ar);
+                //Console.WriteLine($"[Server] {Name} Data received: {length} bytes.");
+
                 if (length == 0)
                 {
+                    //Console.WriteLine($"[Server] {Name} Zero bytes received. Buffer content for inspection:");
+                    //Console.WriteLine($"[Server] {Name} Raw buffer: {BitConverter.ToString(_serverBuffer)}");
+
+                    //Console.WriteLine($"[Server] {Name} Zero bytes received, disconnecting...");
                     DisconnectWait();
                 }
                 else
                 {
                     byte[] data = new byte[length];
                     Buffer.BlockCopy(_serverBuffer, 0, data, 0, length);
+                    //Console.WriteLine($"[Server] {Name} Raw data received: {BitConverter.ToString(data)}");
+
                     _fullServerBuffer.AddRange(data);
+
+                    //Console.WriteLine($"[Server] {Name} Full buffer size: {_fullServerBuffer.Count} bytes.");
+
                     while (_fullServerBuffer.Count > 3)
                     {
                         int count = (_fullServerBuffer[1] << 8) + _fullServerBuffer[2] + 3;
+                        //Console.WriteLine($"[Server] {Name} Packet size detected: {count} bytes.");
+
                         if (count > _fullServerBuffer.Count)
                         {
+                            //Console.WriteLine($"[Server] {Name} Incomplete packet, waiting for more data...");
                             break;
                         }
+
                         List<byte> range = _fullServerBuffer.GetRange(0, count);
                         _fullServerBuffer.RemoveRange(0, count);
+                        //Console.WriteLine($"[Server] {Name} Processed packet of size: {range.Count} bytes. Remaining buffer size: {_fullServerBuffer.Count} bytes.");
+
                         ServerPacket serverPacket = new ServerPacket(range.ToArray());
+
+                        //Console.WriteLine($"[Server] {Name} Processed packet Opcode: {serverPacket.Opcode} ({serverPacket.ToString()}), Length: {serverPacket.Data.Length}");
+
                         lock (_receiveQueue)
                         {
                             _receiveQueue.Enqueue(serverPacket);
@@ -3901,13 +4099,34 @@ namespace Talos.Base
             }
             catch (Exception ex)
             {
-                Console.WriteLine("SERVER ENDRECEIVE EXCEPTION + ", ex.ToString());
+                Console.WriteLine($"[Server] {Name} Exception in EndReceive: {ex}");
                 DisconnectWait();
             }
             finally
             {
-                _serverSocket.BeginReceive(_serverBuffer, 0, _serverBuffer.Length, SocketFlags.None, ServerEndReceive, null);
+                // Reset the receiving flag and start receiving again.
+                serverReceiving = false;
+
+                if (_connected && !serverReceiving)
+                {
+                    try
+                    {
+                        serverReceiving = true;
+                        _serverSocket.BeginReceive(_serverBuffer, 0, _serverBuffer.Length, SocketFlags.None, ServerEndReceive, null);
+                    }
+                    catch (SocketException ex)
+                    {
+                        Console.WriteLine($"[Server] {Name} SocketException in BeginReceive: {ex.SocketErrorCode} - {ex.Message}");
+                        DisconnectWait();
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        Console.WriteLine($"[Server] {Name} ObjectDisposedException in BeginReceive: {ex.Message}");
+                        // Socket already disposed, nothing more to do
+                    }
+                }
             }
+
         }
 
         /// <summary>

@@ -128,48 +128,7 @@ namespace Talos.Base
         internal AllyPage AllyPage { get; set; }
         internal EnemyPage AllMonsters { get; set; }
 
-        private static readonly Dictionary<uint, Location> DestinationMap = new Dictionary<uint, Location>
-        {
-            { 104857644U,  new Location(11500, 76, 90) }, // Tavaly
-            { 42952968U,   new Location(8995, 41, 36)  }, // Lost Ruins
-            { 197647056U,  new Location(8295, 12, 7)   }, // Aman Skills/Spells
-            { 140575268U,  new Location(10055, 0, 0)   }, // Noam
-            { 122196308U,  new Location(10240, 15, 15) }, // Andor 140
-            { 362565633U,  new Location(6718, 8, 8)    }, // Nobis Storage
-            { 270108063U,  new Location(8314, 9, 95)   }, // Crystal Caves
-            { 705191458U,  new Location(72, 23, 19)    }, // Succi Hair
-            { 656194412U,  new Location(3210, 69, 34)  }, // Blackstar
-            { 390284915U,  new Location(6537, 65, 1)   }, // Nobis 2-11 (Actually 2-4)
-            { 3045472732U, new Location(6534, 1, 36)   }, // Nobis 2-5 (Actually 2-1)
-            { 1434418274U, new Location(6541, 73, 4)   }, // Nobis 3-11 (Actually 3-4)
-            { 3002224923U, new Location(6538, 58, 73)  }, // Nobis 3-5 (Actually 3-1)
-            { 1054692617U, new Location(3938, 7, 13)   }, // Canals (Loures Storage 12)
-            { 1917735196U, new Location(3950, 13, 12)  }, // Glad Arena
-            { 1570042694U, new Location(8368, 48, 24)  }, // YT 24
-            { 2122966770U, new Location(6998, 11, 9)   }, // Water Dungeon
-            { 1936185911U, new Location(10101, 15, 10) }, // Andor Lobby
-            { 2510239379U, new Location(559, 43, 26)   }, // Shinewood
-            { 2487385400U, new Location(8358, 58, 1)   }, // YT Vine Rooms
-            { 2199457723U, new Location(3012, 15, 0)   }, // Loures
-            { 2543647522U, new Location(566, 28, 24)   }, // Shinewood 36
-            { 2529604651U, new Location(10265, 93, 48) }, // Fire Canyon (Hwarone City)
-            { 2728795543U, new Location(9376, 42, 47)  }, // Plamit Boss
-            { 2628668450U, new Location(573, 22, 26)   }, // Shinewood 43
-            { 2577202760U, new Location(568, 28, 38)   }, // Shinewood 38
-            { 2911405393U, new Location(8300, 121, 33) }, // Aman Jungle
-            { 3381421134U, new Location(9378, 40, 20)  }, // Plamit Lobby
-            { 3033542801U, new Location(10180, 20, 20) }, // Andor 80
-            { 3560321112U, new Location(2092, 79, 6)   }, // MTG 16
-            { 3660986826U, new Location(2096, 4, 7)    }, // MTG 10
-            { 3644209207U, new Location(2095, 55, 94)  }, // MTG 13
-            { 3610506874U, new Location(2092, 57, 93)  }, // MTG 25
-            { 3390820287U, new Location(2901, 15, 15)  }, // Mines
-            { 3826339036U, new Location(8318, 50, 93)  }, // Yowien Territory
-            { 3791705852U, new Location(424, 6, 6)     }, // Black Market
-            { 3770643204U, new Location(8432, 5, 8)    }, // Chadul Mileth 1
-            { 4189239892U, new Location(3634, 18, 10)  }, // Chaos 1
-            { 3848419112U, new Location(5031, 6, 34)   }, // CR 31
-        };
+
 
         internal Bot(Client client, Server server) : base(client, server)
         {
@@ -903,7 +862,7 @@ namespace Talos.Base
 
             if (Client.ClientTab.chkBashAssails.Checked && !bashWffUsed)
             {
-                UseAssails();
+                Client.Assail();
             }
 
             if (Client.ClientTab.chkBashDion.Checked)
@@ -918,25 +877,6 @@ namespace Talos.Base
 
         }
 
-        private void UseAssails()
-        {
-
-            TimeSpan sinceLastAssail = DateTime.UtcNow.Subtract(assailUse);
-
-            if (sinceLastAssail.TotalMilliseconds > 250.0)
-            {
-                foreach (var assail in CONSTANTS.ASSAILS)
-                {
-                    foreach (var skill in Client.Skillbook.SkillbookDictionary)
-                    {
-                        if (skill.Key.Contains(assail))
-                            Client.UseSkill(skill.Key);
-                    }
-                }
-
-                assailUse = DateTime.UtcNow;
-            }
-        }
         private bool ShouldUseCrasher()
         {
             // Use the configured health threshold if available, otherwise fallback to 60
@@ -954,11 +894,16 @@ namespace Talos.Base
                 return true;
 
             // Check if the Damage Scroll item is available and usable
-            if (Client.HasItem("Damage Scroll") &&
-                Client.CanUseItem(Client.Inventory["Damage Scroll"]) &&
-                DateTime.UtcNow.Subtract(Client.Inventory["Damage Scroll"].LastUsed).TotalSeconds > 28)
+            if (Client.HasItem("Damage Scroll"))
             {
-                return true;
+                if (Client.CanUseItem(Client.Inventory["Damage Scroll"]) &&
+                    DateTime.UtcNow.Subtract(Client.Inventory["Damage Scroll"].LastUsed).TotalSeconds > 28)
+                {
+                    {
+                        return true;
+                    }
+
+                }
             }
 
             return false;
@@ -1918,7 +1863,7 @@ namespace Talos.Base
         private Location GetDestinationBasedOnComboBoxText(string text)
         {
             uint fnvHash = Utility.CalculateFNV(text);
-            return DestinationMap.TryGetValue(fnvHash, out var loc) ? loc : default;
+            return CONSTANTS.DESTINATION_MAP.TryGetValue(fnvHash, out var loc) ? loc : default;
         }
 
         private void FollowWalking(string followName)
@@ -2003,9 +1948,8 @@ namespace Talos.Base
                         }
 
                         // Apply bubble logic for synchronization
-                        if (Client._okToBubble
-                            && DateTime.UtcNow.Subtract(Client.LastStep).TotalMilliseconds > 500.0
-                            && DateTime.UtcNow.Subtract(Client.LastMoved).TotalMilliseconds > 500.0)
+                        if (Client._okToBubble && 
+                            DateTime.UtcNow.Subtract(Client.LastStep).TotalMilliseconds > 500.0)
                         {
                             //Console.WriteLine("Bubble conditions met, checking for refresh.");
                             if (Client._serverLocation != Client._clientLocation)
