@@ -165,7 +165,7 @@ namespace Talos.Bashing
 
         private bool HandleMovement(Creature target)
         {
-            int distanceToTarget = Client._clientLocation.DistanceFrom(target.Location);
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
 
             if (distanceToTarget == 0)
                 return TryUnstuck();
@@ -188,7 +188,7 @@ namespace Talos.Bashing
 
         private bool ShouldPathfindToTarget(Creature target, int distance)
         {
-            if (distance <= 3 && target.Direction == Client._clientLocation.GetDirection(target.Location))
+            if (distance <= 3 && target.Direction == Client.ClientLocation.GetDirection(target.Location))
             {
                 var lastStepTime = DateTime.UtcNow - target.LastStep;
                 return !(lastStepTime > TimeSpan.FromMilliseconds(MonsterWalkIntervalMs - PingCompensation * 2) &&
@@ -202,7 +202,7 @@ namespace Talos.Bashing
         protected IEnumerable<Player> GetStrangers()
         {
             // Create a HashSet with OrdinalIgnoreCase for fast lookups
-            var friendSet = new HashSet<string>(Client._friendBindingList, StringComparer.OrdinalIgnoreCase);
+            var friendSet = new HashSet<string>(Client.FriendBindingList, StringComparer.OrdinalIgnoreCase);
 
             return NearbyPlayers.Where(user => !friendSet.Contains(user.Name));
         }
@@ -260,7 +260,7 @@ namespace Talos.Bashing
             }
 
             // Check for pramhed/suained status or low MP in follow chain
-            bool hasDisabledFollowers = Client._server
+            bool hasDisabledFollowers = Client.Server
                 .GetFollowChain(Client)
                 .Any(cli => cli.Player.IsAsleep || cli.Player.IsSuained || cli.CurrentMP < 10000U);
 
@@ -271,7 +271,7 @@ namespace Talos.Bashing
 
             // Check if too many surrounding creatures exist
             int surroundingCreaturesCount = GetSurroundingCreatures(NearbyMonsters)
-                .Count(mob => mob.Location != Client._clientLocation);
+                .Count(mob => mob.Location != Client.ClientLocation);
 
             if (surroundingCreaturesCount > 3)
             {
@@ -331,16 +331,16 @@ namespace Talos.Bashing
         {
             // Apply sprite priority logic: prioritized sprites have normal distance, others are tripled
             return PrioritySprites.Contains(mob.SpriteID)
-                ? mob.Location.DistanceFrom(Client._clientLocation)
-                : mob.Location.DistanceFrom(Client._clientLocation) * 3;
+                ? mob.Location.DistanceFrom(Client.ClientLocation)
+                : mob.Location.DistanceFrom(Client.ClientLocation) * 3;
         }
 
         private int GetCursedAdjustedDistance(Creature mob)
         {
             // Reduce distance slightly if the creature is both cursed and fas-nadured
             return mob.IsCursed && mob.IsFassed
-                ? mob.Location.DistanceFrom(Client._clientLocation) - 1
-                : mob.Location.DistanceFrom(Client._clientLocation);
+                ? mob.Location.DistanceFrom(Client.ClientLocation) - 1
+                : mob.Location.DistanceFrom(Client.ClientLocation);
         }
 
         private bool IsValidTarget(Creature mob, IEnumerable<Player> strangers)
@@ -353,27 +353,27 @@ namespace Talos.Bashing
             bool hasNearbyStrangers = strangers.Any(stranger => stranger.WithinRange(mob, 4));
             bool hasNearbyUsers = NearbyPlayers.Any(user =>
                 user == Client.Player
-                    ? Client._clientLocation.DistanceFrom(mob.Location) == 0
+                    ? Client.ClientLocation.DistanceFrom(mob.Location) == 0
                     : user.WithinRange(mob, 0));
 
             if (hasNearbyStrangers || hasNearbyUsers)
                 return false;
 
             // Check pathfinding distance (1 for adjacent, otherwise validate path)
-            if (Client._clientLocation.DistanceFrom(mob.Location) == 1)
+            if (Client.ClientLocation.DistanceFrom(mob.Location) == 1)
                 return true;
 
-            int pathCount = Client.Pathfinder.FindPath(Client._serverLocation, mob.Location).Count;
+            int pathCount = Client.Pathfinder.FindPath(Client.ServerLocation, mob.Location).Count;
             return pathCount > 0 && pathCount < 15;
         }
         protected virtual bool IsFacingAway(Creature target)
         {
-            return target.Location.GetDirection(Client._clientLocation) == target.Direction;
+            return target.Location.GetDirection(Client.ClientLocation) == target.Direction;
         }
 
         protected virtual bool IsFacingUs(Creature target)
         {
-            return Client._clientLocation.GetDirection(target.Location) == target.Direction;
+            return Client.ClientLocation.GetDirection(target.Location) == target.Direction;
         }
 
         protected virtual bool TryFaceTarget(Creature target)
@@ -382,16 +382,16 @@ namespace Talos.Bashing
                 return false;
 
             DateTime currentTime = DateTime.UtcNow;
-            Direction targetDirection = target.Location.GetDirection(Client._clientLocation);
+            Direction targetDirection = target.Location.GetDirection(Client.ClientLocation);
 
-            bool isOutOfSync = Client._clientDirection != Client._serverDirection;
+            bool isOutOfSync = Client.ClientDirection != Client.ServerDirection;
             bool shouldResync = isOutOfSync &&
                                 (currentTime - LastDirectionInSync).TotalMilliseconds > (1000 + PingCompensation * 2);
 
             // Resynchronize if needed
             if (shouldResync)
             {
-                Client._clientDirection = Client._serverDirection;
+                Client.ClientDirection = Client.ServerDirection;
                 LastDirectionInSync = currentTime;
             }
             else if (!isOutOfSync)
@@ -400,7 +400,7 @@ namespace Talos.Bashing
             }
 
             // Adjust direction to face the target
-            if (shouldResync || Client._clientDirection != targetDirection)
+            if (shouldResync || Client.ClientDirection != targetDirection)
             {
                 Client.Turn(targetDirection);
             }
@@ -416,7 +416,7 @@ namespace Talos.Bashing
         protected IEnumerable<Creature> GetSurroundingCreatures(IEnumerable<Creature> creatures = null, int skillRange = 1)
         {
             creatures ??= KillableTargets ?? NearbyMonsters;
-            return creatures.Where(mob => mob.Location.DistanceFrom(Client._clientLocation) <= skillRange);
+            return creatures.Where(mob => mob.Location.DistanceFrom(Client.ClientLocation) <= skillRange);
         }
 
         internal bool SharesAxis(Location loc1, Location loc2)
@@ -427,21 +427,21 @@ namespace Talos.Bashing
 
         internal virtual bool EquipNecklaceIfNeeded(Creature target)
         {
-            if (!Client._map.Name.Contains("Shinewood Forest"))
+            if (!Client.Map.Name.Contains("Shinewood Forest"))
                 return false;
 
             bool canSwapNecklace = DateTime.UtcNow.Subtract(LastNeckSwap).TotalMilliseconds > (1000 + PingCompensation * 2);
 
             if (canSwapNecklace)
             {
-                if (CONSTANTS.SHINEWOOD_HOLY.Contains(target.SpriteID) && !Client._offenseElement.Equals("Light", StringComparison.OrdinalIgnoreCase))
+                if (CONSTANTS.SHINEWOOD_HOLY.Contains(target.SpriteID) && !Client.OffenseElement.Equals("Light", StringComparison.OrdinalIgnoreCase))
                 {
                     Client.EquipLightNeck();
                     LastNeckSwap = DateTime.UtcNow;
                     return true;
                 }
 
-                if (CONSTANTS.SHINEWOOD_DARK.Contains(target.SpriteID) && !Client._offenseElement.Equals("Dark", StringComparison.OrdinalIgnoreCase))
+                if (CONSTANTS.SHINEWOOD_DARK.Contains(target.SpriteID) && !Client.OffenseElement.Equals("Dark", StringComparison.OrdinalIgnoreCase))
                 {
                     Client.EquipDarkNeck();
                     LastNeckSwap = DateTime.UtcNow;
@@ -489,7 +489,7 @@ namespace Talos.Bashing
             if (!CanMove)
                 return false;
 
-            Location currentLoc = Client._clientLocation;
+            Location currentLoc = Client.ClientLocation;
 
             // Randomize the directions and check for walkability
             var randomDirections = Enum.GetValues(typeof(Direction))
@@ -498,8 +498,8 @@ namespace Talos.Bashing
 
             foreach (var dir in randomDirections)
             {
-                var targetPoint = currentLoc.Offset(dir);
-                if (Client._map.IsWalkable(Client, targetPoint))
+                var targetPoint = currentLoc.Offsetter(dir);
+                if (Client.Map.IsWalkable(Client, targetPoint))
                 {
                     Client.Walk(dir);
                     return true;
@@ -522,13 +522,13 @@ namespace Talos.Bashing
             }
 
             // Refresh if Client and Server points are out of sync
-            if (Client._clientLocation != Client._serverLocation)
+            if (Client.ClientLocation != Client.ServerLocation)
             {
                 if ((currentTime - LastPointInSync).TotalMilliseconds > 1000)
                 {
                     WaitForSync(pingDelay, currentTime);
 
-                    if (Client._clientLocation != Client._serverLocation)
+                    if (Client.ClientLocation != Client.ServerLocation)
                         Client.RefreshRequest();
 
                     LastPointInSync = DateTime.UtcNow;
@@ -555,7 +555,7 @@ namespace Talos.Bashing
             while ((DateTime.UtcNow - startTime) < pingDelay)
             {
                 Thread.Sleep(25);
-                if (Client._clientLocation == Client._serverLocation)
+                if (Client.ClientLocation == Client.ServerLocation)
                     break;
             }
         }

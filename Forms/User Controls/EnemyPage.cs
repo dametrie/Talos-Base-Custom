@@ -200,7 +200,7 @@ namespace Talos.Forms
             {
                 if (priorityLbox.Items.Contains(result.ToString()))
                 {
-                    MessageDialog.Show(Client._server._mainForm, "\tEnemy already in list\t");
+                    MessageDialog.Show(Client.Server._mainForm, "\tEnemy already in list\t");
                     priorityTbox.Clear();
                 }
                 else
@@ -211,7 +211,7 @@ namespace Talos.Forms
             }
             else
             {
-                MessageDialog.Show(Client._server._mainForm, "Your sprite must be a number between 1-1000");
+                MessageDialog.Show(Client.Server._mainForm, "Your sprite must be a number between 1-1000");
                 priorityTbox.Clear();
             }
         }
@@ -230,7 +230,7 @@ namespace Talos.Forms
             {
                 if (priorityLbox.Items.Contains(result.ToString()))
                 {
-                    MessageDialog.Show(Client._server._mainForm, "\tEnemy already in list\t");
+                    MessageDialog.Show(Client.Server._mainForm, "\tEnemy already in list\t");
                     ignoreTbox.Clear();
                 }
                 else
@@ -241,7 +241,7 @@ namespace Talos.Forms
             }
             else
             {
-                MessageDialog.Show(Client._server._mainForm, "Your sprite must be a number between 1-1000");
+                MessageDialog.Show(Client.Server._mainForm, "Your sprite must be a number between 1-1000");
                 ignoreTbox.Clear();
             }
         }

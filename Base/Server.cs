@@ -65,17 +65,25 @@ namespace Talos
         #endregion
 
         private bool _isMapping;
+        private bool _mapChangePending;
         internal bool _stopWalking;
         internal bool _stopCasting;
         internal bool _disableSound = false;
         private bool _shouldCloseProfile = false;
         private bool _canCloseProfile = false;
+        private DateTime _lastWorldShout = DateTime.MinValue;
+        private DateTime _lastMapChange = DateTime.MinValue;
+        private Element _enemyElement;
+        private Animation _lastAnimation;
+        private string _itemToReEquip = "";
+        private bool _clientWalkPending;
+        internal DateTime ArenaAnnounceTimer { get; set; } = DateTime.MinValue;
 
         InputSimulator inputSimulator = new InputSimulator();
 
         // Create a single instance of ActiveMessageHandler
         ActiveMessageHandler activeMessageHandler = ActiveMessageHandler.Instance;
-        // Create a singel isntance of CommandManager
+        // Create a singel instance of CommandManager
         CommandManager commandManager = CommandManager.Instance;
 
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
@@ -344,13 +352,13 @@ namespace Talos
             //Console.WriteLine("CLIENT Direction facing = " + facing);
             clientPacket.ReadByte();
             clientPacket.Data[1] = client.StepCount++;
-            client._clientLocation.Offset(facing);
+            client.ClientLocation.Offsetter(facing);
             client.LastStep = DateTime.UtcNow;
-            client._isCasting = false;
+            client.IsCasting = false;
 
             if (client.ClientTab != null)
             {
-                client.ClientTab.DisplayMapInfoOnCover(client._map);
+                client.ClientTab.DisplayMapInfoOnCover(client.Map);
             }
 
             return true;
@@ -360,7 +368,7 @@ namespace Talos
         {
             byte inventorySlot = clientPacket.ReadByte();
             Point groundPoint = clientPacket.ReadStruct();
-            Location location = new Location(client._map.MapID, groundPoint);
+            Location location = new Location(client.Map.MapID, groundPoint);
 
             return true;
         }
@@ -370,7 +378,7 @@ namespace Talos
             byte inventorySlot = clientPacket.ReadByte();
             Point groundPoint = clientPacket.ReadStruct();
             int count = clientPacket.ReadInt32();
-            Location location = new Location(client._map.MapID, groundPoint);
+            Location location = new Location(client.Map.MapID, groundPoint);
 
             return true;
         }
@@ -475,7 +483,7 @@ namespace Talos
             string name = clientPacket.ReadString8();
             uint id = clientPacket.ReadUInt32();
             client.Name = name;
-            client._crypto = new Crypto(seed, key, name);
+            client.Crypto = new Crypto(seed, key, name);
 
             return true;
         }
@@ -483,7 +491,7 @@ namespace Talos
         private bool ClientMessage_0x11_Turn(Client client, ClientPacket clientPacket)
         {
             Direction direction = (Direction)clientPacket.ReadByte();
-            client._serverDirection = direction;
+            client.ServerDirection = direction;
 
             return true;
         }
@@ -518,7 +526,7 @@ namespace Talos
             byte slot = clientPacket.ReadByte();
 
             client.Inventory[slot].LastUsed = DateTime.UtcNow;
-            client._currentItem = client.Inventory[slot].Name;
+            client.CurrentItem = client.Inventory[slot].Name;
 
             try
             {
@@ -534,16 +542,16 @@ namespace Talos
 
             if (client.Inventory[slot].Name == "Two Move Combo")
             {
-                if (client._comboScrollCounter <= 1)
+                if (client.ComboScrollCounter <= 1)
                 {
-                    client._comboScrollCounter = (byte)(client._comboScrollCounter + 1);
-                    client._comboScrollLastUsed = DateTime.UtcNow;
+                    client.ComboScrollCounter = (byte)(client.ComboScrollCounter + 1);
+                    client.ComboScrollLastUsed = DateTime.UtcNow;
                 }
             }
-            else if ((client.Inventory[slot].Name == "Three Move Combo") && (client._comboScrollCounter <= 2))
+            else if ((client.Inventory[slot].Name == "Three Move Combo") && (client.ComboScrollCounter <= 2))
             {
-                client._comboScrollCounter = (byte)(client._comboScrollCounter + 1);
-                client._comboScrollLastUsed = DateTime.UtcNow;
+                client.ComboScrollCounter = (byte)(client.ComboScrollCounter + 1);
+                client.ComboScrollLastUsed = DateTime.UtcNow;
             }
 
             return true;
@@ -681,11 +689,11 @@ namespace Talos
             byte slot = clientPacket.ReadByte();
 
             client.Skillbook[slot].LastUsed = DateTime.UtcNow;
-            client._currentSkill = client.Skillbook[slot].Name;
+            client.CurrentSkill = client.Skillbook[slot].Name;
 
             try
             {
-                if (client._currentSkill == "Charge") //In the event the client is a monk that has a "fake" skill named charge
+                if (client.CurrentSkill == "Charge") //In the event the client is a monk that has a "fake" skill named charge
                                                       //On their skill panel that is linked to sprint potion
                 {
                     ThreadPool.QueueUserWorkItem(_ => client.ClientTab.DelayedUpdateStrangerList());
@@ -793,11 +801,11 @@ namespace Talos
                         break;
                     }
                 case ExchangeType.Cancel:
-                    client._cancelPressed = true;
+                    client.CancelPressed = true;
                     ThreadPool.QueueUserWorkItem(_ => client.ResetExchangeVars());
                     break;
                 case ExchangeType.Accept:
-                    client._acceptPressed = true;
+                    client.AcceptPressed = true;
                     break;
             }
             return true;
@@ -900,12 +908,18 @@ namespace Talos
             Point location;
             try { location = serverPacket.ReadStruct(); } catch { return false; }
 
-            client._clientLocation.X = location.X;
-            client._clientLocation.Y = location.Y;
-            client._serverLocation.X = location.X;
-            client._serverLocation.Y = location.Y;
+            Location tempClientLocation = client.ClientLocation;
+            Location tempServerLocation = client.ServerLocation;
 
-            client.ClientTab.DisplayMapInfoOnCover(client._map);
+            tempClientLocation.X = location.X;
+            tempClientLocation.Y = location.Y;
+            tempServerLocation.X = location.X;
+            tempServerLocation.Y = location.Y;
+
+            client.ClientLocation = tempClientLocation;
+            client.ServerLocation = tempServerLocation;
+
+            client.ClientTab.DisplayMapInfoOnCover(client.Map);
 
             if (client.Staffs.Count == 0 || client.Bows.Count == 0 || client.Weapons.Count == 0)
             {
@@ -922,15 +936,15 @@ namespace Talos
                 }
             }
 
-            if (!client._unmaxedSkillsLoaded)
+            if (!client.UnmaxedSkillsLoaded)
             {
                 client.LoadUnmaxedSkills();
             }
-            if (!client._unmaxedSpellsLoaded)
+            if (!client.UnmaxedSpellsLoaded)
             {
                 client.LoadUnmaxedSpells();
             }
-            if (!client._bashingSkillsLoaded)
+            if (!client.BashingSkillsLoaded)
             {
                 client.LoadBashingSkills();
             }
@@ -960,7 +974,7 @@ namespace Talos
                 while (count < length)
                 {
                     Point point = serverPacket.ReadStruct();
-                    Location location = new Location(client._map.MapID, point);
+                    Location location = new Location(client.Map.MapID, point);
                     int id = serverPacket.ReadInt32();
                     ushort sprite = serverPacket.ReadUInt16();
 
@@ -1097,11 +1111,11 @@ namespace Talos
                         stats.Damage = serverPacket.ReadByte();
                         stats.Hit = serverPacket.ReadByte();
                     }
-                    if (stats.Mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client._safeScreen))
+                    if (stats.Mail.HasFlag(Mail.HasParcel) && (!client.HasParcel && !client.SafeScreen))
                     {
                         client.ServerMessage((byte)ServerMessageType.Whisper, "{=qYou have received a parcel.");
                     }
-                    if ((stats.Mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client._safeScreen)
+                    if ((stats.Mail.HasFlag(Mail.HasLetter) && !client.HasLetter) && !client.SafeScreen)
                     {
                         client.ServerMessage((byte)ServerMessageType.Whisper, "{=qYou've got mail.");
                     }
@@ -1213,11 +1227,11 @@ namespace Talos
                     {
                         string defenseNatureValue = fullMessage.Split(':')[1].Trim();
                         if (defenseNatureValue == "No attributes")
-                            client._element = Element.None;
+                            _enemyElement = Element.None;
                         else
-                            Enum.TryParse(defenseNatureValue, out client._element);
+                            Enum.TryParse(defenseNatureValue, out _enemyElement);
                     }
-                    client._isCheckingBelt = false;
+                    client.IsCheckingBelt = false;
                     return true;
                 case (byte)ServerMessageType.GroupChat:
                     if (client.ClientTab != null)
@@ -1266,22 +1280,28 @@ namespace Talos
         {
             Point location;
             Direction direction = (Direction)serverPacket.ReadByte();
-            try { location = serverPacket.ReadStruct().TranslatePointByDirection(direction); } catch { return false; }
+            try { location = serverPacket.ReadStruct().Offsetter(direction); } catch { return false; }
 
             Location playerLocation = client.Player.Location;
             playerLocation.X = location.X;
             playerLocation.Y = location.Y;
             client.Player.Location = playerLocation;
+
             client.Player.LastStep = client.Player.LastStep;
 
-            client._serverLocation.X = location.X;
-            client._serverLocation.Y = location.Y;
-            client._clientDirection = direction;
+            Location tempServerLocation = client.ServerLocation;
+
+            tempServerLocation.X = location.X;
+            tempServerLocation.Y = location.Y;
+
+            client.ServerLocation = tempServerLocation;
+
+            client.ClientDirection = direction;
             client.LastStep = DateTime.UtcNow;
 
 
-            client._stuckCounter = 0;
-            client.ClientTab.DisplayMapInfoOnCover(client._map);
+            client.StuckCounter = 0;
+            client.ClientTab.DisplayMapInfoOnCover(client.Map);
 
             //Console.WriteLine("[ConfirmClientWalk] Direction facing: " + client._clientDirection);
             //Console.WriteLine("[ConfirmClientWalk] Server Location-- Map ID: " + client._serverLocation.MapID + " X,Y: " + client._serverLocation.Point);
@@ -1295,9 +1315,9 @@ namespace Talos
             int id = serverPacket.ReadInt32();
             try { point = serverPacket.ReadStruct(); } catch { return false; }
             Direction direction = (Direction)serverPacket.ReadByte();
-            point.GetDirection(direction);
+            point.Offset(direction);
 
-            Location location = new Location(client._map.MapID, point);
+            Location location = new Location(client.Map.MapID, point);
             client.LastSeenLocations[id] = location;
             if (!client.WorldObjects.ContainsKey(id))
             {
@@ -1348,7 +1368,7 @@ namespace Talos
                 return false;
             } 
 
-            if ((client != null) && ((client._map != null) && (client._map.Name.Contains("Mount Giragan") && (client.WorldObjects.ContainsKey(ID) && ((client.WorldObjects[ID] is Creature) && !(client.WorldObjects[ID] is Player))))))
+            if ((client != null) && ((client.Map != null) && (client.Map.Name.Contains("Mount Giragan") && (client.WorldObjects.ContainsKey(ID) && ((client.WorldObjects[ID] is Creature) && !(client.WorldObjects[ID] is Player))))))
             {
                 //return false to disable MTG spam
                 return false;
@@ -1432,9 +1452,9 @@ namespace Talos
                         //Console.WriteLine($"[RemoveVisibleObjects] Removed dead Creature ID {creature.ID}, Hash: {creature.GetHashCode()}");
                     }
 
-                    if (client._map.Name.Contains("Plamit"))
+                    if (client.Map.Name.Contains("Plamit"))
                     {
-                        if (creature.Location.DistanceFrom(client._serverLocation) >= 10)
+                        if (creature.Location.DistanceFrom(client.ServerLocation) >= 10)
                         {
                             client.WorldObjects.TryRemove(creature.ID, out _);
                             client.NearbyObjects.Remove(creature.ID);
@@ -1491,7 +1511,7 @@ namespace Talos
                 Item existingWorldShout = client.Inventory[name];
                 if (existingWorldShout != null && quantity == existingWorldShout.Quantity - 1)
                 {
-                    client._lastWorldShout = DateTime.UtcNow;
+                    _lastWorldShout = DateTime.UtcNow;
                 }
             }
 
@@ -1506,7 +1526,7 @@ namespace Talos
         {
             byte slot = serverPacket.ReadByte();
             if ((client.Inventory[slot] != null) && (client.Inventory[slot].Name == "World Shout"))
-                client._lastWorldShout = DateTime.UtcNow;
+                _lastWorldShout = DateTime.UtcNow;
 
             client.Inventory[slot] = null;
             return true;
@@ -1531,8 +1551,8 @@ namespace Talos
             }
             if (id == client.PlayerID)
             {
-                client._clientDirection = direction;
-                client._serverDirection = direction;
+                client.ClientDirection = direction;
+                client.ServerDirection = direction;
             }
 
             return true;
@@ -1553,8 +1573,8 @@ namespace Talos
 
                 creature.HealthPercent = percent;
                 creature._hitCounter++;
-                creature.LastAnimation[(ushort)SpellAnimation.Net] = DateTime.MinValue;
-                creature.LastAnimation[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
+                creature.AnimationHistory[(ushort)SpellAnimation.Net] = DateTime.MinValue;
+                creature.AnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
             }
             return true;
         }
@@ -1569,8 +1589,8 @@ namespace Talos
             ushort checksum = serverPacket.ReadUInt16();
             string name = serverPacket.ReadString8();
 
-            if (client._overrideMapFlags)
-                serverPacket.Data[4] = (byte)client._mapFlags;
+            if (client.OverrideMapFlags)
+                serverPacket.Data[4] = (byte)client.MapFlags;
 
             Map map = new Map(mapID, sizeX, sizeY, flags, checksum, name);
 
@@ -1618,9 +1638,9 @@ namespace Talos
                 Packet[] requestMapData = new Packet[] { cp };
                 client.Enqueue(requestMapData);
             }
-            client._map = map;
+            client.Map = map;
 
-            _maps[mapID].Tiles = client._map.Tiles;
+            _maps[mapID].Tiles = client.Map.Tiles;
 
 
 
@@ -1635,12 +1655,12 @@ namespace Talos
             client.ClientTab.UpdateStrangerList();
 
             
-            client.ClientTab.DisplayMapInfoOnCover(client._map);
+            client.ClientTab.DisplayMapInfoOnCover(client.Map);
 
 
-            client._mapChangePending = false;
-            client._worldMap = null;
-            client._clientWalkPending = false;
+            _mapChangePending = false;
+            client.WorldMap = null;
+            _clientWalkPending = false;
             client.Pathfinder = new Pathfinder(client);
 
 
@@ -1685,7 +1705,7 @@ namespace Talos
             Spell spell = new Spell(slot, name, type, sprite, prompt, castLines, currentLevel, maximumLevel);
             client.Spellbook.AddOrUpdateSpell(spell);
             
-            if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client._map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab._unmaxedSpells.Contains(spell.Name)))))
+            if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client.Map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab._unmaxedSpells.Contains(spell.Name)))))
             {
                 client.ClientTab.SpellToUse(client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name], new EventArgs());
                 client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name].Dispose();
@@ -1713,7 +1733,7 @@ namespace Talos
             //Console.WriteLine($"[SERVER] Sound index: {num}");
             if (num == (byte)19) // That god-awful sound that plays constantly in Tavaly
                 return false;
-            return !client._assailNoise || num != (byte)1 && num != (byte)101 && num != (byte)16;
+            return !client.AssailNoise || num != (byte)1 && num != (byte)101 && num != (byte)16;
         }
 
         private bool ServerMessage_0x1A_BodyAnimation(Client client, ServerPacket serverPacket)
@@ -1732,14 +1752,14 @@ namespace Talos
         private bool ServerMessage_0x1F_MapChangeComplete(Client client, ServerPacket serverPacket)
         {
 
-            client._previousMapID = client._map.MapID;
+            client.PreviousMapID = client.Map.MapID;
             client.Bot._doorTime = DateTime.UtcNow;
-            client.Bot._doorPoint = client._clientLocation.Point;
+            client.Bot._doorPoint = client.ClientLocation.Point;
 
-            client._lastMapChange = DateTime.UtcNow;
+            _lastMapChange = DateTime.UtcNow;
 
-            client._map.CanUseSkills = true;
-            client._map.CanUseSpells = true;
+            client.Map.CanUseSkills = true;
+            client.Map.CanUseSpells = true;
 
             return true;
         }
@@ -1775,7 +1795,7 @@ namespace Talos
                     sourceAnimation = serverPacket.ReadUInt16();
                     animationSpeed = serverPacket.ReadInt16();
 
-                    client._lastAnimation = new Animation(targetID, sourceID, targetAnimation, sourceAnimation, animationSpeed);
+                    _lastAnimation = new Animation(targetID, sourceID, targetAnimation, sourceAnimation, animationSpeed);
 
                     if (!client.WorldObjects.ContainsKey(targetID))
                     {
@@ -1786,12 +1806,12 @@ namespace Talos
                     Creature targetCreature = client.WorldObjects[targetID] as Creature;
                     Creature sourceCreature = client.WorldObjects.ContainsKey(sourceID) ? client.WorldObjects[sourceID] as Creature : null;
 
-                    targetCreature.LastAnimation[targetAnimation] = DateTime.UtcNow;
-                    targetCreature._lastAnimation = targetAnimation;
-                    targetCreature._lastAnimationTime = DateTime.UtcNow;
+                    targetCreature.AnimationHistory[targetAnimation] = DateTime.UtcNow;
+                    targetCreature.LastAnimation = targetAnimation;
+                    targetCreature.LastAnimationTime = DateTime.UtcNow;
 
                     if (sourceID != 0)
-                        targetCreature.LastForeignAnimation[targetAnimation] = DateTime.UtcNow;
+                        targetCreature.ForeignAnimationHistory[targetAnimation] = DateTime.UtcNow;
 
                     AnimationHandler animationHandler = new AnimationHandler(client, this, targetCreature, sourceCreature, targetAnimation, targetID, sourceID);
                     animationHandler.HandleAnimation();
@@ -1847,7 +1867,7 @@ namespace Talos
 
             Skill skill = new Skill(slot, name, sprite, currentLevel, maximumLevel);
 
-            if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client._map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab._unmaxedSkills.Contains(skill.Name)))))
+            if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client.Map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab._unmaxedSkills.Contains(skill.Name)))))
             {
                 client.ClientTab.SkillToUse(client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name], new EventArgs());
                 client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name].Dispose();
@@ -1883,19 +1903,19 @@ namespace Talos
                 worldMap.Nodes.Add(new WorldMapNode(position, name, mapID, spawnPoint));
             }
 
-            client._worldMap = worldMap;
+            client.WorldMap = worldMap;
             uint crc = worldMap.GetCRC32();
             WorldMap newWorldMap = worldMap;
             _worldMaps[crc] = newWorldMap;
 
-            if (_isMapping && (client._clientWalkPending && _maps.ContainsKey(client._map.MapID)))
+            if (_isMapping && (_clientWalkPending && _maps.ContainsKey(client.Map.MapID)))
             {
-                Location loc = client._serverLocation;
-                loc.Offset(client._clientDirection);
-                _maps[client._map.MapID].WorldMaps[loc.Point] = newWorldMap;
+                Location loc = client.ServerLocation;
+                loc.Offsetter(client.ClientDirection);
+                _maps[client.Map.MapID].WorldMaps[loc.Point] = newWorldMap;
             }
 
-            client._clientWalkPending = false;
+            _clientWalkPending = false;
 
             return true;
         }
@@ -1916,14 +1936,14 @@ namespace Talos
                 string merchantText = serverPacket.ReadString16();
 
 
-                if ((merchantText == "Hello.  What can I do for you?") && (merchantName == "ColiseumTor") && (DateTime.UtcNow.Subtract(client._arenaAnnounceTimer).TotalMinutes < 6.0))
+                if ((merchantText == "Hello.  What can I do for you?") && (merchantName == "ColiseumTor") && (DateTime.UtcNow.Subtract(ArenaAnnounceTimer).TotalMinutes < 6.0))
                 {
                     string str = "";
-                    TimeSpan span2 = new TimeSpan(0, 6, 0) - DateTime.UtcNow.Subtract(client._arenaAnnounceTimer);
-                    str = "You may broadcast again in " + ((client._arenaAnnounceTimer != DateTime.MinValue) ? (((span2.Minutes > 1) ? $"{span2.Minutes} minutes and " : ((span2.Minutes > 0) ? $"{span2.Minutes} minutes and " : string.Empty)) + $"{span2.Seconds} seconds.") : "unkown value.");
+                    TimeSpan span2 = new TimeSpan(0, 6, 0) - DateTime.UtcNow.Subtract(ArenaAnnounceTimer);
+                    str = "You may broadcast again in " + ((ArenaAnnounceTimer != DateTime.MinValue) ? (((span2.Minutes > 1) ? $"{span2.Minutes} minutes and " : ((span2.Minutes > 0) ? $"{span2.Minutes} minutes and " : string.Empty)) + $"{span2.Seconds} seconds.") : "unkown value.");
                     client.ServerMessage(3, str);
                 }
-                client._npcDialog = merchantText;
+                client.NpcDialog = merchantText;
                 client.ClientTab.npcText.Text = merchantText;
                 int num7 = serverPacket.Position;
                 switch (menuType)
@@ -1942,7 +1962,7 @@ namespace Talos
 
                         case (byte)MenuType.WithdrawlOrBuy:
                         {
-                            client._inventoryList.Clear();
+                            client.SavedInventoryList.Clear();
                             serverPacket.Read(3);
                             byte uniqueItemCount = serverPacket.ReadByte();
                             for (int index = 0; index < uniqueItemCount; index++)
@@ -1953,13 +1973,13 @@ namespace Talos
                                 string itemName = serverPacket.ReadString8();
                                 string unknown = serverPacket.ReadString8();  // Presuming these are used elsewhere or logged
 
-                                client._inventoryList.Add(itemName);
+                                client.SavedInventoryList.Add(itemName);
                             }
 
-                            if (client._inventoryList.Count > 0)
+                            if (client.SavedInventoryList.Count > 0)
                             {
                                 StringBuilder builder = new StringBuilder();
-                                foreach (string item in client._inventoryList)
+                                foreach (string item in client.SavedInventoryList)
                                 {
                                     if (!string.IsNullOrEmpty(item))
                                     {
@@ -2024,7 +2044,7 @@ namespace Talos
                     if (npcDialog != "You have already sent a world shout in the last 5 minutes.")
                     {
                         client.ClientTab.UpdateNpcInfo(npcDialog, dialogID, pursuitID);
-                        client._npcDialog = npcDialog;
+                        client.NpcDialog = npcDialog;
                         int captionOffset = dialogType - 2;
                         if (captionOffset != 0)
                         {
@@ -2106,7 +2126,7 @@ namespace Talos
                         }
                         else if (npcDialog == "This will reset your labor to one hour. You can only do this once.")
                         {
-                            client._hasLabor = true;
+                            client.HasLabor = true;
                         }
                         else if (npcDialog == "Will you be respectful of the meditations and not reveal the secrets of meditation?")
                         {
@@ -2188,8 +2208,8 @@ namespace Talos
                     }
                     else
                     {
-                        TimeSpan span = new TimeSpan(0, 5, 0) - DateTime.UtcNow.Subtract(client._lastWorldShout);
-                        client.ServerDialog(dialogType, objType, objID, unknown, sprite1, color1, unknown2, sprite2, color2, pursuitID, dialogID, false, false, unknown3, objName, "You may World Shout again in " + ((client._lastWorldShout != DateTime.MinValue) ? (((span.Minutes > 1) ? $"{span.Minutes} minutes and " : ((span.Minutes > 0) ? $"{span.Minutes} minutes and " : string.Empty)) + $"{span.Seconds} seconds.") : "unkown value."));
+                        TimeSpan span = new TimeSpan(0, 5, 0) - DateTime.UtcNow.Subtract(_lastWorldShout);
+                        client.ServerDialog(dialogType, objType, objID, unknown, sprite1, color1, unknown2, sprite2, color2, pursuitID, dialogID, false, false, unknown3, objName, "You may World Shout again in " + ((_lastWorldShout != DateTime.MinValue) ? (((span.Minutes > 1) ? $"{span.Minutes} minutes and " : ((span.Minutes > 0) ? $"{span.Minutes} minutes and " : string.Empty)) + $"{span.Seconds} seconds.") : "unkown value."));
                         dialogSuccess = false;
                     }
                 }
@@ -2247,13 +2267,13 @@ namespace Talos
                 byte length = serverPacket.ReadByte();
                 for (int i = 0; i < length; i++)
                 {
-                    client._clientWalkPending = true;
+                    _clientWalkPending = true;
                     byte x = serverPacket.ReadByte();
                     byte y = serverPacket.ReadByte();
                     bool closed = serverPacket.ReadBoolean();
                     bool openedRight = serverPacket.ReadBoolean();
 
-                    Location currentLocation = new Location(client._map.MapID, x, y);
+                    Location currentLocation = new Location(client.Map.MapID, x, y);
                     //Console.WriteLine($"Door found at: {client._map.MapID}, {x},{y}, closed: {closed}, openedRight: {openedRight}");
                     Door door = new Door(currentLocation, closed);
                     if (!client.Doors.ContainsKey(door.Location))
@@ -2302,7 +2322,7 @@ namespace Talos
 
 
             Point point = serverPacket.ReadStruct();
-            Location location = new Location(client._map.MapID, point);
+            Location location = new Location(client.Map.MapID, point);
             Direction direction = (Direction)serverPacket.ReadByte();
             int id = serverPacket.ReadInt32();
             ushort headSprite = serverPacket.ReadUInt16();
@@ -2432,8 +2452,8 @@ namespace Talos
             if (id == client.PlayerID)
             {
                 client.Player = player;
-                client._clientDirection = direction;
-                client._clientLocation = location;
+                client.ClientDirection = direction;
+                client.ClientLocation = location;
                 if (client.SpriteOverrideEnabled)
                 {
                     serverPacket.Clear();
@@ -2441,7 +2461,7 @@ namespace Talos
                     serverPacket.WriteByte((byte)direction);
                     serverPacket.WriteUInt32((uint)id);
                     serverPacket.WriteUInt16(ushort.MaxValue);
-                    serverPacket.WriteUInt16((ushort)(client._spriteOverride + CONSTANTS.CREATURE_SPRITE_OFFSET));
+                    serverPacket.WriteUInt16((ushort)(client.SpriteOverride + CONSTANTS.CREATURE_SPRITE_OFFSET));
                     serverPacket.WriteByte(headColor);
                     serverPacket.WriteByte(bootsColor);
                     serverPacket.Write(new byte[6]);
@@ -2753,7 +2773,7 @@ namespace Talos
             byte slot = serverPacket.ReadByte();
 
             if (slot == 2)
-                client._itemToReEquip = client.EquippedItems[slot].Name;
+                _itemToReEquip = client.EquippedItems[slot].Name;
 
             client.EquippedItems[slot] = null;
 
@@ -2786,7 +2806,7 @@ namespace Talos
             int temClass = serverPacket.ReadByte();
             serverPacket.Read(2);
 
-            if (temClass != null) SetTemuairClass(client, temClass);
+            SetTemuairClass(client, temClass);
 
             string medClass = serverPacket.ReadString8();
             if (medClass != null) SetMedeniaClass(client, medClass);
@@ -2810,7 +2830,7 @@ namespace Talos
                 }
                 if ((legendMarkKey != null) && legendMarkKey.Equals("_Unr"))
                 {
-                    client._isRegistered = false;
+                    client.IsRegistered = false;
                 }
                 if ((legendMarkKey != null) && legendMarkKey.StartsWith("LBeast"))
                 {
@@ -2881,7 +2901,7 @@ namespace Talos
                 client.EffectsBar.Remove(effect);
                 if ((effect == 19) && !client.InArena)//bday or incapacitate //ADAM check this
                 {
-                    ThreadPool.QueueUserWorkItem(_ => client.ReEquipItem(client._itemToReEquip));
+                    ThreadPool.QueueUserWorkItem(_ => client.ReEquipItem(_itemToReEquip));
                 }
             }
             return true;
@@ -2906,24 +2926,24 @@ namespace Talos
         private bool ServerMessage_0x3C_MapData(Client client, ServerPacket serverPacket)
         {
             short num = serverPacket.ReadInt16();
-            object[] mapID = new object[] { client._map.MapID };
+            object[] mapID = new object[] { client.Map.MapID };
             string path = Program.WriteMapFiles(Environment.SpecialFolder.CommonApplicationData, @"maps\lod{0}.map", mapID);
             FileStream output = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
-            output.Seek((client._map.Width * 6) * num, SeekOrigin.Begin);
+            output.Seek((client.Map.Width * 6) * num, SeekOrigin.Begin);
             BinaryWriter writer = new BinaryWriter(output);
-            for (short i = 0; i < client._map.Width; i = (short)(i + 1))
+            for (short i = 0; i < client.Map.Width; i = (short)(i + 1))
             {
                 writer.Write(serverPacket.ReadInt16());
                 writer.Write(serverPacket.ReadInt16());
                 writer.Write(serverPacket.ReadInt16());
             }
             writer.Close();
-            if (num == (client._map.Height - 1))
+            if (num == (client.Map.Height - 1))
             {
                 byte[] buffer = File.ReadAllBytes(path);
-                if (CRC.Calculate(buffer) == client._map.Checksum)
+                if (CRC.Calculate(buffer) == client.Map.Checksum)
                 {
-                    client._map.Initialize(buffer);
+                    client.Map.Initialize(buffer);
                 }
             }
             return true;
@@ -3010,8 +3030,8 @@ namespace Talos
 
         private bool ServerMessage_0x58_MapLoadComplete(Client client, ServerPacket serverPacket)
         {
-            if (client._isRefreshing == 1)
-                client._mapChanged = true;
+            if (client.IsRefreshingData == 1)
+                client.MapChanged = true;
 
 
 
@@ -3043,7 +3063,7 @@ namespace Talos
 
         private bool ServerMessage_0x67_MapChangePending(Client client, ServerPacket serverPacket)
         {
-            client._mapChangePending = true;
+            _mapChangePending = true;
             return true;
         }
 
@@ -3072,10 +3092,10 @@ namespace Talos
         {
             client.Bot._dontCast = true;
             client.Bot._dontWalk = true;
-            client._exchangeOpen = true;
+            client.ExchangeOpen = true;
 
             uint id = serverPacket.ReadUInt32();
-            client._exchangeID = id;
+            client.ExchangeID = id;
             _exchangeName = serverPacket.ReadString8();
 
             client.ClientTab.AddMessageToChatPanel(Color.IndianRed, $"An exchange has started with {_exchangeName}!");
@@ -3083,7 +3103,7 @@ namespace Talos
 
         private void HandleAddStackable(Client client, ServerPacket serverPacket)
         {
-            client._exchangeOpen = true;
+            client.ExchangeOpen = true;
 
             byte toOrFrom = serverPacket.ReadByte();
             serverPacket.ReadByte();
@@ -3282,10 +3302,10 @@ namespace Talos
         {
             lock (SyncObj)
             {
-                if (client._spellHistory != null && client._spellHistory.Count > 0)
+                if (client.SpellHistory != null && client.SpellHistory.Count > 0)
                 {
                     //Console.WriteLine($"[RemoveFirstCreatureToSpell] Creature ID: {client._spellHistory[0].Creature.ID}, Spellname: {client._spellHistory[0].Spell.Name}, Hash: {client._spellHistory[0].Spell.GetHashCode()}");
-                    client._spellHistory.RemoveAt(0);
+                    client.SpellHistory.RemoveAt(0);
                 }
             }
         }
@@ -3413,9 +3433,9 @@ namespace Talos
             // Map combo type to flags and scroll names
             var comboMapping = new Dictionary<string, (string ComboScrollName, Func<Client, bool> GetFlag, Action<Client, bool> SetFlag)>
             {
-                { "Combo1", ("Combo Scroll 1", c => c._comboOneSet, (c, v) => c._comboOneSet = v) },
-                { "Combo2", ("Combo Scroll 2", c => c._comboTwoSet, (c, v) => c._comboTwoSet = v) },
-                { "Combo3", ("Combo Scroll 3", c => c._comboThreeSet, (c, v) => c._comboThreeSet = v) }
+                { "Combo1", ("Combo Scroll 1", c => c.ComboOneSet, (c, v) => c.ComboOneSet = v) },
+                { "Combo2", ("Combo Scroll 2", c => c.ComboTwoSet, (c, v) => c.ComboTwoSet = v) },
+                { "Combo3", ("Combo Scroll 3", c => c.ComboThreeSet, (c, v) => c.ComboThreeSet = v) }
             };
 
             if (!comboMapping.TryGetValue(comboType, out var comboInfo))
@@ -3563,7 +3583,7 @@ namespace Talos
                 }
                 catch (Exception ex)
                 {
-                    //Console.WriteLine($"Error processing map ID {index3}: {ex.Message}");
+                    Console.WriteLine($"Error processing map ID {index3}: {ex.Message}");
                 }
             }
             binaryReader.Close();
@@ -3619,9 +3639,9 @@ namespace Talos
 
             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, stateUpdates);
 
-            if (creature.LastAnimation.ContainsKey((byte)SpellAnimation.Armachd))
+            if (creature.AnimationHistory.ContainsKey((byte)SpellAnimation.Armachd))
             {
-                creature.LastAnimation[(byte)SpellAnimation.Armachd] = DateTime.MinValue;
+                creature.AnimationHistory[(byte)SpellAnimation.Armachd] = DateTime.MinValue;
             }
 
             if (ReferenceEquals(creature, client.Player))
@@ -3651,16 +3671,16 @@ namespace Talos
 
                         if (text == "Stop" && client.ClientTab.rangerLogCbox.Checked)
                         {
-                            lock (client.Lock)
+                            lock (client.CastLock)
                             {
                                 //request world list
                                 client.Enqueue(new Packet[] { new ClientPacket(0x18) });
                             }
                         }
 
-                        if (Settings.Default.enableKom && !string.IsNullOrEmpty(client.Name) && client._map != null &&
-                            client._map.MapID == 10055 && !client.Bot.IsStrangerNearby() &&
-                            client._serverLocation.DistanceFrom(new Location(10055, 39, 40)) <= 18 &&
+                        if (Settings.Default.enableKom && !string.IsNullOrEmpty(client.Name) && client.Map != null &&
+                            client.Map.MapID == 10055 && !client.Bot.IsStrangerNearby() &&
+                            client.ServerLocation.DistanceFrom(new Location(10055, 39, 40)) <= 18 &&
                             client.GetItemQuantity("Komadium") < 52)
                         {
                             int currentKoms = client.GetItemQuantity("Komadium");
@@ -3677,7 +3697,7 @@ namespace Talos
                             client.ClientTab._lastUpdate = DateTime.UtcNow;
                         }
 
-                        if (DateTime.UtcNow.Subtract(client.ClientTab._lastStatusUpdate).TotalSeconds > 3.0 && !client.isStatusUpdated)
+                        if (DateTime.UtcNow.Subtract(client.ClientTab._lastStatusUpdate).TotalSeconds > 3.0 && !client.IsStatusUpdated)
                         {
                             client.ClientTab.AutoLoginHandlers();
                         }

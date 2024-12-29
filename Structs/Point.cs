@@ -87,47 +87,49 @@ namespace Talos.Structs
         /// </summary>
         public static bool operator !=(Point left, Point right) => !left.Equals(right);
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="dir"></param>
-        /// <returns></returns>
-        internal Direction GetDirection(Direction dir)
-        {
-            return dir switch
-            {
-                Direction.North => (Direction)Y--,
-                Direction.East => (Direction)X++,
-                Direction.South => (Direction)Y++,
-                Direction.West => (Direction)X--,
-                _ => Direction.Invalid
-            };
-        }
 
-        internal Direction Relation(Point point)
+        internal void Offset(Direction dir)
         {
-            if (Y == point.Y)
+            switch (dir)
             {
-                if (X == point.X)
-                {
-                    return Direction.Invalid;
-                }
-                return X < point.X ? Direction.West : Direction.East;
+                case Direction.North:
+                    --Y;
+                    break;
+                case Direction.East:
+                    ++X;
+                    break;
+                case Direction.South:
+                    ++Y;
+                    break;
+                case Direction.West:
+                    --X;
+                    break;
             }
-            return Y < point.Y ? Direction.North : Direction.South;
         }
 
-        /// <summary>
-        /// Create a new point objbect the represents the current point translated by the direction
-        /// </summary>
-        /// <param name="dir">The direction to translate by</param>
-        /// <returns></returns>
-        internal Point TranslatePointByDirection(Direction dir)
+
+        internal Point Offsetter(Direction dir)
         {
             Point result = new Point(X, Y);
-            result.GetDirection(dir);
+            result.Offset(dir);
             return result;
         }
+
+
+        internal Direction GetDirection(Point point)
+        {
+            if (Y < point.Y)
+                return Direction.North;
+            if (X > point.X)
+                return Direction.East;
+            if (Y > point.Y)
+                return Direction.South;
+            if (X < point.X)
+                return Direction.West;
+
+            return Direction.Invalid;
+        }
+
 
         /// <summary>
         /// Prints the value of the point to a string

@@ -20,7 +20,7 @@ namespace Talos.Helper
         // Method to update multiple creature states across all clients
         internal static void UpdateCreatureStates(Client castingClient, int creatureID, Dictionary<CreatureState, object> stateUpdates)
         {
-            IEnumerable<Client> allClients = castingClient._server.Clients;
+            IEnumerable<Client> allClients = castingClient.Server.Clients;
 
             foreach (var client in allClients)
             {
@@ -44,7 +44,7 @@ namespace Talos.Helper
 
         internal static void UpdateCreatureState(Client castingClient, int creatureID, CreatureState state, object value)
         {
-            IEnumerable<Client> allClients = castingClient._server.Clients;
+            IEnumerable<Client> allClients = castingClient.Server.Clients;
 
             foreach (var client in allClients)
             {

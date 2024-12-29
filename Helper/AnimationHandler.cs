@@ -139,7 +139,7 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.Aite:
-                    if ((_sourceID != _client.Player.ID) || _client._spellHistory.Count <= 0) 
+                    if ((_sourceID != _client.Player.ID) || _client.SpellHistory.Count <= 0) 
                     {
                         var aiteStateUpdates = new Dictionary<CreatureState, object> 
                         {
@@ -157,8 +157,8 @@ namespace Talos.Helper
                         {
                             { CreatureState.IsAited, true },
                             { CreatureState.LastAited, DateTime.UtcNow },
-                            { CreatureState.AiteName, _client._spellHistory[0].Spell.Name },
-                            { CreatureState.AiteDuration, Spell.GetSpellDuration(_client._spellHistory[0].Spell.Name) }
+                            { CreatureState.AiteName, _client.SpellHistory[0].Spell.Name },
+                            { CreatureState.AiteDuration, Spell.GetSpellDuration(_client.SpellHistory[0].Spell.Name) }
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, aiteStateUpdates);
@@ -182,7 +182,7 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.Fas:
-                    if ((_sourceID != _client.Player.ID) || (_client._spellHistory.Count <= 0)) //we didn't cast it or our creature to spell list is empty
+                    if ((_sourceID != _client.Player.ID) || (_client.SpellHistory.Count <= 0)) //we didn't cast it or our creature to spell list is empty
                     {
 
                         double fasDuration = Spell.GetSpellDuration("ard fas nadur");
@@ -204,7 +204,7 @@ namespace Talos.Helper
                     else
                     {
 
-                        string spellName = _client._spellHistory[0].Spell.Name;
+                        string spellName = _client.SpellHistory[0].Spell.Name;
                         double fasDuration = Spell.GetSpellDuration(spellName);
 
                         var fasStateUpdate = new Dictionary<CreatureState, object> //Adam new
@@ -394,11 +394,11 @@ namespace Talos.Helper
 
                         if (isSourceCreatureNull || isSourceNotPlayer)
                         {
-                            _client._recentlyCrashered = isSourceCreatureNull;
+                            _client.RecentlyCrashered = isSourceCreatureNull;
                         }
-                        else if (_client._recentlyCrashered)
+                        else if (_client.RecentlyCrashered)
                         {
-                            _client._recentlyCrashered = false;
+                            _client.RecentlyCrashered = false;
                         }
                     }
                     break;
@@ -430,7 +430,7 @@ namespace Talos.Helper
                         Player targetPlayer = _targetCreature as Player;
                         if (targetPlayer.IsSkulled)
                         {
-                            targetPlayer.LastAnimation[(ushort)SpellAnimation.Skull] = DateTime.MinValue;
+                            targetPlayer.AnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.MinValue;
                         }
                         if (_targetID == _client.Player.ID)
                         {
@@ -469,9 +469,9 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.FrostStrike:
-                    if (_sourceID == _client.Player.ID && _client._spellHistory.Count > 0)
+                    if (_sourceID == _client.Player.ID && _client.SpellHistory.Count > 0)
                     {
-                        _client._spellHistory.RemoveAt(0);
+                        _client.SpellHistory.RemoveAt(0);
                     }
 
                     break;

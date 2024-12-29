@@ -135,10 +135,10 @@ namespace Talos.Forms
             InitializeCustomResourceBars();
 
             _wayForm.savedWaysLBox.DataSource = _wayFormProfiles;
-            worldObjectListBox.DataSource = client._worldObjectBindingList;
-            creatureHashListBox.DataSource = client._creatureBindingList;
-            strangerList.DataSource = client._strangerBindingList;
-            friendList.DataSource = client._friendBindingList;
+            worldObjectListBox.DataSource = client.WorldObjectBindingList;
+            creatureHashListBox.DataSource = client.CreatureBindingList;
+            strangerList.DataSource = client.StrangerBindingList;
+            friendList.DataSource = client.FriendBindingList;
             trashList.DataSource = _trashToDrop;
 
             profilePath = Settings.Default.DarkAgesPath.Replace("Darkages.exe", client.Name + "\\Talos");
@@ -192,39 +192,39 @@ namespace Talos.Forms
             });
 
 
-            _client._spellTimer.Start();
+            _client.SpellTimer.Start();
 
             _wayForm.DesktopLocation = Location;
-            if (_client._server._medWalk.ContainsKey(_client.Name) && _client._server._medWalk.ContainsKey(_client.Name))
+            if (_client.Server._medWalk.ContainsKey(_client.Name) && _client.Server._medWalk.ContainsKey(_client.Name))
             {
-                walkMapCombox.Text = _client._server._medWalk[_client.Name];
-                walkSpeedSldr.Value = _client._server._medWalkSpeed[_client.Name];
+                walkMapCombox.Text = _client.Server._medWalk[_client.Name];
+                walkSpeedSldr.Value = _client.Server._medWalkSpeed[_client.Name];
                 walkSpeedSldr_Scroll(_client.ClientTab.walkSpeedSldr, new EventArgs());
                 walkBtn.Text = "Stop";
                 startStrip_Click_1(new object(), new EventArgs());
-                _client._server._medWalk.Remove(_client.Name);
-                _client._server._medWalkSpeed.Remove(_client.Name);
+                _client.Server._medWalk.Remove(_client.Name);
+                _client.Server._medWalkSpeed.Remove(_client.Name);
             }
-            else if (_client._server._medTask.ContainsKey(_client.Name) && _client._server._medWalkSpeed.ContainsKey(_client.Name))
+            else if (_client.Server._medTask.ContainsKey(_client.Name) && _client.Server._medWalkSpeed.ContainsKey(_client.Name))
             {
-                if (_client._server._medTask[_client.Name] == "bugEvent")
+                if (_client.Server._medTask[_client.Name] == "bugEvent")
                 {
                     toggleBugBtn.Text = "Disable";
                 }
-                if (_client._server._medTask[_client.Name] == "vDayEvent")
+                if (_client.Server._medTask[_client.Name] == "vDayEvent")
                 {
                     toggleSeaonalDblBtn.Text = "Disable";
                 }
                 else
                 {
-                    followText.Text = _client._server._medTask[_client.Name];
+                    followText.Text = _client.Server._medTask[_client.Name];
                     followCbox.Checked = true;
                 }
-                walkSpeedSldr.Value = _client._server._medWalkSpeed[_client.Name];
+                walkSpeedSldr.Value = _client.Server._medWalkSpeed[_client.Name];
                 walkSpeedSldr_Scroll(_client.ClientTab.walkSpeedSldr, new EventArgs());
                 startStrip_Click_1(new object(), new EventArgs());
-                _client._server._medTask.Remove(_client.Name);
-                _client._server._medWalkSpeed.Remove(_client.Name);
+                _client.Server._medTask.Remove(_client.Name);
+                _client.Server._medWalkSpeed.Remove(_client.Name);
             }
 
             if (!Directory.Exists(profilePath))
@@ -301,7 +301,7 @@ namespace Talos.Forms
                     writer.WriteStartElement("Friends");
 
 
-                    foreach (string friend in _client._friendBindingList)
+                    foreach (string friend in _client.FriendBindingList)
                     {
                         writer.WriteElementString("friend", friend);
                     }
@@ -339,9 +339,9 @@ namespace Talos.Forms
 
                             // Check that friendName matches the regex and that a case-insensitive match does not already exist
                             if (wordPattern.IsMatch(friendName) &&
-                                !_client._friendBindingList.Any(f => f.Equals(friendName, StringComparison.CurrentCultureIgnoreCase)))
+                                !_client.FriendBindingList.Any(f => f.Equals(friendName, StringComparison.CurrentCultureIgnoreCase)))
                             {
-                                UpdateBindingList(_client._friendBindingList, friendList, friendName);
+                                UpdateBindingList(_client.FriendBindingList, friendList, friendName);
                             }
                         }
                     }
@@ -355,10 +355,10 @@ namespace Talos.Forms
 
         private void AddClientToFriends()
         {
-            if (!_client._friendBindingList.Contains(_client.Name))
+            if (!_client.FriendBindingList.Contains(_client.Name))
             {
-                UpdateBindingList(_client._friendBindingList, friendList, _client.Name);
-                _client._strangerBindingList.Remove(_client.Name);
+                UpdateBindingList(_client.FriendBindingList, friendList, _client.Name);
+                _client.StrangerBindingList.Remove(_client.Name);
             }
         }
 
@@ -389,7 +389,7 @@ namespace Talos.Forms
 
         private void SetVisibilityBasedOnMedeniaClass()
         {
-            string medeniaClass = _client._medeniaClassFlag.ToString();
+            string medeniaClass = _client.MedeniaClassFlag.ToString();
 
             switch (medeniaClass)
             {
@@ -420,7 +420,7 @@ namespace Talos.Forms
 
         private void SetVisibilityBasedOnTemuairClass()
         {
-            string temuairClass = _client._temuairClassFlag.ToString();
+            string temuairClass = _client.TemuairClassFlag.ToString();
 
             switch (temuairClass)
             {
@@ -428,7 +428,7 @@ namespace Talos.Forms
                     SetControlVisibility(hideCbox, "Hide", spellBased: true);
                     break;
                 case "Warrior":
-                    if (_client._previousClassFlag.ToString() == "Pure")
+                    if (_client.PreviousClassFlag.ToString() == "Pure")
                     {
                         SetPureClassSpells(asgallCbox, "asgall faileas");
                         SetPureClassSkills(perfectDefenseCbox, "Perfect Defense");
@@ -453,7 +453,7 @@ namespace Talos.Forms
         }
         private void SetVisibilityBasedOnPreviousClass()
         {
-            string previousClass = _client._previousClassFlag.ToString();
+            string previousClass = _client.PreviousClassFlag.ToString();
 
             switch (previousClass)
             {
@@ -491,23 +491,23 @@ namespace Talos.Forms
 
         private void SetPureClassSkills(Control control, string skillName)
         {
-            if (_client._previousClassFlag.ToString() == "Pure" && _client.Skillbook[skillName] != null)
+            if (_client.PreviousClassFlag.ToString() == "Pure" && _client.Skillbook[skillName] != null)
                 control.Visible = true;
         }
         private void SetPureClassSpells(Control control, string spellName)
         {
-            if (_client._previousClassFlag.ToString() == "Pure" && _client.Spellbook[spellName] != null)
+            if (_client.PreviousClassFlag.ToString() == "Pure" && _client.Spellbook[spellName] != null)
                 control.Visible = true;
         }
         private void SetPureClassItems(Control control, string itemName)
         {
-            if (_client._previousClassFlag.ToString() == "Pure" && _client.HasItem(itemName))
+            if (_client.PreviousClassFlag.ToString() == "Pure" && _client.HasItem(itemName))
                 control.Visible = true;
         }
 
         private void SetPureClassSpells(Control[] controls, string[] spellNames)
         {
-            if (_client._previousClassFlag.ToString() == "Pure")
+            if (_client.PreviousClassFlag.ToString() == "Pure")
             {
                 for (int i = 0; i < spellNames.Length; i++)
                 {
@@ -533,7 +533,7 @@ namespace Talos.Forms
 
         private void SetVineyardVisibility()
         {
-            if (_client._previousClassFlag.ToString() == "Pure" && _client.Spellbook["Lyliac Vineyard"] != null)
+            if (_client.PreviousClassFlag.ToString() == "Pure" && _client.Spellbook["Lyliac Vineyard"] != null)
             {
                 vineyardCbox.Visible = true;
                 vineCombox.Visible = true;
@@ -1077,15 +1077,15 @@ namespace Talos.Forms
 
         private void button7_Click(object sender, EventArgs e)
         {
-            if (_client._isRefreshing == 1)
+            if (_client.IsRefreshingData == 1)
             {
                 button7.Text = "Refresh";
-                _client._isRefreshing = 0;
+                _client.IsRefreshingData = 0;
             }
             else
             {
                 button7.Text = "Stop Refreshing";
-                _client._isRefreshing = 1;
+                _client.IsRefreshingData = 1;
             }
         }
 
@@ -1096,7 +1096,7 @@ namespace Talos.Forms
         }
         private void formNum_ValueChanged(object sender, EventArgs e)
         {
-            _client._spriteOverride = (ushort)(sender as NumericUpDown).Value;
+            _client.SpriteOverride = (ushort)(sender as NumericUpDown).Value;
             if (formCbox.Checked)
             {
                 _client.DisplayAisling(_client.Player);
@@ -1107,9 +1107,9 @@ namespace Talos.Forms
         {
 
             if (deformCbox.Checked)
-                _client._deformNearStrangers = true;
+                _client.DeformNearStrangers = true;
             else
-                _client._deformNearStrangers = false;
+                _client.DeformNearStrangers = false;
 
             _client.DisplayAisling(_client.Player);
         }
@@ -1131,7 +1131,7 @@ namespace Talos.Forms
 
         internal void DisplayMapInfoOnCover(Map map)
         {
-            mapInfoInfoLbl.Text = "Pt:" + _client._serverLocation.Point.ToString() + "  Size: " + map.Width + "x" + map.Height + "  ID: " + map.MapID;
+            mapInfoInfoLbl.Text = "Pt:" + _client.ServerLocation.Point.ToString() + "  Size: " + map.Width + "x" + map.Height + "  ID: " + map.MapID;
         }
 
 
@@ -1204,20 +1204,20 @@ namespace Talos.Forms
                 // Start the walking process on a new thread
                 Task.Run(() =>
                 {
-                    while (_client._clientLocation != targetLocation)
+                    while (_client.ClientLocation != targetLocation)
                     {
                         // Safely update the UI or check conditions that involve UI elements
 
                         Invoke((MethodInvoker)delegate
                         {
                             // Example of checking a condition or updating UI
-                            shouldContinue = (_client._clientLocation != targetLocation);
+                            shouldContinue = (_client.ClientLocation != targetLocation);
                         });
 
                         if (!shouldContinue)
                             break;
 
-                        _client.RouteFind(targetLocation);
+                        _client.Routefind(targetLocation);
 
 
                         // Optionally add a small delay to prevent tight looping
@@ -1233,7 +1233,7 @@ namespace Talos.Forms
             if (textBox6 != null && textBox5 != null && textBox4 != null)
             {
                 Location targetLocation = new Location(textMap, new Structs.Point(textX, testY));
-                _client.RouteFind(targetLocation);
+                _client.Routefind(targetLocation);
 
             }
         }
@@ -1246,7 +1246,7 @@ namespace Talos.Forms
         private void walkSpeedSldr_Scroll(object sender, EventArgs e)
         {
             walkSpeedLbl.Text = (sender as TrackBar).Value.ToString();
-            _client._walkSpeed = walkSpeedSldr.Value;
+            _client.WalkSpeed = walkSpeedSldr.Value;
         }
 
         internal void DelayedUpdateStrangerList()
@@ -1267,23 +1267,23 @@ namespace Talos.Forms
                     if (!isChargeSkillUsedRecently && !isSprintPotionUsedRecently)
                     {
                         HashSet<string> nearbyPlayers = new HashSet<string>(_client.GetNearbyPlayers().Select(player => player.Name), StringComparer.CurrentCultureIgnoreCase);
-                        HashSet<string> nonStrangers = new HashSet<string>(_client.GroupedPlayers.Concat(_client._friendBindingList), StringComparer.CurrentCultureIgnoreCase);
+                        HashSet<string> nonStrangers = new HashSet<string>(_client.GroupedPlayers.Concat(_client.FriendBindingList), StringComparer.CurrentCultureIgnoreCase);
 
-                        foreach (string name in new List<string>(_client._strangerBindingList))
+                        foreach (string name in new List<string>(_client.StrangerBindingList))
                         {
                             if (nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) || !nearbyPlayers.Contains(name, StringComparer.CurrentCultureIgnoreCase))
                             {
-                                _client._strangerBindingList.Remove(name);
+                                _client.StrangerBindingList.Remove(name);
                             }
                         }
                         foreach (string name in nearbyPlayers)
                         {
-                            if (!nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) && !_client._strangerBindingList.Contains(name, StringComparer.CurrentCultureIgnoreCase))
+                            if (!nonStrangers.Contains(name, StringComparer.CurrentCultureIgnoreCase) && !_client.StrangerBindingList.Contains(name, StringComparer.CurrentCultureIgnoreCase))
                             {
-                                UpdateBindingList(_client._strangerBindingList, strangerList, name);
+                                UpdateBindingList(_client.StrangerBindingList, strangerList, name);
                             }
                         }
-                        foreach (string name in new List<string>(_client._strangerBindingList))
+                        foreach (string name in new List<string>(_client.StrangerBindingList))
                         {
                             if (!string.IsNullOrEmpty(name))
                             {
@@ -1351,7 +1351,7 @@ namespace Talos.Forms
             {
                 AddAllyPage(name);
                 addAislingText.Clear();
-                if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+                if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
                 {
                     aislingTabControl.SelectTab(aislingTabControl.TabPages.IndexOfKey(name));
                     clientTabControl.SelectTab(1);
@@ -1363,22 +1363,22 @@ namespace Talos.Forms
         {
             if (string.IsNullOrEmpty(name))
             {
-                MessageDialog.Show(_client._server._mainForm, "Your ally target cannot be empty.");
+                MessageDialog.Show(_client.Server._mainForm, "Your ally target cannot be empty.");
                 return false;
             }
             if (!name.All(char.IsLetter))
             {
-                MessageDialog.Show(_client._server._mainForm, "Your ally target cannot contain noncharacters.");
+                MessageDialog.Show(_client.Server._mainForm, "Your ally target cannot contain noncharacters.");
                 return false;
             }
             if (_client.Bot.IsAllyAlreadyListed(name))
             {
-                MessageDialog.Show(_client._server._mainForm, "Ally already in list.");
+                MessageDialog.Show(_client.Server._mainForm, "Ally already in list.");
                 return false;
             }
             if (name.Equals(_client.Name, StringComparison.CurrentCultureIgnoreCase))
             {
-                MessageDialog.Show(_client._server._mainForm, "Cannot add yourself to ally list.");
+                MessageDialog.Show(_client.Server._mainForm, "Cannot add yourself to ally list.");
                 return false;
             }
             return true;
@@ -1510,8 +1510,8 @@ namespace Talos.Forms
         internal void UpdateGroupList()
         {
             groupList.DataSource = null;
-            _client._groupBindingList = new BindingList<string>(_client.GroupedPlayers.ToList());
-            groupList.DataSource = _client._groupBindingList;
+            _client.GroupBindingList = new BindingList<string>(_client.GroupedPlayers.ToList());
+            groupList.DataSource = _client.GroupBindingList;
         }
 
         internal void UpdateNearbyAllyTable(string name)
@@ -1587,7 +1587,7 @@ namespace Talos.Forms
                 {
                     _client.BotBase = _client.Bot;
                     _client.BotBase.Client = _client;
-                    _client.BotBase.Server = _client._server;
+                    _client.BotBase.Server = _client.Server;
                     _client.CurrentWaypoint = 0;
                 }
 
@@ -1615,11 +1615,11 @@ namespace Talos.Forms
                 {
                     _client.ServerMessage((byte)ServerMessageType.OrangeBar1, "Bot Stopped");
                 }
-                _client._isWalking = false;
-                _client._isCasting = false;
+                _client.IsWalking = false;
+                _client.IsCasting = false;
                 _client.Bot._dontWalk = false;
                 _client.Bot._dontCast = false;
-                _client._exchangeOpen = false;
+                _client.ExchangeOpen = false;
             }
         }
 
@@ -1644,8 +1644,8 @@ namespace Talos.Forms
         {
             foreach (string selectedItem in strangerList.SelectedItems.OfType<string>().ToList())
             {
-                UpdateBindingList(_client._friendBindingList, friendList, selectedItem);
-                _client._strangerBindingList.Remove(selectedItem);
+                UpdateBindingList(_client.FriendBindingList, friendList, selectedItem);
+                _client.StrangerBindingList.Remove(selectedItem);
             }
 
             SaveFriendList();
@@ -1661,10 +1661,10 @@ namespace Talos.Forms
             {
                 if (source.Select((Player player) => player.Name).Contains(seletedItem, StringComparer.CurrentCultureIgnoreCase))
                 {
-                    UpdateBindingList(_client._strangerBindingList, strangerList, seletedItem);
+                    UpdateBindingList(_client.StrangerBindingList, strangerList, seletedItem);
                 }
 
-                _client._friendBindingList.Remove(seletedItem);
+                _client.FriendBindingList.Remove(seletedItem);
 
                 UpdateStrangerList();
                 SaveFriendList();
@@ -1691,9 +1691,9 @@ namespace Talos.Forms
         private void groupAltsBtn_Click(object sender, EventArgs e)
         {
             List<Client> clientListCopy;
-            lock (_client._server._clientListLock)
+            lock (_client.Server._clientListLock)
             {
-                clientListCopy = _client._server._clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = _client.Server._clientList.ToList(); // Create a copy to iterate over
             }
 
             foreach (Client client in clientListCopy)
@@ -1709,9 +1709,9 @@ namespace Talos.Forms
         {
             foreach (string selectedItem in groupList.SelectedItems.OfType<string>().ToList())
             {
-                if (!_client._friendBindingList.Contains(selectedItem))
+                if (!_client.FriendBindingList.Contains(selectedItem))
                 {
-                    UpdateBindingList(_client._friendBindingList, friendList, selectedItem);
+                    UpdateBindingList(_client.FriendBindingList, friendList, selectedItem);
                 }
             }
             SaveFriendList();
@@ -1729,13 +1729,13 @@ namespace Talos.Forms
 
         private void friendAltsBtn_Click(object sender, EventArgs e)
         {
-            BindingList<string> friends = _client._friendBindingList;
+            BindingList<string> friends = _client.FriendBindingList;
 
 
             List<Client> clientListCopy;
-            lock (_client._server._clientListLock)
+            lock (_client.Server._clientListLock)
             {
-                clientListCopy = _client._server._clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = _client.Server._clientList.ToList(); // Create a copy to iterate over
             }
 
             foreach (Client client in clientListCopy)
@@ -1744,9 +1744,9 @@ namespace Talos.Forms
                 {
                     UpdateBindingList(friends, friendList, client.Name);
                 }
-                if (_client._strangerBindingList.Contains(client.Name))
+                if (_client.StrangerBindingList.Contains(client.Name))
                 {
-                    _client._strangerBindingList.Remove(client.Name);
+                    _client.StrangerBindingList.Remove(client.Name);
                 }
             }
 
@@ -1759,7 +1759,7 @@ namespace Talos.Forms
         {
             foreach (string name in _client.GroupedPlayers)
             {
-                if (_client.Bot.AllyPage == null || _client._server.GetClient(name) == null)
+                if (_client.Bot.AllyPage == null || _client.Server.GetClient(name) == null)
                 {
                     if (_client.Bot.IsAllyAlreadyListed(name))
                     {
@@ -1782,7 +1782,7 @@ namespace Talos.Forms
         {
             if (!_isLoading && _client.Bot.AllyPage != null)
             {
-                MessageDialog.Show(_client._server._mainForm, "You are already targeting the group.");
+                MessageDialog.Show(_client.Server._mainForm, "You are already targeting the group.");
                 return;
             }
 
@@ -1796,7 +1796,7 @@ namespace Talos.Forms
             aislingTabControl.TabPages.Add(tabPage);
             foreach (string name in _client.GroupedPlayers)
             {
-                if (_client.Bot.AllyPage == null || _client._server.GetClient(name) == null)
+                if (_client.Bot.AllyPage == null || _client.Server.GetClient(name) == null)
                 {
                     if (_client.Bot.IsAllyAlreadyListed(name))
                     {
@@ -1810,7 +1810,7 @@ namespace Talos.Forms
                     _client.Bot.AddAlly(ally);
                 }
             }
-            if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 aislingTabControl.SelectTab(tabPage);
                 clientTabControl.SelectTab(1);
@@ -1821,7 +1821,7 @@ namespace Talos.Forms
         {
             if (!_isLoading && _client.Bot.AllyPage != null)
             {
-                MessageDialog.Show(_client._server._mainForm, "You already targeting alts.");
+                MessageDialog.Show(_client.Server._mainForm, "You already targeting alts.");
                 return;
             }
             _client.Bot.AllyPage = new AllyPage(new Ally("alts"), _client);
@@ -1830,11 +1830,11 @@ namespace Talos.Forms
             aislingTabControl.TabPages.Add(tabPage);
 
             List<Client> clientListCopy;
-            lock (_client._server._clientListLock)
+            lock (_client.Server._clientListLock)
             {
-                clientListCopy = _client._server._clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = _client.Server._clientList.ToList(); // Create a copy to iterate over
             }
-            foreach (Client client in clientListCopy.Where((Client c) => c._identifier != _client._identifier))
+            foreach (Client client in clientListCopy.Where((Client c) => c.Identifier != _client.Identifier))
             {
                 if (_client.Bot.IsAllyAlreadyListed(client.Name))
                 {
@@ -1848,7 +1848,7 @@ namespace Talos.Forms
                 };
                 _client.Bot.AddAlly(ally);
             }
-            if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 aislingTabControl.SelectTab(tabPage);
                 clientTabControl.SelectTab(1);
@@ -1859,7 +1859,7 @@ namespace Talos.Forms
         {
             if (!_isLoading && _client.Bot.AllMonsters != null)
             {
-                MessageDialog.Show(_client._server._mainForm, "Enemy already in list");
+                MessageDialog.Show(_client.Server._mainForm, "Enemy already in list");
                 return;
             }
             EnemyPage enemyPage = new EnemyPage(new Enemy("all monsters"), _client);
@@ -1891,7 +1891,7 @@ namespace Talos.Forms
                     _client.Bot.UpdateEnemyList(enemy);
                 }
             }
-            if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 clientTabControl.SelectTab(2);
                 monsterTabControl.SelectTab(tabPage);
@@ -1905,7 +1905,7 @@ namespace Talos.Forms
             {
                 AddEnemyPage(result);
                 addMonsterText.Clear();
-                if (!_isLoading && MessageDialog.Show(_client._server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+                if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
                 {
                     monsterTabControl.SelectTab(monsterTabControl.TabPages.IndexOfKey(result.ToString()));
                     clientTabControl.SelectTab(2);
@@ -1921,11 +1921,11 @@ namespace Talos.Forms
                 {
                     return true;
                 }
-                MessageDialog.Show(_client._server._mainForm, "Enemy already in list");
+                MessageDialog.Show(_client.Server._mainForm, "Enemy already in list");
                 addMonsterText.Clear();
                 return false;
             }
-            MessageDialog.Show(_client._server._mainForm, "Your sprite must be a number between 1-1000");
+            MessageDialog.Show(_client.Server._mainForm, "Your sprite must be a number between 1-1000");
             addMonsterText.Clear();
             return false;
         }
@@ -1940,7 +1940,7 @@ namespace Talos.Forms
             // Ensure savePath does not contain invalid characters
             if (Regex.Match(savePath, "[\\/\\*\\\"\\[\\]\\\\\\:\\?\\|\\<\\>\\.]").Success)
             {
-                MessageDialog.Show(_client._server._mainForm, "Cannot use characters /*\"[]\\:?|<>.");
+                MessageDialog.Show(_client.Server._mainForm, "Cannot use characters /*\"[]\\:?|<>.");
                 return;
             }
 
@@ -2606,7 +2606,7 @@ namespace Talos.Forms
             combo3List.Clear();
             combo4List.Clear();
 
-            _client._walkSpeed = 150;
+            _client.WalkSpeed = 150;
             walkSpeedLbl.Text = "150";
 
             // Clear ally and enemy pages
@@ -2699,13 +2699,13 @@ namespace Talos.Forms
 
         private void mapNodeIdsBtn_Click(object sender, EventArgs e)
         {
-            if (_client._worldMap == null)
+            if (_client.WorldMap == null)
             {
                 _client.ServerMessage((byte)ServerMessageType.Whisper, "Please be in the world map before clicking!");
             }
             else
             {
-                var messages = _client._worldMap.Nodes
+                var messages = _client.WorldMap.Nodes
                     .Select(node => $"{node.Name}: {node.MapID}  {node.Location}")
                     .ToArray();
 
@@ -2718,20 +2718,20 @@ namespace Talos.Forms
 
         private void classDetectorBtn_Click(object sender, EventArgs e)
         {
-            _client.ServerMessage((byte)ServerMessageType.Whisper, "Prev Class: " + _client._previousClassFlag.ToString());
-            _client.ServerMessage((byte)ServerMessageType.Whisper, "Current Class: " + _client._temuairClassFlag.ToString());
-            _client.ServerMessage((byte)ServerMessageType.Whisper, "Med Class: " + _client._medeniaClassFlag.ToString());
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Prev Class: " + _client.PreviousClassFlag.ToString());
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Current Class: " + _client.TemuairClassFlag.ToString());
+            _client.ServerMessage((byte)ServerMessageType.Whisper, "Med Class: " + _client.MedeniaClassFlag.ToString());
         }
 
         private void pursuitIdsBtn_Click(object sender, EventArgs e)
         {
-            if (!_client._server.PursuitIDs.Any())
+            if (!_client.Server.PursuitIDs.Any())
             {
                 _client.ServerMessage((byte)ServerMessageType.Whisper, "No pursuits recorded yet, please click an NPC");
                 return;
             }
 
-            var messages = _client._server.PursuitIDs
+            var messages = _client.Server.PursuitIDs
                 .Select(p => $"{p.Value}: {p.Key}   ")
                 .ToList();
 
@@ -2792,7 +2792,7 @@ namespace Talos.Forms
         private void deleteMenuItem_Click(object sender, EventArgs e)
         {
             string text = (sender as ToolStripMenuItem).Text;
-            if (MessageDialog.Show(_client._server._mainForm, "ARE YOU SURE YOU WANT TO DELETE " + text + "?") == DialogResult.OK)
+            if (MessageDialog.Show(_client.Server._mainForm, "ARE YOU SURE YOU WANT TO DELETE " + text + "?") == DialogResult.OK)
             {
                 DeleteProfile(text);
             }
@@ -2819,7 +2819,7 @@ namespace Talos.Forms
         private void saveStrip_Click(object sender, EventArgs e)
         {
             string input = string.Empty;
-            if (!string.IsNullOrEmpty(LastLoadedProfile) && MessageDialog.Show(_client._server._mainForm, "Save this profile as " + LastLoadedProfile + "?") == DialogResult.OK)
+            if (!string.IsNullOrEmpty(LastLoadedProfile) && MessageDialog.Show(_client.Server._mainForm, "Save this profile as " + LastLoadedProfile + "?") == DialogResult.OK)
             {
                 SaveProfile(LastLoadedProfile);
             }
@@ -3257,7 +3257,7 @@ namespace Talos.Forms
         {
             if ((sender as CheckBox).Checked)
             {
-                _client._safeScreen = true;
+                _client.SafeScreen = true;
                 noBlindCbox.Checked = false;
                 seeHiddenCbox.Checked = false;
                 mapZoomCbox.Checked = false;
@@ -3270,7 +3270,7 @@ namespace Talos.Forms
             }
             else
             {
-                _client._safeScreen = false;
+                _client.SafeScreen = false;
             }
         }
 
@@ -3385,14 +3385,14 @@ namespace Talos.Forms
         private void button2_Click_1(object sender, EventArgs e)
         {
             // Iterate through Exits on the current map and print them to the console
-            foreach (KeyValuePair<Structs.Point, Warp> exit in _client._map.Exits)
+            foreach (KeyValuePair<Structs.Point, Warp> exit in _client.Map.Exits)
             {
                 Structs.Point exitPoint = exit.Key; // The point where the warp exists on the map
                 Warp warp = exit.Value;     // The warp object itself
                 Console.WriteLine($"Exit at {exitPoint}: {warp}");
             }
 
-            foreach (KeyValuePair<Structs.Point, WorldMap> worldMapLinks in _client._map.WorldMaps)
+            foreach (KeyValuePair<Structs.Point, WorldMap> worldMapLinks in _client.Map.WorldMaps)
             {
                 Structs.Point exitPoint = worldMapLinks.Key;
                 WorldMap worldMap = worldMapLinks.Value;
@@ -3409,7 +3409,7 @@ namespace Talos.Forms
                 return;
             }
             walkBtn.Text = "Walk";
-            _client._isWalking = false;
+            _client.IsWalking = false;
         }
 
         private void waypointsMenu_Click_1(object sender, EventArgs e)
@@ -3471,9 +3471,9 @@ namespace Talos.Forms
         private void walkAllClientsBtn_Click(object sender, EventArgs e)
         {
             List<Client> clientListCopy;
-            lock (_client._server._clientListLock)
+            lock (_client.Server._clientListLock)
             {
-                clientListCopy = _client._server._clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = _client.Server._clientList.ToList(); // Create a copy to iterate over
             }
 
             foreach (Client client in clientListCopy)
@@ -3588,14 +3588,14 @@ namespace Talos.Forms
 
         private void btnResetAllStatus_Click(object sender, EventArgs e)
         {
-            _client._isRefreshing = 0;
-            _client._needsToRepairHammer = false;
-            _client._isCasting = false;
-            _client._isWalking = false;
-            _client._isBashing = false;
-            _client._hasWalked = false;
-            _client._map.CanUseSpells = true;
-            _client._spellHistory.Clear();
+            _client.IsRefreshingData = 0;
+            _client.NeedsToRepair = false;
+            _client.IsCasting = false;
+            _client.IsWalking = false;
+            _client.IsBashing = false;
+            _client.HasWalked = false;
+            _client.Map.CanUseSpells = true;
+            _client.SpellHistory.Clear();
         }
 
         private void EscapeSay(object sender, KeyPressEventArgs k)
@@ -3826,7 +3826,7 @@ namespace Talos.Forms
         {
             if (!ushort.TryParse(priorityTBox.Text, out ushort parsedPriority) || parsedPriority < 1 || parsedPriority > 1000)
             {
-                MessageDialog.Show(_client._server._mainForm, "Your sprite must be a number between 1-1000");
+                MessageDialog.Show(_client.Server._mainForm, "Your sprite must be a number between 1-1000");
                 priorityTBox.Clear();
                 return;
             }
@@ -3835,7 +3835,7 @@ namespace Talos.Forms
 
             if (priorityLBox.Items.Contains(priorityStr))
             {
-                MessageDialog.Show(_client._server._mainForm, "\tEnemy already in list\t");
+                MessageDialog.Show(_client.Server._mainForm, "\tEnemy already in list\t");
                 priorityTBox.Clear();
                 return;
             }
@@ -3872,8 +3872,8 @@ namespace Talos.Forms
 
         private void ascendBtn_Click_1(object sender, EventArgs e)
         {
-            _client.ascendTaskdone = false;
-            _client.depositedwarbag = false;
+            _client.AscendTaskDone = false;
+            _client.WarBagDeposited = false;
             if (ascendBtn.Text == "Ascend")
             {
                 ascendBtn.Text = "Ascending";

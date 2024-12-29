@@ -30,7 +30,7 @@ namespace Talos.Bashing
             }
 
             // Check distance to target
-            int distanceToTarget = Client._clientLocation.DistanceFrom(target.Location);
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget != 1)
                 return;
 

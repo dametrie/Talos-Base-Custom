@@ -68,9 +68,9 @@ namespace Talos
 
         internal void CheckBelt(Client client)
         {
-            client._isCheckingBelt = true;
+            client.IsCheckingBelt = true;
             client.UseSkill("Sense");
-            while (client._isCheckingBelt)
+            while (client.IsCheckingBelt)
             {
                 Thread.Sleep(5);
             }
@@ -104,7 +104,7 @@ namespace Talos
 
             _clientTabs.Add(client, tabPage);
 
-            foreach (Client otherClient in client._server._clientList)
+            foreach (Client otherClient in client.Server._clientList)
             {
                 Bot bot = otherClient.Bot;
                 if (bot != null && bot.AllyPage != null && otherClient != client)

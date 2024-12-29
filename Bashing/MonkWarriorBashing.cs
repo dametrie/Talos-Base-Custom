@@ -30,7 +30,7 @@ namespace Talos.Bashing
             }
 
             // Check distance to target
-            int distanceToTarget = Client._clientLocation.DistanceFrom(target.Location);
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget > 3)
                 return;
 
@@ -117,8 +117,8 @@ namespace Talos.Bashing
         private bool DoActionForRangeLessThan3(Creature target)
         {
             // Must be able to use skills on target and must be axis-aligned + direction correct
-            bool axisAligned = (target.Location.X == Client._clientLocation.X || target.Location.Y == Client._clientLocation.Y);
-            bool directionMatch = (target.Location.GetDirection(Client._clientLocation) == Client._clientDirection);
+            bool axisAligned = (target.Location.X == Client.ClientLocation.X || target.Location.Y == Client.ClientLocation.Y);
+            bool directionMatch = (target.Location.GetDirection(Client.ClientLocation) == Client.ClientDirection);
 
             if (!ShouldUseSkillsOnTarget(target))
                 return false;

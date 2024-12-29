@@ -71,17 +71,17 @@ namespace Talos.Bashing
             }
 
             // 4) Check if user is stuck on a monster
-            if (NearbyMonsters.Any(nm => nm.Location.DistanceFrom(Client._clientLocation) == 0))
+            if (NearbyMonsters.Any(nm => nm.Location.DistanceFrom(Client.ClientLocation) == 0))
                 return TryUnstuck();
 
             // 5) Movement / positioning logic
-            int distanceToTarget = Client._clientLocation.DistanceFrom(target.Location);
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
 
             // If distance>1 and not aligned, we pathfind or do micro-movement
             if (distanceToTarget > 1)
             {
                 // If not on the same axis and outside of AttackRange => pathfind
-                if (!SharesAxis(Client._clientLocation, target.Location))
+                if (!SharesAxis(Client.ClientLocation, target.Location))
                 {
                     // Avoid if group members are pramhed or pathfinding fails
                     if (!Bot._nearbyAllies.Any(u => u.IsAsleep) && !TryPathfindToPoint(attackPosition, 0))
@@ -90,10 +90,10 @@ namespace Talos.Bashing
                 else if (distanceToTarget > AttackRange)
                 {
                     // If the user is aligned but still out of AttackRange => step closer if possible
-                    var dir = target.Location.GetDirection(Client._clientLocation);
-                    Location nextStep = Client._clientLocation.Offset(dir);
+                    var dir = target.Location.GetDirection(Client.ClientLocation);
+                    Location nextStep = Client.ClientLocation.Offsetter(dir);
 
-                    if (Client._map.IsWalkable(Client, nextStep) &&
+                    if (Client.Map.IsWalkable(Client, nextStep) &&
                         !Bot._nearbyAllies.Any(u => u.IsAsleep))
                     {
                         TryPathfindToPoint(nextStep, 0);
@@ -102,7 +102,7 @@ namespace Talos.Bashing
             }
 
             // 6) Try facing or refreshing
-            bool sameAxis = SharesAxis(Client._clientLocation, target.Location);
+            bool sameAxis = SharesAxis(Client.ClientLocation, target.Location);
             if ((sameAxis && !TryFaceTarget(target)) || RefreshIfNeeded() || !sameAxis)
                 return true;
 
@@ -124,12 +124,12 @@ namespace Talos.Bashing
             var allPositions = GetAllRangedAttackPositions(NearbyMonsters, EngageRange)
                 // Sort logic: first by distance priority, then by health, then creation time
                 .OrderBy(info => PrioritySprites.Contains(info.Target.SpriteID)
-                    ? Client._clientLocation.DistanceFrom(info.AttackPosition)
-                    : Client._clientLocation.DistanceFrom(info.AttackPosition) * 3)
+                    ? Client.ClientLocation.DistanceFrom(info.AttackPosition)
+                    : Client.ClientLocation.DistanceFrom(info.AttackPosition) * 3)
                 .ThenBy(info =>
                 {
                     // Additional sorting logic as in the original
-                    int dist = Client._clientLocation.DistanceFrom(info.Target.Location);
+                    int dist = Client.ClientLocation.DistanceFrom(info.Target.Location);
                     bool closeRange = (dist < 3 || dist <= 8);
                     return closeRange ? 0 : 1; // 0 means top priority if close
                 })
@@ -150,8 +150,8 @@ namespace Talos.Bashing
 
             // Attempt an immediate approach if user is already in range
             var immediate = validPositions.FirstOrDefault(info =>
-                Client._clientLocation.DistanceFrom(info.Target.Location) == 1 ||
-                Client._clientLocation.DistanceFrom(info.AttackPosition) == 0);
+                Client.ClientLocation.DistanceFrom(info.Target.Location) == 1 ||
+                Client.ClientLocation.DistanceFrom(info.AttackPosition) == 0);
 
             if (immediate.Target != null)
                 return immediate;
@@ -159,10 +159,10 @@ namespace Talos.Bashing
             // Fallback: pathfinding approach
             var fallback = validPositions.FirstOrDefault(info =>
             {
-                int dist = Client._clientLocation.DistanceFrom(info.AttackPosition);
+                int dist = Client.ClientLocation.DistanceFrom(info.AttackPosition);
                 if (dist <= 1) return true;
 
-                var path = Client.Pathfinder.FindPath(Client._serverLocation, info.AttackPosition);
+                var path = Client.Pathfinder.FindPath(Client.ServerLocation, info.AttackPosition);
                 return path.Count > 0 && path.Count < 15;
             });
 
@@ -187,10 +187,10 @@ namespace Talos.Bashing
         internal IEnumerable<(Creature Target, Location AttackPosition)> GetAllRangedAttackPositions(
             Creature target, int maxDistance = 8)
         {
-            var top = new Location(Client._map.MapID, target.Location.X, (short)(target.Location.Y - maxDistance));
-            var east = new Location(Client._map.MapID, (short)(target.Location.X + maxDistance), target.Location.Y);
-            var south = new Location(Client._map.MapID, target.Location.X, (short)(target.Location.Y + maxDistance));
-            var west = new Location(Client._map.MapID, (short)(target.Location.X - maxDistance), target.Location.Y);
+            var top = new Location(Client.Map.MapID, target.Location.X, (short)(target.Location.Y - maxDistance));
+            var east = new Location(Client.Map.MapID, (short)(target.Location.X + maxDistance), target.Location.Y);
+            var south = new Location(Client.Map.MapID, target.Location.X, (short)(target.Location.Y + maxDistance));
+            var west = new Location(Client.Map.MapID, (short)(target.Location.X - maxDistance), target.Location.Y);
 
             // Each direction, iterating closer to the target
             foreach (var p in WalkLine(top, target.Location, Direction.South))
@@ -210,9 +210,9 @@ namespace Talos.Bashing
                 var current = start;
                 while (current != end)
                 {
-                    if (!Warps.Contains(current) && Client._map.IsWalkable(Client, current))
+                    if (!Warps.Contains(current) && Client.Map.IsWalkable(Client, current))
                         yield return current;
-                    current = current.Offset(dir);
+                    current = current.Offsetter(dir);
                 }
             }
         }
@@ -315,14 +315,14 @@ namespace Talos.Bashing
             if (once && !_backedOff.Add(target.ID))
                 return false;
 
-            Direction dir = Client._clientLocation.GetDirection(target.Location);
+            Direction dir = Client.ClientLocation.GetDirection(target.Location);
             return MicroAdjust(dir);
         }
 
         private bool MicroAdjust(Direction dir)
         {
-            Location nextPos = Client._clientLocation.Offset(dir);
-            if (!Client._map.IsWalkable(Client, nextPos) || Warps.Contains(nextPos))
+            Location nextPos = Client.ClientLocation.Offsetter(dir);
+            if (!Client.Map.IsWalkable(Client, nextPos) || Warps.Contains(nextPos))
                 return false;
 
             Client.Walk(dir);
@@ -331,8 +331,8 @@ namespace Talos.Bashing
 
         private bool TryApproach(Creature target)
         {
-            return Client._clientLocation.DistanceFrom(target.Location) <= 1 ||
-                   MicroAdjust(target.Location.GetDirection(Client._clientLocation));
+            return Client.ClientLocation.DistanceFrom(target.Location) <= 1 ||
+                   MicroAdjust(target.Location.GetDirection(Client.ClientLocation));
         }
 
         private bool TryAmbushTech(Creature target)
@@ -342,14 +342,14 @@ namespace Talos.Bashing
 
             // Check alignment
             Direction targetDirection = target.Direction;
-            Direction userToTargetDir = Client._clientLocation.GetDirection(target.Location);
+            Direction userToTargetDir = Client.ClientLocation.GetDirection(target.Location);
 
             if (targetDirection != userToTargetDir)
                 return false;
 
             // Position behind the target
-            Location behindTarget = target.Location.Offset(userToTargetDir);
-            if (!Client._map.IsWalkable(Client, behindTarget) ||
+            Location behindTarget = target.Location.Offsetter(userToTargetDir);
+            if (!Client.Map.IsWalkable(Client, behindTarget) ||
                 Warps.Contains(behindTarget) ||
                 !(Client.UseSkill("Shadow Figure") ||
                   Client.UseSkill("Shadow Strike") ||
@@ -359,8 +359,8 @@ namespace Talos.Bashing
             }
 
             // Manually set these after a skill jump
-            Client._clientLocation = behindTarget;
-            Client._clientDirection = userToTargetDir;
+            Client.ClientLocation = behindTarget;
+            Client.ClientDirection = userToTargetDir;
 
             // Ranged attacks after approach
             UseRangedAssails();
@@ -370,8 +370,8 @@ namespace Talos.Bashing
 
         private void TurnForAction(Creature target, Action action)
         {
-            Direction originalDir = Client._clientDirection;
-            Direction newDir = target.Location.GetDirection(Client._clientLocation);
+            Direction originalDir = Client.ClientDirection;
+            Direction newDir = target.Location.GetDirection(Client.ClientLocation);
 
             if (originalDir != newDir)
                 Client.Turn(newDir);
@@ -422,7 +422,7 @@ namespace Talos.Bashing
                 return false;
 
             // Then turn, use "Amnesia," walk forward, and skill
-            Direction dir = target.Location.GetDirection(Client._clientLocation);
+            Direction dir = target.Location.GetDirection(Client.ClientLocation);
             Client.Turn(dir);
             Client.UseSkill("Amnesia");
             Client.Walk(dir);
@@ -447,7 +447,7 @@ namespace Talos.Bashing
             }
 
             // Possibly back off if distance=2
-            int distanceToTarget = Client._clientLocation.DistanceFrom(target.Location);
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget == 2)
             {
                 if (TryBackOff(target, once: true) || TryApproach(target))
@@ -462,7 +462,7 @@ namespace Talos.Bashing
             }
 
             // Re-check distance in case we moved
-            distanceToTarget = Client._clientLocation.DistanceFrom(target.Location);
+            distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget > 11)
                 return;
 
@@ -571,13 +571,13 @@ namespace Talos.Bashing
             // 1) If hp>=60 & hits=0 => "Rear Strike" or "Amnesia + Rear Strike"
             if (hp >= 60 &&
                ((target._hitCounter == 0 && Client.NumberedSkill("Rear Strike")) ||
-                (Client._clientLocation.DistanceFrom(target.Location) == 3 && TryComboWithAmnesia("Rear Strike"))))
+                (Client.ClientLocation.DistanceFrom(target.Location) == 3 && TryComboWithAmnesia("Rear Strike"))))
             {
                 return true;
             }
 
             // 2) If hp>=20 => check if we can do special arrow attacks if we are behind or out of direct range
-            bool behindOrFar = IsFacingAway(target) || (target.Location.DistanceFrom(Client._clientLocation) >= 3);
+            bool behindOrFar = IsFacingAway(target) || (target.Location.DistanceFrom(Client.ClientLocation) >= 3);
             if (hp >= 20 && behindOrFar)
             {
                 return TryUseSpecialArrowAttacks();
@@ -597,10 +597,10 @@ namespace Talos.Bashing
                 foreach (Creature mob in KillableTargets)
                 {
                     if (mob != Target &&
-                        mob.Location.DistanceFrom(Client._clientLocation) > 1 &&
+                        mob.Location.DistanceFrom(Client.ClientLocation) > 1 &&
                         MeetsKillCriteria(mob) &&
                         ShouldUseSkillsOnTarget(mob) &&
-                        SharesAxis(Client._clientLocation, mob.Location) &&
+                        SharesAxis(Client.ClientLocation, mob.Location) &&
                         (mob._hitCounter <= 0 || Client.CanUseSkill("Amnesia")))
                     {
                         TurnForAction(mob, () =>
@@ -620,7 +620,7 @@ namespace Talos.Bashing
                 foreach (Creature mob in KillableTargets)
                 {
                     if (mob != Target &&
-                        mob.Location.DistanceFrom(Client._clientLocation) == 1 &&
+                        mob.Location.DistanceFrom(Client.ClientLocation) == 1 &&
                         mob._hitCounter <= 0 &&
                         MeetsKillCriteria(mob) &&
                         ShouldUseSkillsOnTarget(mob))

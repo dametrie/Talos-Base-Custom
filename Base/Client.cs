@@ -38,193 +38,56 @@ namespace Talos.Base
 
         internal int BASE_ADDRESS = 6281332;
 
-        internal byte[] ADDRESS_BUFFER = new byte[5]
-        {
-        232,
-        47,
-        88,
-        2,
-        0
-        };
+        internal byte[] ADDRESS_BUFFER = new byte[5] { 232, 47, 88, 2, 0 };
 
         private bool IsOSCompatible => Environment.OSVersion.Version.Major >= 5;
         #endregion
 
         #region Networking Vars
-        internal Server _server;
-        internal Crypto _crypto;
-        internal Socket _clientSocket;
-        internal Socket _serverSocket;
+        private Socket _clientSocket;
+        private Socket _serverSocket;
 
-        internal bool _connected = false;
+        private Queue<Packet> _sendQueue;
+        private Queue<Packet> _receiveQueue;
 
-        internal Queue<Packet> _sendQueue;
-        internal Queue<Packet> _receiveQueue;
+        private byte _serverOrdinal;
+        private byte _clientOrdinal;
+        private byte[] _clientBuffer = new byte[4096];
+        private byte[] _serverBuffer = new byte[4096];
 
-        internal byte _serverOrdinal;
-        internal byte _clientOrdinal;
-        internal byte[] _clientBuffer = new byte[4096];
-        internal byte[] _serverBuffer = new byte[4096];
-        internal List<byte> _fullClientBuffer = new List<byte>();
-        internal List<byte> _fullServerBuffer = new List<byte>();
+        private List<byte> _fullClientBuffer = new List<byte>();
+        private List<byte> _fullServerBuffer = new List<byte>();
 
         private Thread _clientLoopThread = null;
 
+        private bool _connected = false;
         private bool clientReceiving = false;
         private bool serverReceiving = false;
+
+        internal Crypto Crypto { get; set; }
+        internal Server Server { get; set; }
         #endregion
 
-
-
-
-        internal Location _clientLocation;
-        internal Location _serverLocation;
-        internal Location _routeDestination;
-        internal Location _lastDestination;
-
-        internal DateTime _lastWorldShout = DateTime.MinValue;
-        internal DateTime _lastMapChange = DateTime.MinValue;
-        internal DateTime _comboScrollLastUsed = DateTime.MinValue;
-        internal DateTime _sprintPotionLastUsed = DateTime.MinValue;
-        internal DateTime _arenaAnnounceTimer = DateTime.MinValue;
-        internal DateTime _lastHidden = DateTime.MinValue;
+        private Location _routeDestination;
+        private Location _lastDestination;
+        private Stack<Location> _pathStack = new Stack<Location>();
+        private Stack<Location> _routeStack = new Stack<Location>();
+        private Cheats _cheats;
         private DateTime _lastClickedWorldMap = DateTime.MinValue;
-        private static DateTime _lastWalkTime = DateTime.MinValue;
-
-        internal Map _map;
-        internal WorldMap _worldMap;
-        internal Cheats _cheats;
-        internal Direction _clientDirection;
-        internal Direction _serverDirection;
-        internal MapFlags _mapFlags;
-        internal EffectsBar _status;
-        internal TemuairClass _temuairClassFlag;
-        internal MedeniaClass _medeniaClassFlag;
-        internal DruidForm _druidFormFlag;
-        internal PreviousClass _previousClassFlag;
-        internal Dugon _dugon;
-        internal Element _element;
-        internal Animation _lastAnimation;
-        internal string _npcDialog;
-        internal string _currentSkill = "";
-        internal string _currentItem = "";
-        internal string _offenseElement = "";
-        internal string _action = "Current Action: ";
-        internal string _itemToReEquip = "";
-        internal bool _safeScreen;
-        internal bool _clientWalkPending;
-        internal bool _isCasting;
-        internal bool _isWalking;
-        internal bool _isBashing;
-        internal int _isRefreshing;
-        internal bool _mapChanged;
-        internal bool _hasLabor;
-        internal bool _bool_39;
-        internal bool _overrideMapFlags;
-        internal bool _mapChangePending;
-        internal bool _isRegistered = true;
-        internal bool _isCheckingBelt;
-        internal bool _inventoryFull;
-        internal bool _shouldEquipBow;
-        internal bool _trainingGroundsMember;
-        internal bool _hasWalked;
-        internal bool _cancelPressed;
-        internal bool _acceptPressed;
-        internal bool _exchangeOpen;
-        internal bool _exchangeClosing;
-        internal bool _okToBubble = false;
-        internal bool _confirmBubble;
-        internal bool isStatusUpdated;
-        internal bool _recentlyCrashered;
-        internal bool _bashingSkillsLoaded = false;
-        internal bool _unmaxedSpellsLoaded = false;
-        internal bool _unmaxedSkillsLoaded = false;
-        internal bool _comboOneSet = false;
-        internal bool _comboTwoSet = false;
-        internal bool _comboThreeSet = false;
-
-        internal double _walkSpeed = 150;
-        internal ushort _spriteOverride = 1;
-        internal bool _deformNearStrangers = false;
-        internal int _spellCounter;
+        private DateTime _lastAssail;
         private int _customSpellLineCounter;
         private static int _walkCallCount = 0;
-        internal int _identifier;
-        internal int _stuckCounter;
-        internal byte _comboScrollCounter;
-        internal Spell CastedSpell { get; set; }
-        internal System.Windows.Forms.Timer _spellTimer;
-        internal Stack<Location> pathStack = new Stack<Location>();
-        internal Stack<Location> routeStack = new Stack<Location>();
-
-
-        private static readonly object SkillQueueLock = new();
-        private static readonly Queue<(string SkillName, ClientPacket Packet)> SkillQueue = new Queue<(string SkillName, ClientPacket Packet)>();
-        private static DateTime LastPacketSentTime = DateTime.MinValue;
-        private static readonly TimeSpan PacketCooldown = TimeSpan.FromMilliseconds(100);
-
-        internal readonly object Lock = new object();
+        private static HashSet<string> AoSuainHashSet = new HashSet<string>(new string[3] { "ao suain", "ao pramh", "Leafhopper Chirp" }, StringComparer.CurrentCultureIgnoreCase);
+        internal int IsRefreshingData;
         internal readonly object BashLock = new object();
-
-        internal AutoResetEvent _walkSignal = new AutoResetEvent(false);
-
-
-        internal List<SpellEntry> _spellHistory = new List<SpellEntry>();
-        internal List<string> _inventoryList = new List<string>();
-
-        internal BindingList<int> _worldObjectBindingList = new BindingList<int>();
-        internal BindingList<int> _creatureBindingList = new BindingList<int>();
-
-        internal BindingList<string> _strangerBindingList = new BindingList<string>();
-        internal BindingList<string> _friendBindingList = new BindingList<string>();
-        internal BindingList<string> _groupBindingList = new BindingList<string>();
-
-
-        internal List<Staff> Staffs { get; set; } = new List<Staff>();
-        internal List<MeleeWeapon> Weapons { get; set; } = new List<MeleeWeapon>();
-        internal List<Bow> Bows { get; set; } = new List<Bow>();
-        internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
-
-        internal Dictionary<string, byte> StaffSpells { get; set; } = new Dictionary<string, byte>();
-        internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
-        internal ConcurrentDictionary<int, Location> LastSeenLocations { get; set; } = new ConcurrentDictionary<int, Location>();
-
-        internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
-        internal ConcurrentDictionary<int, Player> NearbyHiddenPlayers { get; private set; } = new ConcurrentDictionary<int, Player>();
-        internal ConcurrentDictionary<string, Player> NearbyPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
-        internal ConcurrentDictionary<string, Player> NearbyGhosts { get; private set; } = new ConcurrentDictionary<string, Player>();
-        internal ConcurrentDictionary<string, Creature> NearbyNPC { get; private set; } = new ConcurrentDictionary<string, Creature>();
-        internal ConcurrentDictionary<string, int> ObjectID { get; private set; } = new ConcurrentDictionary<string, int>();
-        internal ConcurrentDictionary<string, Player> DeadPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
-        internal ConcurrentDictionary<Location, Door> Doors { get; private set; } = new ConcurrentDictionary<Location, Door> { };
-
-        internal HashSet<int> NearbyObjects { get; private set; } = new HashSet<int>();
-        internal HashSet<int> NearbyGroundItems { get; private set; } = new HashSet<int>();
-        internal HashSet<ushort> EffectsBar { get; set; } = new HashSet<ushort>();
-        internal HashSet<string> GroupedPlayers { get; set; } = new HashSet<string> { };
-
-        internal static HashSet<string> AoSuainHashSet = new HashSet<string>(new string[3]
-        {
-            "ao suain",
-            "ao pramh",
-            "Leafhopper Chirp"
-        }, StringComparer.CurrentCultureIgnoreCase);
-
-        internal bool _stopped = false;
-        internal short _previousMapID;
-        internal uint _exchangeID;
-        internal bool _needsToRepairHammer = false;
-        internal bool _assailNoise;
-        internal bool _ladder;
-        internal bool _chestToggle = false;
-        internal bool _raffleToggle = false;
-        private DateTime _lastAssail;
-        internal bool ascendTaskdone;
-        internal bool depositedwarbag;
-
+        internal readonly object CastLock = new object();
+        internal Player Player { get; set; }
+        internal Creature CastedTarget { get; set; }
+        internal Map Map { get; set; }
+        internal WorldMap WorldMap { get; set; }
+        internal Spell CastedSpell { get; set; }
         internal Pathfinder Pathfinder { get; set; }
         internal RouteFinder RouteFinder { get; set; }
-
         internal Bot Bot { get; set; }
         internal BotBase BotBase { get; set; }
         internal Thread WalkThread { get; set; }
@@ -235,19 +98,110 @@ namespace Talos.Base
         internal Item[] EquippedItems { get; set; } = new Item[20];
         internal Spellbook Spellbook { get; set; } = new Spellbook();
         internal Skillbook Skillbook { get; set; } = new Skillbook();
-        internal string Name { get; set; }
-        internal string GuildName { get; set; }
-        internal byte Path { get; set; }
-        internal byte StepCount { get; set; }
+        internal BindingList<int> WorldObjectBindingList { get; set; } = new BindingList<int>();
+        internal BindingList<int> CreatureBindingList { get; set; } = new BindingList<int>();
+        internal BindingList<string> StrangerBindingList { get; set; } = new BindingList<string>();
+        internal BindingList<string> FriendBindingList { get; set; } = new BindingList<string>();
+        internal BindingList<string> GroupBindingList { get; set; } = new BindingList<string>();
+        internal List<SpellEntry> SpellHistory { get; set; } = new List<SpellEntry>();
+        internal List<string> SavedInventoryList { get; set; } = new List<string>();
+        internal List<Staff> Staffs { get; set; } = new List<Staff>();
+        internal List<MeleeWeapon> Weapons { get; set; } = new List<MeleeWeapon>();
+        internal List<Bow> Bows { get; set; } = new List<Bow>();
+        internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
+        internal Dictionary<string, byte> StaffSpells { get; set; } = new Dictionary<string, byte>();
+        internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
+        internal ConcurrentDictionary<int, Location> LastSeenLocations { get; set; } = new ConcurrentDictionary<int, Location>();
+        internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
+        internal ConcurrentDictionary<int, Player> NearbyHiddenPlayers { get; private set; } = new ConcurrentDictionary<int, Player>();
+        internal ConcurrentDictionary<string, Player> NearbyPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
+        internal ConcurrentDictionary<string, Player> NearbyGhosts { get; private set; } = new ConcurrentDictionary<string, Player>();
+        internal ConcurrentDictionary<string, Creature> NearbyNPC { get; private set; } = new ConcurrentDictionary<string, Creature>();
+        internal ConcurrentDictionary<string, int> ObjectID { get; private set; } = new ConcurrentDictionary<string, int>();
+        internal ConcurrentDictionary<string, Player> DeadPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
+        internal ConcurrentDictionary<Location, Door> Doors { get; private set; } = new ConcurrentDictionary<Location, Door> { };
+        internal HashSet<int> NearbyObjects { get; private set; } = new HashSet<int>();
+        internal HashSet<int> NearbyGroundItems { get; private set; } = new HashSet<int>();
+        internal HashSet<ushort> EffectsBar { get; set; } = new HashSet<ushort>();
+        internal HashSet<string> GroupedPlayers { get; set; } = new HashSet<string> { };
+        internal DateTime ComboScrollLastUsed { get; set; } = DateTime.MinValue;
+        internal Location ClientLocation { get; set; }
+        internal Location ServerLocation { get; set; }
         internal DateTime LastStep { get; set; } = DateTime.MinValue;
         internal DateTime LastTurned { get; set; } = DateTime.MinValue;
-        internal uint PlayerID { get; set; }
+        internal Nation Nation { get; set; }
+        internal Direction ClientDirection { get; set; }
+        internal Direction ServerDirection { get; set; }
+        internal MapFlags MapFlags { get; set; }
+        internal TemuairClass TemuairClassFlag { get; set; }
+        internal MedeniaClass MedeniaClassFlag { get; set; }
+        internal DruidForm DruidFormFlag { get; set; }
+        internal PreviousClass PreviousClassFlag { get; set; }
+        internal Dugon DugonFlag { get; set; }
+        internal string NpcDialog { get; set; }
+        internal string CurrentSkill { get; set; } = "";
+        internal string CurrentItem { get; set; } = "";
+        internal string OffenseElement { get; set; } = "";
+        internal string Action { get; set; } = "Current Action: ";
+        internal string Name { get; set; }
+        internal string GuildName { get; set; }
+        internal bool SafeScreen { get; set; }
+        internal bool IsCasting { get; set; }
+        internal bool IsWalking { get; set; }
+        internal bool IsBashing { get; set; }
+        internal bool MapChanged { get; set; }
+        internal bool HasLabor { get; set; }
+        internal bool OverrideMapFlags { get; set; }
+        internal bool IsRegistered { get; set; } = true;
+        internal bool IsCheckingBelt { get; set; }
+        internal bool InventoryFull { get; set; }
+        internal bool ShouldEquipBow { get; set; }
+        internal bool TrainingGroundsMember { get; set; }
+        internal bool HasWalked { get; set; }
+        internal bool CancelPressed { get; set; }
+        internal bool AcceptPressed { get; set; }
+        internal bool ExchangeOpen { get; set; }
+        internal bool ExchangeClosing { get; set; }
+        internal bool OkToBubble { get; set; } = false;
+        internal bool ConfirmBubble { get; set; }
+        internal bool IsStatusUpdated { get; set; }
+        internal bool RecentlyCrashered { get; set; }
+        internal bool BashingSkillsLoaded { get; set; } = false;
+        internal bool UnmaxedSpellsLoaded { get; set; } = false;
+        internal bool UnmaxedSkillsLoaded { get; set; } = false;
+        internal bool ComboOneSet { get; set; } = false;
+        internal bool ComboTwoSet { get; set; } = false;
+        internal bool ComboThreeSet { get; set; } = false;
+        internal bool DeformNearStrangers { get; set; } = false;
+        internal bool Stopped { get; set; } = false;
+        internal bool NeedsToRepair { get; set; } = false;
+        internal bool AssailNoise { get; set; }
+        internal bool Ladder { get; set; }
+        internal bool ChestToggle { get; set; } = false;
+        internal bool RaffleToggle { get; set; } = false;
+        internal bool AscendTaskDone { get; set; }
+        internal bool WarBagDeposited { get; set; }
         internal bool SpriteOverrideEnabled { get; set; }
+        internal bool UnifiedGuildChat { get; set; }
+        internal bool DialogOn { get; set; }
+        internal int SpellCounter { get; set; }
+        internal int Identifier { get; set; }
+        internal int StuckCounter { get; set; }
+        public int CurrentWaypoint { get; internal set; }
+        internal uint ExchangeID { get; set; }
+        internal uint PlayerID { get; set; }
+        internal double WalkSpeed { get; set; } = 150;
+        internal ushort SpriteOverride { get; set; } = 1;
+        internal short PreviousMapID { get; set; }
+        internal byte ComboScrollCounter { get; set; }
+        internal byte Path { get; set; }
+        internal byte StepCount { get; set; }
+        internal System.Windows.Forms.Timer SpellTimer { get; set; }
         internal bool InArena
         {
             get
             {
-                string mapName = _map?.Name;
+                string mapName = Map?.Name;
 
                 if (mapName == "Balanced Arena" || mapName == "Coliseum Circuit")
                 {
@@ -262,11 +216,8 @@ namespace Talos.Base
                 return mapName?.Contains("Coliseum") == true;
             }
         }
-        internal bool UnifiedGuildChat { get; set; }
-        internal Player Player { get; set; }
-        internal Creature CastedTarget { get; set; }
-        internal Nation Nation { get; set; }
-
+        internal uint BaseHP { get; set; }
+        internal uint BaseMP { get; set; }
         internal uint HealthPct
         {
             get
@@ -289,7 +240,6 @@ namespace Talos.Base
                 return 100;
             }
         }
-
         internal uint MaximumHP { get { return Stats.MaximumHP; } set { Stats.MaximumHP = value; } }
         internal uint MaximumMP { get { return Stats.MaximumMP; } set { Stats.MaximumMP = value; } }
         internal uint CurrentHP { get { return Stats.CurrentHP; } set { Stats.CurrentHP = value; } }
@@ -301,40 +251,33 @@ namespace Talos.Base
         internal byte Ability => Stats.Ability;
         internal byte Level => Stats.Level;
         internal uint ToNextLevel => Stats.ToNextLevel;
-        internal bool DialogOn { get; set; }
         internal bool HasLetter => Stats.Mail.HasFlag(Mail.HasLetter);
         internal bool HasParcel => Stats.Mail.HasFlag(Mail.HasParcel);
-
         internal bool IsSkulled => Player != null && (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Skull) || EffectsBar.Contains((ushort)Enumerations.EffectsBar.WormSkull) && Player.IsSkulled);
 
-        public int CurrentWaypoint { get; internal set; }
-        public uint BaseHP { get; internal set; }
-        public uint BaseMP { get; internal set; }
-
-
-        public readonly object CastLock = new object();
+ 
 
         internal Client(Server server, Socket socket)
         {
-            _identifier = Utility.Random(int.MaxValue);
-            _server = server;
-            _crypto = new Crypto(0, "UrkcnItnI");
+            Identifier = Utility.Random(int.MaxValue);
+            Server = server;
+            Crypto = new Crypto(0, "UrkcnItnI");
             _clientSocket = socket;
             _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _sendQueue = new Queue<Packet>();
             _receiveQueue = new Queue<Packet>();
-            _spellTimer = new System.Windows.Forms.Timer
+            SpellTimer = new System.Windows.Forms.Timer
             {
                 Interval = 1000
             };
-            _spellTimer.Tick += SpellTimerTick;
-            RouteFinder = new RouteFinder(_server, this);
+            SpellTimer.Tick += SpellTimerTick;
+            RouteFinder = new RouteFinder(Server, this);
             Stats = new Statistics();
             Bot = new Bot(this, server);
         }
         internal void SpellTimerTick(object sender, EventArgs e)
         {
-            _spellCounter = 0;
+            SpellCounter = 0;
         }
         internal void Remove()
         {
@@ -344,13 +287,13 @@ namespace Talos.Base
 
         internal bool HasEffect(EffectsBar effectID) => EffectsBar.Contains((ushort)effectID);
         internal void ClearEffect(EffectsBar effectID) => EffectsBar.Remove((ushort)effectID);
-        internal bool GetMapFlags(MapFlags flagID) => _mapFlags.HasFlag(flagID);
-        internal void SetMapFlags(MapFlags flagID) => _mapFlags |= flagID;
-        internal void SetTemuairClass(TemuairClass temClass) => _temuairClassFlag |= temClass;
-        internal void SetMedeniaClass(MedeniaClass medClass) => _medeniaClassFlag |= medClass;
-        internal void SetPreviousClass(PreviousClass previousClass) => _previousClassFlag |= previousClass;
-        internal void SetDruidForm (DruidForm druidForm) => _druidFormFlag |= druidForm;
-        internal void SetDugon(Dugon color) => _dugon |= color;
+        internal bool GetMapFlags(MapFlags flagID) => MapFlags.HasFlag(flagID);
+        internal void SetMapFlags(MapFlags flagID) => MapFlags |= flagID;
+        internal void SetTemuairClass(TemuairClass temClass) => TemuairClassFlag |= temClass;
+        internal void SetMedeniaClass(MedeniaClass medClass) => MedeniaClassFlag |= medClass;
+        internal void SetPreviousClass(PreviousClass previousClass) => PreviousClassFlag |= previousClass;
+        internal void SetDruidForm (DruidForm druidForm) => DruidFormFlag |= druidForm;
+        internal void SetDugon(Dugon color) => DugonFlag |= color;
         internal bool GetCheats(Cheats value) => _cheats.HasFlag(value);
         internal void EnableCheats(Cheats value) => _cheats |= value;
         internal void DisableCheats(Cheats value) => _cheats &= (Cheats)(byte)(~(uint)value);
@@ -419,7 +362,7 @@ namespace Talos.Base
         internal bool CanUseSkill(Skill skill)
         {
             return skill.CanUse
-                && _map.CanUseSkills
+                && Map.CanUseSkills
                 && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh)
                 && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain);
         }
@@ -438,7 +381,7 @@ namespace Talos.Base
 
         internal bool CanUseSpell(Spell spell, Creature creature = null)
         {
-            if (spell.CanUse && _map.CanUseSpells)
+            if (spell.CanUse && Map.CanUseSpells)
             {
                 if (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh) || EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain))
                     return AoSuainHashSet.Contains(spell.Name);
@@ -487,7 +430,7 @@ namespace Talos.Base
                 }
 
                 ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, (ushort)(Dialog.DialogID + 1U));
-                _needsToRepairHammer = false;
+                NeedsToRepair = false;
                 Bot._hammerTimer = DateTime.UtcNow;
                 Bot._dontWalk = false;
                 Bot._dontCast = false;
@@ -532,7 +475,7 @@ namespace Talos.Base
                 return WorldObjects.Values
                     .OfType<GroundItem>()
                     .Where(obj => obj.GetType() == typeof(Objects.GroundItem))
-                    .Where(obj => _serverLocation.DistanceFrom(obj.Location) <= distance)
+                    .Where(obj => ServerLocation.DistanceFrom(obj.Location) <= distance)
                     .ToList();
             }
             finally
@@ -633,7 +576,7 @@ namespace Talos.Base
         }
         internal List<Location> GetWarpPoints(Location location)
         {
-            if (!_server._maps.TryGetValue(location.MapID, out Map value))
+            if (!Server._maps.TryGetValue(location.MapID, out Map value))
             {
                 return new List<Location>();
             }
@@ -654,16 +597,16 @@ namespace Talos.Base
         {
             HashSet<Location> allWarpPoints = new HashSet<Location>();
 
-            if (_server._maps.TryGetValue(_map.MapID, out Map map))
+            if (Server._maps.TryGetValue(Map.MapID, out Map map))
             {
                 foreach (var exit in map.Exits)
                 {
-                    allWarpPoints.Add(new Location(_map.MapID, exit.Key));
+                    allWarpPoints.Add(new Location(Map.MapID, exit.Key));
                 }
 
                 foreach (var worldMap in map.WorldMaps)
                 {
-                    allWarpPoints.Add(new Location(_map.MapID, worldMap.Key));
+                    allWarpPoints.Add(new Location(Map.MapID, worldMap.Key));
                 }
             }
 
@@ -688,8 +631,8 @@ namespace Talos.Base
 
                 if (creatureList.Count == 0) return creatureList;
 
-                if (CONSTANTS.WHITELIST_BY_MAP_ID.ContainsKey((ushort)_map.MapID) ||
-                    CONSTANTS.WHITELIST_BY_MAP_NAME.Any(kv => _map.Name.StartsWith(kv.Key)))
+                if (CONSTANTS.WHITELIST_BY_MAP_ID.ContainsKey((ushort)Map.MapID) ||
+                    CONSTANTS.WHITELIST_BY_MAP_NAME.Any(kv => Map.Name.StartsWith(kv.Key)))
                 {
                     whiteList = GetWhiteLists();
                     creatureList = creatureList.Where(creature => IsCreatureAllowed(creature, whiteList)).ToList();
@@ -705,12 +648,12 @@ namespace Talos.Base
         private HashSet<ushort> GetWhiteLists()
         {
             var whiteList = new HashSet<ushort>();
-            if (CONSTANTS.WHITELIST_BY_MAP_ID.TryGetValue((ushort)_map.MapID, out var whiteListByMapID))
+            if (CONSTANTS.WHITELIST_BY_MAP_ID.TryGetValue((ushort)Map.MapID, out var whiteListByMapID))
             {
                 whiteList.UnionWith(whiteListByMapID);
             }
 
-            var whiteListByMapName = CONSTANTS.WHITELIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
+            var whiteListByMapName = CONSTANTS.WHITELIST_BY_MAP_NAME.FirstOrDefault(kv => Map.Name.StartsWith(kv.Key)).Value;
             if (whiteListByMapName != null)
             {
                 whiteList.UnionWith(whiteListByMapName);
@@ -720,7 +663,7 @@ namespace Talos.Base
         }
         private bool IsValidCreature(Creature creature, int distance)
         {
-            int mapID = _map.MapID;
+            int mapID = Map.MapID;
 
             // Allow sprite 492 only on map 6999
             if (creature.SpriteID == 492 && mapID == 6999)
@@ -881,7 +824,7 @@ namespace Talos.Base
                 foreach (var creature in GetNearbyObjects().OfType<Creature>())
                 {
                     // Allow sprite 492 only on map 6999
-                    if (creature.SpriteID == 492 && _map.MapID != 6999)
+                    if (creature.SpriteID == 492 && Map.MapID != 6999)
                     {
                         continue;
                     }
@@ -950,7 +893,7 @@ namespace Talos.Base
             }
 
             // Guard clause: Make sure we aren't in Dojo
-            if (!_map.Name.Contains("Training Dojo"))
+            if (!Map.Name.Contains("Training Dojo"))
             {
                 // Reject spell based on spell name
                 //Adam check whether this is needed. We already check for spell == null in the parent method
@@ -1005,15 +948,15 @@ namespace Talos.Base
                         {
                             foreach (Player player in GetNearbyAllies())
                             {
-                                player.LastAnimation[(ushort)SpellAnimation.Mesmerize] = DateTime.MinValue;
-                                player.LastAnimation[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
+                                player.AnimationHistory[(ushort)SpellAnimation.Mesmerize] = DateTime.MinValue;
+                                player.AnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
                             }
                         }
                         return false;
 
                     case 810175405: // ao suain
                     case 894297607: // Leafhopper Chirp
-                        CastedTarget.LastAnimation[(ushort)SpellAnimation.Suain] = DateTime.MinValue;
+                        CastedTarget.AnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.MinValue;
                         return false;
 
                     case 1046347411: // suain
@@ -1050,9 +993,9 @@ namespace Talos.Base
                     case 2756163491: // Fungus Beetle Extract
                         foreach (Player player in GetNearbyAllies())
                         {
-                            player.LastAnimation[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
-                            player.LastAnimation[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
-                            player.LastAnimation[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
+                            player.AnimationHistory[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
+                            player.AnimationHistory[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
+                            player.AnimationHistory[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
                         }
                         return false;
 
@@ -1063,9 +1006,9 @@ namespace Talos.Base
 
                     case 2996522388: //ao puinsein
                         {
-                            CastedTarget.LastAnimation[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
-                            CastedTarget.LastAnimation[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
-                            CastedTarget.LastAnimation[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
+                            CastedTarget.AnimationHistory[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
+                            CastedTarget.AnimationHistory[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;
+                            CastedTarget.AnimationHistory[(ushort)SpellAnimation.MedeniaPoison] = DateTime.MinValue;
                         }
                         return false;
 
@@ -1181,65 +1124,63 @@ namespace Talos.Base
         }
         private bool DoesCreatureHaveSpellAlready(string spellName, Creature creature, Client client)
         {
-            lock (Lock)
+            if (creature == null)
             {
-                if (creature == null)
-                {
+                return false;
+            }
+
+            switch (spellName)
+            {
+                case "suain":
+                    //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()}, Currently Suained: {creature.IsSuained}");
+                    return creature.IsSuained;
+                case "beag cradh":
+                case "cradh":
+                case "mor cradh":
+                case "ard cradh":
+                case "Dark Seal":
+                case "Darker Seal":
+                case "Demise":
+                case "Demon Seal":
+                    //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()} Currently Cursed: {creature.IsCursed}");
+                    return creature.IsCursed;
+
+                case "Frost Arrow 1":
+                case "Frost Arrow 2":
+                case "Frost Arrow 3":
+                case "Frost Arrow 4":
+                case "Frost Arrow 5":
+                case "Frost Arrow 6":
+                case "Frost Arrow 7":
+                case "Frost Arrow 8":
+                case "Frost Arrow 9":
+                case "Frost Arrow 10":
+                    return creature.IsFrozen;
+                case "beag pramh":
+                case "pramh":
+                case "Mesmerize":
+                    //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, Currently Asleep: {creature.IsAsleep}");
+                    return creature.IsAsleep;
+                case "fas spiorad":
+                    return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;
+                case "beag fas nadur":
+                case "fas nadur":
+                case "mor fas nadur":
+                case "ard fas nadur":
+                    //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Fassed: {creature.IsFassed}");
+                    return creature.IsFassed;
+                case "ao suain":
+                    return creature.IsSuained;
+                case "beag naomh aite":
+                case "naomh aite":
+                case "mor naomh aite":
+                case "ard naomh aite":
+                    return creature.IsAited;
+                default:
                     return false;
-                }
-
-                switch (spellName)
-                {
-                    case "suain":
-                        //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()}, Currently Suained: {creature.IsSuained}");
-                        return creature.IsSuained;
-                    case "beag cradh":
-                    case "cradh":
-                    case "mor cradh":
-                    case "ard cradh":
-                    case "Dark Seal":
-                    case "Darker Seal":
-                    case "Demise":
-                    case "Demon Seal":
-                        //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Creature Name: {creature.Name}, Hash: {creature.GetHashCode()} Currently Cursed: {creature.IsCursed}");
-                        return creature.IsCursed;
-
-                    case "Frost Arrow 1":
-                    case "Frost Arrow 2":
-                    case "Frost Arrow 3":
-                    case "Frost Arrow 4":
-                    case "Frost Arrow 5":
-                    case "Frost Arrow 6":
-                    case "Frost Arrow 7":
-                    case "Frost Arrow 8":
-                    case "Frost Arrow 9":
-                    case "Frost Arrow 10":
-                        return creature.IsFrozen;
-                    case "beag pramh":
-                    case "pramh":
-                    case "Mesmerize":
-                        //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Hash: {creature.GetHashCode()}, Currently Asleep: {creature.IsAsleep}");
-                        return creature.IsAsleep;
-                    case "fas spiorad":
-                        return !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct;
-                    case "beag fas nadur":
-                    case "fas nadur":
-                    case "mor fas nadur":
-                    case "ard fas nadur":
-                        //Console.WriteLine($"[DoesCreatureHaveSpellAlready] Checking {spellName} for Creature ID: {creature.ID}, Currently Fassed: {creature.IsFassed}");
-                        return creature.IsFassed;
-                    case "ao suain":
-                        return creature.IsSuained;
-                    case "beag naomh aite":
-                    case "naomh aite":
-                    case "mor naomh aite":
-                    case "ard naomh aite":
-                        return creature.IsAited;
-                    default:
-                        return false;
-                }
             }
         }
+        
         internal bool WaitForSpellChant()
         {
             DateTime utcNow = DateTime.UtcNow;
@@ -1316,7 +1257,7 @@ namespace Talos.Base
 
                         if (elapsedSeconds <= 2.0)
                         {
-                            UpdateClientActionText($"{_action} Swapping to {bestBow.Name}");
+                            UpdateClientActionText($"{Action} Swapping to {bestBow.Name}");
                             // Thread.Sleep(5);
                             continue;
                         }
@@ -1328,7 +1269,7 @@ namespace Talos.Base
             else
             {
                 var bestStaff = Inventory
-                    .Where(item => item.IsStaff && item.ThisStaff.CanUse(Ability, Level, ToNextLevel, _temuairClassFlag))
+                    .Where(item => item.IsStaff && item.ThisStaff.CanUse(Ability, Level, ToNextLevel, TemuairClassFlag))
                     .FirstOrDefault(item => item.ThisStaff.CastLines[spell.Name] < spell.CastLines &&
                         (item.ThisStaff.AbilityRequired > staff.AbilityRequired ||
                         item.ThisStaff.InsightRequired >= staff.InsightRequired ||
@@ -1366,7 +1307,7 @@ namespace Talos.Base
                         // Ensure the swap operation doesn't exceed 2 seconds
                         if (elapsedSeconds <= 2.0)
                         {
-                            UpdateClientActionText($"{_action} Swapping to {staff.Name}");
+                            UpdateClientActionText($"{Action} Swapping to {staff.Name}");
 
                             // Thread.Sleep(5);
                             continue;
@@ -1492,72 +1433,70 @@ namespace Talos.Base
             Dictionary<string, byte> cradhZeroLine = new Dictionary<string, byte>(StaffSpells);
             Dictionary<string, byte> fourLinesBecome2Lines = new Dictionary<string, byte>(StaffSpells);
             Dictionary<string, byte> cradhOneLine = new Dictionary<string, byte>(StaffSpells);
-            foreach (KeyValuePair<string, byte> item in new List<KeyValuePair<string, byte>>(minusOneLine))
+
+            foreach (var key in minusOneLine.Keys.ToList())
             {
-                if (item.Value <= 1)
+                minusOneLine[key] = minusOneLine[key] <= 1 ? (byte)0 : (byte)(minusOneLine[key] - 1);
+            }
+
+            foreach (var key in minusTwoLines.Keys.ToList())
+            {
+                minusTwoLines[key] = minusTwoLines[key] <= 2 ? (byte)0 : (byte)(minusTwoLines[key] - 2);
+            }
+
+            foreach (var key in masterOneLine.Keys.ToList())
+            {
+                masterOneLine[key] = 1;
+            }
+
+            foreach (var key in oneLine.Keys.ToList())
+            {
+                oneLine[key] = oneLine[key] > 0 ? (byte)1 : (byte)0;
+            }
+
+            foreach (var key in masterPriest.Keys.ToList())
+            {
+                byte currentValue = masterPriest[key];
+                masterPriest[key] = currentValue <= 3 ? (byte)0 : (byte)(currentValue - 3);
+
+                if (key == "cradh" || key == "mor cradh" || key == "ard cradh")
                 {
-                    minusOneLine[item.Key] = 0;
-                }
-                else
-                {
-                    minusOneLine[item.Key]--;
+                    masterPriest[key] = 1;
                 }
             }
-            foreach (KeyValuePair<string, byte> item2 in new List<KeyValuePair<string, byte>>(minusTwoLines))
+
+            // -- cradhZeroLine: Force 0 for specific keys
+            string[] zeroKeys = {
+                "beag cradh", "cradh", "mor cradh", "ard cradh",
+                "Dark Seal", "Darker Seal", "Demise", "Demon Seal"
+            };
+            foreach (var key in cradhZeroLine.Keys.ToList())
             {
-                if (item2.Value <= 2)
+                if (zeroKeys.Contains(key))
                 {
-                    minusTwoLines[item2.Key] = 0;
-                }
-                else
-                {
-                    minusTwoLines[item2.Key] -= 2;
+                    cradhZeroLine[key] = 0;
                 }
             }
-            foreach (KeyValuePair<string, byte> item3 in new List<KeyValuePair<string, byte>>(masterOneLine))
+
+            // -- fourLinesBecome2Lines: If exactly 4, become 2
+            foreach (var key in fourLinesBecome2Lines.Keys.ToList())
             {
-                masterOneLine[item3.Key] = 1;
-            }
-            foreach (KeyValuePair<string, byte> item4 in new List<KeyValuePair<string, byte>>(oneLine))
-            {
-                oneLine[item4.Key] = (byte)((item4.Value > 0) ? 1 : 0);
-            }
-            foreach (KeyValuePair<string, byte> item5 in new List<KeyValuePair<string, byte>>(masterPriest))
-            {
-                if (item5.Value <= 3)
+                if (fourLinesBecome2Lines[key] == 4)
                 {
-                    masterPriest[item5.Key] = 0;
-                }
-                else
-                {
-                    masterPriest[item5.Key] -= 3;
-                }
-                if (item5.Key == "cradh" || item5.Key == "mor cradh" || item5.Key == "ard cradh")
-                {
-                    masterPriest[item5.Key] = 1;
+                    fourLinesBecome2Lines[key] = 2;
                 }
             }
-            foreach (KeyValuePair<string, byte> item6 in new List<KeyValuePair<string, byte>>(cradhZeroLine))
+
+            // -- cradhOneLine: Force 1 for specific cradh-keys
+            string[] cradhKeys = { "beag cradh", "cradh", "mor cradh", "ard cradh" };
+            foreach (var key in cradhOneLine.Keys.ToList())
             {
-                if (item6.Key == "beag cradh" || item6.Key == "cradh" || item6.Key == "mor cradh" || item6.Key == "ard cradh" || item6.Key == "Dark Seal" || item6.Key == "Darker Seal" || item6.Key == "Demise" || item6.Key == "Demon Seal")
+                if (cradhKeys.Contains(key))
                 {
-                    cradhZeroLine[item6.Key] = 0;
+                    cradhOneLine[key] = 1;
                 }
             }
-            foreach (KeyValuePair<string, byte> item7 in new List<KeyValuePair<string, byte>>(fourLinesBecome2Lines))
-            {
-                if (item7.Value == 4)
-                {
-                    fourLinesBecome2Lines[item7.Key] = 2;
-                }
-            }
-            foreach (KeyValuePair<string, byte> item8 in new List<KeyValuePair<string, byte>>(cradhOneLine))
-            {
-                if (item8.Key == "beag cradh" || item8.Key == "cradh" || item8.Key == "mor cradh" || item8.Key == "ard cradh")
-                {
-                    cradhOneLine[item8.Key] = 1;
-                }
-            }
+
             Bows.Add(new Bow("Wooden Bow", 1, 1));
             Bows.Add(new Bow("Royal Bow", 8, 2));
             Bows.Add(new Bow("Jenwir Bow", 15, 3));
@@ -1633,7 +1572,7 @@ namespace Talos.Base
             Staffs.Add(new Staff("Yowien's Claw1", StaffSpells, 65, 99, true, TemuairClass.Monk));
             Staffs.Add(new Staff("Blackstar Night Claw", StaffSpells, 95, 99, true, TemuairClass.Monk));
             Staffs.Add(new Staff("Ancient Hy-brasyl Tonfa", StaffSpells, 99, 99, true, TemuairClass.Monk));
-            //Adam Add Arsaid Aon weapons
+            //Adam Add Arsaid Aon weapons?
         }
         internal void CheckWeaponType(Item item)
         {
@@ -1810,7 +1749,7 @@ namespace Talos.Base
             {
                 if (necklaceList.ContainsKey(EquippedItems[6].Name))
                 {
-                    _offenseElement = elementName;
+                    OffenseElement = elementName;
                     return true;
                 }
                 var bestNecklace = Inventory
@@ -1831,7 +1770,7 @@ namespace Talos.Base
                 {
                     if (EquippedItems[6].Name == bestNecklace.Name)
                     {
-                        _offenseElement = elementName;
+                        OffenseElement = elementName;
                         return true;
                     }
                     Thread.Sleep(50);
@@ -1843,7 +1782,7 @@ namespace Talos.Base
         private bool IsCreatureAllowed(Creature creature, HashSet<ushort> whiteList)
         {
 
-            int mapID = _map.MapID;
+            int mapID = Map.MapID;
 
             // Allow sprite 492 only on map 6999
             if (creature.SpriteID == 492 && mapID == 6999)
@@ -1856,7 +1795,7 @@ namespace Talos.Base
                 return false;
             }
 
-            var blackListByMapName = CONSTANTS.BLACKLIST_BY_MAP_NAME.FirstOrDefault(kv => _map.Name.StartsWith(kv.Key)).Value;
+            var blackListByMapName = CONSTANTS.BLACKLIST_BY_MAP_NAME.FirstOrDefault(kv => Map.Name.StartsWith(kv.Key)).Value;
             if (blackListByMapName != null && blackListByMapName.Contains(creature.SpriteID))
             {
                 return false;
@@ -1866,10 +1805,10 @@ namespace Talos.Base
         }
         internal void ResetExchangeVars()
         {
-            _exchangeClosing = true;
+            ExchangeClosing = true;
             Thread.Sleep(1500);
-            _exchangeOpen = false;
-            _exchangeClosing = false;
+            ExchangeOpen = false;
+            ExchangeClosing = false;
         }
         internal void LoadUnmaxedSkills()
         {
@@ -1889,7 +1828,7 @@ namespace Talos.Base
                     }
                 }
             }
-            _unmaxedSkillsLoaded = true;
+            UnmaxedSkillsLoaded = true;
         }
         internal void LoadBashingSkills()
         {
@@ -1933,7 +1872,7 @@ namespace Talos.Base
                 }
             }
 
-            _bashingSkillsLoaded = true;
+            BashingSkillsLoaded = true;
         }
         internal void LoadUnmaxedSpells()
         {
@@ -1952,7 +1891,7 @@ namespace Talos.Base
                     }
                 }
             }
-            _unmaxedSpellsLoaded = true;
+            UnmaxedSpellsLoaded = true;
         }
         internal void EscapeKey()
         {
@@ -1973,42 +1912,42 @@ namespace Talos.Base
         internal bool Pathfind(Location destination, short distance = 1, bool shouldBlock = true, bool avoidWarps = true)
         {
 
-            if (NearbyHiddenPlayers.Count > 0 || _isCasting)
+            if (NearbyHiddenPlayers.Count > 0 || IsCasting)
             {
                 //Console.WriteLine($"[Pathfind] [{this.Name}] Cannot walk because NearbyHiddenPlayers count is {NearbyHiddenPlayers.Count} or is casting {_isCasting}");
-                if (!_isWalking)
+                if (!IsWalking)
                 {
                     //Console.WriteLine($"[Pathfind] [{this.Name}] Not currently walking.");
                     return false;
                 }
-                _isCasting = false;
+                IsCasting = false;
             }
 
-            bool isWall = _map.IsWall(_clientLocation);
+            bool isWall = Map.IsWall(ClientLocation);
             bool isStuck = GetNearbyObjects().OfType<Creature>()
-                .Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && creature.Location == _clientLocation);
+                .Any(creature => creature != Player && creature.Type != CreatureType.WalkThrough && creature.Location == ClientLocation);
 
             //Console.WriteLine($"[Pathfind] [{this.Name}] value of isStuck = " + isStuck);
 
-            if ((isWall || isStuck) && (_hasWalked || _clientLocation.X == 0 && _clientLocation.Y == 0 || _serverLocation.X == 0 && _serverLocation.Y == 0))
+            if ((isWall || isStuck) && (HasWalked || ClientLocation.X == 0 && ClientLocation.Y == 0 || ServerLocation.X == 0 && ServerLocation.Y == 0))
             {
                 //Console.WriteLine($"[Pathfind] [{this.Name}] isWall or isStuck, refreshing. Setting _hasWalked to false and returning false");
                 RefreshRequest();
-                _hasWalked = false;
+                HasWalked = false;
                 return false;
             }
 
 
-            if (_clientLocation == destination)
+            if (ClientLocation == destination)
             {
-                if (_hasWalked || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
+                if (HasWalked || DateTime.UtcNow.Subtract(LastStep).TotalSeconds > 2.0)
                 {
-                    if (_stuckCounter == 0)
+                    if (StuckCounter == 0)
                     {
                         //Console.WriteLine($"[Pathfind] [{this.Name}] Refreshing client due to timeout or refresh needed.");
                         RefreshRequest();
                     }
-                    _hasWalked = false;
+                    HasWalked = false;
                 }
                 return true;
             }
@@ -2016,7 +1955,7 @@ namespace Talos.Base
             double elapsedMilliseconds = DateTime.UtcNow.Subtract(LastStep).TotalMilliseconds;
             double waitThreshold = (Bot.IsStrangerNearby() && !ClientTab.chkSpeedStrangers.Checked) || Bot._rangerNear
                 ? 420.0
-                : _walkSpeed;
+                : WalkSpeed;
 
             // Continue looping until elapsed time meets or exceeds the threshold
             while (elapsedMilliseconds < waitThreshold)
@@ -2025,35 +1964,35 @@ namespace Talos.Base
                 elapsedMilliseconds = DateTime.UtcNow.Subtract(LastStep).TotalMilliseconds;
             }
 
-            if (Equals(_clientLocation, destination))
+            if (Equals(ClientLocation, destination))
             {
                 //Console.WriteLine($"[Pathfind] [{this.Name}] Destination reached.");
                 RefreshRequest();
                 return true;
             }
 
-            if (Location.NotEquals(destination, _lastDestination) || pathStack.Count == 0)
+            if (Location.NotEquals(destination, _lastDestination) || _pathStack.Count == 0)
             {
                 //Console.WriteLine($"[Pathfind] [{this.Name}] New destination or empty path stack. Calculating new path.");
                 _lastDestination = destination;
-                pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
+                _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps);
 
             }
 
-            if (pathStack.Count == 0 && Location.NotEquals(_clientLocation, _serverLocation) && _hasWalked)
+            if (_pathStack.Count == 0 && Location.NotEquals(ClientLocation, ServerLocation) && HasWalked)
             {
-                pathStack = Pathfinder.FindPath(_serverLocation, destination, avoidWarps);
-                if (pathStack.Count == 0)
+                _pathStack = Pathfinder.FindPath(ServerLocation, destination, avoidWarps);
+                if (_pathStack.Count == 0)
                 {
                     return false;
                 }
                 //Console.WriteLine($"[Pathfind] [{this.Name}] Location difference detected, requesting refresh.");
                 RefreshRequest();
-                _hasWalked = false;
+                HasWalked = false;
                 return false;
             }
 
-            if (pathStack.Count == 0)
+            if (_pathStack.Count == 0)
             {
                 //Console.WriteLine($"[Pathfind] [{this.Name}] Path stack is empty, no further movement possible.");
                 RefreshRequest();
@@ -2062,10 +2001,10 @@ namespace Talos.Base
 
 
             List<Creature> nearbyCreatures = (from creature in GetNearbyObjects().OfType<Creature>()
-                                              where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(_serverLocation) <= 11
+                                              where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(ServerLocation) <= 11
                                               select creature).ToList();
 
-            foreach (Location loc in pathStack)
+            foreach (Location loc in _pathStack)
             {
                 Door door = Doors.Values.FirstOrDefault(d => d.Location.Equals(loc));
                 if (door != null)
@@ -2086,41 +2025,41 @@ namespace Talos.Base
                         break;
                     }
                     //Console.WriteLine($"[Pathfind] [{this.Name}] Creature interaction required at {loc}, recalculating path.");
-                    pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
+                    _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps);
                     return false;
                 }
             }
 
-            Location nextPosition = pathStack.Peek();
-            if (nextPosition.Equals(_clientLocation))
+            Location nextPosition = _pathStack.Peek();
+            if (nextPosition.Equals(ClientLocation))
             {
-                pathStack.Pop();
-                if (pathStack.Count == 0)
+                _pathStack.Pop();
+                if (_pathStack.Count == 0)
                 {
                     //Console.WriteLine($"[Pathfind] [{this.Name}] Path complete. Destination reached.");
                     return true;
                 }
-                nextPosition = pathStack.Peek();
+                nextPosition = _pathStack.Peek();
             }
 
 
-            if (nextPosition.DistanceFrom(_clientLocation) != 1)
+            if (nextPosition.DistanceFrom(ClientLocation) != 1)
             {
                 //Console.WriteLine($"[Pathfind] [{this.Name}] Unexpected distance to next position {nextPosition}, recalculating path.");
-                if (nextPosition.DistanceFrom(_clientLocation) > 2 && _hasWalked)
+                if (nextPosition.DistanceFrom(ClientLocation) > 2 && HasWalked)
                 {
-                    if (_stuckCounter == 0)
+                    if (StuckCounter == 0)
                     {
                         //Console.WriteLine($"[Pathfind] [{this.Name}] Refreshing client due to unexpected position distance.");
                         RefreshRequest();
                     }
-                    _hasWalked = false;
+                    HasWalked = false;
                 }
-                pathStack = Pathfinder.FindPath(_clientLocation, destination, avoidWarps);
+                _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps);
                 return false;
             }
 
-            Direction directionToWalk = nextPosition.GetDirection(_clientLocation);
+            Direction directionToWalk = nextPosition.GetDirection(ClientLocation);
             if (shouldBlock)
             {
                 lock (CastLock)
@@ -2148,18 +2087,18 @@ namespace Talos.Base
 
             return true;
         }
-        internal bool RouteFind(Location destination, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)
+        internal bool Routefind(Location destination, short distance = 0, bool mapOnly = false, bool shouldBlock = true, bool avoidWarps = true)
         {
             try
             {
                 //Console.WriteLine($"[RouteFind] [{this.Name}] Starting RouteFind to {destination}");
-                if (_server._stopWalking)
+                if (Server._stopWalking)
                 {
                     Console.WriteLine($"[RouteFind] [{this.Name}] Not supposed to walk.");
                     return false;
                 }
 
-                Location currentLocation = new Location(_map.MapID, _clientLocation.X, _clientLocation.Y);
+                Location currentLocation = new Location(Map.MapID, ClientLocation.X, ClientLocation.Y);
                 //Console.WriteLine($"[RouteFind] [{this.Name}] Current location: {currentLocation}");
                 Location adjustedDestination;
                 //adjust for followdistance?
@@ -2183,39 +2122,39 @@ namespace Talos.Base
                         Bot._circle2 = true;
                     }
                     //Console.WriteLine($"[RouteFind] [{this.Name}] Already at destination.");
-                    routeStack.Clear();
+                    _routeStack.Clear();
                     return false;
                 }
 
-                if (routeStack.Count == 1 && adjustedDestination.MapID == _map.MapID && mapOnly)
+                if (_routeStack.Count == 1 && adjustedDestination.MapID == Map.MapID && mapOnly)
                 {
-                    routeStack.Clear();
+                    _routeStack.Clear();
                     return false;
                 }
 
-                if (Location.NotEquals(_routeDestination, adjustedDestination) || routeStack.Count == 0)
+                if (Location.NotEquals(_routeDestination, adjustedDestination) || _routeStack.Count == 0)
                 {
                     //Console.WriteLine($"[RouteFind] [{this.Name}] Finding new route.");
                     _routeDestination = adjustedDestination;
-                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
+                    _routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
                 }
 
-                if (_map.Name.Contains("Plamit"))
+                if (Map.Name.Contains("Plamit"))
                 {
-                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
+                    _routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
                 }
 
-                if (routeStack.Count == 0)
+                if (_routeStack.Count == 0)
                 {
                     //Console.WriteLine($"[RouteFind] [{this.Name}] Route not found, initializing new RouteFinder.");
-                    RouteFinder = new RouteFinder(_server, this);
+                    RouteFinder = new RouteFinder(Server, this);
                     _routeDestination = adjustedDestination;
                     _lastClickedWorldMap = DateTime.MinValue;
-                    routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
+                    _routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
                     return false;
                 }
 
-                Location nextLocation = routeStack.Peek();
+                Location nextLocation = _routeStack.Peek();
 
                 //if (routeStack.Count != 1)
                 //{
@@ -2223,14 +2162,14 @@ namespace Talos.Base
                 //    distance = 0;
                 //}
 
-                if (routeStack.Count > 1 && Location.Equals(nextLocation, _serverLocation))
+                if (_routeStack.Count > 1 && Location.Equals(nextLocation, ServerLocation))
                 {
                     //Console.WriteLine($"[RouteFind] [{this.Name}] routeStack.Count > 1 & nextLocaiton = _serverLocation");
-                    routeStack.Pop();
-                    nextLocation = routeStack.Peek();
+                    _routeStack.Pop();
+                    nextLocation = _routeStack.Peek();
                 }
 
-                if (_worldMap != null)
+                if (WorldMap != null)
                 {
                     //Console.WriteLine($"[RouteFind] [{this.Name}] World map is not null, processing world map navigation.");
                     List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
@@ -2242,7 +2181,7 @@ namespace Talos.Base
                     {
                         //Console.WriteLine($"[RouteFind] [{this.Name}] Checking world map node for location {location}");
 
-                        foreach (WorldMapNode node in _worldMap.Nodes)
+                        foreach (WorldMapNode node in WorldMap.Nodes)
                         {
                             //Console.WriteLine($"[RouteFind] [{this.Name}] Checking node {node.Location}");
                             if (node.MapID == location.MapID)
@@ -2254,7 +2193,7 @@ namespace Talos.Base
                             }
                         }
                     }
-                    foreach (WorldMapNode node in _worldMap.Nodes)
+                    foreach (WorldMapNode node in WorldMap.Nodes)
                     {
                         //Console.WriteLine($"[RouteFind] [{this.Name}] [2]Checking node {node.Location}");
 
@@ -2268,17 +2207,17 @@ namespace Talos.Base
                     }
                     return false;
                 }
-                if (nextLocation.MapID != _map.MapID)
+                if (nextLocation.MapID != Map.MapID)
                 {
-                    if (!_server._maps.TryGetValue(_map.MapID, out Map value))
+                    if (!Server._maps.TryGetValue(Map.MapID, out Map value))
                     {
                         //Console.WriteLine($"[RouteFind] [{this.Name}] Map not found in server maps. Clearing routeStack.");
-                        routeStack.Clear();
+                        _routeStack.Clear();
                         return false;
                     }
-                    if (value.WorldMaps.TryGetValue(_clientLocation.Point, out WorldMap _worldMapNodeList))
+                    if (value.WorldMaps.TryGetValue(ClientLocation.Point, out WorldMap _worldMapNodeList))
                     {
-                        if (!value.WorldMaps.TryGetValue(_serverLocation.Point, out _worldMapNodeList))
+                        if (!value.WorldMaps.TryGetValue(ServerLocation.Point, out _worldMapNodeList))
                         {
                             //Console.WriteLine($"[RouteFind] [{this.Name}] Need to refresh");
                             RefreshRequest();
@@ -2293,20 +2232,20 @@ namespace Talos.Base
                             }
                         }
                     }
-                    if (value.Exits.TryGetValue(_clientLocation.Point, out Warp warp) && warp.TargetMapID == nextLocation.MapID)
+                    if (value.Exits.TryGetValue(ClientLocation.Point, out Warp warp) && warp.TargetMapID == nextLocation.MapID)
                     {
                         //Console.WriteLine($"[RouteFind] [{this.Name}] Warping with NPC");
                         WarpWithNPC(nextLocation);
                         RefreshRequest();
                         return true;
                     }
-                    routeStack.Clear();
+                    _routeStack.Clear();
                     return false;
                 }
                 //Console.WriteLine($"[RouteFind] [{this.Name}] About to call TryWalkLocation with distance value of: {distance}");
                 if (!Pathfind(nextLocation, distance, shouldBlock, avoidWarps = true))
                 {
-                    if (_map.Name.Contains("Threshold"))
+                    if (Map.Name.Contains("Threshold"))
                     {
                         //Console.WriteLine($"[RouteFind] [{this.Name}] Threshold map detected, attempting to walk south.");
                         Walk(Direction.South);
@@ -2325,7 +2264,7 @@ namespace Talos.Base
                 RefreshRequest();
                 return false;
             }
-            if (routeStack.Count <= 0)
+            if (_routeStack.Count <= 0)
             {
                 Console.WriteLine($"[RouteFind] [{this.Name}] Route stack empty, returning false.");
                 return false;
@@ -2336,7 +2275,7 @@ namespace Talos.Base
         private bool IsWalkable(Location location)
         {
             // Check if the location is walkable (not blocked)
-            if (_map.Tiles.TryGetValue(location.Point, out Tile tile))
+            if (Map.Tiles.TryGetValue(location.Point, out Tile tile))
             {
                 return !tile.IsWall;
             }
@@ -2348,11 +2287,11 @@ namespace Talos.Base
             {
                 try
                 {
-                    if (Location.Equals(_clientLocation, new Location(5220, 0, 6)) && nextLocation.MapID == 5210 && Dialog != null)
+                    if (Location.Equals(ClientLocation, new Location(5220, 0, 6)) && nextLocation.MapID == 5210 && Dialog != null)
                     {
                         Dialog.DialogNext(2);
                     }
-                    if (Location.Equals(_clientLocation, new Location(6926, 8, 9)) && nextLocation.MapID == 10028)
+                    if (Location.Equals(ClientLocation, new Location(6926, 8, 9)) && nextLocation.MapID == 10028)
                     {
                         Creature creature = GetNearbyNPC("Quard");
                         ClickNPCDialog(creature, "Express Ship", true);
@@ -2361,32 +2300,32 @@ namespace Talos.Base
 
                         if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
+                            Server._medWalk[Name] = ClientTab.walkMapCombox.Text;
                         }
                         if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medTask[Name] = ClientTab.followText.Text;
+                            Server._medTask[Name] = ClientTab.followText.Text;
                         }
                         if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
                         }
                         if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medTask[Name] = "bugEvent";
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server._medTask[Name] = "bugEvent";
+                            Server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
                         }
                         if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medTask[Name] = "vDayEvent";
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server._medTask[Name] = "vDayEvent";
+                            Server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
                         }
                     }
-                    else if (Location.Equals(_clientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
+                    else if (Location.Equals(ClientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
                     {
                         PublicMessage(3, "Enter Sewer Maze");
                     }
-                    else if (Location.Equals(_clientLocation, new Location(10000, 29, 31)) && nextLocation.MapID == 10999)
+                    else if (Location.Equals(ClientLocation, new Location(10000, 29, 31)) && nextLocation.MapID == 10999)
                     {
                         Creature creature = GetNearbyNPC("Lenoa");
                         ClickNPCDialog(creature, "Caravan to Noam", true);
@@ -2394,7 +2333,7 @@ namespace Talos.Base
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
                     }
-                    else if (Location.Equals(_clientLocation, new Location(10055, 46, 23)) && nextLocation.MapID == 10999)
+                    else if (Location.Equals(ClientLocation, new Location(10055, 46, 23)) && nextLocation.MapID == 10999)
                     {
                         Creature creature = GetNearbyNPC("Habab");
                         ClickNPCDialog(creature, "Caravan to Asilon or Hwarone", true);
@@ -2402,7 +2341,7 @@ namespace Talos.Base
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
                     }
-                    else if (Location.Equals(_clientLocation, new Location(10265, 87, 47)) && nextLocation.MapID == 10998)
+                    else if (Location.Equals(ClientLocation, new Location(10265, 87, 47)) && nextLocation.MapID == 10998)
                     {
                         Creature creature = GetNearbyNPC("Mank");
                         ClickNPCDialog(creature, "Caravan to Noam", true);
@@ -2410,7 +2349,7 @@ namespace Talos.Base
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
                     }
-                    else if (Location.Equals(_clientLocation, new Location(10055, 46, 24)) && nextLocation.MapID == 1960)
+                    else if (Location.Equals(ClientLocation, new Location(10055, 46, 24)) && nextLocation.MapID == 1960)
                     {
                         Creature creature = GetNearbyNPC("Habab");
                         ClickNPCDialog(creature, "Carpet Merchant", true);
@@ -2421,40 +2360,40 @@ namespace Talos.Base
 
                         if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medWalk[Name] = ClientTab.walkMapCombox.Text;
+                            Server._medWalk[Name] = ClientTab.walkMapCombox.Text;
                         }
                         if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medTask[Name] = ClientTab.followText.Text;
+                            Server._medTask[Name] = ClientTab.followText.Text;
                         }
                         if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
                         }
                         if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medTask[Name] = "bugEvent";
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server._medTask[Name] = "bugEvent";
+                            Server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
                         }
                         if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
                         {
-                            _server._medTask[Name] = "vDayEvent";
-                            _server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server._medTask[Name] = "vDayEvent";
+                            Server._medWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
                         }
                     }
-                    else if (Location.Equals(_clientLocation, new Location(3634, 16, 6)) && nextLocation.MapID == 8420)
+                    else if (Location.Equals(ClientLocation, new Location(3634, 16, 6)) && nextLocation.MapID == 8420)
                     {
                         Creature creature = GetNearbyNPC("Fallen Soldier");
                         ClickNPCDialog(creature, "ChadulEntry", true);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                     }
-                    else if (Location.Equals(_clientLocation, new Location(8318, 50, 95)) && nextLocation.MapID == 8345)
+                    else if (Location.Equals(ClientLocation, new Location(8318, 50, 95)) && nextLocation.MapID == 8345)
                     {
                         Creature class7 = GetNearbyNPC("Ashlee");
                         ClickObject(class7.ID);
                         ReplyDialog(1, class7.ID, 0, 2);
                     }
-                    else if (Location.Equals(_clientLocation, new Location(8355, 32, 5)) && nextLocation.MapID == 8356)
+                    else if (Location.Equals(ClientLocation, new Location(8355, 32, 5)) && nextLocation.MapID == 8356)
                     {
                         Creature class8 = GetNearbyNPC("Norrie");
                         PublicMessage(0, "let me through");
@@ -2474,7 +2413,7 @@ namespace Talos.Base
                         ReplyDialog(1, class8.ID, 0, 2);
                         Thread.Sleep(1000);
                     }
-                    else if (Location.Equals(_clientLocation, new Location(8361, 32, 7)) && nextLocation.MapID == 8362)
+                    else if (Location.Equals(ClientLocation, new Location(8361, 32, 7)) && nextLocation.MapID == 8362)
                     {
                         Creature class9 = GetNearbyNPC("Yowien Guard");
                         if (class9 != null && Inventory.Contains("Yowien Costume"))
@@ -2508,7 +2447,7 @@ namespace Talos.Base
                             Thread.Sleep(1000);
                         }
                     }
-                    else if (_map.MapID == 3052 && _clientLocation.X == 44 && _clientLocation.Y >= 18 && _clientLocation.Y <= 25)
+                    else if (Map.MapID == 3052 && ClientLocation.X == 44 && ClientLocation.Y >= 18 && ClientLocation.Y <= 25)
                     {
                         Creature class10 = GetNearbyNPC("Celesta");
                         ClickNPCDialog(class10, "Enter Balanced Arena", true);
@@ -2524,7 +2463,7 @@ namespace Talos.Base
                             Bot.Stop();
                         }
                     }
-                    else if (_map.MapID == 393 && _clientLocation.DistanceFrom(new Location(393, 7, 6)) <= 1)
+                    else if (Map.MapID == 393 && ClientLocation.DistanceFrom(new Location(393, 7, 6)) <= 1)
                     {
                         Creature npc = GetNearbyNPC("Aoife");
                         PursuitRequest(1, npc.ID, 1171);
@@ -2537,7 +2476,7 @@ namespace Talos.Base
                             Thread.Sleep(1000);
                         }
                     }
-                    else if (Location.Equals(_clientLocation, new Location(503, 41, 59)) && nextLocation.MapID == 3014)
+                    else if (Location.Equals(ClientLocation, new Location(503, 41, 59)) && nextLocation.MapID == 3014)
                     {
                         Creature npc = GetNearbyNPC("Keane");
                         ClickNPCDialog(npc, "Suomi Help", true);
@@ -2557,7 +2496,7 @@ namespace Talos.Base
             DateTime utcNow = DateTime.UtcNow;
             if (creature != null)
             {
-                if (!_server.PursuitIDs.Values.Contains(dialogText))
+                if (!Server.PursuitIDs.Values.Contains(dialogText))
                 {
                     bool flag = false;
                     ClickObject(creature.ID);
@@ -2578,7 +2517,7 @@ namespace Talos.Base
                 }
                 utcNow = DateTime.UtcNow;
                 Dialog = null;
-                PursuitRequest(1, creature.ID, _server.PursuitIDs.FirstOrDefault((KeyValuePair<ushort, string> keyValuePair_0) => keyValuePair_0.Value == dialogText).Key);
+                PursuitRequest(1, creature.ID, Server.PursuitIDs.FirstOrDefault((KeyValuePair<ushort, string> keyValuePair_0) => keyValuePair_0.Value == dialogText).Key);
                 if (click)
                 {
                     while (Dialog == null)
@@ -2615,11 +2554,11 @@ namespace Talos.Base
         }
         internal bool RouteFindByMapID(short mapID)
         {
-            return RouteFind(new Location(mapID, 0, 0), 0, true);
+            return Routefind(new Location(mapID, 0, 0), 0, true);
         }
         internal bool WithinRange(VisibleObject obj, int range = 12)
         {
-            return NearbyObjects.Contains(obj.ID) && _serverLocation.DistanceFrom(obj.Location) <= range;
+            return NearbyObjects.Contains(obj.ID) && ServerLocation.DistanceFrom(obj.Location) <= range;
         }
         internal bool IsLocationSurrounded(Location location)
         {
@@ -2644,16 +2583,16 @@ namespace Talos.Base
             // Define adjacent locations based on cardinal directions.
             var adjacentLocations = new[]
             {
-                location.Offset(Direction.North),
-                location.Offset(Direction.West),
-                location.Offset(Direction.South),
-                location.Offset(Direction.East)
+                location.Offsetter(Direction.North),
+                location.Offsetter(Direction.West),
+                location.Offsetter(Direction.South),
+                location.Offsetter(Direction.East)
             };
 
             // Check each adjacent location for being surrounded conditions.
             foreach (var loc in adjacentLocations)
             {
-                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || _map.IsWall(loc);
+                bool isOccupiedOrBound = creatureLocations.Contains(loc) || obstacleLocations.Contains(loc) || Map.IsWall(loc);
 
                 // If any adjacent location is not occupied or within bounds, the location is not surrounded.
                 if (!isOccupiedOrBound)
@@ -2683,11 +2622,11 @@ namespace Talos.Base
             int wallsCount = 0;
             foreach (Direction dir in Enum.GetValues(typeof(Direction)))
             {
-                Location adjacentPoint = loc.Offset(dir);
+                Location adjacentPoint = loc.Offsetter(dir);
 
                 if (nearbyPoints.Contains(adjacentPoint) ||
                     warpPoints.Contains(adjacentPoint) ||
-                    _map.IsWall(adjacentPoint))
+                    Map.IsWall(adjacentPoint))
                 {
                     wallsCount++;
                 }
@@ -2739,7 +2678,7 @@ namespace Talos.Base
             ClientPacket clientPacket = new ClientPacket(17);
             clientPacket.WriteByte((byte)direction);
             Enqueue(clientPacket);
-            _serverDirection = direction;
+            ServerDirection = direction;
         }
 
         internal void Assail()
@@ -2773,12 +2712,12 @@ namespace Talos.Base
                 return false;
             }
 
-            if (!EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh) && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain) && !_server._stopCasting)
+            if (!EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh) && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain) && !Server._stopCasting)
             {
                 ClientPacket clientPacket = new ClientPacket(28);
                 clientPacket.WriteByte(item.Slot);
                 item.LastUsed = DateTime.UtcNow;
-                _currentItem = itemName;
+                CurrentItem = itemName;
                 if (itemName == "Sprint Potion")
                 {
                     Task.Run(() =>
@@ -2787,23 +2726,23 @@ namespace Talos.Base
                     });
                 }
 
-                UpdateClientActionText($"{_action} Using {itemName}");
+                UpdateClientActionText($"{Action} Using {itemName}");
                 ReadyToSpell(itemName);
                 Enqueue(clientPacket);
                 if (itemName == "Two Move Combo")
                 {
-                    if (_comboScrollCounter <= 1u)
+                    if (ComboScrollCounter <= 1u)
                     {
-                        _comboScrollCounter++;
-                        _comboScrollLastUsed = DateTime.UtcNow;
+                        ComboScrollCounter++;
+                        ComboScrollLastUsed = DateTime.UtcNow;
                     }
                 }
                 else if (itemName == "Three Move Combo")
                 {
-                    if (_comboScrollCounter <= 2u)
+                    if (ComboScrollCounter <= 2u)
                     {
-                        _comboScrollCounter++;
-                        _comboScrollLastUsed = DateTime.UtcNow;
+                        ComboScrollCounter++;
+                        ComboScrollLastUsed = DateTime.UtcNow;
                     }
                 }
 
@@ -2831,7 +2770,7 @@ namespace Talos.Base
         }
         internal void RefreshRequest(bool waitForCompletion = true)
         {
-            if (Interlocked.CompareExchange(ref _isRefreshing, 1, 0) == 0)
+            if (Interlocked.CompareExchange(ref IsRefreshingData, 1, 0) == 0)
             {
                 this.Enqueue(new ClientPacket(56));
                 this.Bot._lastRefresh = DateTime.UtcNow;
@@ -2845,9 +2784,9 @@ namespace Talos.Base
                 {
                     while (DateTime.UtcNow < expirationTime)
                     {
-                        if (this._mapChanged || this._isRefreshing == 0)
+                        if (this.MapChanged || this.IsRefreshingData == 0)
                         {
-                            this._mapChanged = false;
+                            this.MapChanged = false;
                             //Console.WriteLine("[REFRESH] Can now refresh");
                             break;
                         }
@@ -2858,15 +2797,15 @@ namespace Talos.Base
                 }
                 catch (ThreadInterruptedException ex)
                 {
-                    //Console.WriteLine("[REFRESH] Thread was interrupted.");
+                    Console.WriteLine($"[REFRESH] Thread interrupted: {ex.Message}");
                 }
                 finally
                 {
-                    this._isRefreshing = 0;
+                    this.IsRefreshingData = 0;
                 }
             }
             else
-                this._isRefreshing = 0;
+                this.IsRefreshingData = 0;
         }
         internal void PursuitRequest(byte objType, int objID, ushort pursuitID, params object[] args)
         {
@@ -2973,9 +2912,9 @@ namespace Talos.Base
             ClientPacket clientPacket = new ClientPacket(62);
             clientPacket.WriteByte(skill.Slot);
             skill.LastUsed = DateTime.UtcNow;
-            if (_currentSkill != skillName)
+            if (CurrentSkill != skillName)
             {
-                _currentSkill = skillName;
+                CurrentSkill = skillName;
                 if (skillName == "Charge")
                 {
                     ThreadPool.QueueUserWorkItem(_ => ClientTab.DelayedUpdateStrangerList());
@@ -3112,10 +3051,10 @@ namespace Talos.Base
             lock (BashLock)
             {
 
-                if (spell == null || !CanUseSpell(spell, target) || ((spellName == "Hide" || spellName == "White Bat Form") && _server._stopCasting))
+                if (spell == null || !CanUseSpell(spell, target) || ((spellName == "Hide" || spellName == "White Bat Form") && Server._stopCasting))
                 {
                     //Console.WriteLine($"[UseSpell] Aborted casting {spellName} on Creature ID: {target?.ID}. Reason: Validation failed.");
-                    _isCasting = false;
+                    IsCasting = false;
                     return false;
                 }
 
@@ -3141,7 +3080,7 @@ namespace Talos.Base
 
                 if (ReadyToSpell(spell.Name))
                 {
-                    var existingEntry = _spellHistory.FirstOrDefault(cts => cts.Creature.ID == CastedTarget.ID && cts.Spell.Name == spell.Name);
+                    var existingEntry = SpellHistory.FirstOrDefault(cts => cts.Creature.ID == CastedTarget.ID && cts.Spell.Name == spell.Name);
 
                     if (existingEntry != null)
                     {
@@ -3162,7 +3101,7 @@ namespace Talos.Base
                         {
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
-                        _spellHistory.Add(newEntry);
+                        SpellHistory.Add(newEntry);
                         //Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
                         //Console.WriteLine($"[Debug] Added to _spellHistory: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
                     }
@@ -3175,7 +3114,7 @@ namespace Talos.Base
 
                 if (CastedSpell != spell)
                 {
-                    UpdateClientActionText($"{_action} Casting {spellName}");
+                    UpdateClientActionText($"{Action} Casting {spellName}");
                 }
 
                 ClientPacket clientPacket = new ClientPacket(15);
@@ -3191,15 +3130,15 @@ namespace Talos.Base
 
                 if (castLines > 0)
                 {
-                    if (_isWalking)
+                    if (IsWalking)
                     {
-                        _isCasting = false;
+                        IsCasting = false;
                         return false;
                     }
                     string[] chantArray = LoadSavedChants(spellName);
                     lock (CastLock)
                     {
-                        _isCasting = true;
+                        IsCasting = true;
                         ClientPacket chantPacket = new ClientPacket(77);//begin chant
                         chantPacket.WriteByte(castLines);
                         Enqueue(chantPacket);
@@ -3218,19 +3157,19 @@ namespace Talos.Base
                                 DisplayChant(chantArray[i]);
                             }
                             DateTime utcNow = DateTime.UtcNow;
-                            Client client = (target != null) ? _server.GetClient(target.Name) : this;
+                            Client client = (target != null) ? Server.GetClient(target.Name) : this;
                             while (DateTime.UtcNow.Subtract(utcNow).TotalMilliseconds < 1000.0)
                             {
                                 if (!IsValidSpell(client, spell.Name, target))
                                 {
-                                    _isCasting = false;
+                                    IsCasting = false;
                                     return false;
                                 }
                                 Thread.Sleep(10);
                             }
-                            if (!_isCasting || !CanUseSpell(spell, target))
+                            if (!IsCasting || !CanUseSpell(spell, target))
                             {
-                                _isCasting = false;
+                                IsCasting = false;
                                 return false;
                             }
                         }
@@ -3242,7 +3181,7 @@ namespace Talos.Base
                         {
                             if (spell.Name == "fas spiorad" && !Bot._needFasSpiorad && !Bot._manaLessThanEightyPct)
                             {
-                                _isCasting = false;
+                                IsCasting = false;
                                 return false;
                             }
                             DisplayChant(spell.Name);
@@ -3255,23 +3194,23 @@ namespace Talos.Base
                     {
                         if (Stats.CurrentHP < Stats.MaximumMP * 0.5)
                         {
-                            _isCasting = false;
+                            IsCasting = false;
                             return false;
                         }
                     }
                     else if (Stats.CurrentHP < result)
                     {
-                        _isCasting = false;
+                        IsCasting = false;
                         return false;
                     }
                 }
                 //Console.WriteLine($"[UseSpell] Casting {spellName} on Creature ID: {target?.ID}, Name: {target?.Name}");
 
                 Enqueue(clientPacket);
-                _spellCounter++;
+                SpellCounter++;
                 Bot._spellTimer = DateTime.UtcNow;
                 spell.LastUsed = DateTime.UtcNow;
-                _isCasting = false;
+                IsCasting = false;
                 CastedSpell = (wait ? spell : null);
                 if (spell.Name != "Gem Polishing" || spell.Name.Contains("Prayer"))
                 {
@@ -3391,7 +3330,7 @@ namespace Talos.Base
         }
         internal void ServerMessage(byte type, string message)
         {
-            if (!_safeScreen)
+            if (!SafeScreen)
             {
                 ServerPacket serverPacket = new ServerPacket(10);
                 serverPacket.WriteByte(type);
@@ -3460,7 +3399,7 @@ namespace Talos.Base
             ushort spriteID = player.SpriteID;
             if (player == Player && SpriteOverrideEnabled)
             {
-                spriteID = _spriteOverride;
+                spriteID = SpriteOverride;
             }
             ServerPacket serverPacket = new ServerPacket(51);
             serverPacket.WriteStruct(player.Location);
@@ -3510,7 +3449,7 @@ namespace Talos.Base
             serverPacket.WriteByte(player.NameTagStyle);
             if (player.BodySprite == 0 && !GetCheats(Cheats.SeeHidden))
             {
-                Map map = _map;
+                Map map = Map;
                 if (map != null && map.Name?.Contains("Arena") == false && !InArena)
                     serverPacket.WriteString8(string.Empty);
                 else
@@ -3528,7 +3467,7 @@ namespace Talos.Base
 
             //Console.WriteLine($"Attempting to walk in direction: {dir}"); // Log the direction
 
-            if (Dialog == null || !_server._stopWalking || dir != Direction.Invalid || _isRefreshing == 1)
+            if (Dialog == null || !Server._stopWalking || dir != Direction.Invalid || IsRefreshingData == 1)
             {
                 _walkCallCount++;
                 //Console.WriteLine($"Walk method called {walkCallCount} times");
@@ -3538,13 +3477,13 @@ namespace Talos.Base
                 LastStep = DateTime.UtcNow;
                 //Console.WriteLine($"LastStep set to: {LastStep}"); // Debugging: Log LastStep update
 
-                if (_serverDirection != dir)
+                if (ServerDirection != dir)
                 {
                     //Console.WriteLine($"Turning from {_serverDirection} to {dir}"); // Debugging: Log direction change
                     Turn(dir);
                 }
 
-                _hasWalked = true;
+                HasWalked = true;
                 //Console.WriteLine("shouldRefresh set to true"); // Debugging: Log shouldRefresh update
 
 
@@ -3558,23 +3497,23 @@ namespace Talos.Base
 
                 ServerPacket serverPacket = new ServerPacket(12); // creaturewalk
                 serverPacket.WriteUInt32(PlayerID);
-                serverPacket.WriteStruct(_clientLocation);
+                serverPacket.WriteStruct(ClientLocation);
                 serverPacket.WriteByte((byte)dir);
 
                 Enqueue(serverPacket);
 
 
-                _clientLocation = _clientLocation.Offset(dir);
+                ClientLocation = ClientLocation.Offsetter(dir);
                 //Console.WriteLine($"Client location updated to: {_clientLocation}"); // Debugging: Log client location update
 
                 LastStep = DateTime.UtcNow;
                 //Console.WriteLine($"[WalkLastStep set to: {LastStep}"); // Debugging: Log LastStep update
 
-                UpdateClientActionText($"{_action} Walking {dir}");
+                UpdateClientActionText($"{Action} Walking {dir}");
             }
             else
             {
-                _isWalking = false;
+                IsWalking = false;
                 //Console.WriteLine("Walk aborted due to conditions not met. _isWalking set to false."); // Debugging: Log abort and _isWalking update
                 Thread.Sleep(100); // Consider logging this delay for clarity if necessary
             }
@@ -3692,7 +3631,7 @@ namespace Talos.Base
             if (clientPacket.ShouldEncrypt)
             {
                 clientPacket.Sequence = _serverOrdinal++;
-                clientPacket.Encrypt(_crypto);
+                clientPacket.Encrypt(Crypto);
             }
         }
 
@@ -3701,7 +3640,7 @@ namespace Talos.Base
             if (serverPacket.ShouldEncrypt)
             {
                 serverPacket.Sequence = _clientOrdinal++;
-                serverPacket.Encrypt(_crypto);
+                serverPacket.Encrypt(Crypto);
             }
         }
 
@@ -3709,7 +3648,7 @@ namespace Talos.Base
         {
             //Console.WriteLine($"[DEBUG] ({Name}) Sending ClientPacket. Opcode: {clientPacket.Opcode} ({clientPacket.ToString()}), Length: {clientPacket.Data.Length}");
 
-            ClientPacket? clientPacketToLog = clientPacket.Copy();
+            ClientPacket clientPacketToLog = clientPacket.Copy();
             if (clientPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
             {
                 ClientTab.LogPackets(clientPacketToLog);
@@ -3720,7 +3659,7 @@ namespace Talos.Base
         {
             //Console.WriteLine($"[DEBUG] ({Name}) Received ServerPacket. Opcode: {serverPacket.Opcode} ({serverPacket.ToString()}), Length: {serverPacket.Data.Length}");
 
-            ServerPacket? serverPacketToLog = serverPacket.Copy();
+            ServerPacket serverPacketToLog = serverPacket.Copy();
             if (serverPacketToLog != null && ClientTab != null && !ClientTab.IsDisposed)
             {
                 ClientTab.LogPackets(serverPacketToLog);
@@ -3752,7 +3691,7 @@ namespace Talos.Base
 
         private void HandlePacketReceiving(Packet packet)
         {
-            if (packet.ShouldEncrypt) packet.Decrypt(_crypto);
+            if (packet.ShouldEncrypt) packet.Decrypt(Crypto);
             bool shouldEnqueue = true;
 
             if (packet is ClientPacket clientPacket)
@@ -3774,13 +3713,13 @@ namespace Talos.Base
         {
             if (clientPacket.IsDialog) clientPacket.DecryptDialog();
 
-            ClientMessageHandler clientHandler = _server.ClientMessage[clientPacket.Opcode];
+            ClientMessageHandler clientHandler = Server.ClientMessage[clientPacket.Opcode];
             return TryHandleClientPacket(clientHandler, clientPacket);
         }
 
         private bool HandleServerPacket(ServerPacket serverPacket)
         {
-            ServerMessageHandler serverHandler = _server.ServerMessage[serverPacket.Opcode];
+            ServerMessageHandler serverHandler = Server.ServerMessage[serverPacket.Opcode];
             return TryHandleServerPacket(serverHandler, serverPacket);
         }
 
@@ -3857,12 +3796,12 @@ namespace Talos.Base
         private void CleanupClient()
         {
             Thread.Sleep(500);
-            lock (_server._clientListLock)
+            lock (Server._clientListLock)
             {
-                _server._clientList.Remove(this);
+                Server._clientList.Remove(this);
             }
             Thread.Sleep(100);
-            _server._mainForm.RemoveClientTab(this);
+            Server._mainForm.RemoveClientTab(this);
         }
 
 

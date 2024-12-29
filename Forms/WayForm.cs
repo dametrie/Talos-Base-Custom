@@ -225,14 +225,14 @@ namespace Talos.Forms
         {
             if (string.IsNullOrEmpty(saveTBox.Text))
             {
-                MessageDialog.Show(Client._server._mainForm, "Save name cannot be empty.", this);
+                MessageDialog.Show(Client.Server._mainForm, "Save name cannot be empty.", this);
                 return;
             }
 
             // Check for invalid characters in the filename
             if (Regex.IsMatch(saveTBox.Text, @"[\/\*\""\\\[\]\:\?\|\<\>]"))
             {
-                MessageDialog.Show(Client._server._mainForm, "Cannot use characters /*\"[]\\:?|<> in the save name.", this);
+                MessageDialog.Show(Client.Server._mainForm, "Cannot use characters /*\"[]\\:?|<> in the save name.", this);
                 return;
             }
 
@@ -281,12 +281,12 @@ namespace Talos.Forms
                     Client.ClientTab._wayFormProfiles.Add(saveTBox.Text);
                 }
 
-                MessageDialog.Show(Client._server._mainForm, "Waypoints saved successfully!", this);
+                MessageDialog.Show(Client.Server._mainForm, "Waypoints saved successfully!", this);
             }
             catch (Exception ex)
             {
                 // Handle errors gracefully
-                MessageDialog.Show(Client._server._mainForm, $"Failed to save waypoints: {ex.Message}", this);
+                MessageDialog.Show(Client.Server._mainForm, $"Failed to save waypoints: {ex.Message}", this);
             }
         }
 
@@ -405,9 +405,9 @@ namespace Talos.Forms
                 try
                 {
                     string item = string.Empty;
-                    item = "(" + Client._clientLocation.X + "," + Client._clientLocation.Y + ") " + Client._map.Name + ": " + Client._map.MapID;
+                    item = "(" + Client.ClientLocation.X + "," + Client.ClientLocation.Y + ") " + Client.Map.Name + ": " + Client.Map.MapID;
                     waypointsLBox.Items.Add(item);
-                    Client.Bot.ways.Add(Client._clientLocation);
+                    Client.Bot.ways.Add(Client.ClientLocation);
                 }
                 finally
                 {

@@ -166,7 +166,7 @@ namespace Talos.Helper
         {
             lock (_lock)
             {
-                Creature creature = client._spellHistory.Count > 0 ? client._spellHistory[0].Creature : null;
+                Creature creature = client.SpellHistory.Count > 0 ? client.SpellHistory[0].Creature : null;
                 if (creature != null)
                 {
                     //Console.WriteLine($"[HandleSpellCastMessage] Creature ID: {creature?.ID}. _creatureToSpellList[0] Creature ID: {client._creatureToSpellList[0].Creature.ID}");
@@ -222,7 +222,7 @@ namespace Talos.Helper
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, curseStateUpdates);
 
                             Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}, Creature Name: {creature?.Name}, Hash: {creature.GetHashCode()}, LastCursed updated to {creature?.GetState<DateTime>(CreatureState.LastCursed)}");
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
@@ -250,7 +250,7 @@ namespace Talos.Helper
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
 
                             //Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastFassed updated to {creature?.GetState<DateTime>(CreatureState.LastFassed)}");
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
@@ -290,7 +290,7 @@ namespace Talos.Helper
                     case "io dia armachd comlhaLR":
                         if (creature != null)
                         {
-                            creature.LastAnimation[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
+                            creature.AnimationHistory[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
 
                             var armachdStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -301,7 +301,7 @@ namespace Talos.Helper
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, armachdStateUpdates);
 
                             Console.WriteLine($"[UpdateSpellAnimationHistory] 'Armachd' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Armachd Duration: {creature.GetState<double>(CreatureState.ArmachdDuration)}");
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
@@ -322,7 +322,7 @@ namespace Talos.Helper
                     case "armachd":
                         if (creature != null)
                         {
-                            creature.LastAnimation[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
+                            creature.AnimationHistory[(ushort)SpellAnimation.Armachd] = DateTime.UtcNow;
 
                             var armachdStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -333,14 +333,14 @@ namespace Talos.Helper
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, armachdStateUpdates);
 
                             Console.WriteLine($"[UpdateSpellAnimationHistory] 'Armachd' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Armachd Duration: {creature.GetState<double>(CreatureState.ArmachdDuration)}");
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
                     case "suain":
                         if (creature != null)
                         {
-                            creature.LastAnimation[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
+                            creature.AnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
 
                             var suainStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -351,7 +351,7 @@ namespace Talos.Helper
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, suainStateUpdates);
 
                             Console.WriteLine($"[UpdateSpellAnimationHistory] 'Suain' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Suain Duration: {creature.GetState<double>(CreatureState.SuainDuration)}");
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
@@ -363,7 +363,7 @@ namespace Talos.Helper
                     case "Mesmerize":
                         if (creature != null)
                         {
-                            creature.LastAnimation[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
+                            creature.AnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
 
                             var pramhStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -374,7 +374,7 @@ namespace Talos.Helper
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, pramhStateUpdates);
 
                             Console.WriteLine($"[UpdateSpellAnimationHistory] 'Sleep' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Sleep Duration: {creature.GetState<double>(CreatureState.PramhDuration)}");
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
@@ -391,7 +391,7 @@ namespace Talos.Helper
                     case "Frost Arrow 11":
                         if (creature != null)
                         {
-                            creature.LastAnimation[(ushort)SpellAnimation.FrostArrow] = DateTime.UtcNow;
+                            creature.AnimationHistory[(ushort)SpellAnimation.FrostArrow] = DateTime.UtcNow;
 
                             var frostArrowStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -402,7 +402,7 @@ namespace Talos.Helper
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, frostArrowStateUpdates);
 
                             Console.WriteLine($"[UpdateSpellAnimationHistory] 'Frost Arrow' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, Frost Arrow Duration: {creature.GetState<double>(CreatureState.FrostArrowDuration)}");
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
@@ -420,7 +420,7 @@ namespace Talos.Helper
                     case "Cursed Tune 12":
                         if (creature != null)
                         {
-                            creature.LastAnimation[(ushort)SpellAnimation.CursedTunePoison] = DateTime.UtcNow;
+                            creature.AnimationHistory[(ushort)SpellAnimation.CursedTunePoison] = DateTime.UtcNow;
 
                             var cursedTuneStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -431,7 +431,7 @@ namespace Talos.Helper
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, cursedTuneStateUpdates);
 
                             Console.WriteLine($"[UpdateSpellAnimationHistory] 'Cursed Tune' cast on Creature ID: {creature.ID}, Time: {DateTime.UtcNow}, CT Duration: {creature.GetState<double>(CreatureState.CursedTuneDuration)}");
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
@@ -447,7 +447,7 @@ namespace Talos.Helper
                     case "Regeneration 10":
                         if (creature != null)
                         {
-                            creature.LastAnimation[(ushort)SpellAnimation.Regeneration] = DateTime.UtcNow;
+                            creature.AnimationHistory[(ushort)SpellAnimation.Regeneration] = DateTime.UtcNow;
 
                             var regenStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -457,14 +457,14 @@ namespace Talos.Helper
 
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, regenStateUpdates);
 
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
                     case "Increased Regeneration":
                         if (creature != null)
                         {
-                            creature.LastAnimation[(ushort)SpellAnimation.IncreasedRegeneration] = DateTime.UtcNow;
+                            creature.AnimationHistory[(ushort)SpellAnimation.IncreasedRegeneration] = DateTime.UtcNow;
 
                             var increasedRegenStateUpdates = new Dictionary<CreatureState, object>
                             {
@@ -474,14 +474,14 @@ namespace Talos.Helper
 
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, increasedRegenStateUpdates);
 
-                            client._server.RemoveFirstCreatureToSpell(client);
+                            client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
 
                     default:
                         //Console.WriteLine($"[HandleSpellCastMessage] default case encountered");
                         //Console.WriteLine($"[HandleSpellCastMessage] _creatureToSpellList.Count {client._creatureToSpellList.Count}");
-                        if (client._spellHistory.Count <= 0)
+                        if (client.SpellHistory.Count <= 0)
                             client.CastedSpell = null;
                         break;
                 }
@@ -491,7 +491,7 @@ namespace Talos.Helper
 
         private void HandleBowMessage(Client client, Match match)
         {
-            client._shouldEquipBow = true;
+            client.ShouldEquipBow = true;
         }
 
         private void HandleAoSithMessage(Client client, Match match)
@@ -503,7 +503,7 @@ namespace Talos.Helper
             client.Bot._shouldAlertItemCap = true;
             if (client.ClientTab.toggleFarmBtn.Text == "Disable")
             {
-                client._inventoryFull = true;
+                client.InventoryFull = true;
             }
         }
         private void HandleNecklaceMessage(Client client, Match match)
@@ -518,7 +518,7 @@ namespace Talos.Helper
                 case "Dark Necklace":
                 case "Royal Baem Scale Pendant":
                 case "Dark Gold Jade Necklace":
-                    client._offenseElement = "Dark";
+                    client.OffenseElement = "Dark";
                     break;
                 case "Lumen Amulet":
                 case "Light Necklace":
@@ -526,10 +526,10 @@ namespace Talos.Helper
                 case "Lannair Amulet":
                 case "Lionnear Amulet":
                 case "Laise Amulet":
-                    client._offenseElement = "Light";
+                    client.OffenseElement = "Light";
                     break;
                 default:
-                    client._offenseElement = "Unknown";
+                    client.OffenseElement = "Unknown";
                     break;
             }
         }
@@ -539,12 +539,12 @@ namespace Talos.Helper
             if (match.Value.Contains("4 Temuairan days"))
             {
                 client.CastedSpell = null;
-                client._hasLabor = false;
+                client.HasLabor = false;
             }
             else if (match.Value.Contains("You do not have time"))
             {
                 client.CastedSpell = null;
-                client._hasLabor = false;
+                client.HasLabor = false;
             }
             else if (match.Value.Contains("You work for"))
             {
@@ -552,7 +552,7 @@ namespace Talos.Helper
             }
             else if (match.Value.Contains("works for you"))
             {
-                client._hasLabor = true;
+                client.HasLabor = true;
             }
         }
 
@@ -564,7 +564,7 @@ namespace Talos.Helper
             {
                 client.ClientTab._sessionExperience += (ulong)experience;
 
-                if (client._map.MapID == 511)//Balanced Arena
+                if (client.Map.MapID == 511)//Balanced Arena
                 {
                     client.Bot._fowlCount++;
                 }
@@ -601,32 +601,32 @@ namespace Talos.Helper
 
             if (client.ClientTab.equipmentrepairCbox.Checked && durabilityPercent == 10)
             {
-                client._needsToRepairHammer = true;
+                client.NeedsToRepair = true;
             }
         }
 
         private void HandleTrainingGroundsMessage(Client client, string message)
         {
-            client._trainingGroundsMember = false;
+            client.TrainingGroundsMember = false;
         }
         private void HandleStuckMessage(Client client, string message)
         {
-            Console.WriteLine("Stuck message received. Current stuck counter: {0}", client._stuckCounter);
+            Console.WriteLine("Stuck message received. Current stuck counter: {0}", client.StuckCounter);
             Console.WriteLine("Message: {0}", message);
 
-            client._server.RemoveFirstCreatureToSpell(client);
+            client.Server.RemoveFirstCreatureToSpell(client);
             client.CastedSpell = null;
             client.CastedTarget = null;
-            client._stuckCounter++;
+            client.StuckCounter++;
 
-            Console.WriteLine("Incremented stuck counter to: {0}", client._stuckCounter);
+            Console.WriteLine("Incremented stuck counter to: {0}", client.StuckCounter);
 
             // Check conditions to attempt moving out of a stuck position
-            if ((client._stuckCounter > 4) && (!client.Bot._rangerNear || !client.ClientTab.rangerStopCbox.Checked))
+            if ((client.StuckCounter > 4) && (!client.Bot._rangerNear || !client.ClientTab.rangerStopCbox.Checked))
             {
                 Console.WriteLine("Stuck counter > 4 and conditions met to attempt moving.");
 
-                Location serverLocation = client._serverLocation;
+                Location serverLocation = client.ServerLocation;
                 Console.WriteLine("Current server location: MapID={0}, X={1}, Y={2}", serverLocation.MapID, serverLocation.X, serverLocation.Y);
 
                 // Define the four adjacent tiles (up, right, down, left)
@@ -651,7 +651,7 @@ namespace Talos.Helper
                 // Check each adjacent location
                 foreach (var loc in adjacentLocations)
                 {
-                    bool isWall = client._map.Tiles[loc.Point].IsWall;
+                    bool isWall = client.Map.Tiles[loc.Point].IsWall;
                     bool creatureAtLoc = creatures.Any(c => c.Location == loc);
 
                     Console.WriteLine("Evaluating location MapID={0}, X={1}, Y={2}: IsWall={3}, CreatureThere={4}", loc.MapID, loc.X, loc.Y, isWall, creatureAtLoc);
@@ -683,7 +683,7 @@ namespace Talos.Helper
                 Console.WriteLine("Stuck counter <= 4 or conditions not met to attempt moving.");
             }
 
-            if (client._stuckCounter > 6)
+            if (client.StuckCounter > 6)
             {
                 Console.WriteLine("Stuck counter > 6, playing system beep.");
                 SystemSounds.Beep.Play();
@@ -693,10 +693,10 @@ namespace Talos.Helper
 
         private void HandleSpiritWorldMessage(Client client, string message)
         {
-            if ((client._spellHistory.Count > 0) && client.NearbyObjects.Contains(client._spellHistory[0].Creature.ID))
+            if ((client.SpellHistory.Count > 0) && client.NearbyObjects.Contains(client.SpellHistory[0].Creature.ID))
             {
-                client.NearbyObjects.Remove(client._spellHistory[0].Creature.ID);
-                client._server.RemoveFirstCreatureToSpell(client);
+                client.NearbyObjects.Remove(client.SpellHistory[0].Creature.ID);
+                client.Server.RemoveFirstCreatureToSpell(client);
             }
         }
 
@@ -744,7 +744,7 @@ namespace Talos.Helper
         private void HandleAlreadyCastMessage(Client client, string message)
         {
 
-            if (client._spellHistory.Count > 0)
+            if (client.SpellHistory.Count > 0)
             {
                 //Console.WriteLine($"[HandleAlreadyCastMessage] Already cast message received on {client._creatureToSpellList[0].Creature.ID}");
                 //Console.WriteLine($"[HandleAlreadyCastMessage] _creatureToSpellList.Count before removal: {client._creatureToSpellList.Count}");
@@ -755,7 +755,7 @@ namespace Talos.Helper
                     //client._spellHistory[0].Creature.FasDuration = Spell.GetSpellDuration(client.CastedSpell.Name);
                     //if (client._spellHistory[0].Creature.ID != client.Player.ID)
                     //    client.UpdateFasTargets(client, client._spellHistory[0].Creature.ID, client._spellHistory[0].Creature.FasDuration);
-                    Creature creature = client._spellHistory[0].Creature;
+                    Creature creature = client.SpellHistory[0].Creature;
                     string fasName = client.CastedSpell.Name;
 
                     //Console.WriteLine($"[HandleAlreadyCastMessage] Received 'You already cast' message for {fasName} on Creature ID: {client._spellHistory[0].Creature?.ID}, Hash: {client._spellHistory[0].Creature?.GetHashCode()} Updating LastFassed.");
@@ -779,19 +779,19 @@ namespace Talos.Helper
                 }
                 if (client.CastedSpell != null && client.CastedSpell.Name.Contains("pramh"))
                 {
-                    client._spellHistory[0].Creature.LastAnimation[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
+                    client.SpellHistory[0].Creature.AnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client.CastedSpell = null;
                 }
                 if (client.CastedSpell != null && client.CastedSpell.Name.Contains("suain"))
                 {
-                    client._spellHistory[0].Creature.LastAnimation[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
+                    client.SpellHistory[0].Creature.AnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client.CastedSpell = null;
                 }
 
 
-                client._server.RemoveFirstCreatureToSpell(client);
+                client.Server.RemoveFirstCreatureToSpell(client);
             }
 
         }
@@ -1094,7 +1094,7 @@ namespace Talos.Helper
 
         private void HandleNoManaMessage(Client client, string message)
         {
-            client._server.RemoveFirstCreatureToSpell(client);
+            client.Server.RemoveFirstCreatureToSpell(client);
             client.Bot._needFasSpiorad = true;
         }
 
@@ -1110,14 +1110,14 @@ namespace Talos.Helper
             }
             else if (message == "You can't use skills here.")
             {
-                client._map.CanUseSkills = false;
+                client.Map.CanUseSkills = false;
             }
             else if (message == "That doesn't work here.")
             {
-                client._map.CanUseSpells = false;
+                client.Map.CanUseSpells = false;
                 client.CastedSpell = null;
                 client.CastedTarget = null;
-                client._server.RemoveFirstCreatureToSpell(client);
+                client.Server.RemoveFirstCreatureToSpell(client);
             }
         }
 
@@ -1144,13 +1144,13 @@ namespace Talos.Helper
         {
             if (client.CastedSpell != null)
             {
-                if ((client._spellHistory.Count > 0) && (client._spellHistory[0].Creature != null))
+                if ((client.SpellHistory.Count > 0) && (client.SpellHistory[0].Creature != null))
                 {
 
-                    Creature creature = client._spellHistory[0].Creature;
+                    Creature creature = client.SpellHistory[0].Creature;
                     string curseName = match.Groups[1].Value;
 
-                    Console.WriteLine($"[HandleCurseMessage] Received 'another curse afflicts thee' message for {match.Groups[1].Value} on Creature ID: {client._spellHistory[0].Creature?.ID}, Hash: {client._spellHistory[0].Creature?.GetHashCode()} Updating LastCursed.");
+                    Console.WriteLine($"[HandleCurseMessage] Received 'another curse afflicts thee' message for {match.Groups[1].Value} on Creature ID: {client.SpellHistory[0].Creature?.ID}, Hash: {client.SpellHistory[0].Creature?.GetHashCode()} Updating LastCursed.");
 
                     double curseDuration = Spell.GetSpellDuration(curseName);
 
@@ -1173,7 +1173,7 @@ namespace Talos.Helper
                     //Console.WriteLine($"[HandleCurseMessage] LastCursed Updated to {client._spellHistory[0].Creature?.LastCursed}");
                     //client.UpdateCurseTargets(client, client._spellHistory[0].Creature.ID, match.Groups[1].Value);
 
-                    client._server.RemoveFirstCreatureToSpell(client);
+                    client.Server.RemoveFirstCreatureToSpell(client);
                 }
                 client.CastedSpell = null;
             }
@@ -1198,11 +1198,11 @@ namespace Talos.Helper
         private void HandleArenaBroadcastMessage(Client client, string message)
         {
             string messageToSend = "";
-            TimeSpan span = new TimeSpan(0, 6, 0) - DateTime.UtcNow.Subtract(client._arenaAnnounceTimer);
+            TimeSpan span = new TimeSpan(0, 6, 0) - DateTime.UtcNow.Subtract(client.Server.ArenaAnnounceTimer);
 
             messageToSend = "You may broadcast again in ";
 
-            if (client._arenaAnnounceTimer != DateTime.MinValue)
+            if (client.Server.ArenaAnnounceTimer != DateTime.MinValue)
             {
                 messageToSend += (span.Minutes > 1) ? $"{span.Minutes} minutes and " :
                                 (span.Minutes > 0) ? $"{span.Minutes} minute{(span.Minutes == 1 ? "" : "s")} and " :
@@ -1221,7 +1221,7 @@ namespace Talos.Helper
         }
         private void HandleInventoryMessage(Client client, string message)
         {
-            client._inventoryFull = true;
+            client.InventoryFull = true;
         }
 
         private void HandleJoinLeaveGroupMessage(Client client, Match match)

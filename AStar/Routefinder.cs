@@ -54,13 +54,13 @@ namespace Talos.AStar
                     Map currentMap = _server._maps[currentNode.Location.MapID];
 
                     List<Warp> exits = (from exit in currentMap.Exits.Values
-                                        where currentMap.MapID != _client._map.MapID || !_client.IsLocationSurrounded(exit.SourceLocation)
+                                        where currentMap.MapID != _client.Map.MapID || !_client.IsLocationSurrounded(exit.SourceLocation)
                                         orderby currentNode.Location.DistanceFrom(exit.SourceLocation)
                                         select exit).ToList();
 
                     List<KeyValuePair<Point, WorldMap>> worldMapExits = (from worldMapEntry in currentMap.WorldMaps
-                                                                             where currentMap.MapID != _client._map.MapID || !_client.IsLocationSurrounded(new Location(currentMap.MapID, worldMapEntry.Key.X, worldMapEntry.Key.Y))
-                                                                             orderby _client._serverLocation.DistanceFrom(new Location(currentMap.MapID, worldMapEntry.Key.X, worldMapEntry.Key.Y))
+                                                                             where currentMap.MapID != _client.Map.MapID || !_client.IsLocationSurrounded(new Location(currentMap.MapID, worldMapEntry.Key.X, worldMapEntry.Key.Y))
+                                                                             orderby _client.ServerLocation.DistanceFrom(new Location(currentMap.MapID, worldMapEntry.Key.X, worldMapEntry.Key.Y))
                                                                              select worldMapEntry).ToList();
 
                     foreach (var worldMapEntry in worldMapExits)

@@ -35,7 +35,7 @@ namespace Talos.Structs
             Y = y;
         }
 
-        internal Location Offset(Direction dir)
+        internal Location Offsetter(Direction dir)
         {
             Location result = new Location(MapID, new Point(X, Y));
 

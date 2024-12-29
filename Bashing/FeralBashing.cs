@@ -31,7 +31,7 @@ namespace Talos.Bashing
             }
 
             // Check distance to target
-            int distanceToTarget = Client._clientLocation.DistanceFrom(target.Location);
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget > 5)
                 return;
 
@@ -144,8 +144,8 @@ namespace Talos.Bashing
             if (!ShouldUseSkillsOnTarget(target))
                 return false;
 
-            bool alignedAxis = (target.Location.X == Client._clientLocation.X || target.Location.Y == Client._clientLocation.Y);
-            bool directionMatch = (target.Location.GetDirection(Client._clientLocation) == Client._clientDirection);
+            bool alignedAxis = (target.Location.X == Client.ClientLocation.X || target.Location.Y == Client.ClientLocation.Y);
+            bool directionMatch = (target.Location.GetDirection(Client.ClientLocation) == Client.ClientDirection);
 
             return alignedAxis && directionMatch && Client.NumberedSkill("Pounce");
         }

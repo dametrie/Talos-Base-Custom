@@ -32,7 +32,7 @@ namespace Talos.Bashing
             }
 
             // Check distance to target
-            int distanceToTarget = Client._clientLocation.DistanceFrom(target.Location);
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget > 3)
                 return; // Too far to do anything else
 
@@ -125,8 +125,8 @@ namespace Talos.Bashing
             // Must be able to use skills on target, and must be aligned to X or Y
             // Also must be facing the correct direction to use "Strikedown"
             bool alignedToTarget =
-                (target.Location.X == Client._clientLocation.X || target.Location.Y == Client._clientLocation.Y) &&
-                target.Location.GetDirection(Client._clientLocation) == Client._clientDirection;
+                (target.Location.X == Client.ClientLocation.X || target.Location.Y == Client.ClientLocation.Y) &&
+                target.Location.GetDirection(Client.ClientLocation) == Client.ClientDirection;
 
             return ShouldUseSkillsOnTarget(target) &&
                    alignedToTarget &&

@@ -35,7 +35,7 @@ internal class Pathfinder
     internal Pathfinder(Client client)
     {
         _client = client;
-        _map = client._map;
+        _map = client.Map;
         _mapWidth = _map.Width;
         _mapHeight = _map.Height;
         InitializePathNodes(true);
@@ -54,12 +54,12 @@ internal class Pathfinder
             select creature.Location).ToList();
 
         // Handle other clients on the same map
-        foreach (Client otherClient in _client._server.Clients.Where(cli => cli != _client && cli._map.MapID == _client._map.MapID))
+        foreach (Client otherClient in _client.Server.Clients.Where(cli => cli != _client && cli.Map.MapID == _client.Map.MapID))
         {
             if (!(_isLockstepWalking && otherClient.Player.Name.Equals(_followPlayerName, StringComparison.OrdinalIgnoreCase)))
             {
                 // Add up to 3 points from their path to the obstacles
-                var pathPoints = FindSimplePath(otherClient._clientLocation.Point, otherClient._serverLocation.Point).Take(3);
+                var pathPoints = FindSimplePath(otherClient.ClientLocation.Point, otherClient.ServerLocation.Point).Take(3);
                 foreach (Point point in pathPoints)
                 {
                     Location loc = new Location(_map.MapID, point.X, point.Y);
@@ -190,7 +190,7 @@ internal class Pathfinder
         if (_client.ClientTab.lockstepCbox.Checked && c.Type == CreatureType.Aisling && c.Name.Equals(_followPlayerName, StringComparison.OrdinalIgnoreCase))
         {
             // Get the client instance of the creature
-            Client client = _client._server.GetClient(c.Name);
+            Client client = _client.Server.GetClient(c.Name);
             if (client != null && DateTime.UtcNow.Subtract(client.LastStep).TotalSeconds < 2.0)
             {
                 _isLockstepWalking = true;
@@ -214,8 +214,8 @@ internal class Pathfinder
 
         while (currentPoint != endPoint)
         {
-            Direction direction = currentPoint.Relation(endPoint);
-            currentPoint = currentPoint.TranslatePointByDirection(direction);
+            Direction direction = currentPoint.GetDirection(endPoint);
+            currentPoint = currentPoint.Offsetter(direction);
 
             yield return currentPoint;
         }

@@ -73,7 +73,7 @@ namespace Talos.Helper
         {
             if (args.Length == 0)
             {
-                client.ClientTab.SetMonsterForm(!client.SpriteOverrideEnabled, client._spriteOverride);
+                client.ClientTab.SetMonsterForm(!client.SpriteOverrideEnabled, client.SpriteOverride);
                 return;
             }
 
@@ -178,7 +178,7 @@ namespace Talos.Helper
 
             DateTime startTime = DateTime.UtcNow;
 
-            while (client._npcDialog == null || !client._npcDialog.Contains("your maximum health to raise your health by"))
+            while (client.NpcDialog == null || !client.NpcDialog.Contains("your maximum health to raise your health by"))
             {
                 if (DateTime.UtcNow.Subtract(startTime).TotalSeconds > 2.0)
                 {
@@ -196,7 +196,7 @@ namespace Talos.Helper
             }
 
             // Parse the health cost from the NPC dialog
-            Match match = Regex.Match(client._npcDialog, @"\(\(It costs ([0-9]+) health");
+            Match match = Regex.Match(client.NpcDialog, @"\(\(It costs ([0-9]+) health");
             if (!match.Success)
             {
                 client.ServerMessage((byte)ServerMessageType.Whisper, "Failed to parse health cost from NPC dialog.");
@@ -260,7 +260,7 @@ namespace Talos.Helper
 
             DateTime startTime = DateTime.UtcNow;
 
-            while (client._npcDialog == null || !client._npcDialog.Contains("maximum mana to raise your mana by"))
+            while (client.NpcDialog == null || !client.NpcDialog.Contains("maximum mana to raise your mana by"))
             {
                 if (DateTime.UtcNow.Subtract(startTime).TotalSeconds > 2.0)
                 {
@@ -278,7 +278,7 @@ namespace Talos.Helper
             }
 
             // Parse the mana cost from the NPC dialog
-            Match match = Regex.Match(client._npcDialog, @"\(\(It costs ([0-9]+) mana");
+            Match match = Regex.Match(client.NpcDialog, @"\(\(It costs ([0-9]+) mana");
             if (!match.Success)
             {
                 client.ServerMessage((byte)ServerMessageType.Whisper, "Failed to parse mana cost from NPC dialog.");
@@ -342,10 +342,10 @@ namespace Talos.Helper
 
             // Get the nearest NPC
             Creature nearestNPC = client.GetNearbyNPCs()
-                .OrderBy(npc => npc.Location.DistanceFrom(client._serverLocation))
+                .OrderBy(npc => npc.Location.DistanceFrom(client.ServerLocation))
                 .FirstOrDefault();
 
-            if (nearestNPC == null || nearestNPC.Location.DistanceFrom(client._serverLocation) > 12)
+            if (nearestNPC == null || nearestNPC.Location.DistanceFrom(client.ServerLocation) > 12)
             {
                 client.ServerMessage((byte)ServerMessageType.ActiveMessage, "You need a merchant nearby to use this command.");
                 return;
@@ -384,10 +384,10 @@ namespace Talos.Helper
 
             // Find the nearest NPC
             Creature npc = client.GetNearbyNPCs()
-                .OrderBy(npc => npc.Location.DistanceFrom(client._serverLocation))
+                .OrderBy(npc => npc.Location.DistanceFrom(client.ServerLocation))
                 .FirstOrDefault();
 
-            if (npc == null || npc.Location.DistanceFrom(client._serverLocation) > 12)
+            if (npc == null || npc.Location.DistanceFrom(client.ServerLocation) > 12)
             {
                 client.ServerMessage((byte)ServerMessageType.ActiveMessage, "You need a merchant nearby to use this command.");
                 return;
@@ -439,10 +439,10 @@ namespace Talos.Helper
 
             // Find the nearest NPC
             Creature npc = client.GetNearbyNPCs()
-                .OrderBy(npc => npc.Location.DistanceFrom(client._serverLocation))
+                .OrderBy(npc => npc.Location.DistanceFrom(client.ServerLocation))
                 .FirstOrDefault();
 
-            if (npc == null || npc.Location.DistanceFrom(client._serverLocation) > 12)
+            if (npc == null || npc.Location.DistanceFrom(client.ServerLocation) > 12)
             {
                 client.ServerMessage((byte)ServerMessageType.ActiveMessage, "You need a merchant nearby to use this command.");
                 return;
@@ -499,7 +499,7 @@ namespace Talos.Helper
             // Handle "alts" argument
             if (string.Equals(target, "alts", StringComparison.OrdinalIgnoreCase))
             {
-                foreach (Client otherClient in client._server.Clients)
+                foreach (Client otherClient in client.Server.Clients)
                 {
                     if (otherClient.ClientTab != null && !string.IsNullOrEmpty(otherClient.Name) && client != otherClient)
                     {
@@ -582,7 +582,7 @@ namespace Talos.Helper
             if (args.Length == 0)
             {
                 // Disable follow for all other clients
-                foreach (Client otherClient in client._server.Clients)
+                foreach (Client otherClient in client.Server.Clients)
                 {
                     if (!ReferenceEquals(otherClient, client))
                     {
@@ -596,7 +596,7 @@ namespace Talos.Helper
             {
                 int followDistance = 2;
 
-                foreach (Client otherClient in client._server.Clients)
+                foreach (Client otherClient in client.Server.Clients)
                 {
                     if (!ReferenceEquals(otherClient, client))
                     {
@@ -615,9 +615,9 @@ namespace Talos.Helper
         }
         private void CommandHandler_Assails(Client client, string fullMessage, string[] args)
         {
-            client._assailNoise = !client._assailNoise;
+            client.AssailNoise = !client.AssailNoise;
 
-            string status = client._assailNoise ? "disabled" : "enabled";
+            string status = client.AssailNoise ? "disabled" : "enabled";
             client.ServerMessage((byte)ServerMessageType.ActiveMessage, $"Assail sounds have been {status}.");
         }
 
@@ -679,10 +679,10 @@ namespace Talos.Helper
         private void CommandHandler_Send(Client client, string fullMessage, string[] args)
         {
             Creature npc = client.GetNearbyNPCs()
-                .OrderBy(npc => npc.Location.DistanceFrom(client._serverLocation))
+                .OrderBy(npc => npc.Location.DistanceFrom(client.ServerLocation))
                 .FirstOrDefault();
 
-            if (npc == null || npc.Location.DistanceFrom(client._serverLocation) > 12)
+            if (npc == null || npc.Location.DistanceFrom(client.ServerLocation) > 12)
             {
                 client.ServerMessage((byte)ServerMessageType.ActiveMessage, "You need an NPC nearby to use this command.");
                 return;
@@ -693,10 +693,10 @@ namespace Talos.Helper
         private void CommandHandler_Receive(Client client, string fullMessage, string[] args)
         {
             Creature npc = client.GetNearbyNPCs()
-                .OrderBy(npc => npc.Location.DistanceFrom(client._serverLocation))
+                .OrderBy(npc => npc.Location.DistanceFrom(client.ServerLocation))
                 .FirstOrDefault();
 
-            if (npc == null || npc.Location.DistanceFrom(client._serverLocation) > 12)
+            if (npc == null || npc.Location.DistanceFrom(client.ServerLocation) > 12)
             {
                 client.ServerMessage((byte)ServerMessageType.ActiveMessage, "You need an NPC nearby to use this command.");
                 return;
@@ -781,9 +781,9 @@ namespace Talos.Helper
 
         private void CommandHandler_ladder(Client client, string fullMessage, string[] args)
         {
-            client._ladder = !client._ladder;
+            client.Ladder = !client.Ladder;
 
-            string status = client._ladder ? "disabled" : "enabled";
+            string status = client.Ladder ? "disabled" : "enabled";
             client.ServerMessage((byte)ServerMessageType.ActiveMessage, $"Auto click ladder has been {status}.");
         }
 
@@ -843,9 +843,9 @@ namespace Talos.Helper
 
                 if (action == "all")
                 {
-                    foreach (var otherClient in client._server.Clients)
+                    foreach (var otherClient in client.Server.Clients)
                     {
-                        if (otherClient._map.Name.Contains("Water Dungeon"))
+                        if (otherClient.Map.Name.Contains("Water Dungeon"))
                         {
                             otherClient.PublicMessage(1, "Water Spirit, I have done what you have asked of me.");
                         }
@@ -855,9 +855,9 @@ namespace Talos.Helper
 
                 if (action == "exit")
                 {
-                    foreach (var otherClient in client._server.Clients)
+                    foreach (var otherClient in client.Server.Clients)
                     {
-                        if (otherClient._map.Name.Contains("Water Dungeon"))
+                        if (otherClient.Map.Name.Contains("Water Dungeon"))
                         {
                             otherClient.PublicMessage(1, "Water Spirit, I cannot continue, I must rest.");
                         }
@@ -872,7 +872,7 @@ namespace Talos.Helper
             }
 
             // Default behavior: check if the client is in the Water Dungeon
-            if (client._map.Name.Contains("Water Dungeon"))
+            if (client.Map.Name.Contains("Water Dungeon"))
             {
                 client.PublicMessage(1, "Water Spirit, I have done what you have asked of me.");
             }
@@ -958,7 +958,7 @@ namespace Talos.Helper
         {
             if (args.Length > 0 && args[0].Equals("all", StringComparison.OrdinalIgnoreCase))
             {
-                foreach (Client otherClient in client._server.Clients)
+                foreach (Client otherClient in client.Server.Clients)
                 {
                     if (otherClient.ClientTab != null)
                     {
@@ -986,17 +986,17 @@ namespace Talos.Helper
 
         private void CommandHandler_Chests(Client client, string fullMessage, string[] args)
         {
-            client._chestToggle = !client._chestToggle;
+            client.ChestToggle = !client.ChestToggle;
 
-            string stateMessage = client._chestToggle ? "Chest opening is now toggled on." : "Chest opening is now toggled off.";
+            string stateMessage = client.ChestToggle ? "Chest opening is now toggled on." : "Chest opening is now toggled off.";
             client.ServerMessage((byte)ServerMessageType.ActiveMessage, stateMessage);
         }
 
         private void CommandHandler_Raffle(Client client, string fullMessage, string[] args)
         {
-            client._raffleToggle = !client._raffleToggle;
+            client.RaffleToggle = !client.RaffleToggle;
 
-            string stateMessage = client._raffleToggle ? "Raffle opening is now toggled on." : "Raffle opening is now toggled off.";
+            string stateMessage = client.RaffleToggle ? "Raffle opening is now toggled on." : "Raffle opening is now toggled off.";
             client.ServerMessage((byte)ServerMessageType.ActiveMessage, stateMessage);
         }
 
@@ -1019,7 +1019,7 @@ namespace Talos.Helper
             // Handle "all" argument to load profile for all clients
             if (args.Length > 1 && args[1].Equals("all", StringComparison.OrdinalIgnoreCase))
             {
-                foreach (var otherClient in client._server.Clients)
+                foreach (var otherClient in client.Server.Clients)
                 {
                     _ = otherClient.ClientTab.LoadProfileAsync(profileName);
                     otherClient.ServerMessage((byte)ServerMessageType.ActiveMessage, $"Loading profile '{profileName}' for all clients.");
