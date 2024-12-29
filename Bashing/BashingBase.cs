@@ -10,6 +10,7 @@ using Talos.Definitions;
 using Talos.Enumerations;
 using Talos.Objects;
 using Talos.Structs;
+using Talos.Utility;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Talos.Bashing
@@ -494,7 +495,7 @@ namespace Talos.Bashing
             // Randomize the directions and check for walkability
             var randomDirections = Enum.GetValues(typeof(Direction))
                                        .Cast<Direction>()
-                                       .OrderBy(_ => Utility.Random());
+                                       .OrderBy(_ => RandomUtils.Random());
 
             foreach (var dir in randomDirections)
             {

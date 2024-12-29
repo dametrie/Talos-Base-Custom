@@ -5,6 +5,7 @@ using Talos;
 using Talos.Base;
 using Talos.Cryptography;
 using Talos.Enumerations;
+using Talos.Utility;
 
 namespace Talos.Networking
 {
@@ -59,8 +60,8 @@ namespace Talos.Networking
         internal override void Encrypt(Crypto crypto)
         {
             _position = _data.Length;
-            ushort num = (ushort)(Utility.Random(65277) + 256);
-            byte b = (byte)(Utility.Random(155) + 100);
+            ushort num = (ushort)(RandomUtils.Random(65277) + 256);
+            byte b = (byte)(RandomUtils.Random(155) + 100);
             byte[] key;
             switch (EncryptMethod)
             {
@@ -136,8 +137,8 @@ namespace Talos.Networking
         internal void GenerateDialogHeader()
         {
             ushort num = CRC.Calculate(_data, 6, _data.Length - 6);
-            _data[0] = (byte)Utility.Random();
-            _data[1] = (byte)Utility.Random();
+            _data[0] = (byte)RandomUtils.Random();
+            _data[1] = (byte)RandomUtils.Random();
             _data[2] = (byte)((_data.Length - 4) / 256);
             _data[3] = (byte)((_data.Length - 4) % 256);
             _data[4] = (byte)(num / 256);

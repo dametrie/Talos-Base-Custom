@@ -225,14 +225,14 @@ namespace Talos.Forms
         {
             if (string.IsNullOrEmpty(saveTBox.Text))
             {
-                MessageDialog.Show(Client.Server._mainForm, "Save name cannot be empty.", this);
+                MessageDialog.Show(Client.Server.MainForm, "Save name cannot be empty.", this);
                 return;
             }
 
             // Check for invalid characters in the filename
             if (Regex.IsMatch(saveTBox.Text, @"[\/\*\""\\\[\]\:\?\|\<\>]"))
             {
-                MessageDialog.Show(Client.Server._mainForm, "Cannot use characters /*\"[]\\:?|<> in the save name.", this);
+                MessageDialog.Show(Client.Server.MainForm, "Cannot use characters /*\"[]\\:?|<> in the save name.", this);
                 return;
             }
 
@@ -281,12 +281,12 @@ namespace Talos.Forms
                     Client.ClientTab._wayFormProfiles.Add(saveTBox.Text);
                 }
 
-                MessageDialog.Show(Client.Server._mainForm, "Waypoints saved successfully!", this);
+                MessageDialog.Show(Client.Server.MainForm, "Waypoints saved successfully!", this);
             }
             catch (Exception ex)
             {
                 // Handle errors gracefully
-                MessageDialog.Show(Client.Server._mainForm, $"Failed to save waypoints: {ex.Message}", this);
+                MessageDialog.Show(Client.Server.MainForm, $"Failed to save waypoints: {ex.Message}", this);
             }
         }
 

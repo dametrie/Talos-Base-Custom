@@ -4,6 +4,7 @@ using Talos;
 using Talos.Base;
 using Talos.Cryptography;
 using Talos.Enumerations;
+using Talos.Utility;
 
 namespace Talos.Networking
 {
@@ -51,8 +52,8 @@ namespace Talos.Networking
             _position = _data.Length;
 
             // Generate random values
-            ushort a = (ushort)(Utility.Random(65277) + 256);
-            byte b = (byte)(Utility.Random(155) + 100);
+            ushort a = (ushort)(RandomUtils.Random(65277) + 256);
+            byte b = (byte)(RandomUtils.Random(155) + 100);
 
             // Select encryption key based on EncryptMethod
             byte[] key = EncryptMethod switch

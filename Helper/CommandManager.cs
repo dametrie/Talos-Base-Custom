@@ -11,6 +11,7 @@ using Talos.Base;
 using Talos.Definitions;
 using Talos.Enumerations;
 using Talos.Objects;
+using Talos.Utility;
 
 namespace Talos.Helper
 {
@@ -758,8 +759,8 @@ namespace Talos.Helper
 
                         // Send a message for the found item
                         client.ServerMessage(
-                            (byte)ServerMessageType.ActiveMessage,
-                            $"{Utility.UppercaseFirst(owner)}'s {inventoryName} contains {line}."
+                            (byte)ServerMessageType.Whisper,
+                            $"{StringUtils.UppercaseFirst(owner)}'s {inventoryName} contains {line}."
                         );
 
                         itemFound = true;
@@ -770,7 +771,7 @@ namespace Talos.Helper
             // Notify if no matches were found
             if (!itemFound)
             {
-                client.ServerMessage((byte)ServerMessageType.ActiveMessage, $"No matches found for '{searchQuery}'.");
+                client.ServerMessage((byte)ServerMessageType.Whisper, $"No matches found for '{searchQuery}'.");
             }
         }
        

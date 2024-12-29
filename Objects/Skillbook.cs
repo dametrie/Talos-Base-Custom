@@ -11,13 +11,13 @@ namespace Talos.Objects
     {
 
         internal Dictionary<string, Skill> SkillbookDictionary { get; } = new Dictionary<string, Skill>();
-        private Skill?[] SkillArray { get; } = new Skill?[90];
+        private Skill[] SkillArray { get; } = new Skill[90];
 
         internal int MaxSkills => 90;
 
 
-        internal Skill? this[string skillName] => SkillbookDictionary.TryGetValue(skillName, out var skill) ? skill : null;
-        internal Skill? this[byte slot] => slot >= 0 && slot < MaxSkills ? SkillArray[slot] : null;
+        internal Skill this[string skillName] => SkillbookDictionary.TryGetValue(skillName, out var skill) ? skill : null;
+        internal Skill this[byte slot] => slot >= 0 && slot < MaxSkills ? SkillArray[slot] : null;
 
 
         internal Skillbook()

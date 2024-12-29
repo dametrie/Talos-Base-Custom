@@ -22,6 +22,7 @@ using Talos.Maps;
 using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
+using Talos.Utility;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Talos.Base
@@ -320,7 +321,7 @@ namespace Talos.Base
             if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
             {
                 Client.RefreshRequest(false);
-                Client.Walk(Utility.RandomEnumValue<Direction>());
+                Client.Walk(RandomUtils.RandomEnumValue<Direction>());
                 _lastUnstick = DateTime.UtcNow;
                 Client.ServerMessage((byte)ServerMessageType.TopRight, "No valid actions. Unsticking...");
             }
@@ -399,7 +400,7 @@ namespace Talos.Base
                 if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
                 {
                     Client.RefreshRequest(false);
-                    Client.Walk(Utility.RandomEnumValue<Direction>());
+                    Client.Walk(RandomUtils.RandomEnumValue<Direction>());
                     _lastUnstick = DateTime.UtcNow;
                     return;
                 }
@@ -486,7 +487,7 @@ namespace Talos.Base
 
             foreach (var map in Server._maps.Values.Where(m => m.MapID == Client.Map.MapID))
             {
-                int waypointsToGenerate = Utility.Clamp((map.Height + map.Width) / 8, 5, 12);
+                int waypointsToGenerate = MathUtils.Clamp((map.Height + map.Width) / 8, 5, 12);
 
                 for (int i = 0; i < waypointsToGenerate; i++)
                 {
@@ -494,8 +495,8 @@ namespace Talos.Base
                     do
                     {
                         location = new Location(map.MapID,
-                            (short)Utility.Random(1, Client.Map.Width - 2),
-                            (short)Utility.Random(1, Client.Map.Height - 2));
+                            (short)RandomUtils.Random(1, Client.Map.Width - 2),
+                            (short)RandomUtils.Random(1, Client.Map.Height - 2));
                     }
                     while (Client.Map.IsWall(location) || Client.Pathfinder.FindPath(Client.ServerLocation, location).Count == 0);
 
@@ -518,7 +519,7 @@ namespace Talos.Base
                 if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
                 {
                     Client.RefreshRequest(false);
-                    Client.Walk(Utility.RandomEnumValue<Direction>());
+                    Client.Walk(RandomUtils.RandomEnumValue<Direction>());
                     _lastUnstick = DateTime.UtcNow;
                     return;
                 }
@@ -728,7 +729,7 @@ namespace Talos.Base
 
         private void WaitForWeaponToEquip(string weaponToEquip)
         {
-            var timer = Timer.FromMilliseconds(1500);
+            var timer = Utility.Timer.FromMilliseconds(1500);
             while (!timer.IsTimeExpired && Client.EquippedItems[1]?.Name != weaponToEquip)
             {
                 Thread.Sleep(100);
@@ -1121,355 +1122,471 @@ namespace Talos.Base
 
         private void Ascending()
         {
-            if (Client.ClientTab.ascendBtn.Text == "Ascending")
+            // Step 1: Only proceed if ascendBtn says "Ascending"
+            if (Client.ClientTab.ascendBtn.Text != "Ascending")
+                return;
+
+            bool flagIsHp = (Client.ClientTab.ascendOptionCbx.Text == "HP");
+
+            // 1) Deposit War Bag if needed (returns true if we handled everything)
+            if (DepositWarBagIfNeeded())
+                return;
+
+            // 2) Retrieve War Bag if needed (returns true if we handled everything)
+            if (RetrieveWarBagIfNeeded())
+                return;
+
+            // 3) Handle HP ascend if on map 3086
+            if (AscendHpIfNeeded())
+                return;
+
+            // 4) Handle MP ascend if on map 3087
+            if (AscendMpIfNeeded())
+                return;
+
+            // 5) If we’re not skulled and haven’t finished ascending, handle “get succubus hair + drop it + get killed” steps
+            if (HandleSkullAndSuccubusHair())
+                return;
+
+            // 6) If deathOption is checked, do that logic
+            if (HandleDeathOption())
+                return;
+
+            if (HandleGhostWalk())
+                return;
+
+            // 7) Otherwise do nothing special, sleep briefly
+            Thread.Sleep(100);
+        }
+
+        private bool HandleGhostWalk()
+        {
+            bool ascendHP = Client.ClientTab.ascendOptionCbx.Text == "HP";
+
+            if (Client.Map.MapID == 435)
             {
-                bool flag = (Client.ClientTab.ascendOptionCbx.Text == "HP");
+                if (Client.ServerLocation.X < 6)
+                    Client.Pathfind(new Location(435, 4, 20), 0);
+                else
+                    Client.Pathfind(new Location(435, 6, 23), 0);
+                return true;
+            }
+            else if (Client.Map.MapID == 3085)
+            {
+                if (ascendHP)
+                    Client.Pathfind(new Location(3085, 10, 14), 0);
+                else
+                    Client.Pathfind(new Location(3085, 10, 5), 0);
+                return true;
+            }
 
 
-                if (Client.Inventory.Contains("Warranty Bag") && !Client.AscendTaskDone)
+            return false;
+
+        }
+
+        private bool DepositWarBagIfNeeded()
+        {
+            // Original check: if Inventory has "Warranty Bag" AND we haven’t completed the ascend task
+            if (!Client.Inventory.Contains("Warranty Bag") || Client.AscendTaskDone)
+                return false;
+
+            // If we get here, we have a war bag and ascend not done
+            if (hasrepaired)
+                hasrepaired = false;
+
+            if (Client.Map.MapID == 135) // Mileth Storage
+            {
+                Location current = Client.ServerLocation;
+                if (current.DistanceFrom(new Location(135, 6, 6)) <= 3)
                 {
-                    if (hasrepaired)
-                        hasrepaired = false;
+                    Creature creature = Client.GetNearbyNPCs()
+                        .OrderBy(n => n.Location.DistanceFrom(Client.ServerLocation))
+                        .FirstOrDefault();
 
-                    if (Client.Map.MapID == 135) //Mileth Storage
+                    if (creature != null)
                     {
-                        Location point1 = Client.ServerLocation;
-                        if (point1.DistanceFrom(new Location(135, 6, 6)) <= 3)
+                        if (creature.Location.DistanceFrom(Client.ServerLocation) <= 12)
                         {
-                            // Get nearest merchant
+                            if (!hasrepaired)
+                            {
+                                // EXACT logic from old code
+                                Client.PursuitRequest((byte)1, creature.ID, 92);
+                                Thread.Sleep(1000);
+                                Client.WithdrawItem(creature.ID, "Succubus's Hair", 1);
+                                Thread.Sleep(1000);
+
+                                int komCount = 52 - Client.Inventory.CountOf("Komadium");
+                                if (komCount > 0 && komCount <= 51)
+                                {
+                                    Client.WithdrawItem(creature.ID, "Komadium", komCount);
+                                    Thread.Sleep(1000);
+                                }
+
+                                int exkuraCount = 30 - Client.Inventory.CountOf("Exkuranum");
+                                if (exkuraCount > 0 && exkuraCount <= 30)
+                                {
+                                    Client.WithdrawItem(creature.ID, "Exkuranum", exkuraCount);
+                                    Thread.Sleep(1000);
+                                }
+
+                                int scollCount = 30 - Client.Inventory.CountOf("Rucesion Song");
+                                if (scollCount > 0 && scollCount <= 30)
+                                {
+                                    Client.WithdrawItem(creature.ID, "Rucesion Song", scollCount);
+                                    Thread.Sleep(1000);
+                                }
+
+                                int hemCount = 30 - Client.Inventory.CountOf("Hemloch");
+                                if (hemCount > 0 && hemCount <= 30)
+                                {
+                                    Client.WithdrawItem(creature.ID, "Hemloch", hemCount);
+                                    Thread.Sleep(1000);
+                                }
+                            }
+
+                            // Deposit each war bag we find in inventory
+                            foreach (Item obj in Client.Inventory)
+                            {
+                                if (obj.Name.Equals("Warranty Bag"))
+                                {
+                                    Client.DepositItem(creature.ID, "Warranty Bag");
+                                    Thread.Sleep(1000);
+                                }
+                            }
+
+                            // Wait up to 5 seconds for the bag to disappear
+                            DateTime start = DateTime.UtcNow;
+                            while (Client.Inventory.Contains("Warranty Bag"))
+                            {
+                                Thread.Sleep(10);
+                                var timeSpan = DateTime.UtcNow.Subtract(start);
+                                if (timeSpan.TotalSeconds > 5.0)
+                                {
+                                    Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend"));
+                                    MessageDialog.Show(Server.MainForm, "Could not deposit warranty bag. Error");
+                                    break;
+                                }
+                            }
+
+                            Client.WarBagDeposited = true;
+                            Client.AscendTaskDone = false;
+                            hasrepaired = true;
+
+                            // We handled this fully, so return true
+                            return true;
+                        }
+                    }
+                    // Merchant not found or too far
+                    Client.ServerMessage((byte)ServerMessageType.Whisper,
+                        "You need a merchant nearby to use this command.");
+                    // Return true means we stop further logic in Ascending().
+                    // In the original code, it 'return'ed after showing the message.
+                    return true;
+                }
+            }
+            // Route to Mileth storage
+            Client.Routefind(new Location(135, 6, 6), 2);
+            return true; // We started route, so we’re done here
+        }
+
+        private bool RetrieveWarBagIfNeeded()
+        {
+            // Original check: if WarBagDeposited && AscendTaskDone
+            if (!Client.WarBagDeposited || !Client.AscendTaskDone)
+                return false;
+
+            // If we get here, we need to retrieve the bag
+            if (Client.Map.MapID == 167) // Abel storage
+            {
+                Location current = Client.ServerLocation;
+                if (current.DistanceFrom(new Location(167, 3, 8)) <= 2)
+                {
+                    Creature creature = Client.GetNearbyNPCs()
+                        .OrderBy(n => n.Location.DistanceFrom(Client.ServerLocation))
+                        .FirstOrDefault();
+
+                    if (creature != null && creature.Location.DistanceFrom(Client.ServerLocation) <= 12)
+                    {
+                        Client.PublicMessage((byte)PublicMessageType.Chant, "Give my Warranty Bag back");
+                        Client.Dialog?.Reply();
+
+                        DateTime start = DateTime.UtcNow;
+                        while (!Client.Inventory.Contains("Warranty Bag"))
+                        {
+                            Client.PublicMessage((byte)PublicMessageType.Chant, "Give my Warranty Bag back");
+                            Thread.Sleep(500);
+
+                            var timeSpan = DateTime.UtcNow.Subtract(start);
+                            if (timeSpan.TotalSeconds > 5.0)
+                            {
+                                Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend"));
+                                MessageDialog.Show(Server.MainForm, "Couldn't retrieve warranty bag. Error");
+                                break;
+                            }
+                        }
+
+                        // Once done, set ascendBtn to Ascend
+                        Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend"));
+
+                        var ascendNames = Server.MainForm.AutoAscendDataList
+                            .Where(d => d.ContainsKey("Name"))
+                            .Select(d => d["Name"].ToString());
+
+                        if (ascendNames.Contains(Client.Name))
+                            Server.ClientStateList[Client.Name] = CharacterState.AscendingComplete;
+
+                        // We are done
+                        return true;
+                    }
+
+                    Client.ServerMessage((byte)ServerMessageType.Whisper,
+                        "You need a merchant nearby to use this command.");
+                    return true;
+                }
+            }
+            // Otherwise route to Abel storage
+            Client.Routefind(new Location(167, 3, 8), 1);
+            return true;
+        }
+
+        private bool AscendHpIfNeeded()
+        {
+            if (Client.Map.MapID != 3086)
+                return false;
+
+            Location altarSpot = new Location(3086, 5, 2);
+            Location current = Client.ServerLocation;
+
+            if (current.DistanceFrom(altarSpot) > 2)
+            {
+                Client.Pathfind(altarSpot);
+                return true; // We started pathfinding, so done
+            }
+
+            // If within range
+            Client.RefreshRequest();
+            current = Client.ServerLocation;
+            if (current.DistanceFrom(altarSpot) > 2)
+                return true; // just stop until next call
+
+            Thread.Sleep(2500);
+            commandManager.ExecuteCommand(Client, "/hp all");
+
+            // If WarBag not deposited, set ascendBtn back and possibly complete ascending
+            if (!Client.WarBagDeposited)
+            {
+                Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend"));
+
+                var ascendNames = Server.MainForm.AutoAscendDataList
+                    .Where(d => d.ContainsKey("Name"))
+                    .Select(d => d["Name"].ToString())
+                    .ToList();
+
+                if (ascendNames.Contains(Client.Name))
+                    Server.ClientStateList[Client.Name] = CharacterState.AscendingComplete;
+            }
+
+            Client.AscendTaskDone = true;
+            return true;
+        }
+
+        private bool AscendMpIfNeeded()
+        {
+            if (Client.Map.MapID != 3087)
+                return false;
+
+            Location altarSpot = new Location(3087, 5, 2);
+            Location current = Client.ServerLocation;
+
+            if (current.DistanceFrom(altarSpot) > 2)
+            {
+                Client.Pathfind(altarSpot);
+                return true;
+            }
+
+            Client.RefreshRequest();
+            current = Client.ServerLocation;
+            if (current.DistanceFrom(altarSpot) > 2)
+                return true;
+
+            Thread.Sleep(2500);
+            commandManager.ExecuteCommand(Client, "/mp all");
+
+            if (!Client.WarBagDeposited)
+            {
+                Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend"));
+
+                var ascendNames = Server.MainForm.AutoAscendDataList
+                    .Where(d => d.ContainsKey("Name"))
+                    .Select(d => d["Name"].ToString());
+
+                if (ascendNames.Contains(Client.Name))
+                    Server.ClientStateList[Client.Name] = CharacterState.AscendingComplete;
+            }
+
+            Client.AscendTaskDone = true;
+            return true;
+        }
+
+        private bool HandleSkullAndSuccubusHair()
+        {
+            // We are ghost walking
+            if (Client.Map.MapID == 435 || 
+               Client.Map.MapID == 3085 || 
+               Client.Map.MapID == 3086 || 
+               Client.Map.MapID == 3087)
+                return false;
+
+            // Original check: if not skull, and not ascend done
+            if (Client.EffectsBar.Contains((ushort)EffectsBar.Skull) || Client.AscendTaskDone)
+                return false;
+
+            // If we don’t have succubus hair, withdraw from Mileth
+            if (!Client.Inventory.Contains("Succubus's Hair"))
+            {
+                if (Client.Map.MapID == 135) // Mileth Storage
+                {
+                    Location current = Client.ServerLocation;
+                    if (current.DistanceFrom(new Location(135, 6, 6)) <= 3)
+                    {
+                        Creature creature = Client.GetNearbyNPCs()
+                            .OrderBy(n => n.Location.DistanceFrom(Client.ServerLocation))
+                            .FirstOrDefault();
+
+                        if (creature != null &&
+                            creature.Location.DistanceFrom(Client.ServerLocation) <= 12)
+                        {
+                            Client.PursuitRequest((byte)1, creature.ID, 92);
+                            Thread.Sleep(1000);
+                            Client.WithdrawItem(creature.ID, "Succubus's Hair", 1);
+                            Client.Dialog?.Reply();
+
+                            DateTime start = DateTime.UtcNow;
+                            while (!Client.Inventory.Contains("Succubus's Hair"))
+                            {
+                                Thread.Sleep(10);
+                                var timeSpan = DateTime.UtcNow.Subtract(start);
+                                if (timeSpan.TotalSeconds > 5.0)
+                                {
+                                    Client.ClientTab.ascendBtn.Text = "Ascend";
+                                    MessageDialog.Show(Server.MainForm,
+                                        "Succubus Hair retreival failed.");
+                                    break;
+                                }
+                            }
+                            // The original code had goto label_616; 
+                            // So we just return true to end Ascending().
+                            return true;
+                        }
+
+                        Client.ServerMessage((byte)ServerMessageType.Whisper,
+                            "You need a merchant nearby to use this command.");
+                        return true;
+                    }
+                }
+                Client.Routefind(new Location(135, 6, 6), 3);
+                return true;
+            }
+            else if (Client.Map.MapID == 500
+                     && CONSTANTS.MILETH_ALTAR_SPOTS.Keys.Contains(Client.ServerLocation))
+            {
+                // Drop the succubus hair
+                Client.Drop(
+                    Client.Inventory["Succubus's Hair"].Slot,
+                    CONSTANTS.MILETH_ALTAR_SPOTS[Client.ServerLocation]
+                );
+                Thread.Sleep(1500);
+                Client.Dialog?.Reply();
+                Thread.Sleep(100);
+
+                // If we still don’t have skull, refresh and return
+                if (!Client.EffectsBar.Contains((ushort)EffectsBar.Skull))
+                {
+                    Client.RefreshRequest();
+                    return true;
+                }
+
+                // If we do have skull, possibly warp back (if Rucesion Song)
+                var ascendNames = Server.MainForm.AutoAscendDataList
+                    .Where(d => d.ContainsKey("Name"))
+                    .Select(d => d["Name"].ToString());
+
+                if (ascendNames.Contains(Client.Name) && Client.HasItem("Rucesion Song"))
+                    Client.UseItem("Rucesion Song");
+
+                Thread.Sleep(150);
+                return true;
+            }
+            else
+            {
+                // Route to an unoccupied MILETH_ALTAR_SPOT
+                var nextPoint = CONSTANTS.MILETH_ALTAR_SPOTS
+                    .FirstOrDefault(kvp =>
+                        !Client.GetNearbyPlayers().Any(p => p.Location == kvp.Key)
+                    ).Key;
+
+                Client.Routefind(new Location(500, nextPoint.X, nextPoint.Y));
+                return true;
+            }
+        }
+
+        private bool HandleDeathOption()
+        {
+            // Original check: if (Client.ClientTab.deathOptionCbx.Checked)
+            if (!Client.ClientTab.deathOptionCbx.Checked)
+                return false;
+
+            if (Client.Map.MapID == 340) // Dubhaim Castle
+            {
+                Location current = Client.ServerLocation;
+                if (current.DistanceFrom(new Location(340, 2, 47)) <= 6)
+                {
+                    var buaireadair = Client.GetNearbyPlayer("buaireadair");
+                    if (buaireadair != null)
+                    {
+                        Client.Whisper("buaireadair", "Kill me please, buaireadair?");
+                        Thread.Sleep(800);
+
+                        if (Client.CurrentHP > 1U && !Client.UseSkill("Auto Hemloch"))
+                        {
+                            if (Client.Inventory.Contains("Hemloch"))
+                                Client.UseItem("Hemloch");
+                            Thread.Sleep(2000);
+                        }
+
+                        if (!Client.Inventory.Contains("Hemloch"))
+                        {
                             Creature creature = Client.GetNearbyNPCs()
                                 .OrderBy(n => n.Location.DistanceFrom(Client.ServerLocation))
                                 .FirstOrDefault();
 
                             if (creature != null)
-                            {
-                                point1 = creature.Location;
-                                if (point1.DistanceFrom(Client.ServerLocation) <= 12)
-                                {
-                                    if (!hasrepaired)
-                                    {
-                                        Client.PursuitRequest((byte)1, creature.ID, 92);
-                                        Thread.Sleep(1000);
-                                        Client.WithdrawItem(creature.ID, "Succubus's Hair", 1);
-                                        Thread.Sleep(1000);
+                                Client.WithdrawItem(creature.ID, "Hemloch", 30);
 
-                                        int komCount = 52 - Client.Inventory.CountOf("Komadium");
-                                        if (komCount > 0 && komCount <= 51)
-                                        {
-                                            Client.WithdrawItem(creature.ID, "Komadium", komCount);
-                                            Thread.Sleep(1000);
-                                        }
-
-                                        int exkuraCount = 30 - Client.Inventory.CountOf("Exkuranum");
-                                        if (exkuraCount > 0 && exkuraCount <= 30)
-                                        {
-                                            Client.WithdrawItem(creature.ID, "Exkuranum", exkuraCount);
-                                            Thread.Sleep(1000);
-                                        }
-
-                                        int scollCount = 30 - Client.Inventory.CountOf("Rucesion Song");
-                                        if (scollCount > 0 && scollCount <= 30)
-                                        {
-                                            Client.WithdrawItem(creature.ID, "Rucesion Song", scollCount);
-                                            Thread.Sleep(1000);
-                                        }
-
-                                        int hemCount = 30 - Client.Inventory.CountOf("Hemloch");
-                                        if (hemCount > 0 && hemCount <= 30)
-                                        {
-                                            Client.WithdrawItem(creature.ID, "Hemloch", hemCount);
-                                            Thread.Sleep(1000);
-                                        }
-                                    }
-
-                                    foreach (Item obj in Client.Inventory)
-                                    {
-                                        if (obj.Name.Equals("Warranty Bag"))
-                                        {
-                                            Client.DepositItem(creature.ID, "Warranty Bag");
-                                            Thread.Sleep(1000);
-                                        }
-                                    }
-
-                                    DateTime utcNow = DateTime.UtcNow;
-                                    while (Client.Inventory.Contains("Warranty Bag"))
-                                    {
-                                        Thread.Sleep(10);
-                                        TimeSpan timeSpan = DateTime.UtcNow.Subtract(utcNow);
-                                        if (timeSpan.TotalSeconds > 5.0)
-                                        {
-                                            Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend"));
-                                            MessageDialog.Show(Server._mainForm, "Could not deposit warranty bag. Error");
-                                            break;
-                                        }
-                                    }
-
-                                    Client.WarBagDeposited = true;
-                                    Client.AscendTaskDone = false;
-                                    hasrepaired = true;
-                                    goto label_616;
-                                }
-                            }
-                            Client.ServerMessage((byte)ServerMessageType.Whisper, "You need a merchant nearby to use this command.");
-                            return;
+                            Thread.Sleep(500);
+                            return true; // original code used goto label_616
                         }
-                    }
-                    Client.Routefind(new Location(135, 6, 6), 2);
-                }
-                else if (Client.WarBagDeposited && Client.AscendTaskDone)
-                {
-                    if (Client.Map.MapID == 167) //Abel storage
-                    {
-                        Location point1 = Client.ServerLocation;
-                        if (point1.DistanceFrom(new Location(167, 3, 8)) <= 2)
+                        else
                         {
-                            Creature creature = Client.GetNearbyNPCs()
-                                .OrderBy(n => n.Location.DistanceFrom(Client.ServerLocation))
-                                .FirstOrDefault();
-
-                            if (creature != null && creature.Location.DistanceFrom(Client.ServerLocation) <= 12)
-                            {
-                                Client.PublicMessage((byte)PublicMessageType.Chant, "Give my Warranty Bag back");
-                                Client.Dialog?.Reply();
-
-                                DateTime utcNow = DateTime.UtcNow;
-                                while (!Client.Inventory.Contains("Warranty Bag"))
-                                {
-                                    Client.PublicMessage((byte)PublicMessageType.Chant, "Give my Warranty Bag back");
-                                    Thread.Sleep(500);
-                                    TimeSpan timeSpan = DateTime.UtcNow.Subtract(utcNow);
-                                    if (timeSpan.TotalSeconds > 5.0)
-                                    {
-                                        Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend");
-                                        MessageDialog.Show(Server._mainForm, "Couldn't retrieve warranty bag. Error");
-                                        break;
-                                    }
-                                }
-
-                                Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend"));
-
-                                var ascendNames = Server._mainForm.AutoAscendDataList
-                                    .Where(data => data.ContainsKey("Name"))
-                                    .Select(data => data["Name"].ToString());
-
-                                if (ascendNames.Contains(Client.Name))
-                                    Server.ClientStateList[Client.Name] = CharacterState.AscendingComplete;
-
-                                goto label_616;
-                            }
-
-                            Client.ServerMessage((byte)ServerMessageType.Whisper, "You need a merchant nearby to use this command.");
-                            return;
+                            return true; // also goto label_616
                         }
-                    }
-                    Client.Routefind(new Location(167, 3, 8), 1);
-                }
-                else if (Client.Map.MapID == 3086) // Aosda Deoch Shrine
-                {
-                    Location point5 = new Location(3086, 5, 2);
-                    Location point1 = Client.ServerLocation;
-                    if (point1.DistanceFrom(point5) > 2)
-                    {
-                        Client.Pathfind(point5);
                     }
                     else
                     {
-                        Client.RefreshRequest();
-                        point1 = Client.ServerLocation;
-                        if (point1.DistanceFrom(point5) > 2) return;
-
-                        Thread.Sleep(2500);
-                        commandManager.ExecuteCommand(Client, "/hp all");
-
-                        if (!Client.WarBagDeposited)
-                        {
-                            Client.ClientTab.Invoke((Action)(() => Client.ClientTab.ascendBtn.Text = "Ascend");
-
-                            var ascendNames = Server._mainForm.AutoAscendDataList
-                                .Where(data => data.ContainsKey("Name"))
-                                .Select(data => data["Name"].ToString())
-                                .ToList();
-
-                            if (ascendNames.Contains(Client.Name))
-                                Server.ClientStateList[Client.Name] = CharacterState.AscendingComplete;
-                        }
-                        Client.AscendTaskDone = true;
+                        SystemSounds.Beep.Play();
+                        Thread.Sleep(300);
+                        Client.ServerMessage((byte)ServerMessageType.Whisper,
+                            "buaireadair not present.");
+                        return true;
                     }
                 }
-                else if (Client.Map.MapID == 3087)
-                {
-                    Location point1 = Client.ServerLocation;
-                    Location point5 = new Location(3087, 5, 2);
-                    if (point1.DistanceFrom(point5) > 2)
-                    {
-                        Client.Pathfind(point5);
-                    }
-                    else
-                    {
-                        Client.RefreshRequest();
-                        point1 = Client.ServerLocation;
-                        if (point1.DistanceFrom(point5) > 2) return;
+            }
 
-                        Thread.Sleep(2500);
-                        Server.m_commandManager.HandleCommand(Client, "/mp all");
-
-                        if (!Client.WarBagDeposited)
-                        {
-                            Client.Tab.Invoke(() => Client.Tab.ascendBtn.Text = "Ascend");
-
-                            var ascendNames = Server.m_mainForm.AutoAscendDataList
-                                .Where(data => data.ContainsKey("Name"))
-                                .Select(data => data["Name"].ToString());
-
-                            if (ascendNames.Contains(Client.Name))
-                                Client.Server.ClientStateList[Client.Name] = Client.CharacterState.AscendingComplete;
-                        }
-                        Client.AscendTaskDone = true;
-                    }
-                }
-                else if (Client.Map.Id == 3085)
-                {
-                    if (flag)
-                        Client.Pathfind(new Point(10, 14), 0);
-                    else
-                        Client.Pathfind(new Point(10, 5), 0);
-                }
-                else if (Client.Map.Id == 435)
-                {
-                    if (!Client.tellOptimalThanks)
-                    {
-                        Client.Whisper("buaireadair", "You have done a great service.");
-                        Client.tellOptimalThanks = true;
-                    }
-                    if (Client.ServerPoint.X < 6)
-                        Client.Pathfind(new Point(4, 20), 0);
-                    else
-                        Client.Pathfind(new Point(6, 23), 0);
-                }
-                else if (!Client.SpellBar.Contains((ushort)89) && !Client.AscendTaskDone)
-                {
-                    if (!Client.Inventory.Contains("Succubus's Hair"))
-                    {
-                        if (Client.Map.Id == 135)
-                        {
-                            point1 = Client.ServerPoint;
-                            if (point1.Distance(new Point(6, 6)) <= 3)
-                            {
-                                Creature creature = Client.GetNearbyMerchants()
-                                    .OrderBy(n => n.Point.Distance(Client.ServerPoint))
-                                    .FirstOrDefault();
-
-                                if (creature != null && creature.Point.Distance(Client.ServerPoint) <= 12)
-                                {
-                                    Client.RequestPursuit((byte)1, creature.Id, 92);
-                                    Thread.Sleep(1000);
-                                    Client.WithdrawlItem(creature.Id, "Succubus's Hair", 1);
-                                    Client.Dialog?.Close();
-
-                                    DateTime utcNow = DateTime.UtcNow;
-                                    while (!Client.Inventory.Contains("Succubus's Hair"))
-                                    {
-                                        Thread.Sleep(10);
-                                        timeSpan = DateTime.UtcNow.Subtract(utcNow);
-                                        if (timeSpan.TotalSeconds > 5.0)
-                                        {
-                                            Client.Tab.ascendBtn.Text = "Ascend";
-                                            MessageDialog.Show(Server.m_mainForm, "Succubus Hair retreival failed.");
-                                            break;
-                                        }
-                                    }
-                                    goto label_616;
-                                }
-                                Client.SendSystemMessage((byte)0, "You need a merchant nearby to use this command.");
-                                return;
-                            }
-                        }
-                        Client.Routefind(new Location(135, 6, 6), 3);
-                    }
-                    else if (Client.Map.Id == 500 && AscendPoints.Keys.Contains(Client.ServerPoint))
-                    {
-                        Client.Drop(Client.Inventory["Succubus's Hair"].Slot, AscendPoints[Client.ServerPoint]);
-                        Thread.Sleep(1500);
-                        Client.Dialog?.Close();
-                        Thread.Sleep(100);
-
-                        if (!Client.SpellBar.Contains((ushort)89))
-                        {
-                            Client.Refresh();
-                            return;
-                        }
-
-                        var ascendNames = Server.m_mainForm.AutoAscendDataList
-                            .Where(data => data.ContainsKey("Name"))
-                            .Select(data => data["Name"].ToString());
-
-                        if (ascendNames.Contains(Client.Name) && Client.HasItem("Rucesion Song"))
-                            Client.UseItem("Rucesion Song");
-
-                        Thread.Sleep(150);
-                    }
-                    else
-                    {
-                        // Find a point (in AscendPoints) not occupied by a user
-                        var nextPoint = AscendPoints
-                            .FirstOrDefault(kvp => !Client.GetNearbyUsers()
-                                .Any(user => user.Point == kvp.Key))
-                            .Key;
-
-                        Client.Routefind(new Location(500, nextPoint));
-                    }
-                }
-                else if (Client.Tab.deathOptionCbx.Checked)
-                {
-                    if (Client.Map.Id == 340)
-                    {
-                        point1 = Client.ServerPoint;
-                        if (point1.Distance((short)2, (short)47) <= 6)
-                        {
-                            var buaireadair = Client.GetNearbyUser("buaireadair");
-                            if (buaireadair != null)
-                            {
-                                Client.Whisper("buaireadair", "Kill me please, buaireadair?");
-                                Thread.Sleep(800);
-
-                                if (Client.HP > 1U && !Client.UseSkill("Auto Hemloch"))
-                                {
-                                    if (Client.Inventory.Contains("Hemloch"))
-                                        Client.UseItem("Hemloch");
-                                    Thread.Sleep(2000);
-                                }
-                                if (!Client.Inventory.Contains("Hemloch"))
-                                {
-                                    Creature creature = Client.GetNearbyMerchants()
-                                        .OrderBy(n => n.Point.Distance(Client.ServerPoint))
-                                        .FirstOrDefault();
-                                    if (creature != null)
-                                        Client.WithdrawlItem(creature.Id, "Hemloch", 30);
-                                    Thread.Sleep(500);
-                                    goto label_616;
-                                }
-                                else
-                                {
-                                    goto label_616;
-                                }
-                            }
-                            else
-                            {
-                                SystemSounds.Beep.Play();
-                                Thread.Sleep(300);
-                                Client.SendSystemMessage((byte)0, "buaireadair not present.");
-                                goto label_616;
-                            }
-                        }
-                    }
-                    Client.Routefind(new Location(340, 3, 46), 2);
-                }
-                else
-                {
-                    Thread.Sleep(100);
-                }
-
+            Client.Routefind(new Location(340, 3, 46), 2);
+            return true;
         }
+
 
         #endregion
 
@@ -2218,7 +2335,7 @@ namespace Talos.Base
 
         private Location GetDestinationBasedOnComboBoxText(string text)
         {
-            uint fnvHash = Utility.CalculateFNV(text);
+            uint fnvHash = HashingUtils.CalculateFNV(text);
             return CONSTANTS.DESTINATION_MAP.TryGetValue(fnvHash, out var loc) ? loc : default;
         }
 
@@ -2410,7 +2527,7 @@ namespace Talos.Base
                 && !Client.HasEffect(EffectsBar.Suain)
                 && Client.GetAllNearbyMonsters(0).Any<Creature>())
             {
-                Direction direction = Utility.RandomEnumValue<Direction>();
+                Direction direction = RandomUtils.RandomEnumValue<Direction>();
                 Client.Walk(direction);
                 Thread.Sleep(300);
                 Client.RefreshRequest(false);
@@ -4514,7 +4631,7 @@ namespace Talos.Base
 
             if (_nearbyValidCreatures.Count > 0)
             {
-                _nearbyValidCreatures = _nearbyValidCreatures.OrderBy(c => Utility.Random()).ToList();
+                _nearbyValidCreatures = _nearbyValidCreatures.OrderBy(c => RandomUtils.Random()).ToList();
             }
 
             if (IsStrangerNearby())

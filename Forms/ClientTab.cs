@@ -1351,7 +1351,7 @@ namespace Talos.Forms
             {
                 AddAllyPage(name);
                 addAislingText.Clear();
-                if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+                if (!_isLoading && MessageDialog.Show(_client.Server.MainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
                 {
                     aislingTabControl.SelectTab(aislingTabControl.TabPages.IndexOfKey(name));
                     clientTabControl.SelectTab(1);
@@ -1363,22 +1363,22 @@ namespace Talos.Forms
         {
             if (string.IsNullOrEmpty(name))
             {
-                MessageDialog.Show(_client.Server._mainForm, "Your ally target cannot be empty.");
+                MessageDialog.Show(_client.Server.MainForm, "Your ally target cannot be empty.");
                 return false;
             }
             if (!name.All(char.IsLetter))
             {
-                MessageDialog.Show(_client.Server._mainForm, "Your ally target cannot contain noncharacters.");
+                MessageDialog.Show(_client.Server.MainForm, "Your ally target cannot contain noncharacters.");
                 return false;
             }
             if (_client.Bot.IsAllyAlreadyListed(name))
             {
-                MessageDialog.Show(_client.Server._mainForm, "Ally already in list.");
+                MessageDialog.Show(_client.Server.MainForm, "Ally already in list.");
                 return false;
             }
             if (name.Equals(_client.Name, StringComparison.CurrentCultureIgnoreCase))
             {
-                MessageDialog.Show(_client.Server._mainForm, "Cannot add yourself to ally list.");
+                MessageDialog.Show(_client.Server.MainForm, "Cannot add yourself to ally list.");
                 return false;
             }
             return true;
@@ -1693,7 +1693,7 @@ namespace Talos.Forms
             List<Client> clientListCopy;
             lock (_client.Server._clientListLock)
             {
-                clientListCopy = _client.Server._clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = _client.Server.ClientList.ToList(); // Create a copy to iterate over
             }
 
             foreach (Client client in clientListCopy)
@@ -1735,7 +1735,7 @@ namespace Talos.Forms
             List<Client> clientListCopy;
             lock (_client.Server._clientListLock)
             {
-                clientListCopy = _client.Server._clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = _client.Server.ClientList.ToList(); // Create a copy to iterate over
             }
 
             foreach (Client client in clientListCopy)
@@ -1782,7 +1782,7 @@ namespace Talos.Forms
         {
             if (!_isLoading && _client.Bot.AllyPage != null)
             {
-                MessageDialog.Show(_client.Server._mainForm, "You are already targeting the group.");
+                MessageDialog.Show(_client.Server.MainForm, "You are already targeting the group.");
                 return;
             }
 
@@ -1810,7 +1810,7 @@ namespace Talos.Forms
                     _client.Bot.AddAlly(ally);
                 }
             }
-            if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client.Server.MainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 aislingTabControl.SelectTab(tabPage);
                 clientTabControl.SelectTab(1);
@@ -1821,7 +1821,7 @@ namespace Talos.Forms
         {
             if (!_isLoading && _client.Bot.AllyPage != null)
             {
-                MessageDialog.Show(_client.Server._mainForm, "You already targeting alts.");
+                MessageDialog.Show(_client.Server.MainForm, "You already targeting alts.");
                 return;
             }
             _client.Bot.AllyPage = new AllyPage(new Ally("alts"), _client);
@@ -1832,7 +1832,7 @@ namespace Talos.Forms
             List<Client> clientListCopy;
             lock (_client.Server._clientListLock)
             {
-                clientListCopy = _client.Server._clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = _client.Server.ClientList.ToList(); // Create a copy to iterate over
             }
             foreach (Client client in clientListCopy.Where((Client c) => c.Identifier != _client.Identifier))
             {
@@ -1848,7 +1848,7 @@ namespace Talos.Forms
                 };
                 _client.Bot.AddAlly(ally);
             }
-            if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client.Server.MainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 aislingTabControl.SelectTab(tabPage);
                 clientTabControl.SelectTab(1);
@@ -1859,7 +1859,7 @@ namespace Talos.Forms
         {
             if (!_isLoading && _client.Bot.AllMonsters != null)
             {
-                MessageDialog.Show(_client.Server._mainForm, "Enemy already in list");
+                MessageDialog.Show(_client.Server.MainForm, "Enemy already in list");
                 return;
             }
             EnemyPage enemyPage = new EnemyPage(new Enemy("all monsters"), _client);
@@ -1891,7 +1891,7 @@ namespace Talos.Forms
                     _client.Bot.UpdateEnemyList(enemy);
                 }
             }
-            if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+            if (!_isLoading && MessageDialog.Show(_client.Server.MainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
             {
                 clientTabControl.SelectTab(2);
                 monsterTabControl.SelectTab(tabPage);
@@ -1905,7 +1905,7 @@ namespace Talos.Forms
             {
                 AddEnemyPage(result);
                 addMonsterText.Clear();
-                if (!_isLoading && MessageDialog.Show(_client.Server._mainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
+                if (!_isLoading && MessageDialog.Show(_client.Server.MainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
                 {
                     monsterTabControl.SelectTab(monsterTabControl.TabPages.IndexOfKey(result.ToString()));
                     clientTabControl.SelectTab(2);
@@ -1921,11 +1921,11 @@ namespace Talos.Forms
                 {
                     return true;
                 }
-                MessageDialog.Show(_client.Server._mainForm, "Enemy already in list");
+                MessageDialog.Show(_client.Server.MainForm, "Enemy already in list");
                 addMonsterText.Clear();
                 return false;
             }
-            MessageDialog.Show(_client.Server._mainForm, "Your sprite must be a number between 1-1000");
+            MessageDialog.Show(_client.Server.MainForm, "Your sprite must be a number between 1-1000");
             addMonsterText.Clear();
             return false;
         }
@@ -1940,7 +1940,7 @@ namespace Talos.Forms
             // Ensure savePath does not contain invalid characters
             if (Regex.Match(savePath, "[\\/\\*\\\"\\[\\]\\\\\\:\\?\\|\\<\\>\\.]").Success)
             {
-                MessageDialog.Show(_client.Server._mainForm, "Cannot use characters /*\"[]\\:?|<>.");
+                MessageDialog.Show(_client.Server.MainForm, "Cannot use characters /*\"[]\\:?|<>.");
                 return;
             }
 
@@ -2792,7 +2792,7 @@ namespace Talos.Forms
         private void deleteMenuItem_Click(object sender, EventArgs e)
         {
             string text = (sender as ToolStripMenuItem).Text;
-            if (MessageDialog.Show(_client.Server._mainForm, "ARE YOU SURE YOU WANT TO DELETE " + text + "?") == DialogResult.OK)
+            if (MessageDialog.Show(_client.Server.MainForm, "ARE YOU SURE YOU WANT TO DELETE " + text + "?") == DialogResult.OK)
             {
                 DeleteProfile(text);
             }
@@ -2819,7 +2819,7 @@ namespace Talos.Forms
         private void saveStrip_Click(object sender, EventArgs e)
         {
             string input = string.Empty;
-            if (!string.IsNullOrEmpty(LastLoadedProfile) && MessageDialog.Show(_client.Server._mainForm, "Save this profile as " + LastLoadedProfile + "?") == DialogResult.OK)
+            if (!string.IsNullOrEmpty(LastLoadedProfile) && MessageDialog.Show(_client.Server.MainForm, "Save this profile as " + LastLoadedProfile + "?") == DialogResult.OK)
             {
                 SaveProfile(LastLoadedProfile);
             }
@@ -3473,7 +3473,7 @@ namespace Talos.Forms
             List<Client> clientListCopy;
             lock (_client.Server._clientListLock)
             {
-                clientListCopy = _client.Server._clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = _client.Server.ClientList.ToList(); // Create a copy to iterate over
             }
 
             foreach (Client client in clientListCopy)
@@ -3826,7 +3826,7 @@ namespace Talos.Forms
         {
             if (!ushort.TryParse(priorityTBox.Text, out ushort parsedPriority) || parsedPriority < 1 || parsedPriority > 1000)
             {
-                MessageDialog.Show(_client.Server._mainForm, "Your sprite must be a number between 1-1000");
+                MessageDialog.Show(_client.Server.MainForm, "Your sprite must be a number between 1-1000");
                 priorityTBox.Clear();
                 return;
             }
@@ -3835,7 +3835,7 @@ namespace Talos.Forms
 
             if (priorityLBox.Items.Contains(priorityStr))
             {
-                MessageDialog.Show(_client.Server._mainForm, "\tEnemy already in list\t");
+                MessageDialog.Show(_client.Server.MainForm, "\tEnemy already in list\t");
                 priorityTBox.Clear();
                 return;
             }

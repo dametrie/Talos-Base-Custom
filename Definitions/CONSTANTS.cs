@@ -645,6 +645,23 @@ namespace Talos.Definitions
             { 3848419112U, new Location(5031, 6, 34)   }, // CR 31
         };
 
+        public static readonly Dictionary<Location, Location> MILETH_ALTAR_SPOTS = new Dictionary<Location, Location>
+        {
+            [new Location(500, 30, 50)] = new Location(500, 31, 52),
+            [new Location(500, 31, 50)] = new Location(500, 31, 52),
+            [new Location(500, 32, 50)] = new Location(500, 31, 52),
+            [new Location(500, 33, 50)] = new Location(500, 31, 52),
+            [new Location(500, 33, 51)] = new Location(500, 31, 52),
+            [new Location(500, 33, 52)] = new Location(500, 31, 52),
+            [new Location(500, 33, 53)] = new Location(500, 31, 53),
+            [new Location(500, 33, 54)] = new Location(500, 31, 53),
+            [new Location(500, 33, 55)] = new Location(500, 31, 53),
+            [new Location(500, 32, 55)] = new Location(500, 31, 53),
+            [new Location(500, 31, 55)] = new Location(500, 31, 53),
+            [new Location(500, 30, 55)] = new Location(500, 31, 53),
+            [new Location(500, 29, 55)] = new Location(500, 31, 53),
+            [new Location(500, 29, 54)] = new Location(500, 31, 53),
+        };
 
     }
 }

@@ -99,6 +99,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Resources\MapsCacheEditor.exe</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -256,8 +259,12 @@
     <Compile Include="Structs\Point.cs" />
     <Compile Include="Structs\Rectangle.cs" />
     <Compile Include="Structs\Tile.cs" />
+    <Compile Include="Utility\HashingUtils.cs" />
+    <Compile Include="Utility\LocationConverter.cs" />
+    <Compile Include="Utility\MathUtils.cs" />
+    <Compile Include="Utility\RandomUtils.cs" />
+    <Compile Include="Utility\StringUtils.cs" />
     <Compile Include="Utility\Timer.cs" />
-    <Compile Include="Utility\Utility.cs" />
     <EmbeddedResource Include="Forms\InputDialog.resx">
       <DependentUpon>InputDialog.cs</DependentUpon>
     </EmbeddedResource>

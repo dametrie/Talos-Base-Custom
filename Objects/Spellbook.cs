@@ -8,13 +8,13 @@ namespace Talos.Objects
     internal sealed class Spellbook : IEnumerable<Spell>
     {
         private Dictionary<string, Spell> SpellbookDictionary { get; } = new Dictionary<string, Spell>();
-        private Spell?[] SpellArray { get; } = new Spell?[90];
+        private Spell[] SpellArray { get; } = new Spell[90];
 
         internal int MaxSpells => 90;
 
-        internal Spell? this[string spellName] => SpellbookDictionary.TryGetValue(spellName, out var spell) ? spell : null;
+        internal Spell this[string spellName] => SpellbookDictionary.TryGetValue(spellName, out var spell) ? spell : null;
 
-        internal Spell? this[byte slot] => slot >= 0 && slot < MaxSpells ? SpellArray[slot] : null;
+        internal Spell this[byte slot] => slot >= 0 && slot < MaxSpells ? SpellArray[slot] : null;
 
         internal void AddOrUpdateSpell(Spell spell)
         {

@@ -13,6 +13,11 @@ using Talos.Base;
 using Talos.Definitions;
 using Talos.Capricorn.IO;
 using Talos.Forms.UI;
+using System.Xml.Linq;
+using Newtonsoft.Json.Linq;
+using System.Security.Principal;
+using Newtonsoft.Json;
+using Talos.Utility;
 
 namespace Talos
 {
@@ -24,6 +29,7 @@ namespace Talos
         private Dictionary<Client, TabPage> _clientTabs = new Dictionary<Client, TabPage>();
         internal Dictionary<string, DateTime> _consecutiveLogin = new Dictionary<string, DateTime>();
         internal static Dictionary<string, DATArchive> khanFiles = new Dictionary<string, DATArchive>();
+        internal List<JObject> AutoAscendDataList = new List<JObject>();
         private IntPtr _hWnd;
         public MainForm()
         {
@@ -64,6 +70,54 @@ namespace Talos
         private void MainForm_Load(object sender, EventArgs e)
         {
             Server = new Server(this);
+
+            LoadAutoAscendData();
+            if (!new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
+            {
+                int num1 = (int)MessageDialog.Show(this, "Make sure to run the bot as Admin or you will lose functionality.");
+            }
+        }
+
+        private void LoadAutoAscendData()
+        {
+            lock (AutoAscendDataList)
+            {
+                // 1. Resolve the path and ensure the directory exists
+                string autoAscendPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "data",
+                    "autoascend"
+                );
+                Directory.CreateDirectory(autoAscendPath);
+
+                // 2. Grab all JSON files. If none, exit.
+                string[] files = Directory.GetFiles(autoAscendPath, "*.json");
+                if (files.Length == 0) return;
+
+                // 3. Clear the list before reloading
+                AutoAscendDataList.Clear();
+
+                // 4. Prepare the serializer settings once
+                var serializerSettings = new JsonSerializerSettings
+                {
+                    Converters = { new LocationConverter() }
+                };
+
+                // 5. Load each file, add to AutoAscendDataList
+                foreach (string file in files)
+                {
+                    try
+                    {
+                        string content = File.ReadAllText(file);
+                        var obj = JsonConvert.DeserializeObject<JObject>(content, serializerSettings);
+                        AutoAscendDataList.Add(obj);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading data from {file}: {ex.Message}");
+                    }
+                }
+            }
         }
 
         internal void CheckBelt(Client client)
@@ -91,7 +145,7 @@ namespace Talos
 
         internal void AddClientTab(Client client)
         {
-            if (InvokeRequired) { Invoke(new Action(()=> { AddClientTab(client); })); return; }
+            if (InvokeRequired) { Invoke(new Action(() => { AddClientTab(client); })); return; }
 
             ClientTab clientTab = new ClientTab(client)
             {
@@ -104,7 +158,7 @@ namespace Talos
 
             _clientTabs.Add(client, tabPage);
 
-            foreach (Client otherClient in client.Server._clientList)
+            foreach (Client otherClient in client.Server.ClientList)
             {
                 Bot bot = otherClient.Bot;
                 if (bot != null && bot.AllyPage != null && otherClient != client)

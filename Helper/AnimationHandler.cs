@@ -76,7 +76,7 @@ namespace Talos.Helper
                     List<Client> clientListCopy;
                     lock (_server._clientListLock)
                     {
-                        clientListCopy = _server._clientList.ToList(); // Create a copy to iterate over
+                        clientListCopy = _server.ClientList.ToList(); // Create a copy to iterate over
                     }
                     if (_targetID == _sourceID && _targetID != _client.PlayerID && !clientListCopy.Any(c => c.PlayerID == _targetID))
                     {
@@ -425,19 +425,34 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.RedPotion:
-                    if (_targetCreature is Player && _sourceCreature != null && _sourceCreature is Player || CONSTANTS.GREEN_BOROS.Contains(_sourceCreature.SpriteID) || CONSTANTS.RED_BOROS.Contains(_sourceCreature.SpriteID))
+                    if (_sourceCreature == null) // Happens when we ascend
+                        break;
+
+                    bool isTargetPlayerRedPotion = _targetCreature is Player;
+                    bool isSourcePlayer = _sourceCreature is Player;
+                    bool isGreenBoro = CONSTANTS.GREEN_BOROS.Contains(_sourceCreature.SpriteID);
+                    bool isRedBoro = CONSTANTS.RED_BOROS.Contains(_sourceCreature.SpriteID);
+
+                    if ((isTargetPlayerRedPotion && isSourcePlayer) || isGreenBoro || isRedBoro)
                     {
-                        Player targetPlayer = _targetCreature as Player;
-                        if (targetPlayer.IsSkulled)
+                        if (isTargetPlayerRedPotion)
                         {
-                            targetPlayer.AnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.MinValue;
+                            Player targetPlayerRedPotion = _targetCreature as Player;
+
+                            if (targetPlayerRedPotion.IsSkulled)
+                            {
+                                targetPlayerRedPotion.AnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.MinValue;
+                            }
+
+                            if (_targetID == _client.Player.ID)
+                            {
+                                _client.Bot._skullTime = DateTime.MinValue;
+                            }
+
+                            targetPlayerRedPotion.NeedsHeal = true;
                         }
-                        if (_targetID == _client.Player.ID)
-                        {
-                            _client.Bot._skullTime = DateTime.MinValue;
-                        }
-                        targetPlayer.NeedsHeal = true;
                     }
+
                     break;
 
                 case (ushort)SpellAnimation.CreatureAsgall:

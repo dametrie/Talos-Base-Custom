@@ -21,6 +21,7 @@ using Talos.Objects;
 using Talos.PInvoke;
 using Talos.Properties;
 using Talos.Structs;
+using Talos.Utility;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using GroundItem = Talos.Objects.GroundItem;
 
@@ -259,7 +260,7 @@ namespace Talos.Base
 
         internal Client(Server server, Socket socket)
         {
-            Identifier = Utility.Random(int.MaxValue);
+            Identifier = RandomUtils.Random(int.MaxValue);
             Server = server;
             Crypto = new Crypto(0, "UrkcnItnI");
             _clientSocket = socket;
@@ -304,7 +305,7 @@ namespace Talos.Base
         internal int CalculateHealAmount(string spellName)
         {
             int num = (Stats.CurrentWis >= 99) ? Stats.CurrentWis : 99;
-            uint fnvHash = Utility.CalculateFNV(spellName);
+            uint fnvHash = HashingUtils.CalculateFNV(spellName);
 
             switch (fnvHash)
             {
@@ -420,7 +421,7 @@ namespace Talos.Base
                 if (!UseItem("Equipment Repair"))
                     return;
 
-                Timer hammer = Timer.FromSeconds(5);
+                Utility.Timer hammer = Utility.Timer.FromSeconds(5);
 
                 while (Dialog == null)
                 {
@@ -915,7 +916,7 @@ namespace Talos.Base
         {
             try
             {
-                uint num = Utility.CalculateFNV(spell);
+                uint num = HashingUtils.CalculateFNV(spell);
                 switch (num)
                 {
                     case 420187390: // beag fas nadur
@@ -1078,7 +1079,7 @@ namespace Talos.Base
         }
         private bool ShouldRejectSpellDueToSpellName(string spellName)
         {
-            uint spellHash = Utility.CalculateFNV(spellName);
+            uint spellHash = HashingUtils.CalculateFNV(spellName);
 
             switch (spellHash)
             {
@@ -1765,7 +1766,7 @@ namespace Talos.Base
                 UseItem(bestNecklace.Name);
 
                 // Verify if the necklace is equipped
-                Timer timer = Timer.FromMilliseconds(1500);
+                Utility.Timer timer = Utility.Timer.FromMilliseconds(1500);
                 while (!timer.IsTimeExpired)
                 {
                     if (EquippedItems[6].Name == bestNecklace.Name)
@@ -3798,10 +3799,10 @@ namespace Talos.Base
             Thread.Sleep(500);
             lock (Server._clientListLock)
             {
-                Server._clientList.Remove(this);
+                Server.ClientList.Remove(this);
             }
             Thread.Sleep(100);
-            Server._mainForm.RemoveClientTab(this);
+            Server.MainForm.RemoveClientTab(this);
         }
 
 

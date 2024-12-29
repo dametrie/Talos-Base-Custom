@@ -46,7 +46,7 @@ namespace Talos
         private Socket _clientSocket;
 
         private IPEndPoint _remoteEndPoint;
-        internal int _port { get; set; }
+        private int _port;
 
         private ClientMessageHandler[] _clientMessage;
         internal ClientMessageHandler[] ClientMessage => _clientMessage;
@@ -54,11 +54,11 @@ namespace Talos
         private ServerMessageHandler[] _serverMessage;
         internal ServerMessageHandler[] ServerMessage => _serverMessage;
 
-        internal MainForm _mainForm;
+        internal MainForm MainForm { get; set; }
 
         private Thread _serverThread;
 
-        internal List<Client> _clientList;
+        internal List<Client> ClientList { get; set; } = new List<Client>();
         internal readonly object _clientListLock = new object();
 
         private bool _initialized;
@@ -107,7 +107,7 @@ namespace Talos
         {
             get
             {
-                return _clientList?
+                return ClientList?
                     .Where(client => client != null
                                   && !string.IsNullOrEmpty(client.Name)
                                   && !client.Name.Contains('[')
@@ -123,12 +123,11 @@ namespace Talos
 
         internal Server(MainForm mainForm)
         {
-            _mainForm = mainForm;
+            MainForm = mainForm;
             _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _clientMessage = new ClientMessageHandler[256];
             _serverMessage = new ServerMessageHandler[256];
             _remoteEndPoint = new IPEndPoint(IPAddress.Parse("52.88.55.94"), 2610);
-            _clientList = new List<Client>();
             _serverThread = new Thread(new ThreadStart(AutomaticActions));
             MessageHandlers();
             Initialize(2610);
@@ -173,7 +172,7 @@ namespace Talos
                 _clientSocket.BeginAccept(new AsyncCallback(EndAccept), null);
                 lock (_clientListLock)
                 {
-                    _clientList.Add(client);
+                    ClientList.Add(client);
                 }
             }
             catch (SocketException)
@@ -911,8 +910,10 @@ namespace Talos
             Location tempClientLocation = client.ClientLocation;
             Location tempServerLocation = client.ServerLocation;
 
+            tempClientLocation.MapID = client.Map.MapID;
             tempClientLocation.X = location.X;
             tempClientLocation.Y = location.Y;
+            tempServerLocation.MapID = client.Map.MapID;
             tempServerLocation.X = location.X;
             tempServerLocation.Y = location.Y;
 
@@ -960,7 +961,7 @@ namespace Talos
             client.PlayerID = id;
             client.Path = path;
             client.RequestProfile();
-            _mainForm.AddClientTab(client);
+            MainForm.AddClientTab(client);
 
             return true;
         }
@@ -1257,7 +1258,7 @@ namespace Talos
                         List<Client> clientListCopy;
                         lock (_clientListLock)
                         {
-                            clientListCopy = _clientList.ToList(); // Create a copy to iterate over
+                            clientListCopy = ClientList.ToList(); // Create a copy to iterate over
                         }
 
                         foreach (Client recipient in clientListCopy)
@@ -1289,8 +1290,9 @@ namespace Talos
 
             client.Player.LastStep = client.Player.LastStep;
 
-            Location tempServerLocation = client.ServerLocation;
 
+            Location tempServerLocation = client.ServerLocation;
+            tempServerLocation.MapID = client.Map.MapID;
             tempServerLocation.X = location.X;
             tempServerLocation.Y = location.Y;
 
@@ -2708,7 +2710,7 @@ namespace Talos
                     List<Client> clientListCopy;
                     lock (_clientListLock)
                     {
-                        clientListCopy = _clientList.ToList(); // Create a copy to iterate over
+                        clientListCopy = ClientList.ToList(); // Create a copy to iterate over
                     }
 
                     foreach (Client c in clientListCopy)
@@ -3601,7 +3603,7 @@ namespace Talos
             List<Client> clientListCopy;
             lock (_clientListLock)
             {
-                clientListCopy = _clientList.ToList(); // Create a copy to iterate over
+                clientListCopy = ClientList.ToList(); // Create a copy to iterate over
             }
 
 
@@ -3657,7 +3659,7 @@ namespace Talos
                 List<Client> clientListCopy;
                 lock (_clientListLock)
                 {
-                    clientListCopy = _clientList.ToList(); // Create a copy to iterate over
+                    clientListCopy = ClientList.ToList(); // Create a copy to iterate over
                 }
 
                 foreach (Client client in clientListCopy)
