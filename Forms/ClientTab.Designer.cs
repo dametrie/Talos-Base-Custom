@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Talos.Base;
 using Talos.Forms.UI;
+using Talos.Properties;
 
 namespace Talos.Forms
 {
@@ -576,6 +577,9 @@ namespace Talos.Forms
             this.currentAction = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.chkSpellStatus = new System.Windows.Forms.CheckBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -705,6 +709,7 @@ namespace Talos.Forms
             this.packetStrip.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.menuStrip.SuspendLayout();
+            this.groupBox6.SuspendLayout();
             this.SuspendLayout();
             // 
             // clientTabControl
@@ -3165,7 +3170,6 @@ namespace Talos.Forms
             // btnRepairAuto
             // 
             this.btnRepairAuto.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnRepairAuto.Image = global::Talos.Properties.Resources.hammer;
             this.btnRepairAuto.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnRepairAuto.Location = new System.Drawing.Point(8, 45);
             this.btnRepairAuto.Name = "btnRepairAuto";
@@ -3847,7 +3851,6 @@ namespace Talos.Forms
             // btnBashingNew
             // 
             this.btnBashingNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBashingNew.Image = global::Talos.Properties.Resources.bruneblade;
             this.btnBashingNew.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnBashingNew.Location = new System.Drawing.Point(654, 450);
             this.btnBashingNew.Name = "btnBashingNew";
@@ -3859,6 +3862,7 @@ namespace Talos.Forms
             // 
             // toolsTab
             // 
+            this.toolsTab.Controls.Add(this.groupBox6);
             this.toolsTab.Controls.Add(this.groupBox9);
             this.toolsTab.Controls.Add(this.resetGroup);
             this.toolsTab.Controls.Add(this.customLinesGroup);
@@ -7293,6 +7297,36 @@ namespace Talos.Forms
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this.label17);
+            this.groupBox6.Controls.Add(this.chkSpellStatus);
+            this.groupBox6.Location = new System.Drawing.Point(633, 213);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(101, 89);
+            this.groupBox6.TabIndex = 135;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "Spell Status";
+            // 
+            // label17
+            // 
+            this.label17.Location = new System.Drawing.Point(2, 41);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(95, 45);
+            this.label17.TabIndex = 49;
+            this.label17.Text = "Shows whether creature\r\nhas curse or fas\r\n";
+            this.label17.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // chkSpellStatus
+            // 
+            this.chkSpellStatus.AutoSize = true;
+            this.chkSpellStatus.Location = new System.Drawing.Point(17, 21);
+            this.chkSpellStatus.Name = "chkSpellStatus";
+            this.chkSpellStatus.Size = new System.Drawing.Size(68, 19);
+            this.chkSpellStatus.TabIndex = 20;
+            this.chkSpellStatus.Text = "Enabled";
+            this.chkSpellStatus.UseVisualStyleBackColor = true;
+            // 
             // ClientTab
             // 
             this.AllowDrop = true;
@@ -7502,6 +7536,8 @@ namespace Talos.Forms
             this.tabPage1.PerformLayout();
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
+            this.groupBox6.ResumeLayout(false);
+            this.groupBox6.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -8050,5 +8086,8 @@ namespace Talos.Forms
         private Button button4;
         private Button button5;
         private Button button6;
+        internal GroupBox groupBox6;
+        private Label label17;
+        internal CheckBox chkSpellStatus;
     }
 }

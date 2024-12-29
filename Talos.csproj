@@ -254,6 +254,11 @@
     <Compile Include="Objects\Dialog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PInvoke\ProcessInformation.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Structs\Rect.cs" />
     <Compile Include="PInvoke\StartupInfo.cs" />
     <Compile Include="Objects\Statistics.cs" />
@@ -292,14 +297,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <None Include="Capricorn\COPYRIGHT" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

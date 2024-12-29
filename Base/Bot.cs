@@ -3039,7 +3039,7 @@ namespace Talos.Base
             {
                 return;
             }
-            while (!_shouldThreadStop) 
+            while (!_shouldThreadStop)
             {
                 //Console.WriteLine("[SoundLoop] Pulse");
                 if (Server._disableSound)
@@ -3053,54 +3053,64 @@ namespace Talos.Base
                     return;
                 }
 
+                if (Client.RecentlyDied)
+                {
+                    //soundPlayer.Stream = Resources.warning;
+                    soundPlayer.PlaySync();
+                    Client.RecentlyDied = false;
+                }
+
                 if (Client.ClientTab.alertSkulledCbox.Checked && Client.IsSkulled)
                 {
                     soundPlayer.Stream = Resources.skull;
                     soundPlayer.PlaySync();
                 }
-                else if (Client.ClientTab.alertRangerCbox.Checked && IsRangerNearBy())
+
+                if (Client.ClientTab.alertRangerCbox.Checked && IsRangerNearBy())
                 {
                     soundPlayer.Stream = Resources.ranger;
                     soundPlayer.PlaySync();
                 }
-                else if (Client.ClientTab.alertStrangerCbox.Checked && IsStrangerNearby())
+
+                if (Client.ClientTab.alertStrangerCbox.Checked && IsStrangerNearby())
                 {
                     soundPlayer.Stream = Resources.detection;
                     soundPlayer.PlaySync();
                 }
-                else if (Client.ClientTab.alertItemCapCbox.Checked && _shouldAlertItemCap)
+
+                if (Client.ClientTab.alertItemCapCbox.Checked && _shouldAlertItemCap)
                 {
                     soundPlayer.Stream = Resources.itemCap;
                     soundPlayer.PlaySync();
                     _shouldAlertItemCap = false;
                 }
-                else
+
+                if (Client.ClientTab.alertDuraCbox.Checked && itemDurabilityAlerts.Contains(true))
                 {
-                    if (Client.ClientTab.alertDuraCbox.Checked && itemDurabilityAlerts.Contains(true))
+                    for (int i = 0; i < itemDurabilityAlerts.Length; i++)
                     {
-                        for (int i = 0; i < itemDurabilityAlerts.Length; i++)
+                        if (itemDurabilityAlerts[i])
                         {
-                            if (itemDurabilityAlerts[i])
-                            {
-                                soundPlayer.Stream = Resources.durability;
-                                soundPlayer.PlaySync();
-                                itemDurabilityAlerts[i] = false; // Set the current alert as handled
-                                break; // Exit the loop after handling the first alert
-                            }
+                            soundPlayer.Stream = Resources.durability;
+                            soundPlayer.PlaySync();
+                            itemDurabilityAlerts[i] = false; // Set the current alert as handled
+                            break; // Exit the loop after handling the first alert
                         }
-                        Thread.Sleep(2000);
                     }
-                    if (Client.ClientTab.alertEXPCbox.Checked && Client.Experience >= 4290000000U)
-                    {
-                        soundPlayer.Stream = Resources.expmaxed;
-                        soundPlayer.PlaySync();
-                    }
+                    Thread.Sleep(2000);
                 }
+
+                if (Client.ClientTab.alertEXPCbox.Checked && Client.Experience >= 4290000000U)
+                {
+                    soundPlayer.Stream = Resources.expmaxed;
+                    soundPlayer.PlaySync();
+                }
+
 
                 Thread.Sleep(2000);  // Delay before the next iteration to prevent high CPU usage
             }
 
-
+            
         }
         private void BotLoop()
         {
@@ -3187,8 +3197,14 @@ namespace Talos.Base
             }
         }
 
-        private void ProcessCreatureText()
+        private bool ProcessCreatureText()
         {
+            if (Client == null || Client.ClientTab == null)
+                return false;
+
+            if (!Client.ClientTab.chkSpellStatus.Checked)  
+                return false;
+            
             foreach (Creature creature in _nearbyValidCreatures)
             {
                 // Retrieve the creature's states
@@ -3220,6 +3236,8 @@ namespace Talos.Base
                     Client.DisplayTextOverTarget(2, creature.ID, displayText);
                 }
             }
+
+            return true;
         }
 
         internal bool IsRangerNearBy()

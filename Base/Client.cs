@@ -156,6 +156,7 @@ namespace Talos.Base
         internal bool IsRegistered { get; set; } = true;
         internal bool IsCheckingBelt { get; set; }
         internal bool InventoryFull { get; set; }
+        internal bool RecentlyDied { get; set; }
         internal bool ShouldEquipBow { get; set; }
         internal bool TrainingGroundsMember { get; set; }
         internal bool HasWalked { get; set; }

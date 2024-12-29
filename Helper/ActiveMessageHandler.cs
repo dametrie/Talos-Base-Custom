@@ -29,6 +29,8 @@ namespace Talos.Helper
                 { "Your AP is too high", HandleLastKillMessage },
                 { "You have reached level 99, the maximum for the free trial.", HandleLastKillMessage },
                 { "You can't have more.", HandleInventoryMessage },
+                { "You lost 50 vitality", HandleRecentlyDiedMessage },
+                { "Your items are ripped from your body.", HandleRecentlyDiedMessage },
                 { "You are not a member of the Training Grounds", HandleTrainingGroundsMessage },
                 { "You feel better.", HandlePoisonMessage },
                 { "Poison", HandlePoisonMessage },
@@ -136,10 +138,6 @@ namespace Talos.Helper
             };
 
         }
-
-
-
-
 
 
 
@@ -1223,7 +1221,10 @@ namespace Talos.Helper
         {
             client.InventoryFull = true;
         }
-
+        private void HandleRecentlyDiedMessage(Client client, string arg2)
+        {
+            client.RecentlyDied = true;
+        }
         private void HandleJoinLeaveGroupMessage(Client client, Match match)
         {
             client.RequestProfile();

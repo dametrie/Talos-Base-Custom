@@ -37,6 +37,7 @@
             this.priorityTbox = new System.Windows.Forms.TextBox();
             this.priorityLbox = new System.Windows.Forms.ListBox();
             this.enemySettingsGrp = new System.Windows.Forms.GroupBox();
+            this.FarthestFirstCbx = new System.Windows.Forms.CheckBox();
             this.NearestFirstCbx = new System.Windows.Forms.CheckBox();
             this.settings2 = new System.Windows.Forms.Panel();
             this.fasFirstRbtn = new System.Windows.Forms.RadioButton();
@@ -81,7 +82,6 @@
             this.targetCbox = new System.Windows.Forms.CheckBox();
             this.enemyAttackGrp = new System.Windows.Forms.GroupBox();
             this.attackCboxOne = new System.Windows.Forms.CheckBox();
-            this.FarthestFirstCbx = new System.Windows.Forms.CheckBox();
             this.priorityGroup.SuspendLayout();
             this.enemySettingsGrp.SuspendLayout();
             this.settings2.SuspendLayout();
@@ -200,6 +200,17 @@
             this.enemySettingsGrp.TabIndex = 39;
             this.enemySettingsGrp.TabStop = false;
             this.enemySettingsGrp.Text = "Settings";
+            // 
+            // FarthestFirstCbx
+            // 
+            this.FarthestFirstCbx.AutoSize = true;
+            this.FarthestFirstCbx.Location = new System.Drawing.Point(51, 102);
+            this.FarthestFirstCbx.Name = "FarthestFirstCbx";
+            this.FarthestFirstCbx.Size = new System.Drawing.Size(93, 17);
+            this.FarthestFirstCbx.TabIndex = 26;
+            this.FarthestFirstCbx.Text = "Farthest First";
+            this.FarthestFirstCbx.UseVisualStyleBackColor = true;
+            this.FarthestFirstCbx.CheckedChanged += new System.EventHandler(this.FarthestFirstCbx_CheckedChanged);
             // 
             // NearestFirstCbx
             // 
@@ -693,17 +704,6 @@
             this.attackCboxOne.Size = new System.Drawing.Size(15, 14);
             this.attackCboxOne.TabIndex = 21;
             this.attackCboxOne.UseVisualStyleBackColor = true;
-            // 
-            // FarthestFirstCbx
-            // 
-            this.FarthestFirstCbx.AutoSize = true;
-            this.FarthestFirstCbx.Location = new System.Drawing.Point(51, 102);
-            this.FarthestFirstCbx.Name = "FarthestFirstCbx";
-            this.FarthestFirstCbx.Size = new System.Drawing.Size(93, 17);
-            this.FarthestFirstCbx.TabIndex = 26;
-            this.FarthestFirstCbx.Text = "Farthest First";
-            this.FarthestFirstCbx.UseVisualStyleBackColor = true;
-            this.FarthestFirstCbx.CheckedChanged += new System.EventHandler(this.FarthestFirstCbx_CheckedChanged);
             // 
             // EnemyPage
             // 

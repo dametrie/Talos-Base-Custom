@@ -142,7 +142,7 @@ namespace Talos.Forms
                     return;
                 }
                 // Update UI on the main thread
-                Invoke((Action)(() =>
+                this.Invoke(new Action(() => 
                 {
                     // Update UI on the main thread
                     UpdateUIWithWaypoints(waypointsData);
