@@ -256,10 +256,10 @@ namespace Talos.Enumerations
         InnerFire = 126,
         DarkSeal = 133,
         Demise = 133,
-        BonusMushroom = 140,
         Purify = 143,
         Silenced = 143,
         Regeneration = 146,
+        BonusMushroom = 148,
         CounterAttack = 150,
         IncreasedRegeneration = 181, //incorrect on Vorlof
         FeralForm = 183,

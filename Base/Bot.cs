@@ -54,7 +54,6 @@ namespace Talos.Base
         internal bool _dontWalk;
         internal bool _dontCast;
         internal bool _dontBash;
-        private bool bool_32;
         private int? _leaderID;
         internal bool _hasRescue;
 
@@ -81,10 +80,11 @@ namespace Talos.Base
         internal List<Enemy> _enemyList = new List<Enemy>();
         internal List<Player> _playersExistingOver250ms = new List<Player>();
         internal List<Player> _skulledPlayers = new List<Player>();
-        internal List<Player> _nearbyAllies = new List<Player>();
+    
         internal List<Creature> _nearbyValidCreatures = new List<Creature>();
         internal List<Location> ways = new List<Location>();
 
+        internal List<Player> NearbyAllies { get; set; } = new List<Player>();
         internal HashSet<string> _allyListName = new HashSet<string>(StringComparer.CurrentCultureIgnoreCase);
         internal HashSet<ushort> _enemyListID = new HashSet<ushort>();
 
@@ -121,6 +121,7 @@ namespace Talos.Base
         private DateTime assailUse = DateTime.MinValue;
         private DateTime skillUse = DateTime.MinValue;
         private bool hasrepaired;
+        private bool _hasDeposited;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -374,7 +375,7 @@ namespace Talos.Base
 
         private bool IsAnyGroupMemberPramhed()
         {
-            return _nearbyAllies != null && _nearbyAllies.Any(member => member.IsAsleep);
+            return NearbyAllies != null && NearbyAllies.Any(member => member.IsAsleep);
         }
 
         private void MoveTowardsTarget(Creature target)
@@ -482,7 +483,7 @@ namespace Talos.Base
 
         private void GenerateRandomWaypoints()
         {
-            Client.ClientTab._wayForm.waypointsLBox.Items.Clear();
+            Client.ClientTab.WayForm.waypointsLBox.Items.Clear();
             Client.Bot.ways.Clear();
 
             foreach (var map in Server._maps.Values.Where(m => m.MapID == Client.Map.MapID))
@@ -503,7 +504,7 @@ namespace Talos.Base
                     if (!Client.Bot.ways.Contains(location))
                     {
                         Client.Bot.ways.Add(location);
-                        Client.ClientTab._wayForm.waypointsLBox.Items.Add($"({location.X}, {location.Y}) {map.Name}: {map.MapID}");
+                        Client.ClientTab.WayForm.waypointsLBox.Items.Add($"({location.X}, {location.Y}) {map.Name}: {map.MapID}");
                     }
                 }
             }
@@ -1122,40 +1123,32 @@ namespace Talos.Base
 
         private void Ascending()
         {
-            // Step 1: Only proceed if ascendBtn says "Ascending"
             if (Client.ClientTab.ascendBtn.Text != "Ascending")
                 return;
 
             bool flagIsHp = (Client.ClientTab.ascendOptionCbx.Text == "HP");
 
-            // 1) Deposit War Bag if needed (returns true if we handled everything)
             if (DepositWarBagIfNeeded())
                 return;
 
-            // 2) Retrieve War Bag if needed (returns true if we handled everything)
             if (RetrieveWarBagIfNeeded())
                 return;
 
-            // 3) Handle HP ascend if on map 3086
             if (AscendHpIfNeeded())
                 return;
 
-            // 4) Handle MP ascend if on map 3087
             if (AscendMpIfNeeded())
                 return;
 
-            // 5) If we’re not skulled and haven’t finished ascending, handle “get succubus hair + drop it + get killed” steps
             if (HandleSkullAndSuccubusHair())
                 return;
 
-            // 6) If deathOption is checked, do that logic
             if (HandleDeathOption())
                 return;
 
             if (HandleGhostWalk())
                 return;
 
-            // 7) Otherwise do nothing special, sleep briefly
             Thread.Sleep(100);
         }
 
@@ -1881,6 +1874,10 @@ namespace Talos.Base
         }
         private void HandleExtraMapActions(Location destination)
         {
+
+            if (Client.Map == null)
+                return;
+
             // Extracting for readability
             var currentMapID = Client.Map.MapID;
             var currentLocation = Client.ServerLocation;
@@ -2626,7 +2623,7 @@ namespace Talos.Base
                     }
                     else
                     {
-                        WayForm waysForm = Client.ClientTab._wayForm;
+                        WayForm waysForm = Client.ClientTab.WayForm;
 
                         // Special door proximity condition
                         if (DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 2.5 &&
@@ -3042,7 +3039,7 @@ namespace Talos.Base
             {
                 return;
             }
-            while (!_shouldThreadStop)  // Assuming _shouldStop is a volatile bool that is set to true when you want to stop all threads
+            while (!_shouldThreadStop) 
             {
                 //Console.WriteLine("[SoundLoop] Pulse");
                 if (Server._disableSound)
@@ -3136,6 +3133,7 @@ namespace Talos.Base
                         }
 
                         ProcessPlayers();
+                        ProcessCreatureText();
 
                         if (Client.CurrentHP <= 1U && Client.IsSkulled)
                         {
@@ -3189,6 +3187,41 @@ namespace Talos.Base
             }
         }
 
+        private void ProcessCreatureText()
+        {
+            foreach (Creature creature in _nearbyValidCreatures)
+            {
+                // Retrieve the creature's states
+                bool isCursed = creature.GetState<bool>(CreatureState.IsCursed);
+                bool isFassed = creature.GetState<bool>(CreatureState.IsFassed);
+
+                // Determine the text to display based on the creature's states
+                string displayText = string.Empty;
+
+                if (isCursed && isFassed)
+                {
+                    // Creature is both cursed and fassed
+                    displayText = "[C/F]";
+                }
+                else if (isCursed)
+                {
+                    // Creature is only cursed
+                    displayText = "[C]";
+                }
+                else if (isFassed)
+                {
+                    // Creature is only fassed
+                    displayText = "[F]";
+                }
+
+                // Display the text if applicable
+                if (!string.IsNullOrEmpty(displayText))
+                {
+                    Client.DisplayTextOverTarget(2, creature.ID, displayText);
+                }
+            }
+        }
+
         internal bool IsRangerNearBy()
         {
             if (!Settings.Default.paranoiaMode)
@@ -3204,12 +3237,12 @@ namespace Talos.Base
         private bool CheckForStopConditions()
         {
             return (Client.InventoryFull && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
-                   (Client.Bot.bool_32 && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
+                   (Client.Bot._hasDeposited && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
                    Client.ExchangeOpen || Client.ClientTab == null || Client.Dialog != null || _dontCast;
         }
         private void ProcessPlayers()
         {
-            _nearbyAllies = Client.GetNearbyAllies();
+            NearbyAllies = Client.GetNearbyAllies();
             _nearbyValidCreatures = Client.GetNearbyValidCreatures(11);
             var nearbyPlayers = Client.GetNearbyPlayers();
             _playersExistingOver250ms = nearbyPlayers?
@@ -3507,7 +3540,7 @@ namespace Talos.Base
 
             if (AllyPage.allyMDCRbtn.Checked)
             {
-                var playerToDion = _nearbyAllies.FirstOrDefault(p => !p.IsDioned);
+                var playerToDion = NearbyAllies.FirstOrDefault(p => !p.IsDioned);
 
                 if (playerToDion != null)
                 {
@@ -3622,7 +3655,7 @@ namespace Talos.Base
 
             if (clientTab.vanishingElixirCbox.Checked && Client.IsRegistered)
             {
-                foreach (Player ally in _nearbyAllies)
+                foreach (Player ally in NearbyAllies)
                 {
                     if (!ally._isHidden)
                     {
@@ -3705,7 +3738,8 @@ namespace Talos.Base
                 {
                     foreach (Player player in _playersExistingOver250ms)
                     {
-                        if (player.Name.Equals(currentAlly.Name, StringComparison.OrdinalIgnoreCase) && player != Client.Player && currentAlly.AllyPage.dbRegenCbox.Checked)
+                        if (player != null && currentAlly != null && currentAlly.AllyPage != null && currentAlly.AllyPage.dbRegenCbox != null &&
+                            player.Name.Equals(currentAlly.Name, StringComparison.OrdinalIgnoreCase) && player != Client.Player && currentAlly.AllyPage.dbRegenCbox.Checked)
                         {
                             Client client = Client.Server.GetClient(currentAlly.Name);
                             if (client != null)
@@ -3900,11 +3934,11 @@ namespace Talos.Base
             bool isWakeScrollChecked = clientTab.wakeScrollCbox.Checked;
             bool isRegistered = Client.IsRegistered;
 
-            if (isWakeScrollChecked && isRegistered && _nearbyAllies.Any(player => IsAllyAffectedByPramhOrAsleep(player)))
+            if (isWakeScrollChecked && isRegistered && NearbyAllies.Any(player => IsAllyAffectedByPramhOrAsleep(player)))
             {
                 if (Client.UseItem("Wake Scroll"))
                 {
-                    foreach (Player player in _nearbyAllies)
+                    foreach (Player player in NearbyAllies)
                     {
                         Client client = Server.GetClient(player.Name);
                         if (client != null)
@@ -5206,9 +5240,31 @@ namespace Talos.Base
                 //Console.WriteLine($"[CastCurseIfApplicable] Eligible creatures (not cursed): {eligibleCreatures.Count()}");
 
                 // Select the nearest eligible creature if specified, otherwise select any eligible creature
-                Creature targetCreature = enemyPage.NearestFirstCbx.Checked
-                    ? eligibleCreatures.OrderBy(creature => creature.Location.DistanceFrom(Client.ServerLocation)).FirstOrDefault()
-                    : eligibleCreatures.FirstOrDefault();
+                //Creature targetCreature = enemyPage.NearestFirstCbx.Checked
+                //    ? eligibleCreatures.OrderBy(creature => creature.Location.DistanceFrom(Client.ServerLocation)).FirstOrDefault()
+                //    : eligibleCreatures.FirstOrDefault();
+
+                Creature targetCreature;
+
+                if (enemyPage.NearestFirstCbx.Checked && !enemyPage.FarthestFirstCbx.Checked)
+                {
+                    // Select the nearest eligible creature
+                    targetCreature = eligibleCreatures
+                        .OrderBy(creature => creature.Location.DistanceFrom(Client.ServerLocation))
+                        .FirstOrDefault();
+                }
+                else if (enemyPage.FarthestFirstCbx.Checked && !enemyPage.NearestFirstCbx.Checked)
+                {
+                    // Select the farthest eligible creature
+                    targetCreature = eligibleCreatures
+                        .OrderByDescending(creature => creature.Location.DistanceFrom(Client.ServerLocation))
+                        .FirstOrDefault();
+                }
+                else
+                {
+                    // If neither checkbox is checked or both are checked, select any eligible creature
+                    targetCreature = eligibleCreatures.FirstOrDefault();
+                }
 
                 // If a target is found and casting curses is enabled, cast the curse spell
                 if (targetCreature != null && enemyPage.spellsCurseCbox.Checked)
@@ -5236,10 +5292,31 @@ namespace Talos.Base
                 //Console.WriteLine($"[CastFasIfApplicable] Eligible creatures (not fassed): {eligibleCreatures.Count()}");
 
                 // Select the nearest eligible creature if specified, otherwise select any eligible creature
-                Creature targetCreature = enemyPage.NearestFirstCbx.Checked
-                    ? eligibleCreatures.OrderBy(creature => creature.Location.DistanceFrom(Client.ServerLocation)).FirstOrDefault()
-                    : eligibleCreatures.FirstOrDefault();
+                //Creature targetCreature = enemyPage.NearestFirstCbx.Checked
+                //    ? eligibleCreatures.OrderBy(creature => creature.Location.DistanceFrom(Client.ServerLocation)).FirstOrDefault()
+                //    : eligibleCreatures.FirstOrDefault();
+                
+                Creature targetCreature;
 
+                if (enemyPage.NearestFirstCbx.Checked && !enemyPage.FarthestFirstCbx.Checked)
+                {
+                    // Select the nearest eligible creature
+                    targetCreature = eligibleCreatures
+                        .OrderBy(creature => creature.Location.DistanceFrom(Client.ServerLocation))
+                        .FirstOrDefault();
+                }
+                else if (enemyPage.FarthestFirstCbx.Checked && !enemyPage.NearestFirstCbx.Checked)
+                {
+                    // Select the farthest eligible creature
+                    targetCreature = eligibleCreatures
+                        .OrderByDescending(creature => creature.Location.DistanceFrom(Client.ServerLocation))
+                        .FirstOrDefault();
+                }
+                else
+                {
+                    // If neither checkbox is checked or both are checked, select any eligible creature
+                    targetCreature = eligibleCreatures.FirstOrDefault();
+                }
                 // If a target is found and casting the 'fas' spell is enabled, cast the spell
                 if (targetCreature != null && enemyPage.spellsFasCbox.Checked)
                 {

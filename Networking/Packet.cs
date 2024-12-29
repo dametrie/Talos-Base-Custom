@@ -404,7 +404,7 @@ namespace Talos.Networking
             return BitConverter.ToString(array).Replace('-', ' ');
         }
 
-        internal string GetAsciiString(bool bool_0 = true)
+        internal string GetAsciiString(bool replaceNewline = true)
         {
             char[] array = new char[_data.Length + 1];
             byte[] array2 = new byte[_data.Length + 1];
@@ -413,7 +413,7 @@ namespace Talos.Networking
             for (int i = 0; i < array2.Length; i++)
             {
                 byte b = array2[i];
-                array[i] = (char)(((b == 10 || b == 13) && !bool_0) ? b : ((b < 32 || b > 126) ? 46 : b));
+                array[i] = (char)(((b == 10 || b == 13) && !replaceNewline) ? b : ((b < 32 || b > 126) ? 46 : b));
             }
             return new string(array);
         }

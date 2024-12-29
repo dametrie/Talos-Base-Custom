@@ -131,16 +131,23 @@ namespace Talos
         }
         internal void RemoveClientTab(Client client)
         {
-            if (InvokeRequired) { Invoke(new Action(() => { RemoveClientTab(client); })); return; }
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => { RemoveClientTab(client); }));
+                return;
+            }
 
             if (_clientTabs.ContainsKey(client))
             {
-                clientTabControl.Controls.Remove(_clientTabs[client]);
-                _clientTabs.Remove(client);
-                client.ClientTab.Dispose();
-                client.Remove();
+                var tab = _clientTabs[client];
+                if (tab.IsHandleCreated)
+                {
+                    clientTabControl.Controls.Remove(tab);
+                    _clientTabs.Remove(client);
+                    client.ClientTab.Dispose();
+                    client.Remove();
+                }
             }
-
         }
 
         internal void AddClientTab(Client client)

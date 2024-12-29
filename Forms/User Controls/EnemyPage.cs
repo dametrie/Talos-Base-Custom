@@ -253,5 +253,44 @@ namespace Talos.Forms
 			ignoreLbox.Items.RemoveAt(ignoreLbox.SelectedIndex);
 		}
         }
+
+        private bool isHandlingCheck = false;
+        private void NearestFirstCbx_CheckedChanged(object sender, EventArgs e)
+        {
+            if (isHandlingCheck)
+                return;
+
+            if (NearestFirstCbx.Checked)
+            {
+                try
+                {
+                    isHandlingCheck = true;
+                    FarthestFirstCbx.Checked = false;
+                }
+                finally
+                {
+                    isHandlingCheck = false;
+                }
+            }
+        }
+
+        private void FarthestFirstCbx_CheckedChanged(object sender, EventArgs e)
+        {
+            if (isHandlingCheck)
+                return;
+
+            if (FarthestFirstCbx.Checked)
+            {
+                try
+                {
+                    isHandlingCheck = true;
+                    NearestFirstCbx.Checked = false;
+                }
+                finally
+                {
+                    isHandlingCheck = false;
+                }
+            }
+        }
     }
 }

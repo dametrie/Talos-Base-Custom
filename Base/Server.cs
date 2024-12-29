@@ -88,11 +88,13 @@ namespace Talos
 
         internal Dictionary<uint, WorldMap> _worldMaps = new Dictionary<uint, WorldMap>();
         internal Dictionary<short, Map> _maps = new Dictionary<short, Map>();
-        internal Dictionary<string, string> _medWalk = new Dictionary<string, string>();
-        internal Dictionary<string, string> _medTask = new Dictionary<string, string>();
-        internal Dictionary<string, int> _medWalkSpeed = new Dictionary<string, int>();
+        internal Dictionary<string, string> MedWalk { get; set; } = new Dictionary<string, string>();
+        internal Dictionary<string, string> MedTask { get; set; } = new Dictionary<string, string>();
+        internal Dictionary<string, int> MedWalkSpeed { get; set; } = new Dictionary<string, int>();
         internal SortedDictionary<ushort, string> PursuitIDs { get; set; } = new SortedDictionary<ushort, string>();
         internal ConcurrentDictionary<string, CharacterState> ClientStateList {  get; set; } = new ConcurrentDictionary<string, CharacterState>();
+        internal ConcurrentDictionary<string, bool> ManualServerSwitch { get; set; } = new ConcurrentDictionary<string, bool>();
+
         internal List<Client> _clients = new List<Client>();
         internal bool _toggleWalk;
         private string _exchangeName;
@@ -1039,7 +1041,6 @@ namespace Talos
                                 client.ClientTab.AddNearbyEnemy(creature);
                             }
                         }
-
 
                     }
                     count++;
@@ -3022,6 +3023,7 @@ namespace Talos
 
         private bool ServerMessage_0x4C_ConfirmExit(Client client, ServerPacket serverPacket)
         {
+            ManualServerSwitch.TryAdd(client.Name, true);
             return true;
         }
 

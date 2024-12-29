@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Talos.Forms;
 
 namespace Talos.Helper
@@ -100,6 +101,7 @@ namespace Talos.Helper
         // Numeric values
         public decimal DionPctNumValue { get; set; }
         public decimal HealPctNumValue { get; set; }
+        public decimal FollowDistanceNumValue { get; set; }
 
         // TextBox values
         public string FasSpioradText { get; set; }
@@ -110,7 +112,6 @@ namespace Talos.Helper
         public bool RangerLogCboxChecked { get;  set; }
         public bool ChkLastStepF5Checked { get;  set; }
         public bool LockstepCboxChecked { get;  set; }
-        public decimal FollowDistanceNumValue { get;  set; }
         public int WalkSpeedSldrValue { get;  set; }
         public decimal NumLastStepTimeValue { get;  set; }
         public string WalkSpeedTlbl { get;  set; }
@@ -119,20 +120,56 @@ namespace Talos.Helper
     [Serializable]
     public class BashingPageState
     {
+        // Checkboxes
         public bool ChkWaitForFasChecked { get; set; }
         public bool ChkWaitForCradhChecked { get; set; }
         public bool ChkFrostStrikeChecked { get; set; }
         public bool ChkUseSkillsFromRangeChecked { get; set; }
-        public bool ChargeToTargetCbxChecked { get; set; }
-        public bool AssistBasherChkChecked { get; set; }
+        public bool ChkChargeToTargetCbxChecked { get; set; }
+        public bool ChkAssistBasherChecked { get; set; }
+        public bool ChkTavWallHacksChecked { get; set; }
+        public bool ChkTavWallStrangerChecked { get; set; }
+
+        public bool ChkAssailsChecked { get; set; }
+        public bool ChkExkuraChecked { get; set; }
+        public bool ChkProtect1CboxChecked { get; set; }
+        public bool ChkProtect2CboxChecked { get; set; }
+        public bool ChkBashAsgallChecked { get; set; }
+        public bool ChkIgnoreWalledInChecked { get; set; }
+        public bool ChkRiskySkillsChecked { get; set; }
+        public bool ChkRiskySkillsDionChecked { get; set; }
+        public bool ChkCrasherCboxChecked { get; set; }
+        public bool ChkUseCrashersChecked { get; set; }
+        public bool ChkCrasherOnlyAsgallChecked { get; set; }
+        public bool ChkCrasherAboveHPChecked { get; set; }
+        public bool ChkPrioritizeChecked { get; set; }
+        public bool ChkPriorityOnlyChecked { get; set; }
 
         // NumericUpDown values
-        public decimal OverrideDistanceNumValue { get; set; }
+        public decimal NumOverrideDistanceValue { get; set; }
         public decimal NumAssitantStrayValue { get; set; }
         public decimal NumPFCounterValue { get; set; }
+        public decimal NumCrasherHealthValue { get; set; }
+        public decimal NumExHealValue { get; set; }
+        public decimal NumBashSkillDelayValue { get; set; }
+        public decimal NumSkillIntValue { get; set; }
+        public decimal NumPingCompensation1Value { get; set; }
+        public decimal NumMonsterWalkInterval1Value { get; set; }
+        public decimal NumAtkRangeValue { get; set; }
+        public decimal NumEngageRangeValue { get; set; }
 
         // TextBox values
-        public string LeadBasherTxt { get; set; }
+        public string TextLeadBasherValue { get; set; }
+        public string TextProtect1Value { get; set; }
+        public string TextProtect2Value { get; set; }
+
+        // Radiobutton values
+        public bool RbtnLeaderTargetChecked { get; set; }
+        public bool RbtnAssistantStrayChecked { get; set; }
+
+        // Listbox values
+        public List<string> PriorityLboxItems { get; set; }
+
     }
 
     [Serializable]
@@ -212,6 +249,7 @@ namespace Talos.Helper
         public bool PriorityCboxChecked { get; set; }
         public List<string> PriorityLboxItems { get; set; }
         public bool NearestFirstCbxChecked { get; set; }
+        public bool FarthestFirstCbxChecked { get; set; }
         public bool FasFirstRbtnChecked { get; set; }
         public bool CurseFirstRbtnChecked { get; set; }
         public bool SpellOneRbtnChecked { get; set; }

@@ -84,7 +84,7 @@ namespace Talos.Bashing
                 if (!SharesAxis(Client.ClientLocation, target.Location))
                 {
                     // Avoid if group members are pramhed or pathfinding fails
-                    if (!Bot._nearbyAllies.Any(u => u.IsAsleep) && !TryPathfindToPoint(attackPosition, 0))
+                    if (!Bot.NearbyAllies.Any(u => u.IsAsleep) && !TryPathfindToPoint(attackPosition, 0))
                         return false;
                 }
                 else if (distanceToTarget > AttackRange)
@@ -94,7 +94,7 @@ namespace Talos.Bashing
                     Location nextStep = Client.ClientLocation.Offsetter(dir);
 
                     if (Client.Map.IsWalkable(Client, nextStep) &&
-                        !Bot._nearbyAllies.Any(u => u.IsAsleep))
+                        !Bot.NearbyAllies.Any(u => u.IsAsleep))
                     {
                         TryPathfindToPoint(nextStep, 0);
                     }

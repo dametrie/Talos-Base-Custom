@@ -44,7 +44,7 @@ namespace Talos.Forms
         private short textMap;
         private short textX;
         private short testY;
-        internal WayForm _wayForm = null;
+        internal WayForm WayForm { get; set; } = null;
 
         internal string _lastWhispered;
         internal int _whispIndex;
@@ -129,12 +129,12 @@ namespace Talos.Forms
         {
             _client = client;
             _client.ClientTab = this;
-            _wayForm = new WayForm(_client);
+            WayForm = new WayForm(_client);
             UIHelper.Initialize(_client);
             InitializeComponent();
             InitializeCustomResourceBars();
 
-            _wayForm.savedWaysLBox.DataSource = _wayFormProfiles;
+            WayForm.savedWaysLBox.DataSource = _wayFormProfiles;
             worldObjectListBox.DataSource = client.WorldObjectBindingList;
             creatureHashListBox.DataSource = client.CreatureBindingList;
             strangerList.DataSource = client.StrangerBindingList;
@@ -194,37 +194,37 @@ namespace Talos.Forms
 
             _client.SpellTimer.Start();
 
-            _wayForm.DesktopLocation = Location;
-            if (_client.Server._medWalk.ContainsKey(_client.Name) && _client.Server._medWalk.ContainsKey(_client.Name))
+            WayForm.DesktopLocation = Location;
+            if (_client.Server.MedWalk.ContainsKey(_client.Name) && _client.Server.MedWalk.ContainsKey(_client.Name))
             {
-                walkMapCombox.Text = _client.Server._medWalk[_client.Name];
-                walkSpeedSldr.Value = _client.Server._medWalkSpeed[_client.Name];
+                walkMapCombox.Text = _client.Server.MedWalk[_client.Name];
+                walkSpeedSldr.Value = _client.Server.MedWalkSpeed[_client.Name];
                 walkSpeedSldr_Scroll(_client.ClientTab.walkSpeedSldr, new EventArgs());
                 walkBtn.Text = "Stop";
                 startStrip_Click_1(new object(), new EventArgs());
-                _client.Server._medWalk.Remove(_client.Name);
-                _client.Server._medWalkSpeed.Remove(_client.Name);
+                _client.Server.MedWalk.Remove(_client.Name);
+                _client.Server.MedWalkSpeed.Remove(_client.Name);
             }
-            else if (_client.Server._medTask.ContainsKey(_client.Name) && _client.Server._medWalkSpeed.ContainsKey(_client.Name))
+            else if (_client.Server.MedTask.ContainsKey(_client.Name) && _client.Server.MedWalkSpeed.ContainsKey(_client.Name))
             {
-                if (_client.Server._medTask[_client.Name] == "bugEvent")
+                if (_client.Server.MedTask[_client.Name] == "bugEvent")
                 {
                     toggleBugBtn.Text = "Disable";
                 }
-                if (_client.Server._medTask[_client.Name] == "vDayEvent")
+                if (_client.Server.MedTask[_client.Name] == "vDayEvent")
                 {
                     toggleSeaonalDblBtn.Text = "Disable";
                 }
                 else
                 {
-                    followText.Text = _client.Server._medTask[_client.Name];
+                    followText.Text = _client.Server.MedTask[_client.Name];
                     followCbox.Checked = true;
                 }
-                walkSpeedSldr.Value = _client.Server._medWalkSpeed[_client.Name];
+                walkSpeedSldr.Value = _client.Server.MedWalkSpeed[_client.Name];
                 walkSpeedSldr_Scroll(_client.ClientTab.walkSpeedSldr, new EventArgs());
                 startStrip_Click_1(new object(), new EventArgs());
-                _client.Server._medTask.Remove(_client.Name);
-                _client.Server._medWalkSpeed.Remove(_client.Name);
+                _client.Server.MedTask.Remove(_client.Name);
+                _client.Server.MedWalkSpeed.Remove(_client.Name);
             }
 
             if (!Directory.Exists(profilePath))
@@ -272,7 +272,7 @@ namespace Talos.Forms
                 BindingList<string> bindingList = _wayFormProfiles;
                 if (bindingList != null && !bindingList.Contains(itemToAdd))
                 {
-                    UpdateBindingList(_wayFormProfiles, _wayForm.savedWaysLBox, itemToAdd);
+                    UpdateBindingList(_wayFormProfiles, WayForm.savedWaysLBox, itemToAdd);
                 }
             }
         }
@@ -2086,22 +2086,41 @@ namespace Talos.Forms
                     ChkWaitForCradhChecked = chkWaitForCradh.Checked,
                     ChkFrostStrikeChecked = chkFrostStrike.Checked,
                     ChkUseSkillsFromRangeChecked = chkUseSkillsFromRange.Checked,
-                    ChargeToTargetCbxChecked = ChargeToTargetCbx.Checked,
-                    AssistBasherChkChecked = assistBasherChk.Checked,
-                    OverrideDistanceNumValue = overrideDistanceNum.Value,
+                    ChkChargeToTargetCbxChecked = ChargeToTargetCbx.Checked,
+                    ChkAssistBasherChecked = assistBasherChk.Checked,
+                    NumOverrideDistanceValue = overrideDistanceNum.Value,
                     NumAssitantStrayValue = numAssitantStray.Value,
                     NumPFCounterValue = numPFCounter.Value,
-                    LeadBasherTxt = leadBasherTxt.Text
-                    //NumCrasherHealthValue = numCrasherHealth.Value,
-                    //NumExHealValue = numExHeal.Value,
-                    //NumBashSkillDelayValue = numBashSkillDelay.Value,
-                    //NumSkillIntValue = numSkillInt.Value,
-                    //PingCompensationNum1Value = pingCompensationNum1.Value,
-                    //MonsterWalkIntervalNum1Value = monsterWalkIntervalNum1.Value,
-                    //AtkRangeNumValue = atkRangeNum.Value,
-                    //EngageRangeNumValue = engageRangeNum.Value,
-                    //ChkTavWallHacksChecked = chkTavWallHacks.Checked,
-                    //ChkTavWallStrangerChecked = chkTavWallStranger.Checked,
+                    TextLeadBasherValue = leadBasherTxt.Text,
+                    NumCrasherHealthValue = numCrasherHealth.Value,
+                    NumExHealValue = numExHeal.Value,
+                    NumBashSkillDelayValue = numBashSkillDelay.Value,
+                    NumSkillIntValue = numSkillInt.Value,
+                    NumPingCompensation1Value = pingCompensationNum1.Value,
+                    NumMonsterWalkInterval1Value = monsterWalkIntervalNum1.Value,
+                    NumAtkRangeValue = atkRangeNum.Value,
+                    NumEngageRangeValue = engageRangeNum.Value,
+                    ChkTavWallHacksChecked = chkTavWallHacks.Checked,
+                    ChkTavWallStrangerChecked = chkTavWallStranger.Checked,
+                    RbtnLeaderTargetChecked = radioLeaderTarget.Checked,
+                    RbtnAssistantStrayChecked = radioAssitantStray.Checked,
+                    ChkAssailsChecked = chkBashAssails.Checked,
+                    ChkExkuraChecked = chkExkuranum.Checked,
+                    ChkProtect1CboxChecked = Protect1Cbx.Checked,
+                    ChkProtect2CboxChecked = Protect2Cbx.Checked,
+                    ChkBashAsgallChecked = chkBashAsgall.Checked,
+                    ChkIgnoreWalledInChecked = ignoreCollisionCbox.Checked,
+                    ChkRiskySkillsChecked = riskySkillsCbox.Checked,
+                    ChkRiskySkillsDionChecked = riskySkillsDionCbox.Checked,
+                    ChkCrasherCboxChecked = crasherCbox.Checked,
+                    ChkUseCrashersChecked = chkCrasher.Checked,
+                    ChkCrasherOnlyAsgallChecked = chkCrasherOnlyAsgall.Checked,
+                    ChkCrasherAboveHPChecked = chkCrasherAboveHP.Checked,
+                    ChkPrioritizeChecked = priorityCbox.Checked,
+                    ChkPriorityOnlyChecked = priorityOnlyCbox.Checked,
+                    TextProtect1Value = Protect1Cbx.Text,
+                    TextProtect2Value = Protect2Cbx.Text,
+                    PriorityLboxItems = new List<string>(priorityLBox.Items.Cast<string>()),
                 }
             };
 
@@ -2145,6 +2164,8 @@ namespace Talos.Forms
                     formState.EnemyPages.Add(new EnemyPageState
                     {
                         EnemyPageName = tabPage.Text,
+                        NearestFirstCbxChecked = enemyPage.NearestFirstCbx.Checked,
+                        FarthestFirstCbxChecked = enemyPage.FarthestFirstCbx.Checked,
                         SpellsCurseCboxChecked = enemyPage.spellsCurseCbox.Checked,
                         SpellsCurseComboxText = enemyPage.spellsCurseCombox.Text,
                         SpellsFasCboxChecked = enemyPage.spellsFasCbox.Checked,
@@ -2243,9 +2264,8 @@ namespace Talos.Forms
                 // Update UI controls asynchronously
                 await Task.Run(() =>
                 {
-                    this.Invoke((Action)(() =>
+                    this.Invoke(new Action(() =>
                     {
-
                         // Apply saved AllyPages
                         foreach (var allyState in formState.AllyPages)
                         {
@@ -2322,6 +2342,8 @@ namespace Talos.Forms
                                     if (enemyPage != null)
                                     {
                                         // Apply CheckBox values
+                                        enemyPage.NearestFirstCbx.Checked = enemyState.NearestFirstCbxChecked;
+                                        enemyPage.FarthestFirstCbx.Checked = enemyState.FarthestFirstCbxChecked;
                                         enemyPage.spellsCurseCbox.Checked = enemyState.SpellsCurseCboxChecked;
                                         enemyPage.spellsFasCbox.Checked = enemyState.SpellsFasCboxChecked;
                                         enemyPage.spellsControlCbox.Checked = enemyState.SpellsControlCboxChecked;
@@ -2376,6 +2398,7 @@ namespace Talos.Forms
                         dontCBox4.Checked = formState.ComboBoxPage.DontCBox4Checked;
 
                         // AislingPage controls
+                        followDistanceNum.Value = formState.AislingPage.FollowDistanceNumValue;
                         followText.Text = formState.AislingPage.FollowText;
                         doublesCombox.Text = formState.AislingPage.DoublesComboxText;
                         autoDoubleCbox.Checked = formState.AislingPage.AutoDoubleCboxChecked;
@@ -2477,22 +2500,46 @@ namespace Talos.Forms
                         chkWaitForCradh.Checked = formState.BashingPage.ChkWaitForCradhChecked;
                         chkFrostStrike.Checked = formState.BashingPage.ChkFrostStrikeChecked;
                         chkUseSkillsFromRange.Checked = formState.BashingPage.ChkUseSkillsFromRangeChecked;
-                        ChargeToTargetCbx.Checked = formState.BashingPage.ChargeToTargetCbxChecked;
-                        assistBasherChk.Checked = formState.BashingPage.AssistBasherChkChecked;
-                        overrideDistanceNum.Value = formState.BashingPage.OverrideDistanceNumValue;
+                        ChargeToTargetCbx.Checked = formState.BashingPage.ChkChargeToTargetCbxChecked;
+                        assistBasherChk.Checked = formState.BashingPage.ChkAssistBasherChecked;
+                        overrideDistanceNum.Value = formState.BashingPage.NumOverrideDistanceValue;
                         numAssitantStray.Value = formState.BashingPage.NumAssitantStrayValue;
                         numPFCounter.Value = formState.BashingPage.NumPFCounterValue;
-                        leadBasherTxt.Text = formState.BashingPage.LeadBasherTxt;
-                        //NumCrasherHealthValue = formState.BashingPage.numCrasherHealth.Value,
-                        //NumExHealValue = formState.BashingPage.numExHeal.Value,
-                        //NumBashSkillDelayValue = formState.BashingPage.numBashSkillDelay.Value,
-                        //NumSkillIntValue = formState.BashingPage.numSkillInt.Value,
-                        //PingCompensationNum1Value = formState.BashingPage.pingCompensationNum1.Value,
-                        //MonsterWalkIntervalNum1Value = formState.BashingPage.monsterWalkIntervalNum1.Value,
-                        //AtkRangeNumValue = formState.BashingPage.atkRangeNum.Value,
-                        //EngageRangeNumValue = formState.BashingPage.engageRangeNum.Value,
-                        //ChkTavWallHacksChecked = formState.BashingPage.chkTavWallHacks.Checked,
-                        //ChkTavWallStrangerChecked = formState.BashingPage.chkTavWallStranger.Checked,
+                        leadBasherTxt.Text = formState.BashingPage.TextLeadBasherValue;
+                        numCrasherHealth.Value = formState.BashingPage.NumCrasherHealthValue;
+                        numExHeal.Value = formState.BashingPage.NumExHealValue;
+                        numBashSkillDelay.Value = formState.BashingPage.NumBashSkillDelayValue;
+                        numSkillInt.Value = formState.BashingPage.NumSkillIntValue;
+                        pingCompensationNum1.Value = formState.BashingPage.NumPingCompensation1Value;
+                        monsterWalkIntervalNum1.Value = formState.BashingPage.NumMonsterWalkInterval1Value;
+                        atkRangeNum.Value = formState.BashingPage.NumAtkRangeValue;
+                        engageRangeNum.Value = formState.BashingPage.NumEngageRangeValue;
+                        chkTavWallHacks.Checked = formState.BashingPage.ChkTavWallHacksChecked;
+                        chkTavWallStranger.Checked = formState.BashingPage.ChkTavWallStrangerChecked;
+                        radioLeaderTarget.Checked = formState.BashingPage.RbtnLeaderTargetChecked;
+                        radioAssitantStray.Checked = formState.BashingPage.RbtnAssistantStrayChecked;
+                        chkBashAssails.Checked = formState.BashingPage.ChkAssailsChecked;
+                        chkExkuranum.Checked = formState.BashingPage.ChkExkuraChecked;
+                        Protect1Cbx.Checked = formState.BashingPage.ChkProtect1CboxChecked;
+                        Protect2Cbx.Checked = formState.BashingPage.ChkProtect2CboxChecked;
+                        chkBashAsgall.Checked = formState.BashingPage.ChkBashAsgallChecked;
+                        ignoreCollisionCbox.Checked = formState.BashingPage.ChkIgnoreWalledInChecked;
+                        riskySkillsCbox.Checked = formState.BashingPage.ChkRiskySkillsChecked;
+                        riskySkillsDionCbox.Checked = formState.BashingPage.ChkRiskySkillsDionChecked;
+                        crasherCbox.Checked = formState.BashingPage.ChkCrasherCboxChecked;
+                        chkCrasher.Checked = formState.BashingPage.ChkUseCrashersChecked;
+                        chkCrasherOnlyAsgall.Checked = formState.BashingPage.ChkCrasherOnlyAsgallChecked;
+                        chkCrasherAboveHP.Checked = formState.BashingPage.ChkCrasherAboveHPChecked;
+                        Protect1Cbx.Text = formState.BashingPage.TextProtect1Value;
+                        Protect2Cbx.Text = formState.BashingPage.TextProtect2Value;
+                        priorityCbox.Checked = formState.BashingPage.ChkPrioritizeChecked;
+                        priorityOnlyCbox.Checked = formState.BashingPage.ChkPriorityOnlyChecked;
+                        priorityLBox.Items.Clear();
+                        foreach (string item in formState.BashingPage.PriorityLboxItems)
+                        {
+                            priorityLBox.Items.Add(item);
+                        }
+
                     }));
                 });
             }
@@ -3414,15 +3461,15 @@ namespace Talos.Forms
 
         private void waypointsMenu_Click_1(object sender, EventArgs e)
         {
-            if (_wayForm == null || _wayForm.IsDisposed)
+            if (WayForm == null || WayForm.IsDisposed)
             {
-                _wayForm = new WayForm(_client);
-                _wayForm.Show();
+                WayForm = new WayForm(_client);
+                WayForm.Show();
             }
             else
             {
                 // Bring the existing form to the front
-                _wayForm.Show();
+                WayForm.Show();
             }
         }
 

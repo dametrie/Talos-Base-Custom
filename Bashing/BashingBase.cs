@@ -196,7 +196,7 @@ namespace Talos.Bashing
                          lastStepTime < TimeSpan.FromMilliseconds(MonsterWalkIntervalMs + PingCompensation * 2));
             }
 
-            return Bot._nearbyAllies?.Any(u => u.IsAsleep) ?? false;
+            return Bot.NearbyAllies?.Any(u => u.IsAsleep) ?? false;
         }
 
 
