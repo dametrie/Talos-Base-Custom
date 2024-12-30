@@ -1520,6 +1520,7 @@ namespace Talos
 
             Item item = new Item(slot, sprite, color, name, quantity, stackable, maximumDurability, currentDurability);
 
+
             client.Inventory[slot] = item;
             client.CheckWeaponType(item);
             return true;
@@ -2521,7 +2522,8 @@ namespace Talos
 
 
             int id = serverPacket.ReadInt32();
-            var equipmentData = ReadEquipmentData(serverPacket);
+            var equipmentData = ReadEquipmentData(client, serverPacket);
+
 
             byte optionsByte = serverPacket.ReadByte();
             string name = serverPacket.ReadString8();
@@ -2592,7 +2594,7 @@ namespace Talos
             return true;
         }
 
-        private (ushort[] EquipmentSprite, byte[] EquipmentColor) ReadEquipmentData(ServerPacket packet)
+        private (ushort[] EquipmentSprite, byte[] EquipmentColor) ReadEquipmentData(Client client, ServerPacket packet)
         {
             ushort[] equipmentSprite = new ushort[18];
             byte[] equipmentColor = new byte[18];
@@ -2600,8 +2602,14 @@ namespace Talos
             for (int i = 0; i < 18; i++)
             {
                 equipmentSprite[i] = packet.ReadUInt16();
+                //client.EquippedItems[i].Sprite = equipmentSprite[i];
+
                 equipmentColor[i] = packet.ReadByte();
+                //client.EquippedItems[i].Color = equipmentColor[i];
             }
+
+
+
 
             return (equipmentSprite, equipmentColor);
         }
@@ -2746,6 +2754,12 @@ namespace Talos
             Item item = new Item(slot, sprite, color, itemName, 1, maxDurability, currDurability);
             client.EquippedItems[slot] = item;
 
+            Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} added to slot: " + slot);
+            Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} current durability {client.EquippedItems[slot].CurrentDurability}");
+            Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} maximum durability {client.EquippedItems[slot].MaximumDurability}");
+            Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} ushort sprite {client.EquippedItems[slot].Sprite - CONSTANTS.ITEM_SPRITE_OFFSET}");
+
+
             // Find the staff or bow in the respective lists
             Staff foundStaff = client.Staffs.FirstOrDefault(staff => staff.Name == itemName);
             Bow foundBow = client.Bows.FirstOrDefault(bow => bow.Name == itemName);
@@ -2778,8 +2792,14 @@ namespace Talos
             if (slot == 2)
                 _itemToReEquip = client.EquippedItems[slot].Name;
 
+            Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} unequipped from slot: " + slot);
+            Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} current durability {client.EquippedItems[slot].CurrentDurability}");
+            Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} maximum durability {client.EquippedItems[slot].MaximumDurability}");
+
             client.EquippedItems[slot] = null;
 
+
+            
             return true;
         }
 

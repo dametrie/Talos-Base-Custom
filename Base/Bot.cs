@@ -171,6 +171,7 @@ namespace Talos.Base
                     TaskLoop();
                     // TavalyWallHacks();
                     MonsterForm();
+                    DuraLoop();
 
                     // Sleep before the next iteration
                     Thread.Sleep(100);
@@ -180,6 +181,11 @@ namespace Talos.Base
                     Console.WriteLine($"[MultiLoop] Exception occurred: {ex}");
                 }
             }
+        }
+
+        private void DuraLoop()
+        {
+           
         }
 
         #region HandleBashingCycle

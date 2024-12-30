@@ -92,8 +92,6 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
-            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
-            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -282,6 +280,9 @@ namespace Talos.Forms
             this.bashingSkillsToUseGrp = new System.Windows.Forms.GroupBox();
             this.btnBashingNew = new System.Windows.Forms.Button();
             this.toolsTab = new System.Windows.Forms.TabPage();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.chkSpellStatus = new System.Windows.Forms.CheckBox();
             this.groupBox9 = new System.Windows.Forms.GroupBox();
             this.comboSelector = new System.Windows.Forms.ComboBox();
             this.numComboImgSelect = new System.Windows.Forms.NumericUpDown();
@@ -577,9 +578,27 @@ namespace Talos.Forms
             this.currentAction = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.groupBox6 = new System.Windows.Forms.GroupBox();
-            this.label17 = new System.Windows.Forms.Label();
-            this.chkSpellStatus = new System.Windows.Forms.CheckBox();
+            this.durabilityGrp = new System.Windows.Forms.GroupBox();
+            this.pictureBoxBelt = new System.Windows.Forms.PictureBox();
+            this.pictureBoxBoots = new System.Windows.Forms.PictureBox();
+            this.pictureBoxGreaves = new System.Windows.Forms.PictureBox();
+            this.pictureBoxLeftGaunt = new System.Windows.Forms.PictureBox();
+            this.pictureBoxLeftRing = new System.Windows.Forms.PictureBox();
+            this.pictureBoxRightRing = new System.Windows.Forms.PictureBox();
+            this.pictureBoxRightGaunt = new System.Windows.Forms.PictureBox();
+            this.pictureBoxWeapon = new System.Windows.Forms.PictureBox();
+            this.pictureBoxArmor = new System.Windows.Forms.PictureBox();
+            this.pictureBoxOverCoat = new System.Windows.Forms.PictureBox();
+            this.pictureBoxHeadAcessory = new System.Windows.Forms.PictureBox();
+            this.pictureBoxHelm = new System.Windows.Forms.PictureBox();
+            this.pictureBoxEarrings = new System.Windows.Forms.PictureBox();
+            this.pictureBoxNeck = new System.Windows.Forms.PictureBox();
+            this.pictureBox15 = new System.Windows.Forms.PictureBox();
+            this.pictureBoxShield = new System.Windows.Forms.PictureBox();
+            this.pictureBox17 = new System.Windows.Forms.PictureBox();
+            this.pictureBox18 = new System.Windows.Forms.PictureBox();
+            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
+            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -636,6 +655,7 @@ namespace Talos.Forms
             ((System.ComponentModel.ISupportInitialize)(this.numPFCounter)).BeginInit();
             this.groupBox2.SuspendLayout();
             this.toolsTab.SuspendLayout();
+            this.groupBox6.SuspendLayout();
             this.groupBox9.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numComboImgSelect)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picComboSkill)).BeginInit();
@@ -709,7 +729,25 @@ namespace Talos.Forms
             this.packetStrip.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.menuStrip.SuspendLayout();
-            this.groupBox6.SuspendLayout();
+            this.durabilityGrp.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBelt)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBoots)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxGreaves)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeftGaunt)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeftRing)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRightRing)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRightGaunt)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxWeapon)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxArmor)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxOverCoat)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxHeadAcessory)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxHelm)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxEarrings)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxNeck)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox15)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxShield)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox17)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox18)).BeginInit();
             this.SuspendLayout();
             // 
             // clientTabControl
@@ -1402,35 +1440,6 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // chatPanel2
-            // 
-            this.chatPanel2.AutoDetectUrls = true;
-            this.chatPanel2.BackColor = System.Drawing.Color.White;
-            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel2.Name = "chatPanel2";
-            this.chatPanel2.ReadOnly = true;
-            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel2.TabIndex = 0;
-            this.chatPanel2.Text = "";
-            // 
-            // chatBox
-            // 
-            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatBox.ForeColor = System.Drawing.Color.Black;
-            this.chatBox.Location = new System.Drawing.Point(121, 484);
-            this.chatBox.MaxLength = 53;
-            this.chatBox.Name = "chatBox";
-            this.chatBox.Size = new System.Drawing.Size(508, 23);
-            this.chatBox.TabIndex = 13;
-            this.chatBox.TabStop = false;
-            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
-            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
-            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
-            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
             // mainAislingsTab
             // 
@@ -3862,11 +3871,11 @@ namespace Talos.Forms
             // 
             // toolsTab
             // 
+            this.toolsTab.Controls.Add(this.durabilityGrp);
             this.toolsTab.Controls.Add(this.groupBox6);
             this.toolsTab.Controls.Add(this.groupBox9);
             this.toolsTab.Controls.Add(this.resetGroup);
             this.toolsTab.Controls.Add(this.customLinesGroup);
-            this.toolsTab.Controls.Add(this.unifiedGuildChatCbox);
             this.toolsTab.Controls.Add(this.dmuGroup);
             this.toolsTab.Controls.Add(this.renamedStaffsGrp);
             this.toolsTab.Controls.Add(this.stuffGrp);
@@ -3880,15 +3889,45 @@ namespace Talos.Forms
             this.toolsTab.Text = "Tools";
             this.toolsTab.UseVisualStyleBackColor = true;
             // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this.label17);
+            this.groupBox6.Controls.Add(this.chkSpellStatus);
+            this.groupBox6.Location = new System.Drawing.Point(216, 238);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(172, 61);
+            this.groupBox6.TabIndex = 135;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "Spell Status";
+            // 
+            // label17
+            // 
+            this.label17.Location = new System.Drawing.Point(75, 13);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(89, 45);
+            this.label17.TabIndex = 49;
+            this.label17.Text = "Shows whether creature has curse or fas\r\n";
+            this.label17.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chkSpellStatus
+            // 
+            this.chkSpellStatus.AutoSize = true;
+            this.chkSpellStatus.Location = new System.Drawing.Point(10, 27);
+            this.chkSpellStatus.Name = "chkSpellStatus";
+            this.chkSpellStatus.Size = new System.Drawing.Size(68, 19);
+            this.chkSpellStatus.TabIndex = 20;
+            this.chkSpellStatus.Text = "Enabled";
+            this.chkSpellStatus.UseVisualStyleBackColor = true;
+            // 
             // groupBox9
             // 
             this.groupBox9.Controls.Add(this.comboSelector);
             this.groupBox9.Controls.Add(this.numComboImgSelect);
             this.groupBox9.Controls.Add(this.picComboSkill);
             this.groupBox9.Controls.Add(this.btnAddSkillCombo);
-            this.groupBox9.Location = new System.Drawing.Point(461, 112);
+            this.groupBox9.Location = new System.Drawing.Point(393, 138);
             this.groupBox9.Name = "groupBox9";
-            this.groupBox9.Size = new System.Drawing.Size(166, 187);
+            this.groupBox9.Size = new System.Drawing.Size(166, 162);
             this.groupBox9.TabIndex = 134;
             this.groupBox9.TabStop = false;
             this.groupBox9.Text = "Add Combo to Skills";
@@ -3906,7 +3945,7 @@ namespace Talos.Forms
             "Combo Two",
             "Combo Three",
             "Combo Four"});
-            this.comboSelector.Location = new System.Drawing.Point(21, 116);
+            this.comboSelector.Location = new System.Drawing.Point(21, 91);
             this.comboSelector.Name = "comboSelector";
             this.comboSelector.Size = new System.Drawing.Size(112, 23);
             this.comboSelector.TabIndex = 135;
@@ -3915,14 +3954,14 @@ namespace Talos.Forms
             // numComboImgSelect
             // 
             this.numComboImgSelect.ForeColor = System.Drawing.Color.Black;
-            this.numComboImgSelect.Location = new System.Drawing.Point(20, 86);
+            this.numComboImgSelect.Location = new System.Drawing.Point(90, 62);
             this.numComboImgSelect.Maximum = new decimal(new int[] {
             112,
             0,
             0,
             0});
             this.numComboImgSelect.Name = "numComboImgSelect";
-            this.numComboImgSelect.Size = new System.Drawing.Size(62, 23);
+            this.numComboImgSelect.Size = new System.Drawing.Size(43, 23);
             this.numComboImgSelect.TabIndex = 136;
             this.numComboImgSelect.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.numComboImgSelect.Value = new decimal(new int[] {
@@ -3933,7 +3972,7 @@ namespace Talos.Forms
             // 
             // picComboSkill
             // 
-            this.picComboSkill.Location = new System.Drawing.Point(20, 22);
+            this.picComboSkill.Location = new System.Drawing.Point(21, 27);
             this.picComboSkill.Name = "picComboSkill";
             this.picComboSkill.Size = new System.Drawing.Size(62, 58);
             this.picComboSkill.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
@@ -3943,7 +3982,7 @@ namespace Talos.Forms
             // btnAddSkillCombo
             // 
             this.btnAddSkillCombo.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAddSkillCombo.Location = new System.Drawing.Point(21, 145);
+            this.btnAddSkillCombo.Location = new System.Drawing.Point(21, 120);
             this.btnAddSkillCombo.Name = "btnAddSkillCombo";
             this.btnAddSkillCombo.Size = new System.Drawing.Size(112, 31);
             this.btnAddSkillCombo.TabIndex = 133;
@@ -3954,9 +3993,9 @@ namespace Talos.Forms
             // 
             this.resetGroup.Controls.Add(this.resetLbl);
             this.resetGroup.Controls.Add(this.btnResetAllStatus);
-            this.resetGroup.Location = new System.Drawing.Point(233, 112);
+            this.resetGroup.Location = new System.Drawing.Point(215, 112);
             this.resetGroup.Name = "resetGroup";
-            this.resetGroup.Size = new System.Drawing.Size(223, 187);
+            this.resetGroup.Size = new System.Drawing.Size(174, 120);
             this.resetGroup.TabIndex = 133;
             this.resetGroup.TabStop = false;
             this.resetGroup.Text = "Reset";
@@ -3964,7 +4003,7 @@ namespace Talos.Forms
             // resetLbl
             // 
             this.resetLbl.AutoSize = true;
-            this.resetLbl.Location = new System.Drawing.Point(52, 101);
+            this.resetLbl.Location = new System.Drawing.Point(17, 77);
             this.resetLbl.Name = "resetLbl";
             this.resetLbl.Size = new System.Drawing.Size(130, 30);
             this.resetLbl.TabIndex = 134;
@@ -3974,9 +4013,9 @@ namespace Talos.Forms
             // btnResetAllStatus
             // 
             this.btnResetAllStatus.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnResetAllStatus.Location = new System.Drawing.Point(18, 22);
+            this.btnResetAllStatus.Location = new System.Drawing.Point(17, 22);
             this.btnResetAllStatus.Name = "btnResetAllStatus";
-            this.btnResetAllStatus.Size = new System.Drawing.Size(188, 49);
+            this.btnResetAllStatus.Size = new System.Drawing.Size(129, 49);
             this.btnResetAllStatus.TabIndex = 133;
             this.btnResetAllStatus.Text = "Reset All Status";
             this.btnResetAllStatus.UseVisualStyleBackColor = true;
@@ -3987,14 +4026,14 @@ namespace Talos.Forms
             this.customLinesGroup.Controls.Add(this.customLinesBox);
             this.customLinesGroup.Location = new System.Drawing.Point(6, 112);
             this.customLinesGroup.Name = "customLinesGroup";
-            this.customLinesGroup.Size = new System.Drawing.Size(222, 187);
+            this.customLinesGroup.Size = new System.Drawing.Size(203, 187);
             this.customLinesGroup.TabIndex = 132;
             this.customLinesGroup.TabStop = false;
             this.customLinesGroup.Text = "Custom Spell Lines";
             // 
             // customLinesBox
             // 
-            this.customLinesBox.Location = new System.Drawing.Point(14, 22);
+            this.customLinesBox.Location = new System.Drawing.Point(5, 22);
             this.customLinesBox.Multiline = true;
             this.customLinesBox.Name = "customLinesBox";
             this.customLinesBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
@@ -4005,7 +4044,7 @@ namespace Talos.Forms
             // 
             this.unifiedGuildChatCbox.AutoSize = true;
             this.unifiedGuildChatCbox.ForeColor = System.Drawing.Color.Black;
-            this.unifiedGuildChatCbox.Location = new System.Drawing.Point(633, 28);
+            this.unifiedGuildChatCbox.Location = new System.Drawing.Point(8, 97);
             this.unifiedGuildChatCbox.Name = "unifiedGuildChatCbox";
             this.unifiedGuildChatCbox.Size = new System.Drawing.Size(123, 19);
             this.unifiedGuildChatCbox.TabIndex = 1;
@@ -4496,9 +4535,10 @@ namespace Talos.Forms
             this.stuffGrp.Controls.Add(this.safeScreenCbox);
             this.stuffGrp.Controls.Add(this.formNum);
             this.stuffGrp.Controls.Add(this.formCbox);
-            this.stuffGrp.Location = new System.Drawing.Point(462, 6);
+            this.stuffGrp.Controls.Add(this.unifiedGuildChatCbox);
+            this.stuffGrp.Location = new System.Drawing.Point(394, 6);
             this.stuffGrp.Name = "stuffGrp";
-            this.stuffGrp.Size = new System.Drawing.Size(165, 100);
+            this.stuffGrp.Size = new System.Drawing.Size(165, 126);
             this.stuffGrp.TabIndex = 5;
             this.stuffGrp.TabStop = false;
             this.stuffGrp.Text = "Stuff";
@@ -4565,9 +4605,9 @@ namespace Talos.Forms
             this.mapFlagsGroup.Controls.Add(this.mapSnowTileCbox);
             this.mapFlagsGroup.Controls.Add(this.mapTabsCbox);
             this.mapFlagsGroup.Controls.Add(this.mapFlagsEnableCbox);
-            this.mapFlagsGroup.Location = new System.Drawing.Point(234, 6);
+            this.mapFlagsGroup.Location = new System.Drawing.Point(216, 6);
             this.mapFlagsGroup.Name = "mapFlagsGroup";
-            this.mapFlagsGroup.Size = new System.Drawing.Size(222, 100);
+            this.mapFlagsGroup.Size = new System.Drawing.Size(173, 100);
             this.mapFlagsGroup.TabIndex = 1;
             this.mapFlagsGroup.TabStop = false;
             this.mapFlagsGroup.Text = "Map Flags Override";
@@ -4601,7 +4641,7 @@ namespace Talos.Forms
             this.mapSnowTileCbox.AutoSize = true;
             this.mapSnowTileCbox.Enabled = false;
             this.mapSnowTileCbox.ForeColor = System.Drawing.Color.Gray;
-            this.mapSnowTileCbox.Location = new System.Drawing.Point(98, 72);
+            this.mapSnowTileCbox.Location = new System.Drawing.Point(79, 72);
             this.mapSnowTileCbox.Name = "mapSnowTileCbox";
             this.mapSnowTileCbox.Size = new System.Drawing.Size(91, 19);
             this.mapSnowTileCbox.TabIndex = 4;
@@ -4613,7 +4653,7 @@ namespace Talos.Forms
             this.mapTabsCbox.AutoSize = true;
             this.mapTabsCbox.Enabled = false;
             this.mapTabsCbox.ForeColor = System.Drawing.Color.Gray;
-            this.mapTabsCbox.Location = new System.Drawing.Point(98, 47);
+            this.mapTabsCbox.Location = new System.Drawing.Point(79, 47);
             this.mapTabsCbox.Name = "mapTabsCbox";
             this.mapTabsCbox.Size = new System.Drawing.Size(90, 19);
             this.mapTabsCbox.TabIndex = 3;
@@ -4641,7 +4681,7 @@ namespace Talos.Forms
             this.clientHacksGroup.Controls.Add(this.noBlindCbox);
             this.clientHacksGroup.Location = new System.Drawing.Point(6, 6);
             this.clientHacksGroup.Name = "clientHacksGroup";
-            this.clientHacksGroup.Size = new System.Drawing.Size(222, 100);
+            this.clientHacksGroup.Size = new System.Drawing.Size(205, 100);
             this.clientHacksGroup.TabIndex = 0;
             this.clientHacksGroup.TabStop = false;
             this.clientHacksGroup.Text = "Client Hacks";
@@ -4650,7 +4690,7 @@ namespace Talos.Forms
             // 
             this.ghostHackCbox.AutoSize = true;
             this.ghostHackCbox.ForeColor = System.Drawing.Color.Black;
-            this.ghostHackCbox.Location = new System.Drawing.Point(98, 47);
+            this.ghostHackCbox.Location = new System.Drawing.Point(90, 47);
             this.ghostHackCbox.Name = "ghostHackCbox";
             this.ghostHackCbox.Size = new System.Drawing.Size(83, 19);
             this.ghostHackCbox.TabIndex = 4;
@@ -4675,7 +4715,7 @@ namespace Talos.Forms
             this.hideForegroundCbox.AutoSize = true;
             this.hideForegroundCbox.Enabled = false;
             this.hideForegroundCbox.ForeColor = System.Drawing.Color.Gray;
-            this.hideForegroundCbox.Location = new System.Drawing.Point(98, 72);
+            this.hideForegroundCbox.Location = new System.Drawing.Point(90, 72);
             this.hideForegroundCbox.Name = "hideForegroundCbox";
             this.hideForegroundCbox.Size = new System.Drawing.Size(112, 19);
             this.hideForegroundCbox.TabIndex = 5;
@@ -4687,7 +4727,7 @@ namespace Talos.Forms
             // 
             this.mapZoomCbox.AutoSize = true;
             this.mapZoomCbox.ForeColor = System.Drawing.Color.Black;
-            this.mapZoomCbox.Location = new System.Drawing.Point(98, 22);
+            this.mapZoomCbox.Location = new System.Drawing.Point(90, 22);
             this.mapZoomCbox.Name = "mapZoomCbox";
             this.mapZoomCbox.Size = new System.Drawing.Size(107, 19);
             this.mapZoomCbox.TabIndex = 3;
@@ -7297,35 +7337,205 @@ namespace Talos.Forms
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
-            // groupBox6
+            // durabilityGrp
             // 
-            this.groupBox6.Controls.Add(this.label17);
-            this.groupBox6.Controls.Add(this.chkSpellStatus);
-            this.groupBox6.Location = new System.Drawing.Point(633, 213);
-            this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Size = new System.Drawing.Size(101, 89);
-            this.groupBox6.TabIndex = 135;
-            this.groupBox6.TabStop = false;
-            this.groupBox6.Text = "Spell Status";
+            this.durabilityGrp.Controls.Add(this.pictureBox17);
+            this.durabilityGrp.Controls.Add(this.pictureBox18);
+            this.durabilityGrp.Controls.Add(this.pictureBoxShield);
+            this.durabilityGrp.Controls.Add(this.pictureBox15);
+            this.durabilityGrp.Controls.Add(this.pictureBoxNeck);
+            this.durabilityGrp.Controls.Add(this.pictureBoxEarrings);
+            this.durabilityGrp.Controls.Add(this.pictureBoxHelm);
+            this.durabilityGrp.Controls.Add(this.pictureBoxHeadAcessory);
+            this.durabilityGrp.Controls.Add(this.pictureBoxOverCoat);
+            this.durabilityGrp.Controls.Add(this.pictureBoxArmor);
+            this.durabilityGrp.Controls.Add(this.pictureBoxWeapon);
+            this.durabilityGrp.Controls.Add(this.pictureBoxRightGaunt);
+            this.durabilityGrp.Controls.Add(this.pictureBoxRightRing);
+            this.durabilityGrp.Controls.Add(this.pictureBoxLeftRing);
+            this.durabilityGrp.Controls.Add(this.pictureBoxLeftGaunt);
+            this.durabilityGrp.Controls.Add(this.pictureBoxGreaves);
+            this.durabilityGrp.Controls.Add(this.pictureBoxBoots);
+            this.durabilityGrp.Controls.Add(this.pictureBoxBelt);
+            this.durabilityGrp.Location = new System.Drawing.Point(565, 6);
+            this.durabilityGrp.Name = "durabilityGrp";
+            this.durabilityGrp.Size = new System.Drawing.Size(272, 294);
+            this.durabilityGrp.TabIndex = 136;
+            this.durabilityGrp.TabStop = false;
+            this.durabilityGrp.Text = "Durability";
             // 
-            // label17
+            // pictureBoxBelt
             // 
-            this.label17.Location = new System.Drawing.Point(2, 41);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(95, 45);
-            this.label17.TabIndex = 49;
-            this.label17.Text = "Shows whether creature\r\nhas curse or fas\r\n";
-            this.label17.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.pictureBoxBelt.Location = new System.Drawing.Point(164, 238);
+            this.pictureBoxBelt.Name = "pictureBoxBelt";
+            this.pictureBoxBelt.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxBelt.TabIndex = 0;
+            this.pictureBoxBelt.TabStop = false;
             // 
-            // chkSpellStatus
+            // pictureBoxBoots
             // 
-            this.chkSpellStatus.AutoSize = true;
-            this.chkSpellStatus.Location = new System.Drawing.Point(17, 21);
-            this.chkSpellStatus.Name = "chkSpellStatus";
-            this.chkSpellStatus.Size = new System.Drawing.Size(68, 19);
-            this.chkSpellStatus.TabIndex = 20;
-            this.chkSpellStatus.Text = "Enabled";
-            this.chkSpellStatus.UseVisualStyleBackColor = true;
+            this.pictureBoxBoots.Location = new System.Drawing.Point(111, 238);
+            this.pictureBoxBoots.Name = "pictureBoxBoots";
+            this.pictureBoxBoots.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxBoots.TabIndex = 1;
+            this.pictureBoxBoots.TabStop = false;
+            // 
+            // pictureBoxGreaves
+            // 
+            this.pictureBoxGreaves.Location = new System.Drawing.Point(58, 238);
+            this.pictureBoxGreaves.Name = "pictureBoxGreaves";
+            this.pictureBoxGreaves.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxGreaves.TabIndex = 2;
+            this.pictureBoxGreaves.TabStop = false;
+            // 
+            // pictureBoxLeftGaunt
+            // 
+            this.pictureBoxLeftGaunt.Location = new System.Drawing.Point(6, 194);
+            this.pictureBoxLeftGaunt.Name = "pictureBoxLeftGaunt";
+            this.pictureBoxLeftGaunt.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxLeftGaunt.TabIndex = 3;
+            this.pictureBoxLeftGaunt.TabStop = false;
+            // 
+            // pictureBoxLeftRing
+            // 
+            this.pictureBoxLeftRing.Location = new System.Drawing.Point(58, 194);
+            this.pictureBoxLeftRing.Name = "pictureBoxLeftRing";
+            this.pictureBoxLeftRing.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxLeftRing.TabIndex = 4;
+            this.pictureBoxLeftRing.TabStop = false;
+            // 
+            // pictureBoxRightRing
+            // 
+            this.pictureBoxRightRing.Location = new System.Drawing.Point(164, 194);
+            this.pictureBoxRightRing.Name = "pictureBoxRightRing";
+            this.pictureBoxRightRing.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxRightRing.TabIndex = 5;
+            this.pictureBoxRightRing.TabStop = false;
+            // 
+            // pictureBoxRightGaunt
+            // 
+            this.pictureBoxRightGaunt.Location = new System.Drawing.Point(219, 194);
+            this.pictureBoxRightGaunt.Name = "pictureBoxRightGaunt";
+            this.pictureBoxRightGaunt.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxRightGaunt.TabIndex = 6;
+            this.pictureBoxRightGaunt.TabStop = false;
+            // 
+            // pictureBoxWeapon
+            // 
+            this.pictureBoxWeapon.Location = new System.Drawing.Point(58, 148);
+            this.pictureBoxWeapon.Name = "pictureBoxWeapon";
+            this.pictureBoxWeapon.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxWeapon.TabIndex = 7;
+            this.pictureBoxWeapon.TabStop = false;
+            // 
+            // pictureBoxArmor
+            // 
+            this.pictureBoxArmor.Location = new System.Drawing.Point(58, 102);
+            this.pictureBoxArmor.Name = "pictureBoxArmor";
+            this.pictureBoxArmor.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxArmor.TabIndex = 8;
+            this.pictureBoxArmor.TabStop = false;
+            // 
+            // pictureBoxOverCoat
+            // 
+            this.pictureBoxOverCoat.Location = new System.Drawing.Point(6, 102);
+            this.pictureBoxOverCoat.Name = "pictureBoxOverCoat";
+            this.pictureBoxOverCoat.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxOverCoat.TabIndex = 9;
+            this.pictureBoxOverCoat.TabStop = false;
+            // 
+            // pictureBoxHeadAcessory
+            // 
+            this.pictureBoxHeadAcessory.Location = new System.Drawing.Point(111, 73);
+            this.pictureBoxHeadAcessory.Name = "pictureBoxHeadAcessory";
+            this.pictureBoxHeadAcessory.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxHeadAcessory.TabIndex = 10;
+            this.pictureBoxHeadAcessory.TabStop = false;
+            // 
+            // pictureBoxHelm
+            // 
+            this.pictureBoxHelm.Location = new System.Drawing.Point(111, 26);
+            this.pictureBoxHelm.Name = "pictureBoxHelm";
+            this.pictureBoxHelm.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxHelm.TabIndex = 11;
+            this.pictureBoxHelm.TabStop = false;
+            // 
+            // pictureBoxEarrings
+            // 
+            this.pictureBoxEarrings.Location = new System.Drawing.Point(58, 51);
+            this.pictureBoxEarrings.Name = "pictureBoxEarrings";
+            this.pictureBoxEarrings.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxEarrings.TabIndex = 12;
+            this.pictureBoxEarrings.TabStop = false;
+            // 
+            // pictureBoxNeck
+            // 
+            this.pictureBoxNeck.Location = new System.Drawing.Point(164, 51);
+            this.pictureBoxNeck.Name = "pictureBoxNeck";
+            this.pictureBoxNeck.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxNeck.TabIndex = 13;
+            this.pictureBoxNeck.TabStop = false;
+            // 
+            // pictureBox15
+            // 
+            this.pictureBox15.Location = new System.Drawing.Point(164, 102);
+            this.pictureBox15.Name = "pictureBox15";
+            this.pictureBox15.Size = new System.Drawing.Size(47, 40);
+            this.pictureBox15.TabIndex = 14;
+            this.pictureBox15.TabStop = false;
+            // 
+            // pictureBoxShield
+            // 
+            this.pictureBoxShield.Location = new System.Drawing.Point(164, 148);
+            this.pictureBoxShield.Name = "pictureBoxShield";
+            this.pictureBoxShield.Size = new System.Drawing.Size(47, 40);
+            this.pictureBoxShield.TabIndex = 15;
+            this.pictureBoxShield.TabStop = false;
+            // 
+            // pictureBox17
+            // 
+            this.pictureBox17.Location = new System.Drawing.Point(219, 148);
+            this.pictureBox17.Name = "pictureBox17";
+            this.pictureBox17.Size = new System.Drawing.Size(47, 40);
+            this.pictureBox17.TabIndex = 17;
+            this.pictureBox17.TabStop = false;
+            // 
+            // pictureBox18
+            // 
+            this.pictureBox18.Location = new System.Drawing.Point(219, 102);
+            this.pictureBox18.Name = "pictureBox18";
+            this.pictureBox18.Size = new System.Drawing.Size(47, 40);
+            this.pictureBox18.TabIndex = 16;
+            this.pictureBox18.TabStop = false;
+            // 
+            // chatPanel2
+            // 
+            this.chatPanel2.AutoDetectUrls = true;
+            this.chatPanel2.BackColor = System.Drawing.Color.White;
+            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel2.Name = "chatPanel2";
+            this.chatPanel2.ReadOnly = true;
+            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel2.TabIndex = 0;
+            this.chatPanel2.Text = "";
+            // 
+            // chatBox
+            // 
+            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatBox.ForeColor = System.Drawing.Color.Black;
+            this.chatBox.Location = new System.Drawing.Point(121, 484);
+            this.chatBox.MaxLength = 53;
+            this.chatBox.Name = "chatBox";
+            this.chatBox.Size = new System.Drawing.Size(508, 23);
+            this.chatBox.TabIndex = 13;
+            this.chatBox.TabStop = false;
+            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
+            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
+            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
+            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
             // ClientTab
             // 
@@ -7426,7 +7636,8 @@ namespace Talos.Forms
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.toolsTab.ResumeLayout(false);
-            this.toolsTab.PerformLayout();
+            this.groupBox6.ResumeLayout(false);
+            this.groupBox6.PerformLayout();
             this.groupBox9.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numComboImgSelect)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.picComboSkill)).EndInit();
@@ -7536,8 +7747,25 @@ namespace Talos.Forms
             this.tabPage1.PerformLayout();
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
-            this.groupBox6.ResumeLayout(false);
-            this.groupBox6.PerformLayout();
+            this.durabilityGrp.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBelt)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBoots)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxGreaves)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeftGaunt)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeftRing)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRightRing)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRightGaunt)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxWeapon)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxArmor)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxOverCoat)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxHeadAcessory)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxHelm)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxEarrings)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxNeck)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox15)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxShield)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox17)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox18)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -8089,5 +8317,24 @@ namespace Talos.Forms
         internal GroupBox groupBox6;
         private Label label17;
         internal CheckBox chkSpellStatus;
+        private GroupBox durabilityGrp;
+        internal PictureBox pictureBoxBelt;
+        internal PictureBox pictureBoxGreaves;
+        internal PictureBox pictureBoxBoots;
+        internal PictureBox pictureBox17;
+        internal PictureBox pictureBox18;
+        internal PictureBox pictureBoxShield;
+        internal PictureBox pictureBox15;
+        internal PictureBox pictureBoxNeck;
+        internal PictureBox pictureBoxEarrings;
+        internal PictureBox pictureBoxHelm;
+        internal PictureBox pictureBoxHeadAcessory;
+        internal PictureBox pictureBoxOverCoat;
+        internal PictureBox pictureBoxArmor;
+        internal PictureBox pictureBoxWeapon;
+        internal PictureBox pictureBoxRightGaunt;
+        internal PictureBox pictureBoxRightRing;
+        internal PictureBox pictureBoxLeftRing;
+        internal PictureBox pictureBoxLeftGaunt;
     }
 }

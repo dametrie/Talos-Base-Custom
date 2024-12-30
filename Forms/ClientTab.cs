@@ -3494,7 +3494,7 @@ namespace Talos.Forms
         {
             if (_client.Inventory[1] != null)
             {
-                _client.ServerMessage(0, "Your " + _client.Inventory[1].Name + " has a Sprite ID of " + (_client.Inventory[1].Sprite - 32768) + ".");
+                _client.ServerMessage(0, "Your " + _client.Inventory[1].Name + " has a Sprite ID of " + (_client.Inventory[1].Sprite - CONSTANTS.ITEM_SPRITE_OFFSET) + ".");
             }
         }
 
