@@ -745,7 +745,18 @@ namespace Talos.Helper
             {
                 foreach (string line in File.ReadLines(filePath))
                 {
-                    if (line.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
+                    // Split the line into item name and quantity
+                    string[] parts = line.Split(new[] { ':' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length != 2)
+                    {
+                        continue; // Skip invalid lines
+                    }
+
+                    string itemName = parts[0].Trim();
+                    string quantity = parts[1].Trim();
+
+                    // Check if the item name matches the search query
+                    if (itemName.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         // Extract inventory and file information
                         string[] pathParts = filePath.Replace(inventoryPath, "").Trim('\\').Split('\\');
@@ -760,7 +771,7 @@ namespace Talos.Helper
                         // Send a message for the found item
                         client.ServerMessage(
                             (byte)ServerMessageType.Whisper,
-                            $"{StringUtils.UppercaseFirst(owner)}'s {inventoryName} contains {line}."
+                            $"{StringUtils.UppercaseFirst(owner)}'s {inventoryName} contains {itemName} (Quantity: {quantity})."
                         );
 
                         itemFound = true;

@@ -249,7 +249,7 @@ namespace Talos.Forms
             {
                 try
                 {
-                    File.WriteAllLines(text + "\\inventory.txt", _client.Inventory.Select((Item item) => item.Name));
+                    File.WriteAllLines(text + "\\inventory.txt", _client.Inventory.Select(item => $"{item.Name}: {item.Quantity}"));
                 }
                 catch
                 {

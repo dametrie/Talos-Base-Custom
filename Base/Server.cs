@@ -1966,29 +1966,37 @@ namespace Talos
 
                         case (byte)MenuType.WithdrawlOrBuy:
                         {
-                            client.SavedInventoryList.Clear();
+                            client.BankedItems.Clear();
                             serverPacket.Read(3);
                             byte uniqueItemCount = serverPacket.ReadByte();
                             for (int index = 0; index < uniqueItemCount; index++)
                             {
-                                uint sprite = serverPacket.ReadUInt16();  // Presuming these are used elsewhere or logged
+                                uint sprite = serverPacket.ReadUInt16();
                                 byte itemColor = serverPacket.ReadByte();
                                 uint itemCount = serverPacket.ReadUInt32();
                                 string itemName = serverPacket.ReadString8();
-                                string unknown = serverPacket.ReadString8();  // Presuming these are used elsewhere or logged
+                                string unknown = serverPacket.ReadString8();
 
-                                client.SavedInventoryList.Add(itemName);
+                                if (!string.IsNullOrEmpty(itemName))
+                                {
+                                    if (client.BankedItems.ContainsKey(itemName))
+                                    {
+                                        client.BankedItems[itemName] += itemCount;
+                                    }
+                                    else
+                                    {
+                                        client.BankedItems[itemName] = itemCount;
+                                    }
+                                }
                             }
+                            
 
-                            if (client.SavedInventoryList.Count > 0)
+                            if (client.BankedItems.Count > 0)
                             {
                                 StringBuilder builder = new StringBuilder();
-                                foreach (string item in client.SavedInventoryList)
+                                foreach (var kvp in client.BankedItems)
                                 {
-                                    if (!string.IsNullOrEmpty(item))
-                                    {
-                                        builder.AppendLine(item);
-                                    }
+                                    builder.AppendLine($"{kvp.Key}: {kvp.Value}"); // Include quantity in the output
                                 }
 
                                 string clientInventoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "inventory", client.Name.ToLower());

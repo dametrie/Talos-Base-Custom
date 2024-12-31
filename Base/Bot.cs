@@ -2346,6 +2346,9 @@ namespace Talos.Base
         {
             try
             {
+                if (Client == null || Client.ClientTab == null)
+                    return;
+
                 // Check if follow is enabled and player name is provided
                 if (!Client.ClientTab.followCbox.Checked || string.IsNullOrEmpty(Client.ClientTab.followText.Text))
                     return;
@@ -3357,6 +3360,9 @@ namespace Talos.Base
 
         private bool RedSkulledPlayers()
         {
+            if (Client == null || Client.ClientTab == null)
+                return false;
+
             Console.WriteLine("[BotLoop] RedSkulledPlayers called");
 
             if (_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked)

@@ -105,7 +105,7 @@ namespace Talos.Base
         internal BindingList<string> FriendBindingList { get; set; } = new BindingList<string>();
         internal BindingList<string> GroupBindingList { get; set; } = new BindingList<string>();
         internal List<SpellEntry> SpellHistory { get; set; } = new List<SpellEntry>();
-        internal List<string> SavedInventoryList { get; set; } = new List<string>();
+        internal Dictionary<string, uint> BankedItems { get; set; } = new Dictionary<string, uint>();
         internal List<Staff> Staffs { get; set; } = new List<Staff>();
         internal List<MeleeWeapon> Weapons { get; set; } = new List<MeleeWeapon>();
         internal List<Bow> Bows { get; set; } = new List<Bow>();
