@@ -182,7 +182,9 @@ namespace Talos.Base
         internal bool ChestToggle { get; set; } = false;
         internal bool RaffleToggle { get; set; } = false;
         internal bool AscendTaskDone { get; set; }
+        internal bool SuccHairDropped { get; set; }
         internal bool WarBagDeposited { get; set; }
+        internal bool Depositing { get; set; }
         internal bool SpriteOverrideEnabled { get; set; }
         internal bool UnifiedGuildChat { get; set; }
         internal bool DialogOn { get; set; }
@@ -1214,7 +1216,7 @@ namespace Talos.Base
         {
             if (ClientTab.InvokeRequired)
             {
-                ClientTab.Invoke((Action)(() => ClientTab.currentAction.Text = text));
+                ClientTab.Invoke(new Action(() => ClientTab.currentAction.Text = text));
             }
             else
             {
@@ -2093,7 +2095,7 @@ namespace Talos.Base
         {
             try
             {
-                //Console.WriteLine($"[RouteFind] [{this.Name}] Starting RouteFind to {destination}");
+                Console.WriteLine($"[RouteFind] [{this.Name}] Starting RouteFind to {destination}");
                 if (Server._stopWalking)
                 {
                     Console.WriteLine($"[RouteFind] [{this.Name}] Not supposed to walk.");

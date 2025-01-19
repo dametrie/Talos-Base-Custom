@@ -663,5 +663,17 @@ namespace Talos.Definitions
             [new Location(500, 29, 54)] = new Location(500, 31, 53),
         };
 
+        public static readonly HashSet<string> DONT_UPDATE_STRANGERS = new HashSet<string>()
+        {
+            "Base Camp",
+            "North Pole",
+            "Balanced Arena",
+            "Private Beach 1",
+            "South Lynith Beach",
+            "Grass Battle Field5",
+            "North Lynith Beach 1",
+            "Battle of Mount Merry",
+            "Mileth Floppy Field 1"
+        };
     }
 }

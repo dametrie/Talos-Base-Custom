@@ -28,6 +28,7 @@ using System.IO;
 using System.Xml.Serialization;
 using System.Xml;
 
+
 namespace Talos.Forms
 {
     public partial class ClientTab : UserControl
@@ -1259,6 +1260,19 @@ namespace Talos.Forms
         {
             if (Monitor.TryEnter(_lock, 150))
             {
+                string currentMap = _client.Map.Name;
+                bool flag = false;
+
+                if (!string.IsNullOrEmpty(currentMap))
+                {
+                    flag = CONSTANTS.DONT_UPDATE_STRANGERS.Contains(currentMap);
+                }
+
+                if (flag)
+                {
+                    return;
+                }
+
                 try
                 {
                     bool isChargeSkillUsedRecently = _client.HasSkill("Charge") && (DateTime.UtcNow - _client.Skillbook["Charge"].LastUsed).TotalMilliseconds < 1500.0;
@@ -1293,13 +1307,15 @@ namespace Talos.Forms
                         _client.DictLastSeen = _client.DictLastSeen.OrderByDescending((KeyValuePair<string, DateTime> kvp) => kvp.Value).Take(5).ToDictionary((KeyValuePair<string, DateTime> kvp) => kvp.Key, (KeyValuePair<string, DateTime> kvp) => kvp.Value);
                     }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception caught trying to update stranger list {ex.ToString()}");
+                }
                 finally
                 {
                     Monitor.Exit(_lock);
                 }
             }
-
-
         }
 
         private void dojoRefreshBtn_Click(object sender, EventArgs e)
@@ -2100,7 +2116,7 @@ namespace Talos.Forms
                     NumMonsterWalkInterval1Value = monsterWalkIntervalNum1.Value,
                     NumAtkRangeValue = atkRangeNum.Value,
                     NumEngageRangeValue = engageRangeNum.Value,
-                    ChkTavWallHacksChecked = chkTavWallHacks.Checked,
+                    //ChkTavWallHacksChecked = chkTavWallHacks.Checked,
                     ChkTavWallStrangerChecked = chkTavWallStranger.Checked,
                     RbtnLeaderTargetChecked = radioLeaderTarget.Checked,
                     RbtnAssistantStrayChecked = radioAssitantStray.Checked,
@@ -3928,6 +3944,42 @@ namespace Talos.Forms
             else
             {
                 ascendBtn.Text = "Ascend";
+            }
+        }
+
+        private void killerNameTbx_TextChanged(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(killerNameTbx.Text))
+            {
+                deathOptionCbx.Checked = false;
+                useKillerCbx.Checked = true;
+            }
+            else
+            {
+                useKillerCbx.Checked = false;
+
+            }
+        }
+
+        private void useKillerCbx_CheckedChanged(object sender, EventArgs e)
+        {
+            if (useKillerCbx.Checked)
+            {
+                killerNameTbx.Enabled = true;
+                deathOptionCbx.Checked = false;
+            }
+            else
+            {
+                killerNameTbx.Enabled = false;
+            }
+        }
+
+        private void deathOptionCbx_CheckedChanged(object sender, EventArgs e)
+        {
+            if (deathOptionCbx.Checked)
+            {
+                useKillerCbx.Checked = false;
+                killerNameTbx.Enabled = false;
             }
         }
     }
