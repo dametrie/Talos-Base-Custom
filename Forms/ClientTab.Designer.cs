@@ -5175,7 +5175,7 @@ namespace Talos.Forms
             this.ascendBtn.TabIndex = 9;
             this.ascendBtn.Text = "Ascend";
             this.ascendBtn.UseVisualStyleBackColor = false;
-            this.ascendBtn.Click += new System.EventHandler(this.ascendBtn_Click_1);
+            this.ascendBtn.Click += new System.EventHandler(this.ascendBtn_Click);
             // 
             // prayerGroup
             // 

@@ -15,6 +15,7 @@ using Talos.Cryptography;
 using Talos.Definitions;
 using Talos.Enumerations;
 using Talos.Forms;
+using Talos.Helper;
 using Talos.Maps;
 using Talos.Networking;
 using Talos.Objects;
@@ -60,6 +61,7 @@ namespace Talos.Base
         private List<byte> _fullServerBuffer = new List<byte>();
 
         private Thread _clientLoopThread = null;
+        private Thread _autoAscendLoopThread = null;
 
         private bool _connected = false;
         private bool clientReceiving = false;
@@ -3532,7 +3534,25 @@ namespace Talos.Base
         }
         #endregion
 
+        private void AutoAscendLoop()
+        {
+            // Create an instance of the AutoAscendManager
+            var autoAscendManager = new AutoAscendManager(this, Server);
 
+            while (_connected)
+            {
+                try
+                {
+                    autoAscendManager.AutoAscendTask();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error in AutoAscendLoop: {ex.Message}");
+                }
+
+                Thread.Sleep(100);
+            }
+        }
 
         #region Networking
         /// <summary>
@@ -3546,11 +3566,10 @@ namespace Talos.Base
             _connected = true;
             _clientSocket.BeginReceive(_clientBuffer, 0, _clientBuffer.Length, SocketFlags.None, new AsyncCallback(ClientEndReceive), this);
             _serverSocket.BeginReceive(_serverBuffer, 0, _serverBuffer.Length, SocketFlags.None, new AsyncCallback(ServerEndReceive), this);
-            _clientLoopThread = new Thread(ClientLoop)
-            {
-                IsBackground = true
-            };
+            _clientLoopThread = new Thread(ClientLoop);
             _clientLoopThread.Start();
+            _autoAscendLoopThread = new Thread(AutoAscendLoop);
+            _autoAscendLoopThread.Start();
         }
 
         /// <summary>

@@ -1134,12 +1134,12 @@ namespace Talos.Base
                 return;
 
             if (!DepositWarBagIfNeeded()) return;
+            if (!RetrieveWarBagIfNeeded()) return;
             if (!DropSuccubusHair()) return;
             if (!HandleKillerOrDieOption()) return;
             if (!HandleGhostWalk()) return;
             if (!AscendHpIfNeeded()) return;
             if (!AscendMpIfNeeded()) return;
-            if (!RetrieveWarBagIfNeeded()) return;
 
             Thread.Sleep(100);
         }

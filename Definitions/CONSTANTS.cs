@@ -675,5 +675,19 @@ namespace Talos.Definitions
             "Battle of Mount Merry",
             "Mileth Floppy Field 1"
         };
+
+        public static readonly HashSet<string> HUNTING_AREA_PREFIXES = new HashSet<string>()
+        {
+            "Chaos",
+            "Sacred Forest",
+            "Andor",
+            "Blackstar Crypt",
+            "Chadul's Realm",
+            "Cthonic Remains",
+            "Mount Giragan",
+            "Oren Ruins",
+            "Plamit",
+            "Shinewood Forest"
+        };
     }
 }

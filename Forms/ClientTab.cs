@@ -2955,11 +2955,6 @@ namespace Talos.Forms
 
         }
 
-        private void ascendBtn_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void prayerAssistTbox_KeyPress(object sender, KeyPressEventArgs e)
         {
 
@@ -3933,7 +3928,7 @@ namespace Talos.Forms
             _client.Assail();
         }
 
-        private void ascendBtn_Click_1(object sender, EventArgs e)
+        public void ascendBtn_Click(object sender, EventArgs e)
         {
             _client.AscendTaskDone = false;
             _client.WarBagDeposited = false;

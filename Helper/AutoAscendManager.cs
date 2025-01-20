@@ -14,6 +14,8 @@ using Talos.Extensions;
 using System.IO;
 using System.Text.RegularExpressions;
 using Talos.Structs;
+using Talos.Definitions;
+using Talos.Properties;
 
 namespace Talos.Helper
 {
@@ -23,6 +25,7 @@ namespace Talos.Helper
         private Server _server;
         private Dictionary<string, int> _lastDelayTimes;
         private List<string> GotToSafety = new List<string>();
+        private bool _setInitialState;
         private List<string> _ascendSongs = new List<string>
         {
             "Abel Song",
@@ -47,7 +50,185 @@ namespace Talos.Helper
             _lastDelayTimes[clientIdentifier] = staggeredDelay;
             return staggeredDelay;
         }
+        internal void AutoAscendTask()
+        {
+            // Check preconditions
+            if (!Settings.Default.EnableAutoAscending ||
+                !_server.MainForm.AutoAscendDataList.OfType<JObject>().Any(data => data.HasValue<string>("Name", _client.Name)) ||
+                !InitialChecks())
+            {
+                return;
+            }
 
+            // Ensure initial state is set
+            if (!_setInitialState)
+            {
+                CheckAndSetHuntingActivity();
+            }
+
+            // Retrieve the current client state
+            if (!_server.ClientStateList.TryGetValue(_client.Name, out var characterState))
+            {
+                return;
+            }
+
+            // Handle client states
+            switch (characterState)
+            {
+                case CharacterState.Hunting:
+                    ManageHuntingState();
+                    break;
+
+                case CharacterState.LoadingWaypointProfile:
+                    LoadWaypointProfileAsync();
+                    break;
+
+                case CharacterState.LoadingHuntingProfile:
+                    LoadHuntingProfileAsync();
+                    break;
+
+                case CharacterState.LoadingWalkingProfile:
+                    LoadWalkingProfile();
+                    break;
+
+                case CharacterState.WantsToAscend:
+                    ManageAscendingState();
+                    break;
+
+                case CharacterState.ClearProfile:
+                    _client.ClientTab.Invoke(new Action(() => _client.ClientTab.ClearOptions()));
+                    Thread.Sleep(3000);
+                    if (TryGetAutoAscendProperty("NotGrouped", out bool notGrouped) && notGrouped)
+                    {
+                        _client.ServerMessage(0, "ClearProfile -> NotGrouped -> LoadWalkingProfile");
+                        SetAscendState(CharacterState.LoadingWalkingProfile);
+                    }
+                    else
+                    {
+                        _client.ServerMessage(0, "Clearing Profiles -> Ascending");
+                        SetAscendState(CharacterState.Ascending);
+                    }
+                    break;
+
+                case CharacterState.Ascending:
+                    // Ensure the ascend button is clicked if not already in the "Ascending" state
+                    if (_client.ClientTab.ascendBtn.Text != "Ascending")
+                    {
+                        _client.ClientTab.ascendBtn_Click(this, EventArgs.Empty);
+                    }
+
+                    // Ensure the death option is checked
+                    if (!_client.ClientTab.deathOptionCbx.Checked)
+                    {
+                        _client.ClientTab.deathOptionCbx.Checked = true;
+                    }
+
+                    // Retrieve and apply the HP or MP selection if valid
+                    if (TryGetAutoAscendProperty("HPorMP", out string ascendType) &&
+                        (ascendType == "HP" || ascendType == "MP") &&
+                        _client.ClientTab.ascendOptionCbx.SelectedItem?.ToString() != ascendType)
+                    {
+                        _client.ClientTab.ascendOptionCbx.SelectedItem = ascendType;
+                    }
+                    break;
+
+                case CharacterState.AscendingComplete:
+                    ManageAscendingCompleteState();
+                    break;
+
+                case CharacterState.Walking:
+                    ManageWalkingState();
+                    break;
+
+                case CharacterState.Waiting:
+                    ManageWaitingState();
+                    break;
+
+                case CharacterState.WaitForSpells:
+                    ManageWaitForSpellsState();
+                    break;
+            }
+        }
+
+        private bool InitialChecks()
+        {
+            // Check if the client's name exists in the AutoAscendDataList
+            bool nameExists = _server.MainForm.AutoAscendDataList
+                .OfType<JObject>()
+                .Any(data => data.TryGetValue("Name", out JToken jtoken) && jtoken?.Value<string>() == _client.Name);
+
+            // Ensure the client state is set to Idle if not already present
+            _server.ClientStateList.TryAdd(_client.Name, CharacterState.Idle);
+
+            // Return true if the name exists and auto ascending is enabled
+            return nameExists && Settings.Default.EnableAutoAscending;
+        }
+
+        private bool IsPlayerInHuntingArea(string currentMapName)
+        {
+            // Check if the current map name starts with any hunting area prefix (case-insensitive)
+            return CONSTANTS.HUNTING_AREA_PREFIXES.Any(prefix => currentMapName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+        }
+        private void CheckAndSetHuntingActivity()
+        {
+            // Check if the player is in a hunting area
+            bool isInHuntingArea = IsPlayerInHuntingArea(_client.Map.Name);
+
+            // Retrieve the current client state
+            if (!_server.ClientStateList.TryGetValue(_client.Name, out var characterState))
+                return;
+
+            // Handle client states
+            switch (characterState)
+            {
+                case CharacterState.WantsToAscend:
+                    _client.ServerMessage(0, "CheckAndSet -> WantsToAscend");
+                    _setInitialState = true;
+                    break;
+
+                case CharacterState.Ascending:
+                    _client.ServerMessage(0, "CheckAndSet -> Ascending");
+                    _setInitialState = true;
+                    break;
+
+                case CharacterState.Walking:
+                    _client.ServerMessage(0, "CheckAndSet -> Walking");
+                    _setInitialState = true;
+                    break;
+
+                default:
+                    if (isInHuntingArea)
+                    {
+                        if (_client.Experience < 4200000000U)
+                        {
+                            _client.ServerMessage(0, "CheckAndSet -> Load Profiles -> Hunting");
+                            SetAscendState(CharacterState.LoadingHuntingProfile);
+                            _setInitialState = true;
+                        }
+                        else
+                        {
+                            SetAscendState(CharacterState.WantsToAscend);
+                            _client.ServerMessage(0, "CheckAndSet -> State.WantsToAscend");
+                            _setInitialState = true;
+                        }
+                        break;
+                    }
+
+                    // Handle Idle states based on experience
+                    if (_client.Experience >= 4200000000U)
+                    {
+                        SetAscendState(CharacterState.WantsToAscend);
+                        _client.ServerMessage(0, "Idle (> Exp) -> State.WantsToAscend");
+                    }
+                    else
+                    {
+                        SetAscendState(CharacterState.LoadingWalkingProfile);
+                        _client.ServerMessage(0, "Idle (< Exp) -> State.Walking");
+                    }
+                    _setInitialState = true;
+                    break;
+            }
+        }
         private bool GetToSafetyAscend()
         {
             // Step 1: Notify the system about the ascending process
@@ -101,7 +282,72 @@ namespace Talos.Helper
             // Step 8: Final check to determine if the map has changed from the original
             return _client.Map.Name != originalMapName;
         }
+        private void ManageWalkingState()
+        {
+            // Retrieve player location data
+            if (!TryGetAutoAscendProperty("PlayerLocation", out JObject playerLocation) || playerLocation == null)
+                return;
 
+            // Extract map ID and coordinates
+            int mapId = playerLocation.Value<int>("MapId");
+            int x = playerLocation.Value<int>("X");
+            int y = playerLocation.Value<int>("Y");
+            var targetLocation = new Location((short)mapId, (short)x, (short)y);
+
+            // Check if the player is already at the target location
+            if (_client.ClientLocation.MapID == mapId && _client.ServerLocation.AbsoluteXY((short)x, (short)y) <= 3)
+            {
+                _client.ServerMessage(0, "Walking -> State.Waiting");
+                SetAscendState(CharacterState.Waiting);
+            }
+            else
+            {
+                // Continue routing if the bot is running
+                if (!_client.Bot._shouldThreadStop)
+                {
+                    _client.Routefind(targetLocation);
+                }
+            }
+        }
+        private void ManageWaitingState()
+        {
+            string currentGroupName = GetCurrentClientGroupName();
+
+            // Get the names of clients in the current group
+            var autoAscendNamesInGroup = _server.MainForm.AutoAscendDataList
+                .OfType<JObject>()
+                .Where(data => data.ContainsKey("Name") && data.HasValue<string>("Group", currentGroupName))
+                .Select(data => data["Name"]?.Value<string>())
+                .Where(name => !string.IsNullOrEmpty(name))
+                .ToList();
+
+            // Get the clients in the group who are ready to hunt or wait
+            var clientsWantingToHunt = _server.Clients
+                .Where(client =>
+                {
+                    bool isInGroup = autoAscendNamesInGroup.Contains(client.Name);
+                    if (!isInGroup) return false;
+
+                    // Check if the client is in one of the allowed states
+                    return _server.ClientStateList.TryGetValue(client.Name, out var state) &&
+                           (state == CharacterState.Hunting ||
+                            state == CharacterState.LoadingWaypointProfile ||
+                            state == CharacterState.LoadingHuntingProfile ||
+                            state == CharacterState.Waiting);
+                })
+                .Select(client => client.Name)
+                .ToList();
+
+            // Verify if all group members are ready to hunt or wait
+            bool allReadyToHunt = autoAscendNamesInGroup.All(name => clientsWantingToHunt.Contains(name));
+
+            if (!allReadyToHunt)
+                return;
+
+            // Transition to the next state
+            _client.ServerMessage(0, "Waiting -> LoadHuntingProfile");
+            SetAscendState(CharacterState.LoadingHuntingProfile);
+        }
         private void ManageAscendingCompleteState()
         {
             bool flag;
@@ -123,12 +369,143 @@ namespace Talos.Helper
             _client.ServerMessage((byte)ServerMessageType.Whisper, "AscendingComplete -> LoadWalkingProfile");
             SetAscendState(CharacterState.LoadingWalkingProfile);
         }
-
-        private void SetAscendState(CharacterState state)
+        public void ManageAscendingState()
         {
-            _server.ClientStateList[_client.Name] = state;
+            string currentGroupName = GetCurrentClientGroupName();
+
+            // Check if the group is set to ascend all
+            bool ascendAll = _server.MainForm.AutoAscendDataList
+                .OfType<JObject>()
+                .Any(data => data.HasValue<string>("Group", currentGroupName) && data.HasValue<bool>("AscendAll", true));
+
+            if (ascendAll)
+            {
+                SetGroupToWantsToAscend(currentGroupName);
+            }
+
+            // Get all group member names
+            var groupMemberNames = _server.MainForm.AutoAscendDataList
+                .OfType<JObject>()
+                .Where(data => data.HasValue<string>("Group", currentGroupName))
+                .Select(data => data["Name"]?.Value<string>())
+                .Where(name => !string.IsNullOrEmpty(name))
+                .ToList();
+
+            // Get clients who are ready to ascend
+            var clientsWantingToAscend = _server.Clients
+                .Where(c =>
+                {
+                    bool isGroupMember = groupMemberNames.Contains(c.Name);
+                    bool isInAscendState = _server.ClientStateList.TryGetValue(c.Name, out var state) &&
+                                           (state == CharacterState.WantsToAscend ||
+                                            state == CharacterState.Ascending ||
+                                            state == CharacterState.Walking ||
+                                            state == CharacterState.Waiting);
+
+                    return isGroupMember && isInAscendState && !c.Player.IsAsleep && !c.Player.IsSuained && !c.Player.IsSkulled;
+                })
+                .Select(c => c.Name)
+                .ToList();
+
+            // Check if all group members are ready to ascend
+            bool allReadyToAscend = groupMemberNames.All(name => clientsWantingToAscend.Contains(name));
+
+            // Handle safety check and transitioning states
+            if (allReadyToAscend && !GotToSafety.Contains(_client.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!GetToSafetyAscend())
+                {
+                    return;
+                }
+            }
+
+            if (allReadyToAscend && !GotToSafety.Contains(_client.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                _client.RefreshRequest();
+                _client.ServerMessage(0, "Getting to safety -> Clearing profiles");
+                SetAscendState(CharacterState.ClearProfile);
+            }
+        }
+        private void ManageHuntingState()
+        {
+            // Check if the client is in the Hunting state
+            if (!_server.ClientStateList.TryGetValue(_client.Name, out var characterState) || characterState != CharacterState.Hunting)
+                return;
+
+            // Reset flags if necessary
+            if (_client.WarBagDeposited)
+                _client.WarBagDeposited = false;
+
+            if (_client.AscendTaskDone)
+                _client.AscendTaskDone = false;
+
+            // Check experience and transition to WantsToAscend if criteria are met
+            if (_client.Experience >= 4200000000U && _server.ClientStateList[_client.Name] != CharacterState.WantsToAscend)
+            {
+                _client.ServerMessage(0, "Hunting (> Exp) -> State.WantsToAscend");
+                _server.ClientStateList[_client.Name] = CharacterState.WantsToAscend;
+            }
+
+            // Handle non-grouped logic
+            if (TryGetAutoAscendProperty("NotGrouped", out bool notGrouped) && notGrouped)
+            {
+                _client.ServerMessage(0, "Hunting -> WantsToAscend (Non Grouped: Ready to Leave)");
+                SetAscendState(CharacterState.WantsToAscend);
+            }
+        }
+        private void ManageWaitForSpellsState()
+        {
+            // Notify the system about the state transition
+            _client.ServerMessage(0, "WaitForSpells -> Sleeping (10) Seconds");
+
+            // Pause walking for 10 seconds
+            _client.IsWalking = false;
+            Thread.Sleep(10000);
+            _client.IsWalking = true;
+
+            // Ensure the walk button is in the correct state
+            if (!_client.ClientTab.IsBashing && _client.ClientTab.walkBtn.Text != "Stop" && _client.ClientTab.WayForm.waypointsLBox.Items.Count > 0)
+            {
+                _client.ClientTab.walkBtn.Text = "Stop";
+            }
+
+            // Notify about the transition to Hunting and update the state
+            _client.ServerMessage(0, "WaitForSpells -> Hunting");
+            SetAscendState(CharacterState.Hunting);
         }
 
+        private void SetGroupToWantsToAscend(string groupName)
+        {
+            // Check if the "NotGrouped" property exists and is set to true; if so, exit
+            if (TryGetAutoAscendProperty("NotGrouped", out bool notGrouped) && notGrouped)
+                return;
+
+            // Iterate through all clients
+            foreach (var client in _server.Clients)
+            {
+                // Find the associated data in the AutoAscendDataList
+                var clientData = _server.MainForm.AutoAscendDataList
+                    .OfType<JObject>()
+                    .FirstOrDefault(data =>
+                        data.ContainsKey("Name") &&
+                        data["Name"]?.ToString() == client.Name);
+
+                // Check if the client is in the specified group and not already set to WantsToAscend
+                if (clientData != null &&
+                    clientData.TryGetValue("Group", out JToken groupToken) &&
+                    groupToken?.ToString() == groupName &&
+                    _server.ClientStateList[client.Name] != CharacterState.WantsToAscend)
+                {
+                    // Update the client's state to WantsToAscend
+                    _server.ClientStateList[client.Name] = CharacterState.WantsToAscend;
+                }
+            }
+        }
+        private string GetCurrentClientGroupName()
+        {
+            string str;
+            return TryGetAutoAscendProperty<string>("Group", out str) ? str : "Group1";
+        }
         private async Task LoadHuntingProfileAsync()
         {
             if (!TryGetAutoAscendProperty<string>("HuntProfile", out var huntProfile) || string.IsNullOrEmpty(huntProfile))
@@ -152,7 +529,6 @@ namespace Talos.Helper
             // Update the ascend state to indicate the waypoint profile is loading
             SetAscendState(CharacterState.LoadingWaypointProfile);
         }
-
         private async Task LoadWaypointProfileAsync()
         {
             // Attempt to retrieve the "Waypoints" property and ensure it's not null or whitespace
@@ -196,7 +572,6 @@ namespace Talos.Helper
                 SetAscendState(CharacterState.WaitForSpells);
             }
         }
-
         public void LoadWaypoints(string waypoints)
         {
             // Define the path to the waypoint file
@@ -319,7 +694,30 @@ namespace Talos.Helper
                 }
             }
         }
+        private void LoadWalkingProfile()
+        {
+            // Retrieve the walking profile name
+            if (!TryGetAutoAscendProperty("SafeWalk", out string walkProfile) || string.IsNullOrEmpty(walkProfile))
+                return;
 
+            // Load the walking profile
+            if (_client.ClientTab.InvokeRequired)
+            {
+                _client.ClientTab.Invoke(new Action(async () => await _client.ClientTab.LoadProfileAsync(walkProfile)));
+            }
+            else
+            {
+                _client.ClientTab.LoadProfileAsync(walkProfile);
+            }
+
+            // Notify and update state
+            _client.ServerMessage(0, $"LoadWalkingProfile -> Walking (Loaded {walkProfile} Profile)");
+            SetAscendState(CharacterState.Walking);
+        }
+        private void SetAscendState(CharacterState state)
+        {
+            _server.ClientStateList[_client.Name] = state;
+        }
         private bool TryGetAutoAscendProperty<T>(string propertyName, out T? value)
         {
             if (TryGetAutoAscendData(out JObject? data))
@@ -330,7 +728,6 @@ namespace Talos.Helper
             value = default;
             return false;
         }
-
         private bool TryGetAutoAscendData(out JObject? data)
         {
             data = _server.MainForm.AutoAscendDataList
