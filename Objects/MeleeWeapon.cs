@@ -1,5 +1,4 @@
-﻿using System;
-using Talos.Enumerations;
+﻿using Talos.Enumerations;
 
 namespace Talos.Objects
 {

@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Talos.Base;
 using Talos.Definitions;
 using Talos.Enumerations;
 using Talos.Objects;
 using Talos.Structs;
 using Talos.Utility;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Talos.Bashing
 {

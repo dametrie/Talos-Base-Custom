@@ -5,17 +5,13 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Media;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
-using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
-using Talos.AStar;
 using Talos.Base;
 using Talos.Cryptography;
 using Talos.Cryptography.Abstractions.Definitions;
@@ -31,9 +27,6 @@ using Talos.PInvoke;
 using Talos.Properties;
 using Talos.Structs;
 using WindowsInput;
-using WindowsInput.Native;
-using static System.Windows.Forms.LinkLabel;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 using Point = Talos.Structs.Point;
 
 
@@ -1782,76 +1775,74 @@ namespace Talos
 
         private bool ServerMessage_0x29_Animation(Client client, ServerPacket serverPacket) //Adam do this
         {
-            int targetID;
-            int sourceID;
-            ushort targetAnimation;
-            ushort sourceAnimation;
-            short animationSpeed;
-
-
             try
             {
-                targetID = serverPacket.ReadInt32();
-                if (targetID != 0)
+                int targetID = serverPacket.ReadInt32();
+                if (targetID == 0)
+                    return true;
+
+                int sourceID = serverPacket.ReadInt32();
+                ushort targetAnimation = serverPacket.ReadUInt16();
+                ushort sourceAnimation = serverPacket.ReadUInt16();
+                short animationSpeed = serverPacket.ReadInt16();
+
+                _lastAnimation = new Animation(targetID, sourceID, targetAnimation, sourceAnimation, animationSpeed);
+
+                Creature targetCreature = client.WorldObjects[targetID] as Creature;
+                Creature sourceCreature = client.WorldObjects.ContainsKey(sourceID) ? client.WorldObjects[sourceID] as Creature : null;
+
+                if (targetCreature != null)
                 {
-                    sourceID = serverPacket.ReadInt32();
-                    targetAnimation = serverPacket.ReadUInt16();
-                    sourceAnimation = serverPacket.ReadUInt16();
-                    animationSpeed = serverPacket.ReadInt16();
-
-                    _lastAnimation = new Animation(targetID, sourceID, targetAnimation, sourceAnimation, animationSpeed);
-
-                    if (!client.WorldObjects.ContainsKey(targetID))
-                    {
-                        //add code for disabled sprites option?
-                        return true;
-                    }
-
-                    Creature targetCreature = client.WorldObjects[targetID] as Creature;
-                    Creature sourceCreature = client.WorldObjects.ContainsKey(sourceID) ? client.WorldObjects[sourceID] as Creature : null;
-
                     targetCreature.AnimationHistory[targetAnimation] = DateTime.UtcNow;
                     targetCreature.LastAnimation = targetAnimation;
                     targetCreature.LastAnimationTime = DateTime.UtcNow;
 
                     if (sourceID != 0)
                         targetCreature.ForeignAnimationHistory[targetAnimation] = DateTime.UtcNow;
-
-                    AnimationHandler animationHandler = new AnimationHandler(client, this, targetCreature, sourceCreature, targetAnimation, targetID, sourceID);
-                    animationHandler.HandleAnimation();
-
-                    Player player = client.WorldObjects[targetID] as Player;
-                    if (((player != null) && !client.NearbyPlayers.ContainsKey(player.Name)) && !client.NearbyGhosts.ContainsKey(player.Name))
-                    {
-                        client.NearbyGhosts.TryAdd(player.Name, player);
-                        if (client.GetCheats(Cheats.None | Cheats.SeeGhosts))
-                        {
-                            client.SeeGhosts(player);
-                        }
-                    }
-
                 }
-            }
-            catch
-            {
+
+                var animationHandler = new AnimationHandler(client, this, targetCreature, sourceCreature, targetAnimation, targetID, sourceID);
+                animationHandler.HandleAnimation();
+
+                if (targetCreature is Player player && !client.NearbyPlayers.ContainsKey(player.Name) && !client.NearbyGhosts.ContainsKey(player.Name))
+                {
+                    client.NearbyGhosts.TryAdd(player.Name, player);
+                    if (client.GetCheats(Cheats.None | Cheats.SeeGhosts))
+                    {
+                        client.SeeGhosts(player);
+                    }
+                }
+
+                if (Settings.Default.disableSprites)
+                    return false;
+
+                if (Settings.Default.normalSprites || !Settings.Default.OverrideSprites ||
+                    (!MainForm.SpriteOverrides.ContainsKey(targetAnimation) && !MainForm.SpriteOverrides.ContainsKey(sourceAnimation)))
+                {
+                    return true;
+                }
+
+                ushort overriddenTargetAnimation = MainForm.SpriteOverrides.TryGetValue(targetAnimation, out var targetOverride) ? (ushort)targetOverride : targetAnimation;
+                ushort overriddenSourceAnimation = MainForm.SpriteOverrides.TryGetValue(sourceAnimation, out var sourceOverride) ? (ushort)sourceOverride : sourceAnimation;
+
+                var responsePacket = new ServerPacket(41);
+                responsePacket.WriteInt32(targetID);
+                responsePacket.WriteInt32(sourceID);
+                responsePacket.WriteUInt16(overriddenTargetAnimation);
+                responsePacket.WriteUInt16(overriddenSourceAnimation);
+                responsePacket.WriteInt16(animationSpeed);
+
+                client.Enqueue(responsePacket);
                 return false;
             }
-            /* if (Settings.Instance.DisableSprites)
-                 return false;
-             if (Settings.Instance.NormalSprites || !Settings.Instance.OverrideSprites || !m_mainForm.spriteOverrides.ContainsKey((int)targetAnimation) && !m_mainForm.spriteOverrides.ContainsKey((int)sourceAnimation))
-                 return true;
-             ushort num1 = m_mainForm.spriteOverrides.ContainsKey((int)targetAnimation) ? (ushort)m_mainForm.spriteOverrides[(int)targetAnimation] : targetAnimation;
-             ushort num2 = m_mainForm.spriteOverrides.ContainsKey((int)sourceAnimation) ? (ushort)m_mainForm.spriteOverrides[(int)sourceAnimation] : sourceAnimation;
-             ServerPacket serverPacket = new ServerPacket((byte)41);
-             serverPacket.WriteInt32(targetID);
-             serverPacket.WriteInt32(sourceId);
-             serverPacket.WriteUInt16(num1);
-             serverPacket.WriteUInt16(num2);
-             serverPacket.WriteInt16(speed);
-             client.Enqueue((Packet)serverPacket);
-             return false;*/
-            return true;
+            catch (Exception ex)
+            {
+                // Consider logging the exception for debugging purposes.
+                Console.WriteLine($"Error in ServerMessage_0x29_Animation: {ex.Message}");
+                return false;
+            }
         }
+
 
         private bool ServerMessage_0x2C_AddSkillToPane(Client client, ServerPacket serverPacket)
         {
@@ -3301,7 +3292,7 @@ namespace Talos
                 {
                     count = followChain.Count;
 
-                    foreach (var client in this.Clients)
+                    foreach (var client in Clients)
                     {
                         if (client.ClientTab != null
                             && !client.Name.Contains("[")

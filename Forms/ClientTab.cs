@@ -179,8 +179,8 @@ namespace Talos.Forms
                 Style = ProgressBarStyle.Continuous
             };
 
-            this.mainCoverTab.Controls.Add(healthBar);
-            this.mainCoverTab.Controls.Add(manaBar);
+            mainCoverTab.Controls.Add(healthBar);
+            mainCoverTab.Controls.Add(manaBar);
         }
 
         private void ClientTab_Load(object sender, EventArgs e)
@@ -2280,7 +2280,7 @@ namespace Talos.Forms
                 // Update UI controls asynchronously
                 await Task.Run(() =>
                 {
-                    this.Invoke(new Action(() =>
+                    Invoke(new Action(() =>
                     {
                         // Apply saved AllyPages
                         foreach (var allyState in formState.AllyPages)

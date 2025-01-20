@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -142,7 +140,7 @@ namespace Talos.Forms
                     return;
                 }
                 // Update UI on the main thread
-                this.Invoke(new Action(() => 
+                Invoke(new Action(() => 
                 {
                     // Update UI on the main thread
                     UpdateUIWithWaypoints(waypointsData);

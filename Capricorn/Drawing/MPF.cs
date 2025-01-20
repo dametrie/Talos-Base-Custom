@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
+﻿using System.IO;
 using Talos.Capricorn.IO;
 
 namespace Talos.Capricorn.Drawing

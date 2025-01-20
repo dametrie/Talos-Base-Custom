@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Drawing.Drawing2D;
+﻿using System.Collections.Concurrent;
 using System.Linq;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using Talos.Base;
 using Talos.Enumerations;
 using Talos.Objects;

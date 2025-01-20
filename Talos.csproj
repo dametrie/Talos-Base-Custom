@@ -156,6 +156,31 @@
     <Compile Include="Forms\InputDialog.Designer.cs">
       <DependentUpon>InputDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Options\GeneralPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Options\GeneralPage.Designer.cs">
+      <DependentUpon>GeneralPage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Options\HotKeys.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Options\HotKeys.Designer.cs">
+      <DependentUpon>HotKeys.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Options\IOptionsPage.cs" />
+    <Compile Include="Options\LogoutTimer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Options\LogoutTimer.Designer.cs">
+      <DependentUpon>LogoutTimer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Options\Options.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Options\Options.Designer.cs">
+      <DependentUpon>Options.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\UI\ChatBox.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -248,6 +273,12 @@
     <Compile Include="Objects\Staff.cs" />
     <Compile Include="Objects\VisibleObject.cs" />
     <Compile Include="Objects\WorldObject.cs" />
+    <Compile Include="Options\SpriteOverride.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Options\SpriteOverride.Designer.cs">
+      <DependentUpon>SpriteOverride.cs</DependentUpon>
+    </Compile>
     <Compile Include="PInvoke\Interop.cs" />
     <Compile Include="PInvoke\NativeMethods.cs" />
     <Compile Include="PInvoke\ProcessMemoryStream.cs" />
@@ -267,6 +298,7 @@
     <Compile Include="Structs\Rectangle.cs" />
     <Compile Include="Structs\Tile.cs" />
     <Compile Include="Utility\HashingUtils.cs" />
+    <Compile Include="Utility\KeyboardUtility.cs" />
     <Compile Include="Utility\LocationConverter.cs" />
     <Compile Include="Utility\MathUtils.cs" />
     <Compile Include="Utility\RandomUtils.cs" />
@@ -274,6 +306,18 @@
     <Compile Include="Utility\Timer.cs" />
     <EmbeddedResource Include="Forms\InputDialog.resx">
       <DependentUpon>InputDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Options\GeneralPage.resx">
+      <DependentUpon>GeneralPage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Options\HotKeys.resx">
+      <DependentUpon>HotKeys.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Options\LogoutTimer.resx">
+      <DependentUpon>LogoutTimer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Options\Options.resx">
+      <DependentUpon>Options.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\User Controls\AllyPage.resx">
       <DependentUpon>AllyPage.cs</DependentUpon>
@@ -294,6 +338,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\WayForm.resx">
       <DependentUpon>WayForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Options\SpriteOverride.resx">
+      <DependentUpon>SpriteOverride.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

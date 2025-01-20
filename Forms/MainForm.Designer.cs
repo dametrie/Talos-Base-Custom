@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -98,6 +99,12 @@ namespace Talos
             this.mapCacheMenuStrip.Size = new System.Drawing.Size(68, 24);
             this.mapCacheMenuStrip.TabIndex = 4;
             this.mapCacheMenuStrip.Text = "menuStrip2";
+            //
+            // killtimer
+            //
+            this.killTimer = new System.Windows.Forms.Timer();
+            this.killTimer.Interval = 1000;
+            this.killTimer.Tick += new System.EventHandler(this.killTimer_Tick);
             // 
             // MainForm
             // 
@@ -123,6 +130,7 @@ namespace Talos
             this.PerformLayout();
 
         }
+
 
         private void clientTabControl_DrawItem(object sender, DrawItemEventArgs e)
         {

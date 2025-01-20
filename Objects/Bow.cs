@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Talos.Objects
+﻿namespace Talos.Objects
 {
     internal class Bow
     {

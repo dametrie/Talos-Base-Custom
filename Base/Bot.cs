@@ -1,16 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Media;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
 using Talos.Bashing;
 using Talos.Definitions;
 using Talos.Enumerations;
@@ -18,12 +14,10 @@ using Talos.Extensions;
 using Talos.Forms;
 using Talos.Forms.UI;
 using Talos.Helper;
-using Talos.Maps;
 using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
 using Talos.Utility;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Talos.Base
 {
@@ -2850,27 +2844,27 @@ namespace Talos.Base
                             }
                         }
 
-                        Point currentPoint = this.Client.ServerLocation.Point;
+                        Point currentPoint = Client.ServerLocation.Point;
 
-                        if (this.Client.ClientTab.IsBashing)
+                        if (Client.ClientTab.IsBashing)
                         {
-                            Location currentWay = this.ways[this.currentWay];
-                            Location nextWay = this.currentWay < this.ways.Count - 1 ? this.ways[this.currentWay + 1] : this.ways[0];
+                            Location currentWay = ways[this.currentWay];
+                            Location nextWay = this.currentWay < ways.Count - 1 ? ways[this.currentWay + 1] : ways[0];
 
                             int distanceToCurrentWay = currentPoint.Distance(currentWay.Point);
                             int distanceToNextWay = currentWay.Point.Distance(nextWay.Point);
                             Direction currentDirection = currentPoint.GetDirection(currentWay.Point);
                             Direction nextDirection = nextWay.Point.GetDirection(currentWay.Point);
 
-                            if (currentWay.MapID == this.Client.Map.MapID && currentWay.MapID == nextWay.MapID && distanceToCurrentWay > 3 && distanceToCurrentWay < distanceToNextWay && currentDirection == nextDirection)
+                            if (currentWay.MapID == Client.Map.MapID && currentWay.MapID == nextWay.MapID && distanceToCurrentWay > 3 && distanceToCurrentWay < distanceToNextWay && currentDirection == nextDirection)
                             {
                                 this.currentWay++;
                                 return;
                             }
                         }
 
-                        Location targetWay = this.ways[this.currentWay];
-                        int distanceToTarget = this.Client.ClientLocation.Point.Distance(targetWay.Point);
+                        Location targetWay = ways[currentWay];
+                        int distanceToTarget = Client.ClientLocation.Point.Distance(targetWay.Point);
 
                         if (distanceToTarget > waysForm.distanceUpDwn.Value)
                         {
@@ -2879,13 +2873,13 @@ namespace Talos.Base
 
                             //Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
 
-                            bool routeFindResult = this.Client.Routefind(targetWay, (short)waysForm.distanceUpDwn.Value);
+                            bool routeFindResult = Client.Routefind(targetWay, (short)waysForm.distanceUpDwn.Value);
                             //Console.WriteLine($"[Waypoints] [{Client.Name}] RouteFind to {targetWay} returned: {routeFindResult}");
 
-                            bool canWalk = !this.Client.ClientTab.oneLineWalkCbox.Checked && !this.Server._toggleWalk;
+                            bool canWalk = !Client.ClientTab.oneLineWalkCbox.Checked && !Server._toggleWalk;
                             //Console.WriteLine($"[Waypoints] [{Client.Name}] Can walk conditions - oneLineWalkCbox.Checked: {this.Client.ClientTab.oneLineWalkCbox.Checked}, _toggleWalk: {this.Server._toggleWalk}, Result: {canWalk}");
 
-                            this.Client.IsWalking = routeFindResult && canWalk;
+                            Client.IsWalking = routeFindResult && canWalk;
                             //Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
 
 
@@ -2894,26 +2888,26 @@ namespace Talos.Base
                         {
                             //Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target waypoint({distanceToTarget}) is within allowed value ({waysForm.distanceUpDwn.Value}). Stopping movement.");
 
-                            this.Client.IsWalking = false;
+                            Client.IsWalking = false;
                             //Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
 
-                            if (this.Client.ClientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
+                            if (Client.ClientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
                             {
                                 //Console.WriteLine($"[Waypoints] [{Client.Name}] Client is within the allowed distance to the target.");
 
-                                if (this.Client.Map.MapID == targetWay.MapID)
+                                if (Client.Map.MapID == targetWay.MapID)
                                 {
                                     //Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
 
-                                    if (this.Client.ServerLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
+                                    if (Client.ServerLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
                                     {
                                         //Console.WriteLine($"[Waypoints] [{Client.Name}] Server's location is beyond the allowed distance. Requesting position refresh.");
-                                        this.Client.RefreshRequest();
+                                        Client.RefreshRequest();
                                     }
                                     else
                                     {
                                         //Console.WriteLine($"[Waypoints] [{Client.Name}] Both client and server positions are within the allowed distance. Advancing to the next waypoint.");
-                                        this.currentWay++;
+                                        currentWay++;
                                     }
                                 }
                             }
@@ -2969,10 +2963,10 @@ namespace Talos.Base
                 // If the clients were together and are now apart, start the timer
                 if (wasTogether && !_together)
                 {
-                    this._followerTimer = DateTime.UtcNow;
+                    _followerTimer = DateTime.UtcNow;
                 }
                 // If the clients have been apart for more than 5 seconds, backtrack to the client
-                else if (!_together && DateTime.UtcNow.Subtract(this._followerTimer).TotalSeconds > 5.0)
+                else if (!_together && DateTime.UtcNow.Subtract(_followerTimer).TotalSeconds > 5.0)
                 {
                     Client.WalkSpeed = Client.ClientTab.walkSpeedSldr.Value;
                     if (clientToFollow != null)

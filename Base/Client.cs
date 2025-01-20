@@ -23,7 +23,6 @@ using Talos.PInvoke;
 using Talos.Properties;
 using Talos.Structs;
 using Talos.Utility;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using GroundItem = Talos.Objects.GroundItem;
 
 
@@ -455,7 +454,7 @@ namespace Talos.Base
                     foreach (var objectId in NearbyGroundItems)
                     {
                         if (WorldObjects[objectId] is GroundItem groundItem
-                            && this.WithinRange(groundItem, distance)
+                            && WithinRange(groundItem, distance)
                             && spriteSet.Contains(groundItem.SpriteID))
                         {
                             nearbyGroundItems.Add(groundItem);
@@ -2097,10 +2096,10 @@ namespace Talos.Base
         {
             try
             {
-                Console.WriteLine($"[RouteFind] [{this.Name}] Starting RouteFind to {destination}");
+                Console.WriteLine($"[RouteFind] [{Name}] Starting RouteFind to {destination}");
                 if (Server._stopWalking)
                 {
-                    Console.WriteLine($"[RouteFind] [{this.Name}] Not supposed to walk.");
+                    Console.WriteLine($"[RouteFind] [{Name}] Not supposed to walk.");
                     return false;
                 }
 
@@ -2264,7 +2263,7 @@ namespace Talos.Base
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RouteFind] [{this.Name}] Exception in RouteFind. Refreshing.");
+                Console.WriteLine($"[RouteFind] [{Name}] Exception in RouteFind. Refreshing.");
                 Console.WriteLine(ex.ToString());
                 Console.WriteLine("***");
                 RefreshRequest();
@@ -2272,7 +2271,7 @@ namespace Talos.Base
             }
             if (_routeStack.Count <= 0)
             {
-                Console.WriteLine($"[RouteFind] [{this.Name}] Route stack empty, returning false.");
+                Console.WriteLine($"[RouteFind] [{Name}] Route stack empty, returning false.");
                 return false;
             }
 
@@ -2778,8 +2777,8 @@ namespace Talos.Base
         {
             if (Interlocked.CompareExchange(ref IsRefreshingData, 1, 0) == 0)
             {
-                this.Enqueue(new ClientPacket(56));
-                this.Bot._lastRefresh = DateTime.UtcNow;
+                Enqueue(new ClientPacket(56));
+                Bot._lastRefresh = DateTime.UtcNow;
             }
 
             var expirationTime = DateTime.UtcNow.AddMilliseconds(1500);
@@ -2790,9 +2789,9 @@ namespace Talos.Base
                 {
                     while (DateTime.UtcNow < expirationTime)
                     {
-                        if (this.MapChanged || this.IsRefreshingData == 0)
+                        if (MapChanged || IsRefreshingData == 0)
                         {
-                            this.MapChanged = false;
+                            MapChanged = false;
                             //Console.WriteLine("[REFRESH] Can now refresh");
                             break;
                         }
@@ -2807,11 +2806,11 @@ namespace Talos.Base
                 }
                 finally
                 {
-                    this.IsRefreshingData = 0;
+                    IsRefreshingData = 0;
                 }
             }
             else
-                this.IsRefreshingData = 0;
+                IsRefreshingData = 0;
         }
         internal void PursuitRequest(byte objType, int objID, ushort pursuitID, params object[] args)
         {
@@ -3350,7 +3349,7 @@ namespace Talos.Base
             serverPacket.WriteByte(type);
             serverPacket.WriteInt32(id);
             serverPacket.WriteString8(message);
-            this.Enqueue(serverPacket);
+            Enqueue(serverPacket);
         }
         internal void RemoveObject(int objId)
         {
@@ -3361,8 +3360,8 @@ namespace Talos.Base
         internal void SendAnimation(ushort animation, short speed)
         {
             ServerPacket serverPacket = new ServerPacket(41);
-            serverPacket.WriteUInt32(this.PlayerID);
-            serverPacket.WriteUInt32(this.PlayerID);
+            serverPacket.WriteUInt32(PlayerID);
+            serverPacket.WriteUInt32(PlayerID);
             serverPacket.WriteUInt16(animation);
             serverPacket.WriteUInt16(animation);
             serverPacket.WriteInt16(speed);

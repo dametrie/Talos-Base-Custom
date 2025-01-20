@@ -13,11 +13,12 @@ using Talos.Base;
 using Talos.Definitions;
 using Talos.Capricorn.IO;
 using Talos.Forms.UI;
-using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
 using System.Security.Principal;
 using Newtonsoft.Json;
 using Talos.Utility;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Talos
 {
@@ -26,11 +27,28 @@ namespace Talos
 
         internal Server Server { get; private set; }
         internal int ThreadID { get; set; }
+
+        internal Dictionary<int, int> SpriteOverrides = new Dictionary<int, int>();
+
+        internal System.Windows.Forms.Timer killTimer = new System.Windows.Forms.Timer();
+        internal int hours;
+        internal int minutes;
+        internal int seconds;
+
         private Dictionary<Client, TabPage> _clientTabs = new Dictionary<Client, TabPage>();
         internal Dictionary<string, DateTime> _consecutiveLogin = new Dictionary<string, DateTime>();
         internal static Dictionary<string, DATArchive> khanFiles = new Dictionary<string, DATArchive>();
         internal List<JObject> AutoAscendDataList = new List<JObject>();
         private IntPtr _hWnd;
+        private List<Keys> _mods = new List<Keys>
+        {
+            Keys.Alt,
+            Keys.Control,
+            Keys.Shift,
+            Keys.LWin,
+            Keys.RWin
+        };
+
         public MainForm()
         {
             InitializeComponent();
@@ -38,6 +56,37 @@ namespace Talos
             ThreadID = Thread.CurrentThread.ManagedThreadId;
 
             CheckForIllegalCrossThreadCalls = false;
+        }
+
+        private void killTimer_Tick(object sender, EventArgs e)
+        {
+            if (hours == 0 && minutes == 0 && seconds == 0)
+            {
+                killTimer.Stop();
+                Process.GetCurrentProcess().Kill();
+                return;
+            }
+
+            if (seconds == 0)
+            {
+                seconds = 59;
+                if (minutes == 0)
+                {
+                    minutes = 59;
+                    if (hours > 0)
+                        hours--;
+                }
+                else
+                {
+                    minutes--;
+                }
+            }
+            else
+            {
+                seconds--;
+            }
+
+            Text = $"Talos - {hours}:{minutes:D2}:{seconds:D2} time left until shutdown!";
         }
 
         private void LoadKhans()
@@ -348,6 +397,130 @@ namespace Talos
                 }
             }
         }
+
+        internal void UnregisterAllHotkeys()
+        {
+            for (int id = 1; id <= 5; ++id)
+                NativeMethods.UnregisterHotKey(Handle, id);
+            for (int id = 9; id <= 12; ++id)
+                NativeMethods.UnregisterHotKey(Handle, id);
+        }
+
+        internal void GenerateDefaultHotKeys()
+        {
+            var e = new KeyEventArgs(Keys.None);
+
+            // Register global hotkey for refresh if enabled
+            if (Properties.Settings.Default.RefreshAll)
+            {
+                try
+                {
+                    NativeMethods.RegisterHotKey(Handle, 1, 0U, (uint)Keys.F5.GetHashCode());
+                }
+                catch
+                {
+                    // Handle exception or log if needed
+                }
+            }
+
+            // Define hotkeys and their corresponding names
+            var hotKeys = new Dictionary<string, string>
+            {
+                { "toggleBot", Settings.Default.BotHotKey },
+                { "toggleWalking", Settings.Default.WalkHotKey },
+                { "toggleCasting", Settings.Default.CastHotKey },
+                { "toggleSound", Settings.Default.SoundHotKey },
+                { "combo1", Settings.Default.Combo1HotKey },
+                { "combo2", Settings.Default.Combo2HotKey },
+                { "combo3", Settings.Default.Combo3HotKey },
+                { "combo4", Settings.Default.Combo4HotKey }
+            };
+
+            // Loop through the dictionary to register each hotkey
+            foreach (var hotKey in hotKeys)
+            {
+                var textBox = new TextBox
+                {
+                    Text = hotKey.Value,
+                    Name = hotKey.Key
+                };
+
+                AddHotKey(textBox, e);
+            }
+        }
+
+        internal void AddHotKey(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                var keysConverter = new KeysConverter();
+                if (sender is not TextBox textBox || string.IsNullOrEmpty(textBox.Text))
+                    return;
+
+                var keyList = new List<Keys>();
+
+                // Parse hotkey string into individual keys
+                var match = Regex.Match(textBox.Text, @"([a-zA-Z0-9]+)(?: ([a-zA-Z0-9]+))?(?: ([a-zA-Z0-9]+))?(?: ([a-zA-Z0-9]+))?");
+                foreach (Group group in match.Groups)
+                {
+                    if (group != match.Groups[0] && group.Success)
+                    {
+                        keyList.Add((Keys)keysConverter.ConvertFromString(group.Value));
+                    }
+                }
+
+                // Check if the last key is already in use
+                if (_mods.Contains(keyList.Last()))
+                {
+                    textBox.Text = string.Empty;
+                    return;
+                }
+
+                // Map control names to their respective hotkey IDs
+                var hotKeyMappings = new Dictionary<string, int>
+                {
+                    { "toggleBot", 2 },
+                    { "toggleWalking", 4 },
+                    { "toggleSound", 5 },
+                    { "toggleCasting", 3 },
+                    { "combo1", 9 },
+                    { "combo2", 10 },
+                    { "combo3", 11 },
+                    { "combo4", 12 }
+                };
+
+                // Determine the hotkey ID based on the TextBox name
+                if (!hotKeyMappings.TryGetValue(textBox.Name, out int hotKeyId))
+                    return;
+
+                // Register the hotkey based on the number of keys
+                try
+                {
+                    uint modifiers = 0u;
+                    uint mainKey = 0u;
+
+                    if (keyList.Count > 0)
+                    {
+                        mainKey = (uint)keyList.Last(); // Last key is the main hotkey
+                        for (int i = 0; i < keyList.Count - 1; i++) // Other keys are modifiers
+                        {
+                            modifiers |= KeyboardUtility.GetKeyModifierMask(keyList[i]);
+                        }
+
+                        NativeMethods.RegisterHotKey(Handle, hotKeyId, modifiers, mainKey);
+                    }
+                }
+                catch
+                {
+                    // Handle errors during hotkey registration
+                }
+            }
+            catch
+            {
+                MessageDialog.Show(this, "Error adding hotkeys!");
+            }
+        }
+
     }
 }
 

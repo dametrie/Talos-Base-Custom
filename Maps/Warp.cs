@@ -1,5 +1,4 @@
-﻿using System;
-using Talos.Objects;
+﻿using Talos.Objects;
 using Talos.Structs;
 
 namespace Talos.Maps

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Talos.Cryptography.Abstractions.Definitions
+﻿namespace Talos.Cryptography.Abstractions.Definitions
 {
     /// <summary>
     ///     OpCodes used when receiving packets from a client

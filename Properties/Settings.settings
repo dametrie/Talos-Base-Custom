@@ -32,5 +32,59 @@
     <Setting Name="EnableAutoAscending" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="BotHotKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">"PgDn"</Value>
+    </Setting>
+    <Setting Name="WalkHotKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">"Ins"</Value>
+    </Setting>
+    <Setting Name="CastHotKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">"Del"</Value>
+    </Setting>
+    <Setting Name="SoundHotKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">"Subtract"</Value>
+    </Setting>
+    <Setting Name="Combo1HotKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">F1</Value>
+    </Setting>
+    <Setting Name="Combo2HotKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">F2</Value>
+    </Setting>
+    <Setting Name="Combo3HotKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">F3</Value>
+    </Setting>
+    <Setting Name="Combo4HotKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">F4</Value>
+    </Setting>
+    <Setting Name="RefreshAll" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="normalSprites" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="EnableOverlay" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="LogOnStartup" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="DAOpacity" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">100</Value>
+    </Setting>
+    <Setting Name="BotOpacity" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">100</Value>
+    </Setting>
+    <Setting Name="FullWindowOpt" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="SmallWindowOpt" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="LargeWindowOpt" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="OverrideSprites" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Talos.Enumerations;
-using Talos.Maps;
 using Talos.Structs;
 
 namespace Talos.Objects
@@ -45,12 +44,12 @@ namespace Talos.Objects
 
         public bool IsNear(Player player, int range = 1)
         {
-            return this.Location.DistanceFrom(player.Location) <= range;
+            return Location.DistanceFrom(player.Location) <= range;
         }
 
         public bool IsNear(Location loctation, int range = 1)
         {
-            return this.Location.DistanceFrom(loctation) <= range;
+            return Location.DistanceFrom(loctation) <= range;
         }
 
         // This implementation of IsAsleep is correct. However, it assumes that the sleep is not broken by any other action.

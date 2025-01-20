@@ -142,5 +142,221 @@ namespace Talos.Properties {
                 this["EnableAutoAscending"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("\"PgDn\"")]
+        public string BotHotKey {
+            get {
+                return ((string)(this["BotHotKey"]));
+            }
+            set {
+                this["BotHotKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("\"Ins\"")]
+        public string WalkHotKey {
+            get {
+                return ((string)(this["WalkHotKey"]));
+            }
+            set {
+                this["WalkHotKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("\"Del\"")]
+        public string CastHotKey {
+            get {
+                return ((string)(this["CastHotKey"]));
+            }
+            set {
+                this["CastHotKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("\"Subtract\"")]
+        public string SoundHotKey {
+            get {
+                return ((string)(this["SoundHotKey"]));
+            }
+            set {
+                this["SoundHotKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("F1")]
+        public string Combo1HotKey {
+            get {
+                return ((string)(this["Combo1HotKey"]));
+            }
+            set {
+                this["Combo1HotKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("F2")]
+        public string Combo2HotKey {
+            get {
+                return ((string)(this["Combo2HotKey"]));
+            }
+            set {
+                this["Combo2HotKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("F3")]
+        public string Combo3HotKey {
+            get {
+                return ((string)(this["Combo3HotKey"]));
+            }
+            set {
+                this["Combo3HotKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("F4")]
+        public string Combo4HotKey {
+            get {
+                return ((string)(this["Combo4HotKey"]));
+            }
+            set {
+                this["Combo4HotKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RefreshAll {
+            get {
+                return ((bool)(this["RefreshAll"]));
+            }
+            set {
+                this["RefreshAll"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool normalSprites {
+            get {
+                return ((bool)(this["normalSprites"]));
+            }
+            set {
+                this["normalSprites"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableOverlay {
+            get {
+                return ((bool)(this["EnableOverlay"]));
+            }
+            set {
+                this["EnableOverlay"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool LogOnStartup {
+            get {
+                return ((bool)(this["LogOnStartup"]));
+            }
+            set {
+                this["LogOnStartup"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("100")]
+        public int DAOpacity {
+            get {
+                return ((int)(this["DAOpacity"]));
+            }
+            set {
+                this["DAOpacity"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("100")]
+        public int BotOpacity {
+            get {
+                return ((int)(this["BotOpacity"]));
+            }
+            set {
+                this["BotOpacity"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool FullWindowOpt {
+            get {
+                return ((bool)(this["FullWindowOpt"]));
+            }
+            set {
+                this["FullWindowOpt"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SmallWindowOpt {
+            get {
+                return ((bool)(this["SmallWindowOpt"]));
+            }
+            set {
+                this["SmallWindowOpt"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool LargeWindowOpt {
+            get {
+                return ((bool)(this["LargeWindowOpt"]));
+            }
+            set {
+                this["LargeWindowOpt"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool OverrideSprites {
+            get {
+                return ((bool)(this["OverrideSprites"]));
+            }
+            set {
+                this["OverrideSprites"] = value;
+            }
+        }
     }
 }

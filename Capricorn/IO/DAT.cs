@@ -1,15 +1,13 @@
-using System;
-using System.Collections.Generic;
 using System.Text;
 
 using System.IO;
 
 namespace Talos.Capricorn.IO
 {
-	/// <summary>
-	/// DAT File Archive Class
-	/// </summary>
-	public class DATArchive
+    /// <summary>
+    /// DAT File Archive Class
+    /// </summary>
+    public class DATArchive
 	{
 		private int expectedFiles;
 		private DATFileEntry[] files;
