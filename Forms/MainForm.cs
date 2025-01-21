@@ -19,6 +19,7 @@ using Newtonsoft.Json;
 using Talos.Utility;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Talos.Options;
 
 namespace Talos
 {
@@ -127,7 +128,7 @@ namespace Talos
             }
         }
 
-        private void LoadAutoAscendData()
+        internal void LoadAutoAscendData()
         {
             lock (AutoAscendDataList)
             {
@@ -521,6 +522,13 @@ namespace Talos
             }
         }
 
+        private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var optionsForm = new Talos.Forms.Options(this))
+            {
+                optionsForm.ShowDialog();
+            }
+        }
     }
 }
 

@@ -1773,7 +1773,7 @@ namespace Talos
             return true;
         }
 
-        private bool ServerMessage_0x29_Animation(Client client, ServerPacket serverPacket) //Adam do this
+        private bool ServerMessage_0x29_Animation(Client client, ServerPacket serverPacket)
         {
             try
             {
@@ -1837,7 +1837,6 @@ namespace Talos
             }
             catch (Exception ex)
             {
-                // Consider logging the exception for debugging purposes.
                 Console.WriteLine($"Error in ServerMessage_0x29_Animation: {ex.Message}");
                 return false;
             }

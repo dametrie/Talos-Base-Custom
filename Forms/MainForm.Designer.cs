@@ -33,11 +33,14 @@ namespace Talos
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.launchDA = new System.Windows.Forms.ToolStripMenuItem();
             this.clientTabControl = new System.Windows.Forms.TabControl();
             this.mapCacheMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mapCacheMenuStrip = new System.Windows.Forms.MenuStrip();
+            this.killTimer = new System.Windows.Forms.Timer(this.components);
+            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.mapCacheMenuStrip.SuspendLayout();
             this.SuspendLayout();
@@ -46,7 +49,8 @@ namespace Talos
             // 
             this.menuStrip1.BackColor = System.Drawing.SystemColors.Window;
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.launchDA});
+            this.launchDA,
+            this.optionsToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(2, 2, 0, 2);
@@ -99,12 +103,18 @@ namespace Talos
             this.mapCacheMenuStrip.Size = new System.Drawing.Size(68, 24);
             this.mapCacheMenuStrip.TabIndex = 4;
             this.mapCacheMenuStrip.Text = "menuStrip2";
-            //
-            // killtimer
-            //
-            this.killTimer = new System.Windows.Forms.Timer();
+            // 
+            // killTimer
+            // 
             this.killTimer.Interval = 1000;
             this.killTimer.Tick += new System.EventHandler(this.killTimer_Tick);
+            // 
+            // optionsToolStripMenuItem
+            // 
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+            this.optionsToolStripMenuItem.Text = "Options";
+            this.optionsToolStripMenuItem.Click += new System.EventHandler(this.optionsToolStripMenuItem_Click);
             // 
             // MainForm
             // 
@@ -167,5 +177,6 @@ namespace Talos
         private System.Windows.Forms.TabControl clientTabControl;
         private ToolStripMenuItem mapCacheMenuItem;
         private MenuStrip mapCacheMenuStrip;
+        private ToolStripMenuItem optionsToolStripMenuItem;
     }
 }

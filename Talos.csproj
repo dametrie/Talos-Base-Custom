@@ -156,29 +156,35 @@
     <Compile Include="Forms\InputDialog.Designer.cs">
       <DependentUpon>InputDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Options\GeneralPage.cs">
+    <Compile Include="Forms\Options\AutoAscend.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Options\GeneralPage.Designer.cs">
+    <Compile Include="Forms\Options\AutoAscend.Designer.cs">
+      <DependentUpon>AutoAscend.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Options\GeneralPage.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Forms\Options\GeneralPage.Designer.cs">
       <DependentUpon>GeneralPage.cs</DependentUpon>
     </Compile>
-    <Compile Include="Options\HotKeys.cs">
+    <Compile Include="Forms\Options\HotKeys.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Options\HotKeys.Designer.cs">
+    <Compile Include="Forms\Options\HotKeys.Designer.cs">
       <DependentUpon>HotKeys.cs</DependentUpon>
     </Compile>
-    <Compile Include="Options\IOptionsPage.cs" />
-    <Compile Include="Options\LogoutTimer.cs">
+    <Compile Include="Forms\Options\IOptionsPage.cs" />
+    <Compile Include="Forms\Options\LogoutTimer.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Options\LogoutTimer.Designer.cs">
+    <Compile Include="Forms\Options\LogoutTimer.Designer.cs">
       <DependentUpon>LogoutTimer.cs</DependentUpon>
     </Compile>
-    <Compile Include="Options\Options.cs">
+    <Compile Include="Forms\Options.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Options\Options.Designer.cs">
+    <Compile Include="Forms\Options.Designer.cs">
       <DependentUpon>Options.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\UI\ChatBox.cs">
@@ -273,10 +279,10 @@
     <Compile Include="Objects\Staff.cs" />
     <Compile Include="Objects\VisibleObject.cs" />
     <Compile Include="Objects\WorldObject.cs" />
-    <Compile Include="Options\SpriteOverride.cs">
+    <Compile Include="Forms\Options\SpriteOverride.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Options\SpriteOverride.Designer.cs">
+    <Compile Include="Forms\Options\SpriteOverride.Designer.cs">
       <DependentUpon>SpriteOverride.cs</DependentUpon>
     </Compile>
     <Compile Include="PInvoke\Interop.cs" />
@@ -307,16 +313,19 @@
     <EmbeddedResource Include="Forms\InputDialog.resx">
       <DependentUpon>InputDialog.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Options\GeneralPage.resx">
+    <EmbeddedResource Include="Forms\Options\AutoAscend.resx">
+      <DependentUpon>AutoAscend.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Options\GeneralPage.resx">
       <DependentUpon>GeneralPage.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Options\HotKeys.resx">
+    <EmbeddedResource Include="Forms\Options\HotKeys.resx">
       <DependentUpon>HotKeys.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Options\LogoutTimer.resx">
+    <EmbeddedResource Include="Forms\Options\LogoutTimer.resx">
       <DependentUpon>LogoutTimer.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Options\Options.resx">
+    <EmbeddedResource Include="Forms\Options.resx">
       <DependentUpon>Options.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\User Controls\AllyPage.resx">
@@ -339,7 +348,7 @@
     <EmbeddedResource Include="Forms\WayForm.resx">
       <DependentUpon>WayForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Options\SpriteOverride.resx">
+    <EmbeddedResource Include="Forms\Options\SpriteOverride.resx">
       <DependentUpon>SpriteOverride.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">

@@ -20,7 +20,7 @@ namespace Talos.Forms
             InitializeComponent();
             AddPage("General", new GeneralPage(mainForm));
             AddPage("Auto Ascend", new AutoAscend(mainForm));
-            AddPage("Character Closet", new CharacterCloset(mainForm));
+            //AddPage("Character Closet", new CharacterCloset(mainForm));
             AddPage("HotKeys", new HotKeys(mainForm));
             AddPage("Logout Timer", new LogoutTimer(mainForm));
             AddPage("Effect Options", new SpriteOverride(mainForm));

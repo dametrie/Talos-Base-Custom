@@ -61,6 +61,7 @@
             this.pageList.Name = "pageList";
             this.pageList.Size = new System.Drawing.Size(120, 259);
             this.pageList.TabIndex = 4;
+            this.pageList.SelectedIndexChanged += new System.EventHandler(this.pageList_SelectedIndexChanged);
             // 
             // acceptButton
             // 
