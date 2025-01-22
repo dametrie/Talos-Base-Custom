@@ -21,6 +21,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Talos.Options;
 using Talos.Structs;
+using System.Text;
+using Talos.Objects;
+using Talos.Enumerations;
 
 
 namespace Talos
@@ -61,6 +64,7 @@ namespace Talos
             InitializeComponent();
             LoadKhans();
             Application.EnableVisualStyles();
+            GenerateDefaultHotKeys();
 
             ThreadID = Thread.CurrentThread.ManagedThreadId;
             CheckForIllegalCrossThreadCalls = false;
@@ -281,7 +285,7 @@ namespace Talos
                 stream.Position = 4404130L;
                 stream.WriteByte(235);
 
-                //edit the direct ip to the server loopback ip
+                //edit the direct ip to the Server loopback ip
                 stream.Position = 4404162L;
                 stream.WriteByte(106);
                 stream.WriteByte(1);
@@ -564,6 +568,325 @@ namespace Talos
                 MessageDialog.Show(this, "Error adding hotkeys!");
             }
         }
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_HOTKEY = 0x0312;
+
+            if (m.Msg == WM_HOTKEY)
+            {
+                int id = m.WParam.ToInt32();
+
+                HandleHotKey(id);
+            }
+
+            base.WndProc(ref m); // Pass unhandled messages to the base class
+        }
+
+        private void HandleHotKey(int hotKeyId)
+        {
+            StringBuilder buffer = new StringBuilder(256);
+            NativeMethods.GetWindowText(NativeMethods.GetForegroundWindow(), buffer, 256);
+
+            switch (hotKeyId)
+            {
+                case 1: // RefreshAll
+                    if (Settings.Default.RefreshAll)
+                    {
+                        foreach (Client client in Server.ClientList)
+                        {
+                            client.RefreshRequest(false);
+                        }
+                    }
+                    break;
+                case 2: // Toggle Bot
+                    foreach (Client client in Server.ClientList)
+                    {
+                        client.ClientTab?.startStrip_Click(new object(), new EventArgs());
+                    }
+                    break;
+                case 3: // Toggle Casting
+                    Server._stopCasting = !Server._stopCasting;
+                    foreach (Client client in Server.ClientList)
+                    {
+                        if (client.ClientTab != null)
+                        {
+                            if (!client.ClientTab.safeScreenCbox.Checked)
+                            {
+                                client.ServerMessage(1, "Casting: " + (Server._stopCasting ? "OFF" : "ON"));
+                            }
+                            if (Server._stopCasting)
+                            {
+                                client.IsCasting = false;
+                            }
+                        }
+                    }
+                    break;
+                case 4: // Toggle Walking
+                    Server._stopWalking = !Server._stopWalking;
+                    foreach (Client client in Server.ClientList)
+                    {
+                        if (client.ClientTab != null)
+                        {
+                            if (!client.ClientTab.safeScreenCbox.Checked)
+                            {
+                                client.ServerMessage(1, "Walking: " + (Server._stopWalking ? "OFF" : "ON"));
+                            }
+                            if (Server._stopWalking)
+                            {
+                                client.IsWalking = false;
+                            }
+                        }
+                    }
+                    break;
+                case 5: // Toggle Sound
+                    Server._disableSound = !Server._disableSound;
+                    foreach (Client client in Server.ClientList)
+                    {
+                        if (client.ClientTab != null && !client.ClientTab.safeScreenCbox.Checked)
+                        {
+                            client.ServerMessage(1, "Sound: " + (Server._disableSound ? "OFF" : "ON"));
+                        }
+                    }
+                    break;
+                case 9: // Combo1
+                case 10: // Combo2
+                case 11: // Combo3
+                case 12: // Combo4
+                    {
+                        int comboId = hotKeyId - 8; // Calculate combo index (9 -> 1, 10 -> 2, etc.)
+                        Client client = Server.GetClient(buffer.ToString()); // Replace `buffer.ToString()` as needed
+                        if (client != null)
+                        {
+                            ThreadPool.QueueUserWorkItem(_ =>
+                            {
+                                UseCombo(client, comboId);
+                            });
+                        }
+                        break;
+                    }
+                default:
+                    break;
+            }
+        }
+
+        internal void UseCombo(Client client, int comboId)
+        {
+            string[] validSkills = new string[]
+            {
+                "Assail", "Clobber", "Wallop", "Assault", "Long Strike",
+                "Double Punch", "Thrash", "Triple Kick", "Midnight Slash"
+            };
+
+            // Check if the combo is enabled
+            if (!IsComboEnabled(client, comboId))
+                return;
+
+            // Get the combo lines from the TextBox
+            string[] comboLines = (client.ClientTab.comboGroup.Controls["combo" + comboId + "List"] as TextBox)?.Lines;
+            if (comboLines == null || !client.ClientTab.ComboChecker(comboId))
+                return;
+
+            foreach (string line in comboLines)
+            {
+                string command = line.Trim();
+
+                if (string.IsNullOrEmpty(command))
+                    continue;
+
+                // Process commands
+                if (client.HasItem(command))
+                {
+                    client.UseItem(command);
+                }
+                else if (TryUseItemBySlot(client, command))
+                {
+                    continue;
+                }
+                else if (TryUseSkillBySlot(client, command))
+                {
+                    continue;
+                }
+                else if (TryCastSpell(client, command))
+                {
+                    continue;
+                }
+                else if (client.HasSkill(command) && !command.Equals("Assail", StringComparison.OrdinalIgnoreCase))
+                {
+                    client.UseSkill(command);
+                }
+                else if (command.StartsWith("Sleep", StringComparison.OrdinalIgnoreCase))
+                {
+                    HandleSleepCommand(command);
+                }
+                else
+                {
+                    HandleSpecialCommands(client, command, validSkills);
+                }
+            }
+        }
+
+        private bool IsComboEnabled(Client client, int comboId)
+        {
+            return comboId switch
+            {
+                1 => client.comboOne,
+                2 => client.comboTwo,
+                3 => client.comboThree,
+                4 => client.comboFour,
+                _ => false,
+            };
+        }
+
+        private bool TryUseItemBySlot(Client client, string command)
+        {
+            Match match = Regex.Match(command, @"ItemSlot (\d+)", RegexOptions.IgnoreCase);
+            if (match.Success && byte.TryParse(match.Groups[1].Value, out byte slot))
+            {
+                string itemName = client.Inventory[slot]?.Name;
+                if (!string.IsNullOrEmpty(itemName))
+                {
+                    client.UseItem(itemName);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool TryUseSkillBySlot(Client client, string command)
+        {
+            Match match = Regex.Match(command, @"SkillSlot (\d+)", RegexOptions.IgnoreCase);
+            if (match.Success && byte.TryParse(match.Groups[1].Value, out byte slot))
+            {
+                string skillName = client.Skillbook[slot]?.Name;
+                if (!string.IsNullOrEmpty(skillName))
+                {
+                    client.UseSkill(skillName);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool TryCastSpell(Client client, string command)
+        {
+            Match match = Regex.Match(command, @"Cast (?:([\w ]+) on (\w+)|([\w ]+))", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                string spellName = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[3].Value;
+                string targetName = match.Groups[2].Value;
+
+                try
+                {
+                    if (!string.IsNullOrEmpty(targetName))
+                    {
+                        Creature target = client.WorldObjects.Values
+                            .OfType<Creature>()
+                            .FirstOrDefault(creature => string.Equals(creature.Name, targetName, StringComparison.OrdinalIgnoreCase));
+                        if (target != null)
+                        {
+                            client.UseSpell(spellName, target, false, false);
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        client.UseSpell(spellName, null, false, false);
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // Handle errors gracefully
+                }
+            }
+            return false;
+        }
+
+        private void HandleSleepCommand(string command)
+        {
+            if (int.TryParse(command.Substring(6), out int sleepDuration))
+            {
+                Thread.Sleep(sleepDuration);
+            }
+        }
+
+        private void HandleSpecialCommands(Client client, string command, string[] validSkills)
+        {
+            switch (command)
+            {
+                case "Assail":
+                    foreach (var skill in client.Skillbook.SkillbookDictionary)
+                    {
+                        if (validSkills.Contains(skill.Key))
+                        {
+                            client.UseSkill(skill.Key);
+                        }
+                    }
+                    break;
+                case "Remove Staff":
+                    client.RemoveStaff();
+                    break;
+                case "Remove Weapon":
+                    client.RemoveWeapon();
+                    break;
+                case "Remove Shield":
+                    client.RemoveShield();
+                    break;
+                case "Free GT":
+                    UseGT(client);
+                    break;
+                case "Check Belt":
+                    CheckBelt(client);
+                    break;
+                case "Use Weakness":
+                    EquipBestNeck(client);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        internal void UseGT(Client client)
+        {
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                client.UseSpell("Gentle Touch");
+            });
+        }
+
+        internal void EquipBestNeck(Client client)
+        {
+            // Determine which element to use
+            Element elementToUse = client.WhichtoUse(client.Server._enemyElement);
+
+            // If the element to use matches the current attack element, do nothing
+            if (elementToUse == client.AttackElement)
+                return;
+
+            // Dictionary to map elements to their respective necklace
+            var necklaceMap = new Dictionary<Element, string>
+            {
+                { Element.Fire, "Blackstar Fire Necklace" },
+                { Element.Water, "Blackstar Sea Necklace" },
+                { Element.Wind, "Blackstar Wind Necklace" },
+                { Element.Earth, "Blackstar Earth Necklace" },
+                { Element.Holy, "Lumen Amulet" },
+                { Element.Darkness, "Royal Baem Scale Pendant" }
+            };
+
+            // Check for a specific necklace for the element
+            if (necklaceMap.TryGetValue(elementToUse, out string necklace))
+            {
+                client.UseItem(necklace);
+            }
+            else if (elementToUse == Element.Any && client.AttackElement == Element.None)
+            {
+                // Equip the default necklace if no specific element and no attack element
+                client.UseItem("Royal Baem Scale Pendant");
+            }
+        }
+
 
         private void optionsToolStripMenuItem_Click(object sender, EventArgs e)
         {

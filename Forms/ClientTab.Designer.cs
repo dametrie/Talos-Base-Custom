@@ -6497,6 +6497,7 @@ namespace Talos.Forms
             this.exampleComboBtn.TabIndex = 194;
             this.exampleComboBtn.Text = "Example Combo";
             this.exampleComboBtn.UseVisualStyleBackColor = true;
+            this.exampleComboBtn.Click += new System.EventHandler(this.exampleComboBtn_Click);
             // 
             // legend1Lbl
             // 
@@ -6567,6 +6568,7 @@ namespace Talos.Forms
             this.combo4Btn.TabIndex = 212;
             this.combo4Btn.Text = "Enable Combo Four";
             this.combo4Btn.UseVisualStyleBackColor = true;
+            this.combo4Btn.Click += new System.EventHandler(this.ComboButton_Click);
             // 
             // combo4List
             // 
@@ -6599,6 +6601,7 @@ namespace Talos.Forms
             this.combo3Btn.TabIndex = 206;
             this.combo3Btn.Text = "Enable Combo Three";
             this.combo3Btn.UseVisualStyleBackColor = true;
+            this.combo3Btn.Click += new System.EventHandler(this.ComboButton_Click);
             // 
             // combo3List
             // 
@@ -6631,6 +6634,7 @@ namespace Talos.Forms
             this.combo2Btn.TabIndex = 200;
             this.combo2Btn.Text = "Enable Combo Two";
             this.combo2Btn.UseVisualStyleBackColor = true;
+            this.combo2Btn.Click += new System.EventHandler(this.ComboButton_Click);
             // 
             // combo2List
             // 
@@ -6663,6 +6667,7 @@ namespace Talos.Forms
             this.combo1Btn.TabIndex = 193;
             this.combo1Btn.Text = "Enable Combo One";
             this.combo1Btn.UseVisualStyleBackColor = true;
+            this.combo1Btn.Click += new System.EventHandler(this.ComboButton_Click);
             // 
             // combo1List
             // 
@@ -7469,7 +7474,7 @@ namespace Talos.Forms
             this.startStrip.Padding = new System.Windows.Forms.Padding(0);
             this.startStrip.Size = new System.Drawing.Size(35, 24);
             this.startStrip.Text = "Start";
-            this.startStrip.Click += new System.EventHandler(this.startStrip_Click_1);
+            this.startStrip.Click += new System.EventHandler(this.startStrip_Click);
             // 
             // clearStrip
             // 

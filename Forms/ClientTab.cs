@@ -205,7 +205,7 @@ namespace Talos.Forms
                 walkSpeedSldr.Value = _client.Server.MedWalkSpeed[_client.Name];
                 walkSpeedSldr_Scroll(_client.ClientTab.walkSpeedSldr, new EventArgs());
                 walkBtn.Text = "Stop";
-                startStrip_Click_1(new object(), new EventArgs());
+                startStrip_Click(new object(), new EventArgs());
                 _client.Server.MedWalk.Remove(_client.Name);
                 _client.Server.MedWalkSpeed.Remove(_client.Name);
             }
@@ -226,7 +226,7 @@ namespace Talos.Forms
                 }
                 walkSpeedSldr.Value = _client.Server.MedWalkSpeed[_client.Name];
                 walkSpeedSldr_Scroll(_client.ClientTab.walkSpeedSldr, new EventArgs());
-                startStrip_Click_1(new object(), new EventArgs());
+                startStrip_Click(new object(), new EventArgs());
                 _client.Server.MedTask.Remove(_client.Name);
                 _client.Server.MedWalkSpeed.Remove(_client.Name);
             }
@@ -1597,7 +1597,7 @@ namespace Talos.Forms
 
 
 
-        private async void startStrip_Click_1(object sender, EventArgs e)
+        internal async void startStrip_Click(object sender, EventArgs e)
         {
             if (startStrip.Text == "Start")
             {
@@ -2902,11 +2902,6 @@ namespace Talos.Forms
 
         private void clearStrip_Click(object sender, EventArgs e) => ClearOptions();
 
-        private void startStrip_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void numComboImgSelect_ValueChanged(object sender, EventArgs e)
         {
 
@@ -3082,6 +3077,24 @@ namespace Talos.Forms
         {
 
         }
+
+        internal bool ComboChecker(int comboNum)
+        {
+            if (!(comboGroup.Controls["dontCbox" + comboNum] as CheckBox)?.Checked ?? false)
+                return true;
+
+            Location targetLocation = _client.ClientLocation.Offsetter(_client.ClientDirection);
+
+            List<WorldObject> nearbyObjects = _client.GetNearbyObjects();
+
+            if (nearbyObjects == null || !nearbyObjects.OfType<Creature>().Any())
+                return false;
+
+            return nearbyObjects
+                .OfType<Creature>()
+                .Any(creature => creature.Location == targetLocation);
+        }
+
 
         private void useDoubleBtn_Click(object sender, EventArgs e)
         {
@@ -3979,6 +3992,66 @@ namespace Talos.Forms
                 useKillerCbx.Checked = false;
                 killerNameTbx.Enabled = false;
             }
+        }
+
+        private void ComboButton_Click(object sender, EventArgs e)
+        {
+            if (sender is not Button button)
+                return;
+
+            // Determine if the combo is being enabled or disabled
+            bool isEnabling = button.Text.Contains("Enable Combo");
+            string comboNumber = button.Text.Split(' ').Last();
+
+            // Update the button text
+            button.Text = $"{(isEnabling ? "Disable" : "Enable")} Combo {comboNumber}";
+
+            // Update the corresponding combo state
+            switch (comboNumber)
+            {
+                case "Four":
+                    _client.comboFour = isEnabling;
+                    break;
+                case "Three":
+                    _client.comboThree = isEnabling;
+                    break;
+                case "Two":
+                    _client.comboTwo = isEnabling;
+                    break;
+                case "One":
+                    _client.comboOne = isEnabling;
+                    break;
+            }
+        }
+
+
+        private void exampleComboBtn_Click(object sender, EventArgs e)
+        {
+            combo1List.AppendText("Cast Gentle Touch");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Sleep 1000");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Cyclone Kick");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Necklace");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Wheel Kick 7");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Hemloch");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Crasher");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Rambutan");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Remove Weapon");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Remove Shield");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Mantis Kick");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Yowien Hatchet");
+            combo1List.AppendText(Environment.NewLine);
+            combo1List.AppendText("Great Yowien Shield");
         }
     }
 }

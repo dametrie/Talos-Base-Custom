@@ -81,6 +81,10 @@ namespace Talos.Base
         private static int _walkCallCount = 0;
         private static HashSet<string> AoSuainHashSet = new HashSet<string>(new string[3] { "ao suain", "ao pramh", "Leafhopper Chirp" }, StringComparer.CurrentCultureIgnoreCase);
         internal int IsRefreshingData;
+        internal bool comboFour;
+        internal bool comboThree;
+        internal bool comboTwo;
+        internal bool comboOne;
         internal readonly object BashLock = new object();
         internal readonly object CastLock = new object();
         internal Player Player { get; set; }
@@ -249,6 +253,8 @@ namespace Talos.Base
         internal uint MaximumMP { get { return Stats.MaximumMP; } set { Stats.MaximumMP = value; } }
         internal uint CurrentHP { get { return Stats.CurrentHP; } set { Stats.CurrentHP = value; } }
         internal uint CurrentMP { get { return Stats.CurrentMP; } set { Stats.CurrentMP = value; } }
+        internal Element AttackElement { get { return Stats.OffenseElement; } set { Stats.OffenseElement = value; } }
+        internal Element DefenseElement { get { return Stats.DefenseElement; } set { Stats.DefenseElement = value; } }
         internal byte UnspentPoints { get { return Stats.UnspentPoints; } set { Stats.UnspentPoints = value; } }
         internal uint Experience => Stats.Experience;
         internal uint AbilityExperience => Stats.AbilityExperience;
@@ -2644,6 +2650,26 @@ namespace Talos.Base
             return false;
         }
 
+        internal Element WhichtoUse(Element element)
+        {
+            var counterElementMap = new Dictionary<Element, Element>
+            {
+                { Element.Fire, Element.Water },
+                { Element.Water, Element.Earth },
+                { Element.Wind, Element.Fire },
+                { Element.Earth, Element.Wind },
+                { Element.Holy, Element.Darkness },
+                { Element.Darkness, Element.Holy },
+                { Element.Wood, Element.Wind },
+                { Element.Metal, Element.Water },
+                { Element.Nature, Element.Fire }
+            };
+
+            return counterElementMap.TryGetValue(element, out Element counterElement)
+                ? counterElement
+                : Element.Any;
+        }
+
 
 
 
@@ -3024,12 +3050,39 @@ namespace Talos.Base
             clientPacket.WriteStruct(point);
             Enqueue(clientPacket);
         }
+        internal void RemoveWeapon()
+        {
+            ClientPacket clientPacket = new ClientPacket(68);
+            clientPacket.WriteByte(1);
+            Enqueue(clientPacket);
+        }
         internal void RemoveShield()
         {
             ClientPacket clientPacket = new ClientPacket(68);
             clientPacket.WriteByte(3);
             Enqueue(clientPacket);
         }
+        internal void RemoveStaff()
+        {
+            // Check if the item in slot 1 is a staff and exists in the staff list
+            var staffInSlot = EquippedItems[1];
+            if (staffInSlot == null || !Staffs.Any(staff => staff.Name == staffInSlot.Name))
+                return;
+
+            // Create and enqueue the client packet for removing the staff
+            var clientPacket = new ClientPacket(68);
+            clientPacket.WriteByte(1);
+            Enqueue(clientPacket);
+
+            // Update cast lines for spells based on the first staff's cast lines
+            var castLines = Staffs.First().CastLines;
+
+            foreach (var spell in Spellbook.Where(spell => spell != null && castLines.ContainsKey(spell.Name)))
+            {
+                spell.CastLines = castLines[spell.Name];
+            }
+        }
+
         internal bool UseSpell(string spellName, Creature target = null, bool staffSwitch = true, bool wait = true)
         {
 

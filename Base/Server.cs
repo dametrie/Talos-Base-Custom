@@ -66,7 +66,7 @@ namespace Talos
         private bool _canCloseProfile = false;
         private DateTime _lastWorldShout = DateTime.MinValue;
         private DateTime _lastMapChange = DateTime.MinValue;
-        private Element _enemyElement;
+        internal Element _enemyElement;
         private Animation _lastAnimation;
         private string _itemToReEquip = "";
         private bool _clientWalkPending;
