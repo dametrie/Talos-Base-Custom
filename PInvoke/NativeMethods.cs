@@ -79,7 +79,7 @@ namespace Talos.PInvoke
         internal static extern int MapVirtualKey(int uCode, int uMapType);
 
         [DllImport("user32.dll")]
-        internal static extern IntPtr GetWindowRect(IntPtr hwnd, ref Interop.RECT lpRect);
+        internal static extern IntPtr GetWindowRect(IntPtr hwnd, ref Rect lpRect);
 
         [DllImport("user32.dll")]
         internal static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);

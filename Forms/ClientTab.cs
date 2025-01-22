@@ -149,6 +149,9 @@ namespace Talos.Forms
             skillImageArchive = EPFImage.FromArchive("skill001.epf", setoaArchive);
             iconPalette = Palette256.FromArchive("gui06.pal", setoaArchive);
 
+            toggleLogRecvBtn.Checked = Settings.Default.LogOnStartup;
+            toggleLogSendBtn.Checked = Settings.Default.LogOnStartup;
+
             OnlyDisplaySpellsWeHave();
             AddClientToFriends();
             UpdateFriendList();

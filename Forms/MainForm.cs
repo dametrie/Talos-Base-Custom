@@ -20,6 +20,8 @@ using Talos.Utility;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Talos.Options;
+using Talos.Structs;
+
 
 namespace Talos
 {
@@ -35,6 +37,10 @@ namespace Talos
         internal int hours;
         internal int minutes;
         internal int seconds;
+        private Rect _daClient;
+        private Rect _daWindow;
+        private int _titleHeight;
+        private int _borderWidth;
 
         private Dictionary<Client, TabPage> _clientTabs = new Dictionary<Client, TabPage>();
         internal Dictionary<string, DateTime> _consecutiveLogin = new Dictionary<string, DateTime>();
@@ -54,9 +60,12 @@ namespace Talos
         {
             InitializeComponent();
             LoadKhans();
-            ThreadID = Thread.CurrentThread.ManagedThreadId;
+            Application.EnableVisualStyles();
 
+            ThreadID = Thread.CurrentThread.ManagedThreadId;
             CheckForIllegalCrossThreadCalls = false;
+
+            Opacity = Settings.Default.BotOpacity / 100.0;
         }
 
         private void killTimer_Tick(object sender, EventArgs e)
@@ -305,6 +314,40 @@ namespace Talos
                 stream.Position = 7290020L;
                 NativeMethods.ResumeThread(information.ThreadHandle);
             }
+
+            // Wait for the main window handle to be assigned
+            int retries = 10;
+            while (processById.MainWindowHandle == IntPtr.Zero && retries > 0)
+            {
+                Thread.Sleep(500);
+                processById.Refresh(); // Refresh process info to update the MainWindowHandle
+                retries--;
+            }
+
+            if (processById.MainWindowHandle == IntPtr.Zero)
+            {
+                throw new Exception("Failed to get the MainWindowHandle for the process.");
+            }
+
+            NativeMethods.GetClientRect(processById.MainWindowHandle, ref _daClient);
+            NativeMethods.GetWindowRect(processById.MainWindowHandle, ref _daWindow);
+
+            _titleHeight = _daWindow.Height - _daClient.Height;
+            _borderWidth = _daWindow.Width - _daClient.Width;
+
+            if(Settings.Default.useDawnd && !Settings.Default.SmallWindowOpt)
+            {
+                if (Settings.Default.LargeWindowOpt)
+                    NativeMethods.MoveWindow(processById.MainWindowHandle, _daWindow.X, _daWindow.Y, 1280 + _borderWidth, 960 + _titleHeight, true);
+                else if (Settings.Default.FullWindowOpt)
+                {
+                    NativeMethods.SetWindowLong(processById.MainWindowHandle, -16, 268435456); // WS_POPUP
+                    NativeMethods.ShowWindowAsync(processById.MainWindowHandle, 3); // SW_MAXIMIZE
+                }
+            }
+            NativeMethods.SetWindowLong(processById.MainWindowHandle, -20, NativeMethods.GetWindowLong(processById.MainWindowHandle, -20) | 524288);
+            NativeMethods.SetLayeredWindowAttributes(processById.MainWindowHandle, 0U, (byte)Math.Truncate(byte.MaxValue / (100.0 / Settings.Default.DAOpacity)), 2U);
+            NativeMethods.SetWindowText(processById.MainWindowHandle, "definitely not dawnd");
             return processById;
         }
 

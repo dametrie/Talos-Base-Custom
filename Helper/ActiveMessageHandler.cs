@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using Talos.Base;
 using Talos.Enumerations;
 using Talos.Objects;
+using Talos.Properties;
 using Talos.Structs;
 
 namespace Talos.Helper
@@ -143,6 +144,12 @@ namespace Talos.Helper
 
         internal bool Handle(Client client, string message)
         {
+
+            if (ShouldRemoveSpam(message))
+            {
+                return false;
+            }
+
             if (stringMessageHandlers.TryGetValue(message, out var stringHandler))
             {
                 stringHandler(client, message);
@@ -485,6 +492,19 @@ namespace Talos.Helper
                 }
             }
 
+        }
+        private bool ShouldRemoveSpam(string message)
+        {
+            if (!Settings.Default.removeSpam) return false;
+
+            string[] spamKeywords = new[]
+            {
+                "Feathers", "Groo", "Keeter", "Torch", "Mermaid", "cradh", "Seal", "fas",
+                "ioc", "nuadhaich", "searg", "concentrate", "gar", "snare", "trap", "comlha",
+                "pramh", "suain", "Arrow", "dion", "lamh", "find", "ABILITY_"
+            };
+
+            return spamKeywords.Any(keyword => message.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         private void HandleBowMessage(Client client, Match match)
