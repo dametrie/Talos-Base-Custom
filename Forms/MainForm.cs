@@ -24,6 +24,7 @@ using Talos.Structs;
 using System.Text;
 using Talos.Objects;
 using Talos.Enumerations;
+using System.Xml.Linq;
 
 
 namespace Talos
@@ -46,7 +47,6 @@ namespace Talos
         private int _borderWidth;
 
         private Dictionary<Client, TabPage> _clientTabs = new Dictionary<Client, TabPage>();
-        internal Dictionary<string, DateTime> _consecutiveLogin = new Dictionary<string, DateTime>();
         internal static Dictionary<string, DATArchive> khanFiles = new Dictionary<string, DATArchive>();
         internal List<JObject> AutoAscendDataList = new List<JObject>();
         private IntPtr _hWnd;
@@ -134,6 +134,7 @@ namespace Talos
         {
             Server = new Server(this);
 
+            LoadCharLoginData();
             LoadAutoAscendData();
             if (!new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
             {
@@ -142,6 +143,64 @@ namespace Talos
                 Application.Exit();
             }
         }
+
+        internal void LoadCharLoginData()
+        {
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "loginCon");
+
+            if (!File.Exists(filePath))
+                return;
+
+            try
+            {
+                var document = XDocument.Load(filePath);
+
+                var characterElement = document.Element("Character");
+                if (characterElement != null)
+                {
+                    foreach (var element in characterElement.Elements())
+                    {
+                        if (DateTime.TryParse(element.Value, out DateTime loginDate))
+                        {
+                            Server.ConsecutiveLogin[element.Name.ToString().ToUpper()] = loginDate;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle exceptions appropriately (e.g., corrupted file, invalid XML)
+                Console.WriteLine($"Error loading character login data: {ex.Message}");
+            }
+        }
+
+        internal void SaveLoginCon()
+        {
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "loginCon");
+
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+
+            // Create sanitized dictionary for saving
+            var sanitizedLoginData = Server.ConsecutiveLogin
+                .Where(entry => !string.IsNullOrWhiteSpace(entry.Key) && entry.Value != default)
+                .ToDictionary(
+                    entry => entry.Key.ToUpper(),  // Normalize keys to uppercase
+                    entry => entry.Value          // Ensure valid DateTime values
+                );
+
+            // Create the XML document with LINQ-to-XML
+            var xDocument = new XDocument(
+                new XElement("Character",
+                    sanitizedLoginData.Select(item =>
+                        new XElement(item.Key, item.Value.ToString("o")) // "o" for round-trip date/time format
+                    )
+                )
+            );
+
+            xDocument.Save(filePath);
+        }
+
+
 
         internal void LoadAutoAscendData()
         {

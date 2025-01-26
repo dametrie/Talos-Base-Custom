@@ -102,6 +102,7 @@ namespace Talos
         internal Dictionary<string, string> MedWalk { get; set; } = new Dictionary<string, string>();
         internal Dictionary<string, string> MedTask { get; set; } = new Dictionary<string, string>();
         internal Dictionary<string, int> MedWalkSpeed { get; set; } = new Dictionary<string, int>();
+        internal Dictionary<string, DateTime> ConsecutiveLogin = new Dictionary<string, DateTime>();
         internal SortedDictionary<ushort, string> PursuitIDs { get; set; } = new SortedDictionary<ushort, string>();
         internal ConcurrentDictionary<string, CharacterState> ClientStateList {  get; set; } = new ConcurrentDictionary<string, CharacterState>();
         internal ConcurrentDictionary<string, bool> ManualServerSwitch { get; set; } = new ConcurrentDictionary<string, bool>();

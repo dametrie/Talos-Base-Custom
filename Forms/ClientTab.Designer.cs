@@ -92,8 +92,6 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
-            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
-            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -602,6 +600,8 @@ namespace Talos.Forms
             this.currentAction = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
+            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -1443,35 +1443,6 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // chatPanel2
-            // 
-            this.chatPanel2.AutoDetectUrls = true;
-            this.chatPanel2.BackColor = System.Drawing.Color.White;
-            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel2.Name = "chatPanel2";
-            this.chatPanel2.ReadOnly = true;
-            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel2.TabIndex = 0;
-            this.chatPanel2.Text = "";
-            // 
-            // chatBox
-            // 
-            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatBox.ForeColor = System.Drawing.Color.Black;
-            this.chatBox.Location = new System.Drawing.Point(121, 484);
-            this.chatBox.MaxLength = 53;
-            this.chatBox.Name = "chatBox";
-            this.chatBox.Size = new System.Drawing.Size(508, 23);
-            this.chatBox.TabIndex = 13;
-            this.chatBox.TabStop = false;
-            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
-            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
-            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
-            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
             // mainAislingsTab
             // 
@@ -4278,6 +4249,7 @@ namespace Talos.Forms
             this.dmuGroup.Controls.Add(this.bodyLbl);
             this.dmuGroup.Controls.Add(this.faceLbl);
             this.dmuGroup.Controls.Add(this.faceNum);
+            this.dmuGroup.Enabled = false;
             this.dmuGroup.Location = new System.Drawing.Point(6, 299);
             this.dmuGroup.Name = "dmuGroup";
             this.dmuGroup.Size = new System.Drawing.Size(450, 213);
@@ -5009,6 +4981,7 @@ namespace Talos.Forms
             this.btnCheckLoginTime.TabIndex = 9;
             this.btnCheckLoginTime.Text = "Check Time";
             this.btnCheckLoginTime.UseVisualStyleBackColor = false;
+            this.btnCheckLoginTime.Click += new System.EventHandler(this.btnCheckLoginTime_Click);
             // 
             // btnConLogin
             // 
@@ -5020,11 +4993,13 @@ namespace Talos.Forms
             this.btnConLogin.TabIndex = 8;
             this.btnConLogin.Text = "Start";
             this.btnConLogin.UseVisualStyleBackColor = false;
+            this.btnConLogin.Click += new System.EventHandler(this.btnConLogin_Click);
             // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.btnFood);
             this.groupBox1.Controls.Add(this.label6);
+            this.groupBox1.Enabled = false;
             this.groupBox1.Location = new System.Drawing.Point(423, 399);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(205, 100);
@@ -5056,6 +5031,7 @@ namespace Talos.Forms
             // 
             this.TailorGroup.Controls.Add(this.TailorBtn);
             this.TailorGroup.Controls.Add(this.label2);
+            this.TailorGroup.Enabled = false;
             this.TailorGroup.Location = new System.Drawing.Point(634, 293);
             this.TailorGroup.Name = "TailorGroup";
             this.TailorGroup.Size = new System.Drawing.Size(205, 100);
@@ -5183,6 +5159,7 @@ namespace Talos.Forms
             this.prayerGroup.Controls.Add(this.prayerAssistCbox);
             this.prayerGroup.Controls.Add(this.prayerAssistTbox);
             this.prayerGroup.Controls.Add(this.togglePrayingBtn);
+            this.prayerGroup.Enabled = false;
             this.prayerGroup.Location = new System.Drawing.Point(633, 194);
             this.prayerGroup.Name = "prayerGroup";
             this.prayerGroup.Size = new System.Drawing.Size(205, 86);
@@ -5239,6 +5216,7 @@ namespace Talos.Forms
             this.itemFindingGB.Controls.Add(this.btnLoadItemList);
             this.itemFindingGB.Controls.Add(this.listToFind);
             this.itemFindingGB.Controls.Add(this.btnItemFinder);
+            this.itemFindingGB.Enabled = false;
             this.itemFindingGB.Location = new System.Drawing.Point(3, 293);
             this.itemFindingGB.Name = "itemFindingGB";
             this.itemFindingGB.Size = new System.Drawing.Size(414, 220);
@@ -5406,6 +5384,7 @@ namespace Talos.Forms
             this.votingGroup.Controls.Add(this.voteForAllBtn);
             this.votingGroup.Controls.Add(this.voteText);
             this.votingGroup.Controls.Add(this.toggleVotingBtn);
+            this.votingGroup.Enabled = false;
             this.votingGroup.Location = new System.Drawing.Point(422, 194);
             this.votingGroup.Name = "votingGroup";
             this.votingGroup.Size = new System.Drawing.Size(205, 86);
@@ -5451,6 +5430,7 @@ namespace Talos.Forms
             this.fishingGroup.Controls.Add(this.keepFishRdio);
             this.fishingGroup.Controls.Add(this.sellFishRdio);
             this.fishingGroup.Controls.Add(this.toggleFishingBtn);
+            this.fishingGroup.Enabled = false;
             this.fishingGroup.Location = new System.Drawing.Point(212, 194);
             this.fishingGroup.Name = "fishingGroup";
             this.fishingGroup.Size = new System.Drawing.Size(205, 86);
@@ -5512,6 +5492,7 @@ namespace Talos.Forms
             this.farmGroup.Controls.Add(this.returnFarmBtn);
             this.farmGroup.Controls.Add(this.setCustomBankBtn);
             this.farmGroup.Controls.Add(this.toggleFarmBtn);
+            this.farmGroup.Enabled = false;
             this.farmGroup.Location = new System.Drawing.Point(425, 95);
             this.farmGroup.Name = "farmGroup";
             this.farmGroup.Size = new System.Drawing.Size(414, 86);
@@ -5571,6 +5552,7 @@ namespace Talos.Forms
             this.hubaeGroup.Controls.Add(this.killedCrabBtn);
             this.hubaeGroup.Controls.Add(this.killedBatBtn);
             this.hubaeGroup.Controls.Add(this.toggleHubaeBtn);
+            this.hubaeGroup.Enabled = false;
             this.hubaeGroup.Location = new System.Drawing.Point(425, 3);
             this.hubaeGroup.Name = "hubaeGroup";
             this.hubaeGroup.Size = new System.Drawing.Size(414, 86);
@@ -5646,6 +5628,7 @@ namespace Talos.Forms
             this.laborGroup.Controls.Add(this.fastLaborCbox);
             this.laborGroup.Controls.Add(this.laborNameText);
             this.laborGroup.Controls.Add(this.laborBtn);
+            this.laborGroup.Enabled = false;
             this.laborGroup.Location = new System.Drawing.Point(3, 194);
             this.laborGroup.Name = "laborGroup";
             this.laborGroup.Size = new System.Drawing.Size(205, 86);
@@ -5691,6 +5674,7 @@ namespace Talos.Forms
             this.polishGroup.Controls.Add(this.polishAssistCbox);
             this.polishGroup.Controls.Add(this.assistText);
             this.polishGroup.Controls.Add(this.polishLbl);
+            this.polishGroup.Enabled = false;
             this.polishGroup.Location = new System.Drawing.Point(423, 293);
             this.polishGroup.Name = "polishGroup";
             this.polishGroup.Size = new System.Drawing.Size(205, 100);
@@ -5760,6 +5744,7 @@ namespace Talos.Forms
             this.ascensionGroup.Controls.Add(this.statsNum);
             this.ascensionGroup.Controls.Add(this.statsPerLbl);
             this.ascensionGroup.Controls.Add(this.toggleAscensionBtn);
+            this.ascensionGroup.Enabled = false;
             this.ascensionGroup.Location = new System.Drawing.Point(3, 3);
             this.ascensionGroup.Name = "ascensionGroup";
             this.ascensionGroup.Size = new System.Drawing.Size(414, 86);
@@ -6108,6 +6093,7 @@ namespace Talos.Forms
             this.candyTreatsGroup.BackColor = System.Drawing.Color.White;
             this.candyTreatsGroup.Controls.Add(this.candyTreatsLbl);
             this.candyTreatsGroup.Controls.Add(this.toggleCandyTreatsBtn);
+            this.candyTreatsGroup.Enabled = false;
             this.candyTreatsGroup.Location = new System.Drawing.Point(423, 386);
             this.candyTreatsGroup.Name = "candyTreatsGroup";
             this.candyTreatsGroup.Size = new System.Drawing.Size(408, 88);
@@ -6142,6 +6128,7 @@ namespace Talos.Forms
             this.parchmentMaskGroup.BackColor = System.Drawing.Color.White;
             this.parchmentMaskGroup.Controls.Add(this.parchmentMaskLbl);
             this.parchmentMaskGroup.Controls.Add(this.toggleParchmentMaskBtn);
+            this.parchmentMaskGroup.Enabled = false;
             this.parchmentMaskGroup.Location = new System.Drawing.Point(9, 385);
             this.parchmentMaskGroup.Name = "parchmentMaskGroup";
             this.parchmentMaskGroup.Size = new System.Drawing.Size(408, 88);
@@ -6174,6 +6161,7 @@ namespace Talos.Forms
             // 
             this.scavengerHuntGroup.Controls.Add(this.scavengerHuntLbl);
             this.scavengerHuntGroup.Controls.Add(this.toggleScavengerHuntBtn);
+            this.scavengerHuntGroup.Enabled = false;
             this.scavengerHuntGroup.Location = new System.Drawing.Point(423, 292);
             this.scavengerHuntGroup.Name = "scavengerHuntGroup";
             this.scavengerHuntGroup.Size = new System.Drawing.Size(408, 88);
@@ -6240,6 +6228,7 @@ namespace Talos.Forms
             // 
             this.groupBox8.Controls.Add(this.label8);
             this.groupBox8.Controls.Add(this.toggleCatchLeprechaunBtn);
+            this.groupBox8.Enabled = false;
             this.groupBox8.Location = new System.Drawing.Point(423, 198);
             this.groupBox8.Name = "groupBox8";
             this.groupBox8.Size = new System.Drawing.Size(408, 88);
@@ -6274,6 +6263,7 @@ namespace Talos.Forms
             // 
             this.MAWGroup.Controls.Add(this.mawLbl);
             this.MAWGroup.Controls.Add(this.toggleMAWBtn);
+            this.MAWGroup.Enabled = false;
             this.MAWGroup.Location = new System.Drawing.Point(9, 198);
             this.MAWGroup.Name = "MAWGroup";
             this.MAWGroup.Size = new System.Drawing.Size(408, 88);
@@ -6307,6 +6297,7 @@ namespace Talos.Forms
             // 
             this.fowlGroup.Controls.Add(this.fowlLbl);
             this.fowlGroup.Controls.Add(this.toggleFowlBtn);
+            this.fowlGroup.Enabled = false;
             this.fowlGroup.Location = new System.Drawing.Point(423, 104);
             this.fowlGroup.Name = "fowlGroup";
             this.fowlGroup.Size = new System.Drawing.Size(408, 88);
@@ -6340,6 +6331,7 @@ namespace Talos.Forms
             // 
             this.pigChaseGroup.Controls.Add(this.pigChaseLbl);
             this.pigChaseGroup.Controls.Add(this.togglePigChaseBtn);
+            this.pigChaseGroup.Enabled = false;
             this.pigChaseGroup.Location = new System.Drawing.Point(9, 104);
             this.pigChaseGroup.Name = "pigChaseGroup";
             this.pigChaseGroup.Size = new System.Drawing.Size(408, 88);
@@ -6373,6 +6365,7 @@ namespace Talos.Forms
             // 
             this.yuleGroup.Controls.Add(this.yuleLbl);
             this.yuleGroup.Controls.Add(this.toggleYuleBtn);
+            this.yuleGroup.Enabled = false;
             this.yuleGroup.Location = new System.Drawing.Point(423, 10);
             this.yuleGroup.Name = "yuleGroup";
             this.yuleGroup.Size = new System.Drawing.Size(408, 88);
@@ -6407,6 +6400,7 @@ namespace Talos.Forms
             // 
             this.bugGroup.Controls.Add(this.bugLbl);
             this.bugGroup.Controls.Add(this.toggleBugBtn);
+            this.bugGroup.Enabled = false;
             this.bugGroup.Location = new System.Drawing.Point(9, 10);
             this.bugGroup.Name = "bugGroup";
             this.bugGroup.Size = new System.Drawing.Size(408, 88);
@@ -7579,6 +7573,35 @@ namespace Talos.Forms
             // 
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
+            // 
+            // chatPanel2
+            // 
+            this.chatPanel2.AutoDetectUrls = true;
+            this.chatPanel2.BackColor = System.Drawing.Color.White;
+            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel2.Name = "chatPanel2";
+            this.chatPanel2.ReadOnly = true;
+            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel2.TabIndex = 0;
+            this.chatPanel2.Text = "";
+            // 
+            // chatBox
+            // 
+            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatBox.ForeColor = System.Drawing.Color.Black;
+            this.chatBox.Location = new System.Drawing.Point(121, 484);
+            this.chatBox.MaxLength = 53;
+            this.chatBox.Name = "chatBox";
+            this.chatBox.Size = new System.Drawing.Size(508, 23);
+            this.chatBox.TabIndex = 13;
+            this.chatBox.TabStop = false;
+            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
+            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
+            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
+            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
             // ClientTab
             // 

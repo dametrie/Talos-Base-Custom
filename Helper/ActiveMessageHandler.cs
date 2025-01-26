@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Media;
 using System.Text.RegularExpressions;
@@ -26,107 +27,116 @@ namespace Talos.Helper
         {
             stringMessageHandlers = new Dictionary<string, Action<Client, string>>
             {
-                { "You just sent a broadcast, you must wait a few more minutes.", HandleArenaBroadcastMessage },
-                { "Your AP is too high", HandleLastKillMessage },
-                { "You have reached level 99, the maximum for the free trial.", HandleLastKillMessage },
-                { "You can't have more.", HandleInventoryMessage },
-                { "You lost 50 vitality", HandleRecentlyDiedMessage },
-                { "Your items are ripped from your body.", HandleRecentlyDiedMessage },
-                { "You are not a member of the Training Grounds", HandleTrainingGroundsMessage },
-                { "You feel better.", HandlePoisonMessage },
-                { "Poison", HandlePoisonMessage },
-                { "Your armor is strengthened.", HandleArmachdMessage },
-                { "Your armor spell wore off.", HandleArmachdMessage },
-                { "The magic has been deflected.", HandleResistMessage },
-                { "You can't cast that spell right now.", HandleCantCastMessage },
-                { "You can't cast a spell.", HandleCantCastMessage },
-                { "You can't use skills here.", HandleCantCastMessage },
-                { "That doesn't work here.", HandleCantCastMessage },
-                { "Your Will is too weak.", HandleNoManaMessage },
-                { "Cannot find group member.", HandleGroupMessage },
                 { "Already a member of another group.", HandleGroupMessage },
-                { "Group disbanded.", HandleGroupMessage },
-                { "You can't perceive the invisible.", HandleCatsMessage },
-                { "You can perceive the invisible.", HandleCatsMessage },
-                { "In sleep", HandlePramhMessage },
-                { "beag pramh", HandlePramhMessage },
-                { "pramh", HandlePramhMessage },
-                { "Awake", HandlePramhMessage },
-                { "Pause", HandlePauseMessage },
-                { "Pause end", HandlePauseMessage },
-                { "Normal power.", HandleFasDeireasMessage },
-                { "You feel more powerful.", HandleFasDeireasMessage },
-                { "End of blessing.", HandleBeannaichMessage },
-                { "You have been blessed.", HandleBeannaichMessage },
-                { "Inner warmth of regeneration dissipates.", HandleInnerFireMessage },
-                { "Inner warmth begins to regenerate you.", HandleInnerFireMessage },
-                { "Purify", HandlePurifyMessage },
-                { "Purify end", HandlePurifyMessage },
-                { "You won't die from any spell.", HandlePerfectDefenseMessage },
-                { "You become normal.", HandlePerfectDefenseMessage },
-                { "You cast Spell/Skill Level Bonus.", HandleBonusMessage },
-                { "Something went wrong.", HandleWrongMessage },
-                { "beag cradh end.", HandleCurseEndMessage },
-                { "cradh end.", HandleCurseEndMessage },
-                { "mor cradh end.", HandleCurseEndMessage },
-                { "ard cradh end.", HandleCurseEndMessage },
-                { "Dark Seal end.", HandleCurseEndMessage },
-                { "Darker Seal end.", HandleCurseEndMessage },
-                { "Demon Seal end.", HandleCurseEndMessage },
-                { "Demise end.", HandleCurseEndMessage },
-                { "beag cradh", HandleCurseBeginMessage },
-                { "cradh", HandleCurseBeginMessage },
-                { "mor cradh", HandleCurseBeginMessage },
                 { "ard cradh", HandleCurseBeginMessage },
-                { "Dark Seal", HandleCurseBeginMessage },
-                { "Darker Seal", HandleCurseBeginMessage },
-                { "Demise", HandleCurseBeginMessage },
-                { "Demon Seal", HandleCurseBeginMessage },
-                { "double attribute", HandleFasMessage },
-                { "normal nature.", HandleFasMessage },
-                { "Stunned", HandleBeagSuainMessage },
-                { "You can move again.", HandleBeagSuainMessage },
-                { "You have found sanctuary.", HandleAiteMessage },
-                { "You feel vulnerable again.", HandleAiteMessage },
-                { "You cast Disenchanter.", HandleDisenchanterMessage },
-                { "You canot see anything.", HandleDallMessage },
-                { "You can see again.", HandleDallMessage },
-                { "Invisible.", HandleHideMessage },
-                { "You are no longer invisible.", HandleHideMessage },
-                { "Failed.", HandleFailedMessage },
-                { "You cannot attack.", HandleCantAttackMessage },
+                { "ard cradh end.", HandleCurseEndMessage },
                 { "asgall faileas", HandleAsgallMessage },
                 { "asgall faileas end.", HandleAsgallMessage },
-                { "You feel quicker.", HandleMistMessage },
-                { "Your reflexes return to normal.", HandleMistMessage },
-                { "Reflect.", HandleDeireasFaileasMessage },
-                { "Reflect end.", HandleDeireasFaileasMessage },
+                { "Awake", HandlePramhMessage },
+                { "beag cradh", HandleCurseBeginMessage },
+                { "beag cradh end.", HandleCurseEndMessage },
+                { "beag pramh", HandlePramhMessage },
+                { "Cannot find group member.", HandleGroupMessage },
+                { "cradh", HandleCurseBeginMessage },
+                { "cradh end.", HandleCurseEndMessage },
+                { "Dark Seal", HandleCurseBeginMessage },
+                { "Dark Seal end.", HandleCurseEndMessage },
+                { "Darker Seal", HandleCurseBeginMessage },
+                { "Darker Seal end.", HandleCurseEndMessage },
+                { "Demon Seal", HandleCurseBeginMessage },
+                { "Demon Seal end.", HandleCurseEndMessage },
+                { "Demise", HandleCurseBeginMessage },
+                { "Demise end.", HandleCurseEndMessage },
+                { "double attribute", HandleFasMessage },
+                { "End of blessing.", HandleBeannaichMessage },
+                { "Failed.", HandleFailedMessage },
+                { "Group disbanded.", HandleGroupMessage },
                 { "Halt", HandleHaltMessage },
                 { "Halt end.", HandleHaltMessage },
-                { "You were distracted", HandleDistractedMessage },
-                { "Your body thaws.", HandleSuainMessage },
-                { "Your body is freezing.", HandleSuainMessage },
-                { "You are in hibernation.", HandleSuainMessage },
-                { "You already cast that spell.", HandleAlreadyCastMessage },
                 { "Harden body spell", HandleDionMessage },
-                { "Your skin turns back to flesh.", HandleDionMessage },
-                { "You are not well.", HandleDragonMessage },
-                { "No longer dragon.", HandleDragonMessage },
+                { "I already told you where my Pot of Gold is buried.", HandleCALMessage },
+                { "In sleep", HandlePramhMessage },
+                { "Inner warmth begins to regenerate you.", HandleInnerFireMessage },
+                { "Inner warmth of regeneration dissipates.", HandleInnerFireMessage },
+                { "Invisible.", HandleHideMessage },
                 { "It does not touch the spirit world.", HandleSpiritWorldMessage },
+                { "mor cradh", HandleCurseBeginMessage },
+                { "mor cradh end.", HandleCurseEndMessage },
+                { "No longer dragon.", HandleDragonMessage },
+                { "Normal power.", HandleFasDeireasMessage },
+                { "normal nature.", HandleFasMessage },
+                { "Pause", HandlePauseMessage },
+                { "Pause end", HandlePauseMessage },
+                { "Poison", HandlePoisonMessage },
+                { "pramh", HandlePramhMessage },
+                { "Purify", HandlePurifyMessage },
+                { "Purify end", HandlePurifyMessage },
+                { "Reflect.", HandleDeireasFaileasMessage },
+                { "Reflect end.", HandleDeireasFaileasMessage },
+                { "Something went wrong.", HandleWrongMessage },
+                { "Stunned", HandleBeagSuainMessage },
+                { "That doesn't work here.", HandleCantCastMessage },
+                { "The magic has been deflected.", HandleResistMessage },
+                { "You already cast that spell.", HandleAlreadyCastMessage },
+                { "You are in hibernation.", HandleSuainMessage },
+                { "You are no longer invisible.", HandleHideMessage },
+                { "You are not a member of the Training Grounds", HandleTrainingGroundsMessage },
+                { "You are not well.", HandleDragonMessage },
                 { "You are stuck.", HandleStuckMessage },
+                { "You become normal.", HandlePerfectDefenseMessage },
+                { "You can move again.", HandleBeagSuainMessage },
+                { "You can perceive the invisible.", HandleCatsMessage },
+                { "You can see again.", HandleDallMessage },
+                { "You cannot attack.", HandleCantAttackMessage },
+                { "You canot see anything.", HandleDallMessage },
+                { "You can't cast a spell.", HandleCantCastMessage },
+                { "You can't cast that spell right now.", HandleCantCastMessage },
+                { "You can't have more.", HandleInventoryMessage },
+                { "You can't perceive the invisible.", HandleCatsMessage },
+                { "You can't use skills here.", HandleCantCastMessage },
+                { "You cast Disenchanter.", HandleDisenchanterMessage },
+                { "You cast Spell/Skill Level Bonus.", HandleBonusMessage },
+                { "You defeated the Great Yeti!", HandleYetiMessage },
+                { "You didn't receive a Stolen Bag", HandleYTBossMessage },
+                { "You feel better.", HandlePoisonMessage },
+                { "You feel more powerful.", HandleFasDeireasMessage },
+                { "You feel quicker.", HandleMistMessage },
+                { "You feel vulnerable again.", HandleAiteMessage },
+                { "You have been blessed.", HandleBeannaichMessage },
+                { "You have found sanctuary.", HandleAiteMessage },
+                { "You have reached level 99, the maximum for the free trial.", HandleLastExpMessage },
+                { "You just sent a broadcast, you must wait a few more minutes.", HandleArenaBroadcastMessage },
+                { "You lost 50 vitality", HandleRecentlyDiedMessage },
+                { "You received a SUPER SUPER RARE item!", HandleSuperRareMessage },
+                { "You were distracted", HandleDistractedMessage },
+                { "You won't die from any spell.", HandlePerfectDefenseMessage },
+                { "Your AP is too high", HandleLastExpMessage },
+                { "Your armor is strengthened.", HandleArmachdMessage },
+                { "Your armor spell wore off.", HandleArmachdMessage },
+                { "Your body is freezing.", HandleSuainMessage },
+                { "Your body thaws.", HandleSuainMessage },
+                { "Your items are ripped from your body.", HandleRecentlyDiedMessage },
+                { "You received a Stolen Bag", HandleYTBossMessage },
+                { "Your reflexes return to normal.", HandleMistMessage },
+                { "Your skin turns back to flesh.", HandleDionMessage },
+                { "Your Will is too weak.", HandleNoManaMessage },
             };
+
 
             regexMessageHandlers = new Dictionary<Regex, Action<Client, Match>>
             {
                 { new Regex(@"^([a-zA-Z]+) is (?:joining|leaving) this group.$"), HandleJoinLeaveGroupMessage },
                 { new Regex(@"^You cast (.*?)\.$"), HandleSpellCastMessage },
-                { new Regex(@"The durability of ([a-zA-Z]+) is now (\d+)%$"), HandleItemDamageMessage },
-                { new Regex(@"(\d+) experience!"), HandleExperienceMessage },//Adam fix this
-                { new Regex("AP went up"), HandleExperienceMessage }, //Adam fix this
+                { new Regex(@"The durability of ([a-zA-Z' ]+) is now ([0-9]+)%$"), HandleItemDamageMessage },
+                { new Regex(@"(\d+) experience!"), HandleExperienceMessage },
+                { new Regex("AP went up"), HandleExperienceMessage },
+
+                { new Regex("[a-zA-Z] works for you for 1 day"), HandleLaborMessage },//Adam check
+                { new Regex("(\\w+) works for you, although you didn't need much done"), HandleLaborMessage },//Adam check
                 { new Regex(@"^\(\( 4 Temuairan days = 12 (Terran|real-life) hours \)\)$"), HandleLaborMessage },//Adam check
                 { new Regex(@"You do not have time for these 4 Temuairan days"), HandleLaborMessage },//Adam check
-                { new Regex("[a-zA-Z] works for you for 1 day"), HandleLaborMessage },//Adam check
                 { new Regex(@"You work for \w+, although the Aisling didn't need much done"), HandleLaborMessage },//Adam check
+
                 { new Regex(@"n:Necklace:([a-zA-Z \'0-9]+)\t Armor class"), HandleNecklaceMessage },
                 { new Regex("([a-zA-Z0-9 ]+), You can't have more than [0-9]+"), HandleInventoryFullMessage },
                 { new Regex("^.*? ao sith .*?"), HandleAoSithMessage },
@@ -136,6 +146,8 @@ namespace Talos.Helper
                 { new Regex("PreventAffliction end."), HandlePreventAfflictionMessage },
                 { new Regex("botcheck (?:attacks|casts)", RegexOptions.IgnoreCase), HandleBotChecks },
                 { new Regex("error (?:attacks|casts)", RegexOptions.IgnoreCase), HandleBotChecks },
+                { new Regex(@"^\d+ (?:hour|day)s? and \d+ (?:minute|hour)s? have passed since you last logg?ed in\.$"), HandleLastLoginMessage },
+                { new Regex(@"^You receive (.+)$"), HandleYouReceiveMessage },
             };
 
         }
@@ -166,6 +178,73 @@ namespace Talos.Helper
             }
 
             return true; // allow any message we aren't handling to come through
+        }
+        private void HandleCALMessage(Client client, string arg2)
+        {
+            client.Bot.toldUsAboutPotofGold = true;
+            client.Bot.madeLepNet = true;
+        }
+        private void HandleYTBossMessage(Client client, string arg2)
+        {
+            client.SaveTimedStuff(EventType.YTBoss);
+        }
+
+        private void HandleYouReceiveMessage(Client client, Match match)
+        {
+
+            // Define state-action pairs as a collection
+            var stateActions = new (Func<bool> condition, EventType eventType, Action resetState)[]
+            {
+            (() => client.Ateabbox, EventType.AbBox, () => client.Ateabbox = false),
+            (() => client.Ateabgift, EventType.AbGift, () => client.Ateabgift = false),
+            (() => client.Atemeg, EventType.MEG, () => client.Atemeg = false),
+            (() => client.ategsf, EventType.GoldStarfish, () => client.ategsf = false),
+            (() => client.ateclover, EventType.LuckyClover, () => client.ateclover = false)
+            };
+
+            // Iterate through the collection and execute relevant actions
+            foreach (var (condition, eventType, resetState) in stateActions)
+            {
+                if (condition())
+                {
+                    client.SaveTimedStuff(eventType);
+                    resetState();
+                }
+            }
+        }
+
+
+        private void HandleYetiMessage(Client client, string arg2)
+        {
+            string time = DateTime.Now.AddMinutes(30.0).ToString("hh:mm tt");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "Next yeti spawn is at " + time + ".");
+            SystemSounds.Beep.Play();
+        }
+
+        private void HandleLastLoginMessage(Client client, Match match)
+        {
+            string clientNameUpper = client.Name.ToUpper();
+
+            if (!client.Server.ConsecutiveLogin.ContainsKey(clientNameUpper))
+                return;
+
+            DateTime lastLogin = client.Server.ConsecutiveLogin[clientNameUpper];
+            TimeSpan timeSinceLastLogin = DateTime.UtcNow - lastLogin;
+
+            if (timeSinceLastLogin.TotalHours >= 24.0)
+            {
+                client.ServerMessage((byte)ServerMessageType.Whisper, "It's been 24 hours since your last consecutive login.");
+                client.ServerMessage((byte)ServerMessageType.Whisper, "You should run the consecutive login task.");
+            }
+            else
+            {
+                TimeSpan timeUntilNextTask = TimeSpan.FromHours(24.0) - timeSinceLastLogin;
+                client.ServerMessage((byte)ServerMessageType.Whisper, $"{timeUntilNextTask:hh\\:mm\\:ss} remaining until next consecutive login.");
+            }
+        }
+        private void HandleSuperRareMessage(Client client, string arg2)
+        {
+            new SoundPlayer(Resources.expmaxed).PlaySync();
         }
         private static void HandleSpellCastMessage(Client client, Match match)
         {
@@ -536,6 +615,7 @@ namespace Talos.Helper
                 case "Dark Necklace":
                 case "Royal Baem Scale Pendant":
                 case "Dark Gold Jade Necklace":
+                case "Chadul Dark Skull Necklace":
                     client.OffenseElement = "Dark";
                     break;
                 case "Lumen Amulet":
@@ -544,6 +624,7 @@ namespace Talos.Helper
                 case "Lannair Amulet":
                 case "Lionnear Amulet":
                 case "Laise Amulet":
+                case "Solas Amulet":
                     client.OffenseElement = "Light";
                     break;
                 default:
@@ -558,20 +639,44 @@ namespace Talos.Helper
             {
                 client.CastedSpell = null;
                 client.HasLabor = false;
+                client.FullLabor = false;
             }
             else if (match.Value.Contains("You do not have time"))
             {
                 client.CastedSpell = null;
                 client.HasLabor = false;
+                client.FullLabor = false;
             }
-            else if (match.Value.Contains("You work for"))
-            {
-                client.ClientTab.laborBtn.Text = "Labor";
-            }
-            else if (match.Value.Contains("works for you"))
+
+            else if (match.Value.Contains("works for you for 1 day"))
             {
                 client.HasLabor = true;
+                client.FullLabor = false;
             }
+            else if (match.Value.Contains("although you didn't need much done"))
+            {
+                client.HasLabor = true;
+                client.FullLabor = true;
+            }
+            else if (match.Value.Contains("although the Aisling didn't need much done"))
+            {
+                string clientName = match.Groups[1].Value;
+                Client targetClient = client.Server.GetClient(clientName);
+
+                if (targetClient != null && targetClient.WaitingOnLabor)
+                {
+                    targetClient.RequestingLabor = false;
+                    targetClient.WaitingOnLabor = false;
+                    client.WaitingToRelaborAfterLaborFix = true;
+                    client.ClientTab.laborBtn.Text = "Labor";
+                }
+                else
+                    client.ClientTab.laborBtn.Text = "Labor";
+            }
+
+
+
+
         }
 
 
@@ -619,7 +724,7 @@ namespace Talos.Helper
 
             if (client.ClientTab.equipmentrepairCbox.Checked && durabilityPercent == 10)
             {
-                client.NeedsToRepair = true;
+                client.NeedsToRepairHammer = true;
             }
         }
 
@@ -878,7 +983,10 @@ namespace Talos.Helper
 
         private void HandleFailedMessage(Client client, string message)
         {
-            return;
+            if (client.SpellHistory.Count > 0)
+                client.SpellHistory.RemoveAt(0);
+            client.CastedSpell = null;
+            client.CastedTarget = null;
         }
 
         private void HandleHideMessage(Client client, string message)
@@ -1019,7 +1127,10 @@ namespace Talos.Helper
 
         private void HandleWrongMessage(Client client, string message)
         {
-            return;
+            if (client.SpellHistory.Count > 0)
+                client.SpellHistory.RemoveAt(0);
+            client.CastedSpell = null;
+            client.CastedTarget = null;
         }
 
         private void HandleBonusMessage(Client client, string message)
@@ -1102,11 +1213,19 @@ namespace Talos.Helper
             }
             else if (message == "Already a member of another group.")
             {
-                //Already a member of another group.
+                if (client.forcegroup)
+                {
+                    client.GMDetect = true;
+                }
             }
             else if (message == "Cannot find group member.")
             {
-                //Cannot find group member.
+                if (client.forcegroup)
+                {
+                    string lastGmChecked = client.lastGMChecked;
+                    client.Bot.GMdetectedonline.Add(lastGmChecked);
+                    client.GMDetect = true;
+                }
             }
         }
 
@@ -1120,7 +1239,10 @@ namespace Talos.Helper
         {
             if (message == "You can't cast a spell.")
             {
-
+                if (client.SpellHistory.Count > 0)
+                    client.SpellHistory.RemoveAt(0);
+                client.CastedSpell = null;
+                client.CastedTarget = null;
             }
             else if (message == "You can't cast that spell right now.")
             {
@@ -1141,7 +1263,10 @@ namespace Talos.Helper
 
         private void HandleResistMessage(Client client, string message)
         {
-            return;
+            if (client.SpellHistory.Count > 0)
+                client.SpellHistory.RemoveAt(0);
+            client.CastedSpell = null;
+            client.CastedTarget = null;
         }
         private void HandleBotChecks(Client client, Match match)
         {
@@ -1233,7 +1358,7 @@ namespace Talos.Helper
                 client.ServerMessage((byte)ServerMessageType.ActiveMessage, messageToSend);
         }
 
-        private void HandleLastKillMessage(Client client, string message)
+        private void HandleLastExpMessage(Client client, string message)
         {
             client.Bot._lastEXP = DateTime.UtcNow;
         }

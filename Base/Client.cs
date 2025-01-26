@@ -86,6 +86,9 @@ namespace Talos.Base
         internal bool comboThree;
         internal bool comboTwo;
         internal bool comboOne;
+        internal string lastGMChecked;
+        internal bool GMDetect;
+        internal bool forcegroup;
         internal readonly object BashLock = new object();
         internal readonly object CastLock = new object();
         internal Player Player { get; set; }
@@ -120,6 +123,7 @@ namespace Talos.Base
         internal Dictionary<string, byte> StaffSpells { get; set; } = new Dictionary<string, byte>();
         internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
         internal Dictionary<string, int> InventoryDialogIDs { get; set; } = new Dictionary<string, int>();
+
         internal ConcurrentDictionary<int, Location> LastSeenLocations { get; set; } = new ConcurrentDictionary<int, Location>();
         internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
         internal ConcurrentDictionary<int, Player> NearbyHiddenPlayers { get; private set; } = new ConcurrentDictionary<int, Player>();
@@ -161,6 +165,7 @@ namespace Talos.Base
         internal bool IsBashing { get; set; }
         internal bool MapChanged { get; set; }
         internal bool HasLabor { get; set; }
+        internal bool FullLabor { get; set; }
         internal bool OverrideMapFlags { get; set; }
         internal bool IsRegistered { get; set; } = true;
         internal bool IsCheckingBelt { get; set; }
@@ -185,7 +190,7 @@ namespace Talos.Base
         internal bool ComboThreeSet { get; set; } = false;
         internal bool DeformNearStrangers { get; set; } = false;
         internal bool Stopped { get; set; } = false;
-        internal bool NeedsToRepair { get; set; } = false;
+        internal bool NeedsToRepairHammer { get; set; } = false;
         internal bool AssailNoise { get; set; }
         internal bool Ladder { get; set; }
         internal bool ChestToggle { get; set; } = false;
@@ -289,6 +294,11 @@ namespace Talos.Base
         public bool Atemeg { get; internal set; }
         public bool Ateabbox { get; internal set; }
         public bool Ateabgift { get; internal set; }
+        public bool RequestingLabor { get; internal set; }
+        public bool WaitingOnLabor { get; internal set; }
+        public bool WaitingToRelaborAfterLaborFix { get; internal set; }
+        public bool ategsf { get; internal set; }
+        public bool ateclover { get; internal set; }
 
         internal Client(Server server, Socket socket)
         {
@@ -463,7 +473,7 @@ namespace Talos.Base
                 }
 
                 ReplyDialog(Dialog.ObjectType, Dialog.ObjectID, Dialog.PursuitID, (ushort)(Dialog.DialogID + 1U));
-                NeedsToRepair = false;
+                NeedsToRepairHammer = false;
                 Bot._hammerTimer = DateTime.UtcNow;
                 Bot._dontWalk = false;
                 Bot._dontCast = false;

@@ -75,7 +75,7 @@ namespace Talos.Base
         internal List<Enemy> _enemyList = new List<Enemy>();
         internal List<Player> _playersExistingOver250ms = new List<Player>();
         internal List<Player> _skulledPlayers = new List<Player>();
-    
+        internal List<String> GMdetectedonline = new List<string>();
         internal List<Creature> _nearbyValidCreatures = new List<Creature>();
         internal List<Location> ways = new List<Location>();
 
@@ -119,6 +119,8 @@ namespace Talos.Base
         private DateTime skillUse = DateTime.MinValue;
         private bool hasrepaired;
         private bool _hasDeposited;
+        internal bool toldUsAboutPotofGold;
+        internal bool madeLepNet;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -1236,6 +1238,9 @@ namespace Talos.Base
 
         private void Ascending()
         {
+            if (Client == null || Client.ClientTab == null)
+                return;
+
             if (Client.ClientTab.ascendBtn.Text != "Ascending")
                 return;
 
@@ -1729,9 +1734,48 @@ namespace Talos.Base
 
         private void HolidayEvents()
         {
+            ConsecutiveLogin();
             RetrieveDoubles();
         }
 
+        private void ConsecutiveLogin()
+        {
+            if (Client.ClientTab != null && Client.ClientTab.btnConLogin.Text == "Stop")
+            {
+                // Check if the client is at the correct map and within range
+                if (Client.Map.MapID == 3052 && Client.ServerLocation.DistanceFrom(new Location(3052, 48, 17)) <= 6)
+                {
+                    // Interact with the NPC
+                    var creature = Client.GetNearbyNPC("Celesta");
+                    if (creature == null || !Client.ClickNPCDialog(creature, "Avid Daydreamer", true))
+                    {
+                        return; // Exit if NPC interaction fails
+                    }
+
+                    // Reply to dialog options
+                    Client.ReplyDialog(1, creature.ID, 0, 2);
+                    Client.Dialog.Reply();
+
+                    // Update consecutive login data
+                    string clientName = Client.Name.ToUpper();
+                    var consecutiveLogin = Client.Server.ConsecutiveLogin;
+                    consecutiveLogin[clientName] = DateTime.UtcNow; // Add or update login time
+
+                    // Save the updated data
+                    Thread.Sleep(1000); // Maintain original behavior with the delay
+                    Client.Server.MainForm.SaveLoginCon();
+
+                    // Update the button text
+                    Client.ClientTab.btnConLogin.Text = "Start";
+                }
+                else
+                {
+                    // Route the client to the required location
+                    Client.Routefind(new Location(3052, 46, 20), 0, false, true, true);
+                }
+            }
+
+        }
         private void RetrieveDoubles()
         {
             {
@@ -3935,7 +3979,7 @@ namespace Talos.Base
                 return false;
             }
 
-            if (clientTab.equipmentrepairCbox.Checked && Client.NeedsToRepair && DateTime.UtcNow.Subtract(_hammerTimer).TotalMinutes > 40.0)
+            if (clientTab.equipmentrepairCbox.Checked && Client.NeedsToRepairHammer && DateTime.UtcNow.Subtract(_hammerTimer).TotalMinutes > 40.0)
             {
                 Client.UseHammer();
             }

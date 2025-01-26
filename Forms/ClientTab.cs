@@ -2930,12 +2930,23 @@ namespace Talos.Forms
 
         private void btnCheckLoginTime_Click(object sender, EventArgs e)
         {
-
+            if (_client.Server.ConsecutiveLogin.ContainsKey(_client.Name.ToUpper()))
+            {
+                TimeSpan timeSpan = _client.Server.ConsecutiveLogin[_client.Name.ToUpper()].Subtract(DateTime.UtcNow);
+                _client.ServerMessage((byte)ServerMessageType.Whisper, timeSpan.ToString("hh\\:mm\\:ss") + " since you've used Consecutive Login.");
+            }
         }
 
         private void btnConLogin_Click(object sender, EventArgs e)
         {
-
+            if (btnConLogin.Text == "Start")
+            {
+                btnConLogin.Text = "Stop";
+            }
+            else
+            {
+                btnConLogin.Text = "Start";
+            }
         }
 
         private void btnFood_Click(object sender, EventArgs e)
@@ -3663,7 +3674,7 @@ namespace Talos.Forms
         private void btnResetAllStatus_Click(object sender, EventArgs e)
         {
             _client.IsRefreshingData = 0;
-            _client.NeedsToRepair = false;
+            _client.NeedsToRepairHammer = false;
             _client.IsCasting = false;
             _client.IsWalking = false;
             _client.IsBashing = false;
