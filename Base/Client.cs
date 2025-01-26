@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -114,9 +115,11 @@ namespace Talos.Base
         internal List<Staff> Staffs { get; set; } = new List<Staff>();
         internal List<MeleeWeapon> Weapons { get; set; } = new List<MeleeWeapon>();
         internal List<Bow> Bows { get; set; } = new List<Bow>();
+        internal List<string> IgnoredDialogs { get; set; } = new List<string>();
         internal Dictionary<string, string> UserOptions { get; set; } = new Dictionary<string, string>();
         internal Dictionary<string, byte> StaffSpells { get; set; } = new Dictionary<string, byte>();
         internal Dictionary<string, DateTime> DictLastSeen { get; set; } = new Dictionary<string, DateTime>();
+        internal Dictionary<string, int> InventoryDialogIDs { get; set; } = new Dictionary<string, int>();
         internal ConcurrentDictionary<int, Location> LastSeenLocations { get; set; } = new ConcurrentDictionary<int, Location>();
         internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
         internal ConcurrentDictionary<int, Player> NearbyHiddenPlayers { get; private set; } = new ConcurrentDictionary<int, Player>();
@@ -151,6 +154,7 @@ namespace Talos.Base
         internal string Action { get; set; } = "Current Action: ";
         internal string Name { get; set; }
         internal string GuildName { get; set; }
+        internal bool BlockDialogs { get; set; } = false;
         internal bool SafeScreen { get; set; }
         internal bool IsCasting { get; set; }
         internal bool IsWalking { get; set; }
@@ -266,7 +270,25 @@ namespace Talos.Base
         internal bool HasParcel => Stats.Mail.HasFlag(Mail.HasParcel);
         internal bool IsSkulled => Player != null && (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Skull) || EffectsBar.Contains((ushort)Enumerations.EffectsBar.WormSkull) && Player.IsSkulled);
 
- 
+        public bool ArcellaGift { get; internal set; }
+        public bool ArcellaGiftOpen { get; internal set; }
+        public bool Wdchest { get; internal set; }
+        public bool Wdchestopen { get; internal set; }
+        public bool Andorchest { get; internal set; }
+        public bool Andorchestopen { get; internal set; }
+        public bool Queenchest { get; internal set; }
+        public bool Queenchestopen { get; internal set; }
+        public bool Veltainchest { get; internal set; }
+        public bool Heavychest { get; internal set; }
+        public bool Smallbag { get; internal set; }
+        public bool Smallbagopen { get; internal set; }
+        public bool Bigbag { get; internal set; }
+        public bool Bigbagopen { get; internal set; }
+        public bool Heavybag { get; internal set; }
+        public bool Heavybagopen { get; internal set; }
+        public bool Atemeg { get; internal set; }
+        public bool Ateabbox { get; internal set; }
+        public bool Ateabgift { get; internal set; }
 
         internal Client(Server server, Socket socket)
         {
@@ -2670,6 +2692,33 @@ namespace Talos.Base
                 : Element.Any;
         }
 
+        public void SaveTimedStuff(EventType eventType)
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string directoryPath = System.IO.Path.Combine(baseDir, "TimedEvents", Name.ToLower());
+
+            Directory.CreateDirectory(directoryPath);
+
+            string filePath = System.IO.Path.Combine(directoryPath, "timedstuff.json");
+
+            Dictionary<string, DateTime> eventDictionary;
+            if (File.Exists(filePath))
+            {
+                string existingJson = File.ReadAllText(filePath);
+                eventDictionary = JsonConvert.DeserializeObject<Dictionary<string, DateTime>>(existingJson)
+                                  ?? new Dictionary<string, DateTime>();
+            }
+            else
+            {
+                eventDictionary = new Dictionary<string, DateTime>();
+            }
+
+            eventDictionary[eventType.ToString()] = DateTime.UtcNow;
+
+            string updatedJson = JsonConvert.SerializeObject(eventDictionary, Formatting.Indented);
+            File.WriteAllText(filePath, updatedJson);
+        }
+
 
 
 
@@ -2733,6 +2782,17 @@ namespace Talos.Base
             clientPacket.WriteString8(targetName);
             clientPacket.WriteString8(message);
             Enqueue(clientPacket);
+        }
+
+        internal bool UseItem(int slot)
+        {
+            ClientPacket clientPacket = new ClientPacket(28);
+            clientPacket.WriteByte((byte)slot);
+            clientPacket.WriteByte(0);
+            clientPacket.WriteByte(clientPacket.Opcode);
+            clientPacket.Write(new byte[7]);
+            Enqueue(clientPacket);
+            return true;
         }
         internal bool UseItem(string itemName)
         {
@@ -2883,16 +2943,16 @@ namespace Talos.Base
                 ServerMessage((byte)ServerMessageType.ActiveMessage, "You don't own that item.");
             else
                 num = Inventory[item].Slot;
-            ClientPacket clientPacket = new ClientPacket((byte)57);
-            clientPacket.WriteByte((byte)1);
+            ClientPacket clientPacket = new ClientPacket(57);
+            clientPacket.WriteByte(1);
             clientPacket.WriteInt32(npcID);
             clientPacket.WriteInt16(quantity > 1 ? (short)84 : (short)83);
             if (quantity > 1)
-                clientPacket.WriteByte((byte)1);
+                clientPacket.WriteByte(1);
             clientPacket.WriteByte(num);
             if (quantity > 1)
                 clientPacket.WriteString8(quantity.ToString());
-            Enqueue((Packet)clientPacket);
+            Enqueue(clientPacket);
         }
         internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId)
         {
@@ -3302,9 +3362,9 @@ namespace Talos.Base
         }
         internal void RaiseStrStat()
         {
-            ClientPacket clientPacket = new ClientPacket((byte)71);
-            clientPacket.WriteByte((byte)1);
-            Enqueue((Packet)clientPacket);
+            ClientPacket clientPacket = new ClientPacket(71);
+            clientPacket.WriteByte(1);
+            Enqueue(clientPacket);
         }
 
 

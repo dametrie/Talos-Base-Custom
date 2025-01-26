@@ -129,6 +129,15 @@ namespace Talos.Objects
             }
         }
 
+        internal void Close()
+        {
+            if (DateTime.UtcNow.Subtract(_lastReply).TotalSeconds >= 1.0)
+            {
+                _client.ReplyDialog(ObjectType, ObjectID, PursuitID, DialogID);
+                _lastReply = DateTime.UtcNow;
+            }
+        }
+
 
     }
 }

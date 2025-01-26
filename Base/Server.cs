@@ -8,6 +8,8 @@ using System.Linq;
 using System.Media;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -27,6 +29,8 @@ using Talos.PInvoke;
 using Talos.Properties;
 using Talos.Structs;
 using WindowsInput;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
+using Dialog = Talos.Objects.Dialog;
 using Point = Talos.Structs.Point;
 
 
@@ -70,6 +74,20 @@ namespace Talos
         private Animation _lastAnimation;
         private string _itemToReEquip = "";
         private bool _clientWalkPending;
+        private string[] spareStickMessages = new[]
+        {
+            "Thank ya so much. Here's a few coins for your effort.",
+            "Ah thank ya, you've done well.",
+            "Ah, it's a good thing you've done",
+            "You remind me of my own little child."
+        };
+
+        private string[] perfectHairstyleMessages = new[]
+        {
+            "Excellent! Thank you so much!",
+            "Well done!",
+            "You remind me of a dear friend"
+        };
         internal DateTime ArenaAnnounceTimer { get; set; } = DateTime.MinValue;
 
         InputSimulator inputSimulator = new InputSimulator();
@@ -660,9 +678,65 @@ namespace Talos
             ushort pursuitID = clientPacket.ReadUInt16();
             ushort dialogID = clientPacket.ReadUInt16();
 
-            if ((client.Dialog != null) && ((client.Dialog.ObjectType == objectType) && 
-               ((client.Dialog.ObjectID == objectID) && ((pursuitID == 0) && (dialogID == 1)))))
+            if (objectType == 2)
+            {
+                if (client.ArcellaGift)
+                {
+                    client.ArcellaGift = false;
+                    client.ArcellaGiftOpen = true;
+                }
+
+                if (client.Smallbag)
+                {
+                    client.Smallbag = false;
+                    client.Smallbagopen = true;
+                }
+
+                if (client.Bigbag)
+                {
+                    client.Bigbag = false;
+                    client.Bigbagopen = true;
+                }
+
+                if (client.Heavybag)
+                {
+                    client.Heavybag = false;
+                    client.Heavybagopen = true;
+                }
+
+                if (dialogID == 2) // Specific dialog action (e.g., chest opening)
+                {
+                    if (client.Wdchest)
+                    {
+                        client.SaveTimedStuff(EventType.WD_Chest);
+                        client.Wdchest = false;
+                        client.Wdchestopen = true;
+                    }
+
+                    if (client.Andorchest)
+                    {
+                        client.SaveTimedStuff(EventType.AndorChest);
+                        client.Andorchest = false;
+                        client.Andorchestopen = true;
+                    }
+
+                    if (client.Queenchest)
+                    {
+                        client.SaveTimedStuff(EventType.QueenChest);
+                        client.Queenchest = false;
+                        client.Queenchestopen = true;
+                    }
+                }
+            }
+
+            if (client.Dialog != null &&
+                client.Dialog.ObjectType == objectType &&
+                client.Dialog.ObjectID == objectID &&
+                pursuitID == 0 &&
+                dialogID == 1)
+            {
                 client.Dialog = null;
+            }
 
             return true;
         }
@@ -1728,9 +1802,9 @@ namespace Talos
         {
             byte num = serverPacket.ReadByte();
             //Console.WriteLine($"[SERVER] Sound index: {num}");
-            if (num == (byte)19) // That god-awful sound that plays constantly in Tavaly
+            if (num == 19) // That god-awful sound that plays constantly in Tavaly
                 return false;
-            return !client.AssailNoise || num != (byte)1 && num != (byte)101 && num != (byte)16;
+            return !client.AssailNoise || num != 1 && num != 101 && num != 16;
         }
 
         private bool ServerMessage_0x1A_BodyAnimation(Client client, ServerPacket serverPacket)
@@ -2011,223 +2085,98 @@ namespace Talos
 
         private bool ServerMessage_0x30_Dialog(Client client, ServerPacket serverPacket)
         {
-            bool dialogSuccess;
+            ResetDialogFlags(client);
+
             byte inputLength = 0;
             string topCaption = string.Empty;
             string bottomCaption = string.Empty;
             List<string> options = new List<string>();
+
             try
             {
                 byte dialogType = serverPacket.ReadByte();
-                if (dialogType != 10)
-                {
-                    byte objType = serverPacket.ReadByte();
-                    int objID = serverPacket.ReadInt32();
-                    byte unknown = serverPacket.ReadByte();
-                    ushort sprite1 = serverPacket.ReadUInt16();
-                    byte color1 = serverPacket.ReadByte();
-                    byte unknown2 = serverPacket.ReadByte();
-                    ushort sprite2 = serverPacket.ReadUInt16();
-                    byte color2 = serverPacket.ReadByte();
-                    ushort pursuitID = serverPacket.ReadUInt16();
-                    ushort dialogID = serverPacket.ReadUInt16();
-                    bool prevButton = serverPacket.ReadBoolean();
-                    bool nextButton = serverPacket.ReadBoolean();
-                    byte unknown3 = serverPacket.ReadByte();
-                    string objName = serverPacket.ReadString8();
-                    int num1 = serverPacket.Position;
-                    string npcDialog = serverPacket.ReadString16();
-                    int num17 = serverPacket.Position;
 
-                    if (npcDialog == "You are going to be arrested for sleep-fighting ((Auto Hunting)) in five minutes unless you state that you do not wish to.")
-                    {
-                        ThreadPool.QueueUserWorkItem(_ => client.SleepFighting());
-                    }
-                    if (npcDialog != "You have already sent a world shout in the last 5 minutes.")
-                    {
-                        client.ClientTab.UpdateNpcInfo(npcDialog, dialogID, pursuitID);
-                        client.NpcDialog = npcDialog;
-                        int captionOffset = dialogType - 2;
-                        if (captionOffset != 0)
-                        {
-                            if (captionOffset == 2)
-                            {
-                                topCaption = serverPacket.ReadString8();
-                                inputLength = serverPacket.ReadByte();
-                                bottomCaption = serverPacket.ReadString8();
-                            }
-                        }
-                        else
-                        {
-                            byte length = serverPacket.ReadByte();
-                            for (int i = 0; i < length; i++)
-                            {
-                                options.Add(serverPacket.ReadString8());
-                            }
-                        }
-                        client.Dialog = new Dialog(dialogType, objType, objID, unknown, sprite1, color1, unknown2, sprite2, color2, pursuitID, dialogID, prevButton, nextButton, unknown3, objName, npcDialog, options, topCaption, inputLength, bottomCaption, client);
-                        Console.WriteLine("Dialog Type: " + dialogType);
-                        Console.WriteLine("Object Type: " + objType);
-                        Console.WriteLine("Object ID: " + objID);
-                        Console.WriteLine("Unknown: " + unknown);
-                        Console.WriteLine("Sprite 1: " + sprite1);
-                        Console.WriteLine("Color 1: " + color1);
-                        Console.WriteLine("Unknown 2: " + unknown2);
-                        Console.WriteLine("Sprite 2: " + sprite2);
-                        Console.WriteLine("Color 2: " + color2);
-                        Console.WriteLine("Pursuit ID: " + pursuitID);
-                        Console.WriteLine("Dialog ID: " + dialogID);
-                        Console.WriteLine("Prev Button: " + prevButton);
-                        Console.WriteLine("Next Button: " + nextButton);
-                        Console.WriteLine("Unknown 3: " + unknown3);
-                        Console.WriteLine("Object Name: " + objName);
-                        Console.WriteLine("NPC Dialog: " + npcDialog);
-                        Console.WriteLine("Options: " + options);
-                        Console.WriteLine("Top Caption: " + topCaption);
-                        Console.WriteLine("Input Length: " + inputLength);
-                        Console.WriteLine("Bottom Caption: " + bottomCaption);
-
-                        if ((npcDialog == "Do you wish to go back to Chaos 1?") || (npcDialog == "You are about to enter a hostile area. Do you wish to proceed?"))
-                        {
-                            client.Dialog.DialogNext(1);
-                            return false;
-                        }
-                        if (npcDialog == "Lying in bed, your eyes become heavy. The cold and weary day has finally caught up to you. Do you want to sleep?")
-                        {
-                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1), 1);
-                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
-                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
-                            return false;
-                        }
-                        if ((npcDialog == "((You are entering a role-playing town where role-playing is strictly enforced. Please do not speak words that are not appropriate to the theme of Dark Ages. Any act of heresy can result in a temporary banishment from the town.))") || (npcDialog == "Congratulations in finding a Golden Starfish!"))
-                        {
-                            client.Dialog.DialogNext();
-                            return false;
-                        }
-                        if (npcDialog == "You throw the Braided Vine around the rocks hoping it gets lodged in between them.")
-                        {
-                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
-                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
-                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
-                            return false;
-                        }
-                        if ((npcDialog == "The Braided Vine unravels from the rocks and you loose your footing.") || (npcDialog == "I don't think this is the correct order for the story. I better look at the other Wall Tablets."))
-                        {
-                            client.Dialog.Reply();
-                            return false;
-                        }
-                        if (npcDialog == "The Braided Vine starts to unravel, but you quickly jumped to dry land.")
-                        {
-                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
-                            client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
-                            return false;
-                        }
-                        if (npcDialog == "*The Yowien Guard sniffs you, then suddenly attacks you. You run back to a safe distance*")
-                        {
-                            client.ClientTab.walkBtn.Text = "Walk";
-                        }
-                        else if (npcDialog == "This will reset your labor to one hour. You can only do this once.")
-                        {
-                            client.HasLabor = true;
-                        }
-                        else if (npcDialog == "Will you be respectful of the meditations and not reveal the secrets of meditation?")
-                        {
-                            client.Dialog.DialogNext(2);
-                        }
-                        else if (client.ClientTab.toggleHubaeBtn.Text == "Disable")
-                        {
-                            string str5;
-                            if (npcDialog == "Welcome to Dark Ages : Online Roleplaying. This tutorial will give you the facts and skills you need to begin.")
-                            {
-                                for (int i = 0; i < 6; i++)
-                                {
-                                    client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
-                                }
-                                Thread.Sleep(1000);
-                                return false;
-                            }
-                            if (npcDialog == "You are about to leave the tutorial. Heres a hint when starting, speak with all the mundanes (merchants) in Mileth (the starting town). Remember, this is an online world, you set your own goals and missions for your character.")
-                            {
-                                client.ReplyDialog(objType, objID, pursuitID, 2);
-                                client.ReplyDialog(objType, objID, pursuitID, 3);
-                                client.ReplyDialog(objType, objID, pursuitID, 11, 1);
-                                client.ReplyDialog(objType, objID, pursuitID, 0x13);
-                                client.ReplyDialog(objType, objID, pursuitID, 0x31);
-                                client.ReplyDialog(objType, objID, pursuitID, 0x6d, 2);
-                                client.ReplyDialog(objType, objID, pursuitID, 0x2a);
-                                Thread.Sleep(1000);
-                                client.Dialog = null;
-                                return false;
-                            }
-                            if (npcDialog == "You rub your eyes...")
-                            {
-                                ThreadPool.QueueUserWorkItem(state =>
-                                {
-                                    var tuple = (Tuple<byte, int, ushort>)state;
-                                    client.NewAisling(tuple.Item1, tuple.Item2, tuple.Item3);
-                                },
-                                Tuple.Create(client, objType, objID, pursuitID));
-                                return false;
-                            }
-                            if (npcDialog == "You legs are the strongest.  You enemies will be scattered.")
-                            {
-                                client.Bot._circle1 = true;
-                                return false;
-                            }
-                            if (npcDialog == "Over that left door, you can be born a Monk.  You will be strong in working with the Nature.  You will save the people in danger, and only you will be able to increase other peoples' mana.")
-                            {
-                                client.Bot._circle2 = true;
-                                return false;
-                            }
-                            if (!client.Bot._hasWhiteDugon && CONSTANTS.WHITE_DUGON_RESPONSES.TryGetValue(npcDialog, out str5))
-                            {
-                                int index = 2147483647;
-                                index = options.IndexOf(str5);
-                                if (index != 2147483647)
-                                {
-                                    client.Dialog.DialogNext((byte)(index + 1));
-                                }
-                            }
-                            else
-                            {
-                                string str6;
-                                if (client.Bot._hasWhiteDugon && CONSTANTS.GREEN_DUGON_RESPONSES.TryGetValue(npcDialog, out str6))
-                                {
-                                    int index = 2147483647;
-                                    index = options.IndexOf(str6);
-                                    if (index != 2147483647)
-                                    {
-                                        client.Dialog.DialogNext((byte)(index + 1));
-                                    }
-                                }
-                            }
-                        }
-                        if (objType == 2)
-                        {
-                            client.ObjectID[objName] = objID;
-                        }
-                        return true;//may be return false but it freezes on dialog...
-                    }
-                    else
-                    {
-                        TimeSpan span = new TimeSpan(0, 5, 0) - DateTime.UtcNow.Subtract(_lastWorldShout);
-                        client.ServerDialog(dialogType, objType, objID, unknown, sprite1, color1, unknown2, sprite2, color2, pursuitID, dialogID, false, false, unknown3, objName, "You may World Shout again in " + ((_lastWorldShout != DateTime.MinValue) ? (((span.Minutes > 1) ? $"{span.Minutes} minutes and " : ((span.Minutes > 0) ? $"{span.Minutes} minutes and " : string.Empty)) + $"{span.Seconds} seconds.") : "unkown value."));
-                        dialogSuccess = false;
-                    }
-                }
-                else
+                if (dialogType == 10)
                 {
                     client.Dialog = null;
-                    dialogSuccess = true;
+                    return true; // End dialog
                 }
+
+                // Parse dialog details
+                byte objectType = serverPacket.ReadByte();
+                int objectID = serverPacket.ReadInt32();
+                byte unknown1 = serverPacket.ReadByte();
+                ushort sprite1 = serverPacket.ReadUInt16();
+                byte color1 = serverPacket.ReadByte();
+                byte unknown2 = serverPacket.ReadByte();
+                ushort sprite2 = serverPacket.ReadUInt16();
+                byte color2 = serverPacket.ReadByte();
+                ushort pursuitID = serverPacket.ReadUInt16();
+                ushort dialogID = serverPacket.ReadUInt16();
+                bool prevButton = serverPacket.ReadBoolean();
+                bool nextButton = serverPacket.ReadBoolean();
+                byte unknown3 = serverPacket.ReadByte();
+                string objName = serverPacket.ReadString8();
+                int position1 = serverPacket.Position;
+                string npcDialog = serverPacket.ReadString16();
+                int position2 = serverPacket.Position;
+
+                // Store the dialog object ID for inventory-type objects
+                if (objectType == 2)
+                {
+                    client.InventoryDialogIDs[objName] = objectID;
+                }
+
+                // Update client UI and state
+                client.ClientTab.npcText.Text = npcDialog;
+                client.ClientTab.dialogIdLbl.Text = $"Dialog ID: {dialogID}";
+                client.ClientTab.pursuitLbl.Text = $"Pursuit ID: {pursuitID}";
+                client.NpcDialog = npcDialog;
+
+                // Parse additional dialog options based on dialog type
+                switch (dialogType - 2)
+                {
+                    case 0:
+                        byte optionCount = serverPacket.ReadByte();
+                        for (int i = 0; i < optionCount; i++)
+                            options.Add(serverPacket.ReadString8());
+                        break;
+                    case 2:
+                        topCaption = serverPacket.ReadString8();
+                        inputLength = serverPacket.ReadByte();
+                        bottomCaption = serverPacket.ReadString8();
+                        break;
+                }
+
+                // Update client dialog object
+                client.Dialog = new Dialog(dialogType, objectType, objectID, unknown1, sprite1, color1, unknown2, sprite2, color2,
+                                            pursuitID, dialogID, prevButton, nextButton, unknown3, objName, npcDialog, options,
+                                            topCaption, inputLength, bottomCaption, client);
+
+                // Handle specific NPC dialog scenarios
+                if (HandleSpecialDialogs(client, npcDialog, dialogType, objectType, objectID, pursuitID, dialogID, unknown1, sprite1, color1, unknown2, sprite2, color2, unknown3, objName, options))
+                    return false;
+
+                // Handle map-specific event tracking
+                if (HandleMapSpecificEvents(client, npcDialog, client.Map.MapID))
+                    return false;
+
+                // Handle chest and bag interactions
+                HandleChestAndBagInteractions(client, npcDialog, objName);
+
+                // Check ignored dialogs
+                if (client.IgnoredDialogs.Contains(objName))
+                {
+                    client.IgnoredDialogs.Remove(objName);
+                    return false;
+                }
+
+                return !client.BlockDialogs;
             }
             catch
             {
-                dialogSuccess = false;
+                return false; // Return false on failure
             }
-
-            return dialogSuccess;
-
         }
 
         private bool ServerMessage_0x31_Board(Client client, ServerPacket serverPacket)
@@ -3493,7 +3442,7 @@ namespace Talos
                 ++slot;
 
             // Create and add the new combo skill
-            Skill skill = new Skill(slot, comboInfo.ComboScrollName, (ushort)101, (byte)100, (byte)100)
+            Skill skill = new Skill(slot, comboInfo.ComboScrollName, 101, 100, 100)
             {
                 Ticks = 1.0
             };
@@ -3754,6 +3703,400 @@ namespace Talos
             {
                 Console.WriteLine($"[CleanupInactiveCreatures] Exception: {ex.Message}");
             }
+        }
+
+        private void ResetDialogFlags(Client client)
+        {
+            client.ArcellaGift = false;
+            client.ArcellaGiftOpen = false;
+            client.Wdchest = false;
+            client.Wdchestopen = false;
+            client.Andorchest = false;
+            client.Andorchestopen = false;
+            client.Queenchest = false;
+            client.Queenchestopen = false;
+            client.Veltainchest = false;
+            client.Heavychest = false;
+            client.Smallbag = false;
+            client.Smallbagopen = false;
+            client.Bigbag = false;
+            client.Bigbagopen = false;
+            client.Heavybag = false;
+            client.Heavybagopen = false;
+            client.Atemeg = false;
+            client.Ateabbox = false;
+            client.Ateabgift = false;
+        }
+
+        private void HandleChestAndBagInteractions(Client client, string npcDialog, string objName)
+        {
+            if (objName == "Andor Chest" && npcDialog.Contains(", What type of prize"))
+                client.Andorchest = true;
+            else if (objName == "Andor Queen's Chest" && npcDialog.Contains(", What type of prize"))
+                client.Queenchest = true;
+            else if (objName == "Water Dungeon Chest" && npcDialog.Contains(", What type of prize would you"))
+                client.Wdchest = true;
+            else if (objName == "Canal Treasure Bag" && npcDialog.Contains("You are about to pull an item"))
+                client.Smallbag = true;
+            else if (objName == "Big Canal Treasure Bag" && npcDialog.Contains("pull an item"))
+                client.Bigbag = true;
+            else if (objName == "Heavy Canal Treasure Bag" && npcDialog.Contains("You are about to pull an item"))
+                client.Heavybag = true;
+            else if (objName == "Veltain Treasure Chest" && npcDialog.Contains("How much do you want to invest"))
+                client.Veltainchest = true;
+            else if (objName == "Heavy Veltain Treasure Chest" && npcDialog.Contains("How much do you want to invest"))
+                client.Heavychest = true;
+            else if (objName == "Ability and Experience Box" && npcDialog.Contains("You will gain great"))
+                client.Ateabbox = true;
+            else if (objName == "Ability and Experience Gift" && npcDialog.Contains("You will gain great"))
+                client.Ateabgift = true;
+            else if (objName == "Arcella's Gift1" && npcDialog.Contains("You are about to open the gift"))
+                client.ArcellaGift = true;
+            else if (objName == "Mother Erbie Gift" && npcDialog.Contains("You will gain great"))
+                client.Atemeg = true;
+        }
+
+        private bool HandleMapSpecificEvents(Client client, string npcDialog, int mapId)
+        {
+            switch (mapId)
+            {
+                case 115:
+                    if (npcDialog.StartsWith("I see you were able ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.PigChase);
+                        return true;
+                    }
+                    break;
+                case 132:
+                    if (spareStickMessages.Any(message => npcDialog.StartsWith(message, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        client.SaveTimedStuff(EventType.SpareStick);
+                        return true;
+                    }
+                    break;
+                case 950:
+                    if (perfectHairstyleMessages.Any(message => npcDialog.StartsWith(message, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        client.SaveTimedStuff(EventType.PerfectHairstyle);
+                        return true;
+                    }
+                    break;
+                case 992:
+                    if (npcDialog.StartsWith("Sorry, no faeries are willing to bond with you.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.PetFaerie);
+                        return true;
+                    }
+                    break;
+                case 3052:
+                    if (npcDialog.StartsWith("Excellent! Here is your prize", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.Fowls);
+                        return true;
+                    }
+                    break;
+                case 6805:
+                    if (npcDialog.StartsWith("You drink from the fountain.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.OrenFountain);
+                        return true;
+                    }
+                    break;
+                case 6998:
+                    if (npcDialog.StartsWith("Thank you for your efforts.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.WaterDungeon);
+                        return true;
+                    }
+                    break;
+                case 7050:
+                    if (npcDialog.StartsWith("Thank you for scaring", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.FilthyErbies);
+                        return true;
+                    }
+                    break;
+                case 8297:
+                    if (npcDialog.StartsWith("Excellent! Here is", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.SporeSet);
+                        return true;
+                    }
+                    break;
+                case 8298:
+                    if (npcDialog.StartsWith("Thank you! You saved me", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.FrogSet);
+                        return true;
+                    }
+                    break;
+                case 8990:
+                    if (npcDialog.StartsWith("This must be the wall markings that Nairn was talking about.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.AssassinLord);
+                        return true;
+                    }
+                    break;
+                case 8995:
+                    if (npcDialog.StartsWith("Guess who we encountered after performing the ritual?", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.Law);
+                        return true;
+                    }
+                    break;
+                case 10266:
+                    if (npcDialog.StartsWith("That's something for us to worry about", StringComparison.OrdinalIgnoreCase))
+                    {
+                        client.SaveTimedStuff(EventType.CursedHome);
+                        return true;
+                    }
+                    break;
+            }
+
+            return false;
+        }
+
+
+        private bool HandleSpecialDialogs(
+            Client client,
+            string npcDialog,
+            byte dialogType,
+            byte objType,
+            int objID,
+            ushort pursuitID,
+            ushort dialogID,
+            byte unknown1,
+            ushort sprite1,
+            byte color1,
+            byte unknown2,
+            ushort sprite2,
+            byte color2,
+            byte unknown3,
+            string gameObjectName,
+            List<string> options)
+        {
+            if (npcDialog == "Thanks a bunch, I wish I was there")
+            {
+                client.SaveTimedStuff(EventType.Penguins);
+                return true;
+            }
+
+            if (npcDialog == "Ahh well, it's best we don't tell Santa")
+            {
+                client.SaveTimedStuff(EventType.Rudolph);
+                return true;
+            }
+
+            if (npcDialog == "She finally bows her head, accepting it.")
+            {
+                client.SaveTimedStuff(EventType.TheLetter);
+                return true;
+            }
+
+            if (npcDialog == "Wonderful. Just wait a moment")
+            {
+                client.SaveTimedStuff(EventType.MothersLove);
+                return true;
+            }
+            if ((npcDialog == "Do you wish to go back to Chaos 1?") || (npcDialog == "You are about to enter a hostile area. Do you wish to proceed?"))
+            {
+                client.Dialog.DialogNext(1);
+                return true;
+            }
+            if (npcDialog == "Lying in bed, your eyes become heavy. The cold and weary day has finally caught up to you. Do you want to sleep?")
+            {
+                client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1), 1);
+                client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                return true;
+            }
+            if ((npcDialog == "((You are entering a role-playing town where role-playing is strictly enforced. Please do not speak words that are not appropriate to the theme of Dark Ages. Any act of heresy can result in a temporary banishment from the town.))") || (npcDialog == "Congratulations in finding a Golden Starfish!"))
+            {
+                client.Dialog.DialogNext();
+                return true;
+            }
+
+            if ((npcDialog == "The Braided Vine unravels from the rocks and you lose your footing."))
+            {
+                client.Dialog.Reply();
+                return true;
+            }
+            if (npcDialog == "The Braided Vine starts to unravel, but you quickly jumped to dry land.")
+            {
+                client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                return true;
+            }
+            if (npcDialog == "You throw the Braided Vine around the rocks hoping it gets lodged in between them.")
+            {
+                client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                return true;
+            }
+            if ((npcDialog == "I don't think this is the correct order for the story. I better look at the other Wall Tablets."))
+            {
+                client.Dialog.Reply();
+                return true;
+            }
+            if (npcDialog == "*The Yowien Guard sniffs you, then suddenly attacks you. You run back to a safe distance*")
+            {
+                client.ClientTab.walkBtn.Text = "Walk";
+            }
+            if (npcDialog == "This will reset your labor to one hour. You can only do this once.")
+            {
+                client.HasLabor = true;
+            }
+            if (npcDialog == "Will you be respectful of the meditations and not reveal the secrets of meditation?")
+            {
+                client.Dialog.DialogNext(2);
+            }
+            if (npcDialog == "You are going to be arrested for sleep-fighting ((Auto Hunting)) in five minutes unless you state that you do not wish to.")
+            {
+                ThreadPool.QueueUserWorkItem(_ => client.SleepFighting());
+                return true;
+            }
+            if (npcDialog.Contains("Golden Starfish") || npcDialog.Contains("role-playing town"))
+            {
+                client.Dialog.DialogNext();
+                return true;
+            }
+            if (npcDialog == "The full Red Moon shines brightly in the sky. You stare at it, hypnotized by its light. Your body starts to tremble. You breathe heavily as you continue to stare at the moon. Your body begins to change...")
+            {
+                client.Dialog.Close();
+                return true;
+            }
+
+            // Dugon meditation handling
+            if (client.ClientTab.toggleHubaeBtn.Text == "Disable")
+            {
+
+                if (npcDialog == "Welcome to Dark Ages : Online Roleplaying. This tutorial will give you the facts and skills you need to begin.")
+                {
+                    for (int i = 0; i < 6; i++)
+                    {
+                        client.ReplyDialog(objType, objID, pursuitID, (ushort)(dialogID + 1));
+                    }
+                    Thread.Sleep(1000);
+                    return true;
+                }
+                if (npcDialog == "You are about to leave the tutorial. Heres a hint when starting, speak with all the mundanes (merchants) in Mileth (the starting town). Remember, this is an online world, you set your own goals and missions for your character.")
+                {
+                    client.ReplyDialog(objType, objID, pursuitID, 2);
+                    client.ReplyDialog(objType, objID, pursuitID, 3);
+                    client.ReplyDialog(objType, objID, pursuitID, 11, 1);
+                    client.ReplyDialog(objType, objID, pursuitID, 0x13);
+                    client.ReplyDialog(objType, objID, pursuitID, 0x31);
+                    client.ReplyDialog(objType, objID, pursuitID, 0x6d, 2);
+                    client.ReplyDialog(objType, objID, pursuitID, 0x2a);
+                    Thread.Sleep(1000);
+                    client.Dialog = null;
+                    return true;
+                }
+                if (npcDialog == "You rub your eyes...")
+                {
+                    ThreadPool.QueueUserWorkItem(state =>
+                    {
+                        var tuple = (Tuple<byte, int, ushort>)state;
+                        client.NewAisling(tuple.Item1, tuple.Item2, tuple.Item3);
+                    },
+                    Tuple.Create(client, objType, objID, pursuitID));
+                    return true;
+                }
+                if (npcDialog == "You legs are the strongest.  You enemies will be scattered.")
+                {
+                    client.Bot._circle1 = true;
+                    return true;
+                }
+                if (npcDialog == "Over that left door, you can be born a Monk.  You will be strong in working with the Nature.  You will save the people in danger, and only you will be able to increase other peoples' mana.")
+                {
+                    client.Bot._circle2 = true;
+                    return true;
+                }
+                if (!client.Bot._hasWhiteDugon && CONSTANTS.WHITE_DUGON_RESPONSES.TryGetValue(npcDialog, out string whiteMeditation))
+                {
+                    int index = int.MaxValue;
+                    index = options.IndexOf(whiteMeditation);
+                    if (index != int.MaxValue)
+                    {
+                        client.Dialog.DialogNext((byte)(index + 1));
+                    }
+                }
+                else
+                {
+                    if (client.Bot._hasGreenDugon && CONSTANTS.GREEN_DUGON_RESPONSES.TryGetValue(npcDialog, out string greenMeditation))
+                    {
+                        int index = int.MaxValue;
+                        index = options.IndexOf(greenMeditation);
+                        if (index != int.MaxValue)
+                        {
+                            client.Dialog.DialogNext((byte)(index + 1));
+                        }
+                    }
+                }
+            }
+
+            // World shout cooldown
+            if (npcDialog == "You have already sent a world shout in the last 5 minutes.")
+            {
+                TimeSpan timeRemaining = TimeSpan.FromMinutes(5) - (DateTime.UtcNow - _lastWorldShout);
+                string message = timeRemaining.TotalSeconds > 0
+                    ? $"You may World Shout again in {timeRemaining.Minutes} minutes and {timeRemaining.Seconds} seconds."
+                    : "unknown value.";
+
+                client.ServerDialog(dialogType, objType, objID, unknown1, sprite1, color1, unknown2, sprite2, color2, pursuitID, dialogID, false, false, unknown3, gameObjectName, message);
+                return true;
+            }
+
+            if (npcDialog == "Mentorship")
+            {
+                client.Dialog.Close();
+
+                if (!client.SafeScreen)
+                {
+                    client.ServerMessage((byte)ServerMessageType.Whisper, "You walked on a mentor popup.");
+                }
+
+                return true;
+            }
+
+            if (npcDialog.StartsWith(
+            "Mentorship: You have no mentor and are not high enough level",
+            StringComparison.OrdinalIgnoreCase))
+            {
+                client.Dialog.Close();
+
+                return true;
+            }
+
+            // "wishes to be your mentor ..."
+            if (npcDialog.EndsWith(
+                "wishes to be your mentor. If you sincerely believe this Aisling will teach and care for your well-being, consider accepting the Aisling as your Mentor.  Otherwise, don't be lured into a trap.",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                client.Dialog.Close();
+                if (!client.SafeScreen)
+                {
+                    client.ServerMessage((byte)ServerMessageType.Whisper, "Someone tried to mentor popup you.");
+                }
+                return true;
+            }
+
+            // "wishes to be your guide and initiate ..."
+            if (npcDialog.EndsWith(
+                "wishes to be your guide and initiate. You were actually initiated by a different Aisling. You should only disgrace your first initiator if he or she has abandoned you or mistreats you.",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                client.Dialog.Close();
+                if (!client.SafeScreen)
+                {
+                    client.ServerMessage((byte)ServerMessageType.Whisper, "You walked on a guide lecture popup.");
+                }
+                return true;
+            }
+
+
+            return false;
         }
     }
 }

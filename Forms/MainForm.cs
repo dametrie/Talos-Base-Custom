@@ -138,6 +138,8 @@ namespace Talos
             if (!new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
             {
                 int num1 = (int)MessageDialog.Show(this, "Make sure to run the bot as Admin or you will lose functionality.");
+
+                Application.Exit();
             }
         }
 
@@ -196,7 +198,10 @@ namespace Talos
         {
             if (InvokeRequired)
             {
-                Invoke(new Action(() => { RemoveClientTab(client); }));
+                if (IsHandleCreated)
+                {
+                    Invoke(new Action(() => { RemoveClientTab(client); }));
+                }
                 return;
             }
 
@@ -250,8 +255,9 @@ namespace Talos
 
 
         #region Launch Darkages
-        internal Process LaunchDarkages(bool noWalls = false)
+        internal Process LaunchDarkages()
         {
+
             if (!Directory.Exists(Settings.Default.DataPath))
             {
                 Directory.CreateDirectory(Settings.Default.DataPath);
@@ -272,7 +278,7 @@ namespace Talos
             using (ProcMemoryStream stream = new ProcMemoryStream(information.ProcessId,
                 ProcessAccessFlags.VmOperation | ProcessAccessFlags.VmRead | ProcessAccessFlags.VmWrite))
             {
-                if (noWalls)
+                if (Settings.Default.NoWalls)
                 {
                     stream.Position = 6281349L;
                     stream.WriteByte(144);
@@ -351,7 +357,6 @@ namespace Talos
             }
             NativeMethods.SetWindowLong(processById.MainWindowHandle, -20, NativeMethods.GetWindowLong(processById.MainWindowHandle, -20) | 524288);
             NativeMethods.SetLayeredWindowAttributes(processById.MainWindowHandle, 0U, (byte)Math.Truncate(byte.MaxValue / (100.0 / Settings.Default.DAOpacity)), 2U);
-            NativeMethods.SetWindowText(processById.MainWindowHandle, "definitely not dawnd");
             return processById;
         }
 

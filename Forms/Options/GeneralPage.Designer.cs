@@ -53,6 +53,7 @@ namespace Talos.Options
             this.darkAgesPathButton = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.darkAgesPath = new System.Windows.Forms.TextBox();
+            this.chkNoWalls = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.daOpacitySldr)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.botOpacitySldr)).BeginInit();
             this.SuspendLayout();
@@ -78,7 +79,7 @@ namespace Talos.Options
             this.paranoiaCbox.TabIndex = 56;
             this.paranoiaCbox.Text = "Paranoid mode (stranger=ranger)";
             this.paranoiaCbox.UseVisualStyleBackColor = true;
-            this.paranoiaCbox.CheckedChanged += new EventHandler(this.paranoiaCbox_CheckedChanged);
+            this.paranoiaCbox.CheckedChanged += new System.EventHandler(this.paranoiaCbox_CheckedChanged);
             // 
             // logOnStartup
             // 
@@ -154,8 +155,7 @@ namespace Talos.Options
             this.daOpacitySldr.TickFrequency = 10;
             this.daOpacitySldr.TickStyle = System.Windows.Forms.TickStyle.Both;
             this.daOpacitySldr.Value = 100;
-            this.daOpacitySldr.Scroll += new EventHandler(this.daOpacitySldr_Scroll);
-
+            this.daOpacitySldr.Scroll += new System.EventHandler(this.daOpacitySldr_Scroll);
             // 
             // botTransVal
             // 
@@ -187,8 +187,7 @@ namespace Talos.Options
             this.botOpacitySldr.TickFrequency = 10;
             this.botOpacitySldr.TickStyle = System.Windows.Forms.TickStyle.Both;
             this.botOpacitySldr.Value = 100;
-            this.botOpacitySldr.Scroll += new EventHandler(this.botOpacitySldr_Scroll);
-
+            this.botOpacitySldr.Scroll += new System.EventHandler(this.botOpacitySldr_Scroll);
             // 
             // whisperSound
             // 
@@ -256,7 +255,7 @@ namespace Talos.Options
             this.dataPathButton.TabIndex = 40;
             this.dataPathButton.Text = "Browse";
             this.dataPathButton.UseVisualStyleBackColor = true;
-            this.darkAgesPathButton.Click += new EventHandler(this.darkAgesPathButton_Click);
+            this.dataPathButton.Click += new System.EventHandler(this.dataPathButton_Click);
             // 
             // label2
             // 
@@ -285,8 +284,7 @@ namespace Talos.Options
             this.darkAgesPathButton.TabIndex = 37;
             this.darkAgesPathButton.Text = "Browse";
             this.darkAgesPathButton.UseVisualStyleBackColor = true;
-            this.dataPathButton.Click += new EventHandler(this.dataPathButton_Click);
-
+            this.darkAgesPathButton.Click += new System.EventHandler(this.darkAgesPathButton_Click);
             // 
             // label1
             // 
@@ -306,11 +304,23 @@ namespace Talos.Options
             this.darkAgesPath.Size = new System.Drawing.Size(310, 23);
             this.darkAgesPath.TabIndex = 35;
             // 
+            // chkNoWalls
+            // 
+            this.chkNoWalls.AutoSize = true;
+            this.chkNoWalls.Location = new System.Drawing.Point(133, 149);
+            this.chkNoWalls.Name = "chkNoWalls";
+            this.chkNoWalls.Size = new System.Drawing.Size(71, 19);
+            this.chkNoWalls.TabIndex = 58;
+            this.chkNoWalls.Text = "No walls";
+            this.chkNoWalls.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.chkNoWalls.UseVisualStyleBackColor = true;
+            // 
             // GeneralPage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
+            this.Controls.Add(this.chkNoWalls);
             this.Controls.Add(this.enableKom);
             this.Controls.Add(this.paranoiaCbox);
             this.Controls.Add(this.logOnStartup);
@@ -370,5 +380,6 @@ namespace Talos.Options
         private System.Windows.Forms.Button darkAgesPathButton;
         private System.Windows.Forms.Label label1;
         internal System.Windows.Forms.TextBox darkAgesPath;
+        private System.Windows.Forms.CheckBox chkNoWalls;
     }
 }

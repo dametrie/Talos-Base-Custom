@@ -31,6 +31,7 @@ namespace Talos.Options
             enableOverlay.Checked = Settings.Default.EnableOverlay;
             logOnStartup.Checked = Settings.Default.LogOnStartup;
             paranoiaCbox.Checked = Settings.Default.paranoiaMode;
+            chkNoWalls.Checked = Settings.Default.NoWalls;
 
         }
 
@@ -51,6 +52,7 @@ namespace Talos.Options
             Settings.Default.EnableOverlay = enableOverlay.Checked;
             Settings.Default.LogOnStartup = logOnStartup.Checked;
             Settings.Default.paranoiaMode = paranoiaCbox.Checked;
+            Settings.Default.NoWalls = chkNoWalls.Checked;
             Settings.Default.Save();
         }
 

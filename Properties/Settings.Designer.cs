@@ -358,5 +358,17 @@ namespace Talos.Properties {
                 this["OverrideSprites"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool NoWalls {
+            get {
+                return ((bool)(this["NoWalls"]));
+            }
+            set {
+                this["NoWalls"] = value;
+            }
+        }
     }
 }

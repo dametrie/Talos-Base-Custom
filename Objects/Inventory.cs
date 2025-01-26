@@ -76,7 +76,7 @@ internal sealed class Inventory : IEnumerable<Item>, IEnumerable
         int totalCount = 0;
         for (int index = 0; index < MAX_ITEMS; ++index)
         {
-            if (item[index] != null && (int)item[index].Sprite - CONSTANTS.ITEM_SPRITE_OFFSET == (int)sprite)
+            if (item[index] != null && item[index].Sprite - CONSTANTS.ITEM_SPRITE_OFFSET == sprite)
             {
                 totalCount += includeStack ? item[index].Quantity : 1;
             }

@@ -863,7 +863,7 @@ namespace Talos.Forms
 
         private void toggleDialogBtn_Click(object sender, EventArgs e)
         {
-            _client.DialogOn = toggleDialogBtn.Checked;
+            _client.BlockDialogs = toggleDialogBtn.Checked;
         }
         private void packetList_KeyDown(object sender, KeyEventArgs e)
         {
@@ -3884,14 +3884,14 @@ namespace Talos.Forms
             if (btnBashingNew.Text == "Start Bashing")
             {
                 btnBashingNew.Text = "Stop Bashing";
-                btnBashingNew.Image = (Image)Resources.grumblade;
+                btnBashingNew.Image = Resources.grumblade;
                 btnBashingNew.ImageAlign = ContentAlignment.MiddleLeft;
                 chkBashAsgall.Enabled = true;
             }
             else
             {
                 btnBashingNew.Text = "Start Bashing";
-                btnBashingNew.Image = (Image)Resources.bruneblade;
+                btnBashingNew.Image = Resources.bruneblade;
                 btnBashingNew.ImageAlign = ContentAlignment.MiddleLeft;
             }
         }

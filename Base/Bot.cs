@@ -18,6 +18,7 @@ using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
 using Talos.Utility;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace Talos.Base
 {
@@ -93,6 +94,7 @@ namespace Talos.Base
         private bool _swappingNecklace;
         private DateTime _lastUsedMonsterCall = DateTime.MinValue;
         internal bool _hasWhiteDugon;
+        internal bool _hasGreenDugon;
         private List<Player> _nearbyPlayers;
         internal bool _circle1;
         internal bool _circle2;
@@ -161,8 +163,8 @@ namespace Talos.Base
 
                     HolidayEvents();
                     // ItemFinding();
-                    // TreasureChests();
-                    // Raffles();
+                    VeltainChests();
+                    Raffles();
                     TaskLoop();
                     // TavalyWallHacks();
                     MonsterForm();
@@ -177,6 +179,116 @@ namespace Talos.Base
                 }
             }
         }
+
+        private void VeltainChests()
+        {
+            if (!Client.ChestToggle || Client.InventoryFull)
+                return;
+
+            if (Client.Inventory.Contains("Treasure Chest"))
+            {
+                foreach (var item in Client.Inventory.Where(i => i.Sprite == 36001))
+                {
+                    Client.UseItem(item.Slot);
+                    Thread.Sleep(500);
+
+                    foreach (var inventoryDialogId in Client.InventoryDialogIDs)
+                    {
+                        if (inventoryDialogId.Key == "Veltain Treasure Chest")
+                        {
+                            Client.ReplyDialog(2, inventoryDialogId.Value, 0, 2);
+                            Client.ReplyDialog(2, inventoryDialogId.Value, 0, 2);
+                            Client.ReplyDialog(2, inventoryDialogId.Value, 0, 2, "1");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Client.ServerMessage((byte)ServerMessageType.Whisper, "No chests found.");
+                Client.ChestToggle = false;
+            }
+        }
+
+
+        private void Raffles()
+        {
+            if (Client.Map == null || Client == null)
+                return;
+
+            if (Client.Map.Name == "Balanced Arena")
+            {
+                Client.RaffleToggle = true;
+            }
+            else if (Client.RaffleToggle)
+            {
+                Client.ServerMessage((byte)ServerMessageType.ActiveMessage, "Must be in Balanced Arena: Raffle opening is now toggled off.");
+                Client.RaffleToggle = false;
+                return;
+            }
+
+            if (!Client.RaffleToggle || Client.InventoryFull)
+                return;
+
+            ProcessRaffleItems("LA Raffle", "LA Raffle(x5)");
+            ProcessRaffleItems("LN Raffle", "LN Raffle(x5)");
+
+            if (!Client.Inventory.Contains("LA Raffle") &&
+                !Client.Inventory.Contains("LN Raffle") &&
+                Client.Map.Name != "Balanced Arena")
+            {
+                Client.ServerMessage((byte)ServerMessageType.ActiveMessage, "No raffles found.");
+                Client.RaffleToggle = false;
+            }
+        }
+
+        private void ProcessRaffleItems(string singleRaffleName, string bundleRaffleName)
+        {
+            if (Client.Inventory.Contains(bundleRaffleName))
+            {
+                int singleRaffleCount = Client.Inventory.CountOf(singleRaffleName);
+                int bundleRaffleCount = Client.Inventory.CountOf(bundleRaffleName);
+                int totalRaffles = singleRaffleCount + (bundleRaffleCount * 5);
+
+                if (totalRaffles > 100)
+                {
+                    int bundlesToUse = (100 - singleRaffleCount) / 5;
+                    var bundles = Client.Inventory.Where(item => item.Name == bundleRaffleName).Take(bundlesToUse);
+
+                    foreach (var bundle in bundles)
+                    {
+                        Client.UseItem(bundle.Slot);
+                    }
+                }
+                else
+                {
+                    foreach (var bundle in Client.Inventory.Where(item => item.Name == bundleRaffleName))
+                    {
+                        Client.UseItem(bundle.Slot);
+                    }
+
+                    Thread.Sleep(5000);
+                }
+            }
+
+            while (Client.Inventory.Contains(singleRaffleName))
+            {
+                Client.UseItem(singleRaffleName);
+                var timer = Utility.Timer.FromSeconds(5);
+
+                while (Client.Dialog == null)
+                {
+                    if (timer.IsTimeExpired)
+                        return;
+
+                    Thread.Sleep(10);
+                }
+
+                Client.Dialog.DialogNext();
+                Thread.Sleep(500);
+            }
+        }
+
 
         private void DuraLoop()
         {
@@ -758,7 +870,7 @@ namespace Talos.Base
             {
                 SwapNecklace("Light");
             }
-            else if (CONSTANTS.SHINEWOOD_DARK.Contains((int)target.SpriteID) && Client.OffenseElement != "Dark" && sinceLastSwap.TotalSeconds > 2.0 && !autoForm)
+            else if (CONSTANTS.SHINEWOOD_DARK.Contains(target.SpriteID) && Client.OffenseElement != "Dark" && sinceLastSwap.TotalSeconds > 2.0 && !autoForm)
             {
                 SwapNecklace("Dark");
             }
@@ -1166,7 +1278,7 @@ namespace Talos.Base
                         {
                             if (!hasrepaired)
                             {
-                                Client.PursuitRequest((byte)1, npc.ID, 92);
+                                Client.PursuitRequest(1, npc.ID, 92);
                                 Thread.Sleep(1000);
                                 Client.WithdrawItem(npc.ID, "Succubus's Hair", 1);
                                 Thread.Sleep(1000);
@@ -1274,7 +1386,7 @@ namespace Talos.Base
                         if (creature != null &&
                             creature.Location.DistanceFrom(Client.ServerLocation) <= 12)
                         {
-                            Client.PursuitRequest((byte)1, creature.ID, 92);
+                            Client.PursuitRequest(1, creature.ID, 92);
                             Thread.Sleep(1000);
                             Client.WithdrawItem(creature.ID, "Succubus's Hair", 1);
                             Client.Dialog?.Reply();
@@ -1315,14 +1427,12 @@ namespace Talos.Base
                 Client.Dialog?.Reply();
                 Thread.Sleep(100);
 
-                // If we still don’t have skull, refresh and return
                 if (!Client.EffectsBar.Contains((ushort)EffectsBar.Skull))
                 {
                     Client.RefreshRequest();
                     return true;
                 }
 
-                // If we do have skull, possibly warp back (if Rucesion Song)
                 var ascendNames = Server.MainForm.AutoAscendDataList
                     .Where(d => d.ContainsKey("Name"))
                     .Select(d => d["Name"].ToString());

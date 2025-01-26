@@ -651,6 +651,7 @@ namespace Talos.Helper
             client.ServerMessage((byte)ServerMessageType.Whisper, "/receive      -             Open receive items menu");
             client.ServerMessage((byte)ServerMessageType.Whisper, "/withdraw  <money|items>    Withdraw money/items (optional qty)");
             client.ServerMessage((byte)ServerMessageType.Whisper, "/deposit   <money|items>    Deposit money/items (optional qty)");
+            client.ServerMessage((byte)ServerMessageType.Whisper, "/raffle       -             Toggles opening raffles in BA");
 
             client.ServerMessage((byte)ServerMessageType.Whisper, "-------------------------------------------------------------");
 
