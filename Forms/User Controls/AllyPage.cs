@@ -89,7 +89,7 @@ namespace Talos.Forms
         {
             foreach (Ally ally in new List<Ally>(_client.Bot.ReturnAllyList()))
             {
-                if (ally.AllyPage == this)
+                if (ally.Page == this)
                 {
                     _client.Bot.RemoveAlly(ally.Name);
                 }
@@ -97,24 +97,28 @@ namespace Talos.Forms
 
             if (_ally.Name == "group")
             {
-                _client.Bot.AllyPage = null;
+                _client.Bot.Group = null;
             }
             else if (_ally.Name == "alts")
             {
-                _client.Bot.AllyPage = null;
+                _client.Bot.Alts = null;
 
-                // Ensure thread-safe access to RemoveAllyPage
-                if (_client.ClientTab.InvokeRequired)
+                if (_client.Bot.Group != null)
                 {
-                    _client.ClientTab.Invoke(new Action(() =>
+                    // Ensure thread-safe access to RemoveAllyPage
+                    if (_client.ClientTab.InvokeRequired)
                     {
-                        _client.ClientTab.RemoveAllyPage();
-                    }));
+                        _client.ClientTab.Invoke(new Action(() =>
+                        {
+                            _client.ClientTab.UpdateGroupTargets();
+                        }));
+                    }
+                    else
+                    {
+                        _client.ClientTab.UpdateGroupTargets();
+                    }
                 }
-                else
-                {
-                    _client.ClientTab.RemoveAllyPage();
-                }
+                
             }
 
             // Dispose the parent safely

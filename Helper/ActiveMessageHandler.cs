@@ -900,6 +900,27 @@ namespace Talos.Helper
 
                     client.CastedSpell = null;
                 }
+
+                if (client.CastedSpell != null && client.CastedSpell.Name.Contains("aite"))
+                {
+                    Creature creature = client.SpellHistory[0].Creature;
+                    string aiteName = client.CastedSpell.Name;
+
+                    double aiteDuration = Spell.GetSpellDuration(aiteName);
+
+                    var aiteStateUpdates = new Dictionary<CreatureState, object>
+                    {
+                        { CreatureState.IsAited, true },
+                        { CreatureState.LastAited, DateTime.UtcNow },
+                        { CreatureState.AiteDuration, aiteDuration },
+                        { CreatureState.AiteName, aiteName },
+                    };
+
+                    // Update the creature's state across all clients
+                    CreatureStateHelper.UpdateCreatureStates(client, creature.ID, aiteStateUpdates);
+
+                    client.CastedSpell = null;
+                }
                 if (client.CastedSpell != null && client.CastedSpell.Name.Contains("pramh"))
                 {
                     client.SpellHistory[0].Creature.AnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
@@ -1207,6 +1228,14 @@ namespace Talos.Helper
         {
             if (message == "Group disbanded.")
             {
+                if (client.Bot.Group != null)
+                {
+                    foreach (string name in client.GroupedPlayers)
+                    {
+                        if (client.Bot.Alts == null || client.Server.GetClient(name) == null)
+                            client.Bot.RemoveAlly(name);
+                    }
+                }
                 client.GroupedPlayers.Clear();
                 client.ClientTab.UpdateGroupList();
                 client.ClientTab.UpdateStrangerList();

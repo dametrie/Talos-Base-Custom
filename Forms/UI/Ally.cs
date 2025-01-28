@@ -3,7 +3,7 @@
     internal class Ally
     {
         internal string Name { get; set; }
-        internal AllyPage AllyPage { get; set; }
+        internal AllyPage Page { get; set; }
         internal Ally(string name)
         {
             Name = name;

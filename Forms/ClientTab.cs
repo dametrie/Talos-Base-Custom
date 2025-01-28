@@ -1392,7 +1392,7 @@ namespace Talos.Forms
                 MessageDialog.Show(_client.Server.MainForm, "Your ally target cannot contain noncharacters.");
                 return false;
             }
-            if (_client.Bot.IsAllyAlreadyListed(name))
+            if (_client.Bot.ContainsAlly(name))
             {
                 MessageDialog.Show(_client.Server.MainForm, "Ally already in list.");
                 return false;
@@ -1409,20 +1409,20 @@ namespace Talos.Forms
         {
             name = name.Trim().ToLowerInvariant(); // Normalize before using
 
-            if (_client.Bot.IsAllyAlreadyListed(name))
+            if (_client.Bot.ContainsAlly(name))
             {
                 return;
             }
 
             Ally ally = new Ally(name);
-            ally.AllyPage = new AllyPage(ally, _client);
+            ally.Page = new AllyPage(ally, _client);
 
             TabPage tabPage = new TabPage(ally.ToString())
             {
                 Name = name
             };
-            tabPage.Controls.Add(ally.AllyPage);
-            ally.AllyPage.allypictureCharacter.Image = image;
+            tabPage.Controls.Add(ally.Page);
+            ally.Page.allypictureCharacter.Image = image;
 
             aislingTabControl.TabPages.Add(tabPage);
             UpdateNearbyAllyTable(name);
@@ -1778,13 +1778,13 @@ namespace Talos.Forms
 
         }
 
-        internal void RemoveAllyPage()
+        internal void UpdateGroupTargets()
         {
             foreach (string name in _client.GroupedPlayers)
             {
-                if (_client.Bot.AllyPage == null || _client.Server.GetClient(name) == null)
+                if (_client.Bot.Alts == null || _client.Server.GetClient(name) == null)
                 {
-                    if (_client.Bot.IsAllyAlreadyListed(name))
+                    if (_client.Bot.ContainsAlly(name))
                     {
                         if (aislingTabControl.TabPages.ContainsKey(name))
                         {
@@ -1794,7 +1794,7 @@ namespace Talos.Forms
                     }
                     Ally ally = new Ally(name)
                     {
-                        AllyPage = _client.Bot.AllyPage
+                        Page = _client.Bot.Group
                     };
                     _client.Bot.AddAlly(ally);
                 }
@@ -1803,32 +1803,32 @@ namespace Talos.Forms
 
         private void addGroupBtn_Click(object sender, EventArgs e)
         {
-            if (!_isLoading && _client.Bot.AllyPage != null)
+            if (!_isLoading && _client.Bot.Group != null)
             {
                 MessageDialog.Show(_client.Server.MainForm, "You are already targeting the group.");
                 return;
             }
 
-            _client.Bot.AllyPage = new AllyPage(new Ally("group"), _client);
-            _client.Bot.AllyPage.allyMDCRbtn.Visible = true;
-            _client.Bot.AllyPage.allyMDCSpamRbtn.Visible = true;
-            _client.Bot.AllyPage.allyMICSpamRbtn.Visible = true;
-            _client.Bot.AllyPage.allyNormalRbtn.Visible = true;
+            _client.Bot.Group = new AllyPage(new Ally("group"), _client);
+            _client.Bot.Group.allyMDCRbtn.Visible = true;
+            _client.Bot.Group.allyMDCSpamRbtn.Visible = true;
+            _client.Bot.Group.allyMICSpamRbtn.Visible = true;
+            _client.Bot.Group.allyNormalRbtn.Visible = true;
             TabPage tabPage = new TabPage("group");
-            tabPage.Controls.Add(_client.Bot.AllyPage);
+            tabPage.Controls.Add(_client.Bot.Group);
             aislingTabControl.TabPages.Add(tabPage);
             foreach (string name in _client.GroupedPlayers)
             {
-                if (_client.Bot.AllyPage == null || _client.Server.GetClient(name) == null)
+                if (_client.Bot.Alts == null || _client.Server.GetClient(name) == null)
                 {
-                    if (_client.Bot.IsAllyAlreadyListed(name))
+                    if (_client.Bot.ContainsAlly(name))
                     {
                         aislingTabControl.TabPages[name]?.Dispose();
                         _client.Bot.RemoveAlly(name);
                     }
                     Ally ally = new Ally(name)
                     {
-                        AllyPage = _client.Bot.AllyPage
+                        Page = _client.Bot.Group
                     };
                     _client.Bot.AddAlly(ally);
                 }
@@ -1842,14 +1842,14 @@ namespace Talos.Forms
 
         private void addAltsBtn_Click(object sender, EventArgs e)
         {
-            if (!_isLoading && _client.Bot.AllyPage != null)
+            if (!_isLoading && _client.Bot.Alts != null)
             {
                 MessageDialog.Show(_client.Server.MainForm, "You already targeting alts.");
                 return;
             }
-            _client.Bot.AllyPage = new AllyPage(new Ally("alts"), _client);
+            _client.Bot.Alts = new AllyPage(new Ally("alts"), _client);
             TabPage tabPage = new TabPage("alts");
-            tabPage.Controls.Add(_client.Bot.AllyPage);
+            tabPage.Controls.Add(_client.Bot.Alts);
             aislingTabControl.TabPages.Add(tabPage);
 
             List<Client> clientListCopy;
@@ -1859,7 +1859,7 @@ namespace Talos.Forms
             }
             foreach (Client client in clientListCopy.Where((Client c) => c.Identifier != _client.Identifier))
             {
-                if (_client.Bot.IsAllyAlreadyListed(client.Name))
+                if (_client.Bot.ContainsAlly(client.Name))
                 {
                     aislingTabControl.TabPages[client.Name]?.Dispose();
                     _client.Bot.RemoveAlly(client.Name);
@@ -1867,7 +1867,7 @@ namespace Talos.Forms
                 }
                 Ally ally = new Ally(client.Name)
                 {
-                    AllyPage = _client.Bot.AllyPage
+                    Page = _client.Bot.Alts
                 };
                 _client.Bot.AddAlly(ally);
             }

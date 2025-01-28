@@ -125,7 +125,8 @@ namespace Talos.Base
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
         public bool RecentlyUsedFungusExtract { get; set; } = false;
-        internal AllyPage AllyPage { get; set; }
+        internal AllyPage Alts { get; set; }
+        internal AllyPage Group { get; set; }
         internal EnemyPage AllMonsters { get; set; }
 
 
@@ -3739,7 +3740,7 @@ namespace Talos.Base
         {
             foreach (Ally ally in ReturnAllyList())
             {
-                if (!ally.AllyPage.miscLyliacCbox.Checked)
+                if (!ally.Page.miscLyliacCbox.Checked)
                     continue;
 
                 bool casted = TryCastLyliacPlantForAlly(ally);
@@ -3757,7 +3758,7 @@ namespace Talos.Base
             if (!IsAlly(ally, out Player player, out Client alt))
                 return false;
 
-            if (!int.TryParse(ally.AllyPage.miscLyliacTbox.Text, out int threshold))
+            if (!int.TryParse(ally.Page.miscLyliacTbox.Text, out int threshold))
                 return false;
 
             // If we have an alt client, check its MP
@@ -3793,7 +3794,7 @@ namespace Talos.Base
 
             if (!int.TryParse(Client.ClientTab.vineText.Text, out int vineDelay))
                 return;
-
+            
             if (!Client.ClientTab.vineyardCbox.Checked
                 || !Client.HasSpell("Lyliac Vineyard")
                 || !Client.Spellbook["Lyliac Vineyard"].CanUse)
@@ -3831,9 +3832,9 @@ namespace Talos.Base
 
         private bool Comlhas()
         {
-            if (AllyPage == null) { return false; }
+            if (Group == null) { return false; }
 
-            if (AllyPage.allyMDCRbtn.Checked)
+            if (Group.allyMDCRbtn.Checked)
             {
                 var playerToDion = NearbyAllies.FirstOrDefault(p => !p.IsDioned);
 
@@ -3845,14 +3846,14 @@ namespace Talos.Base
                 }
             }
 
-            if (AllyPage.allyMDCSpamRbtn.Checked)
+            if (Group.allyMDCSpamRbtn.Checked)
             {
                 if (Client.UseSpell("mor dion comlha", null, _autoStaffSwitch, false))
                 {
                     return false;
                 }
             }
-            else if (AllyPage.allyMICSpamRbtn.Checked)
+            else if (Group.allyMICSpamRbtn.Checked)
             {
                 if (!Client.UseSpell("Nuadhiach Le Cheile", null, _autoStaffSwitch, false) &&
                     !Client.UseSpell("ard ioc comlha", null, _autoStaffSwitch, false) &&
@@ -4033,8 +4034,8 @@ namespace Talos.Base
                 {
                     foreach (Player player in _playersExistingOver250ms)
                     {
-                        if (player != null && currentAlly != null && currentAlly.AllyPage != null && currentAlly.AllyPage.dbRegenCbox != null &&
-                            player.Name.Equals(currentAlly.Name, StringComparison.OrdinalIgnoreCase) && player != Client.Player && currentAlly.AllyPage.dbRegenCbox.Checked)
+                        if (player != null && currentAlly != null && currentAlly.Page != null && currentAlly.Page.dbRegenCbox != null &&
+                            player.Name.Equals(currentAlly.Name, StringComparison.OrdinalIgnoreCase) && player != Client.Player && currentAlly.Page.dbRegenCbox.Checked)
                         {
                             Client client = Client.Server.GetClient(currentAlly.Name);
                             if (client != null)
@@ -4106,9 +4107,9 @@ namespace Talos.Base
 
             foreach (Ally ally in ReturnAllyList())
             {
-                if (ally.AllyPage == null) { break; } 
+                if (ally.Page == null) { break; } 
 
-                bool isDispelSuainChecked = ally.AllyPage.dispelSuainCbox.Checked;
+                bool isDispelSuainChecked = ally.Page.dispelSuainCbox.Checked;
 
                 if (isDispelSuainChecked && TryGetSuainedAlly(ally, out Player player, out Client client))
                 {
@@ -4200,7 +4201,7 @@ namespace Talos.Base
 
             foreach (Ally ally in ReturnAllyList())
             {
-                bool isBeagCradhChecked = ally.AllyPage.dbBCCbox.Checked;
+                bool isBeagCradhChecked = ally.Page.dbBCCbox.Checked;
 
                 if (isBeagCradhChecked && IsAlly(ally, out Player player, out Client client) && !player.IsCursed)
                 {
@@ -4292,7 +4293,7 @@ namespace Talos.Base
 
             foreach (Ally ally in ReturnAllyList())
             {
-                if (ally.AllyPage.dispelPoisonCbox.Checked && IsAlly(ally, out Player player, out Client client))
+                if (ally.Page.dispelPoisonCbox.Checked && IsAlly(ally, out Player player, out Client client))
                 {
                     if (client.HasEffect(EffectsBar.Poison) && player.IsPoisoned && shouldUseFungusExtract)
                     {
@@ -4346,8 +4347,8 @@ namespace Talos.Base
         {
             foreach (Ally ally in ReturnAllyList())
             {
-                bool isAiteChecked = ally.AllyPage.dbAiteCbox.Checked;
-                string spellName = ally.AllyPage.dbAiteCombox.Text;
+                bool isAiteChecked = ally.Page.dbAiteCbox.Checked;
+                string spellName = ally.Page.dbAiteCombox.Text;
 
                 if (isAiteChecked && IsAlly(ally, out Player player, out Client client) && !player.IsAited)
                 {
@@ -4362,8 +4363,8 @@ namespace Talos.Base
         {
             foreach (Ally ally in ReturnAllyList())
             {
-                bool isFasChecked = ally.AllyPage.dbFasCbox.Checked;
-                string spellName = ally.AllyPage.dbFasCombox.Text;
+                bool isFasChecked = ally.Page.dbFasCbox.Checked;
+                string spellName = ally.Page.dbFasCombox.Text;
 
                 if (isFasChecked && IsAlly(ally, out Player player, out Client client) && !player.IsFassed)
                 {
@@ -4501,7 +4502,7 @@ namespace Talos.Base
         {
             foreach (Ally ally in ReturnAllyList())
             {
-                bool isArmChecked = ally.AllyPage.dbArmachdCbox.Checked;
+                bool isArmChecked = ally.Page.dbArmachdCbox.Checked;
 
                 if (isArmChecked && IsAlly(ally, out Player player, out Client allyClient) && !player.HasArmachd)
                 {
@@ -4513,6 +4514,8 @@ namespace Talos.Base
 
                 }
             }
+
+
             return false;
         }
 
@@ -4582,7 +4585,7 @@ namespace Talos.Base
 
             foreach (Ally ally in ReturnAllyList())
             {
-                bool isDispelCurseChecked = ally.AllyPage.dispelCurseCbox.Checked;
+                bool isDispelCurseChecked = ally.Page.dispelCurseCbox.Checked;
 
                 if (isDispelCurseChecked && TryGetCursedAlly(ally, out Player player, out Client client))
                 {
@@ -4647,11 +4650,11 @@ namespace Talos.Base
             {
                 foreach (Player player in Client.GetNearbyPlayers())
                 {
-                    if (IsAllyAlreadyListed(player.Name) || player == Client.Player)
+                    if (ContainsAlly(player.Name) || player == Client.Player)
                     {
                         Ally ally = ReturnAllyList().FirstOrDefault(a =>
                                             string.Equals(a.Name?.ToLowerInvariant(), player.Name?.ToLowerInvariant(), StringComparison.OrdinalIgnoreCase));
-                        AllyPage allyPage = ally?.AllyPage;
+                        AllyPage allyPage = ally?.Page;
                         Client allyClient = Server.GetClient(player.Name);
 
 
@@ -6044,7 +6047,7 @@ namespace Talos.Base
             }
         }
 
-        internal bool IsAllyAlreadyListed(string name)
+        internal bool ContainsAlly(string name)
         {
             lock (_lock)
             {

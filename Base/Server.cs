@@ -2753,11 +2753,11 @@ namespace Talos
 
         private bool ServerMessage_0x39_SelfProfle(Client client, ServerPacket serverPacket)
         {
-            if (client.Bot.AllyPage != null)
+            if (client.Bot.Group != null)
             {
                 foreach (string name in client.GroupedPlayers)
                 {
-                    if (((client.Bot.AllyPage == null) || (GetClient(name) == null)) && client.Bot.IsAllyAlreadyListed(name))
+                    if (((client.Bot.Alts == null) || (GetClient(name) == null)) && client.Bot.ContainsAlly(name))
                     {
                         client.Bot.RemoveAlly(name);
                     }
@@ -2837,9 +2837,9 @@ namespace Talos
             client.ClientTab.UpdateFriendList();
             client.ClientTab.UpdateChatPanelMaxLength(client);
  
-            if (client.Bot.AllyPage != null)
+            if (client.Bot.Group != null)
             {
-                client.ClientTab.RemoveAllyPage();
+                client.ClientTab.UpdateGroupTargets();
             }
 
             client.ClientTab.SetClassSpecificSpells();

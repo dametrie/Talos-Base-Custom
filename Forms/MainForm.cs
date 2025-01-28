@@ -295,9 +295,9 @@ namespace Talos
             foreach (Client otherClient in client.Server.ClientList)
             {
                 Bot bot = otherClient.Bot;
-                if (bot != null && bot.AllyPage != null && otherClient != client)
+                if (bot != null && bot.Alts != null && otherClient != client)
                 {
-                    if (bot.IsAllyAlreadyListed(client.Name))
+                    if (bot.ContainsAlly(client.Name))
                     {
                         otherClient.ClientTab.aislingTabControl.TabPages[client.Name]?.Dispose();
                         bot.RemoveAlly(client.Name);
@@ -305,7 +305,7 @@ namespace Talos
 
                     Ally ally = new Ally(client.Name)
                     {
-                        AllyPage = bot.AllyPage
+                        Page = bot.Alts
                     };
                     bot.AddAlly(ally);
                 }
