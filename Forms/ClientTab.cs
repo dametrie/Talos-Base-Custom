@@ -1366,9 +1366,11 @@ namespace Talos.Forms
         private void addAislingBtn_Click(object sender, EventArgs e)
         {
             string name = addAislingText.Text;
+            Console.WriteLine($"[Debug] Adding ally: {name}");
             if (ParseAllyTextBox(name))
             {
                 AddAllyPage(name);
+                Console.WriteLine($"[Debug] Ally {name} added successfully.");
                 addAislingText.Clear();
                 if (!_isLoading && MessageDialog.Show(_client.Server.MainForm, "Successfully Added!\nGo to it?") == DialogResult.OK)
                 {
@@ -1405,6 +1407,8 @@ namespace Talos.Forms
 
         internal void AddAllyPage(string name, Image image = null)
         {
+            name = name.Trim().ToLowerInvariant(); // Normalize before using
+
             if (_client.Bot.IsAllyAlreadyListed(name))
             {
                 return;

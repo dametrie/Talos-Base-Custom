@@ -57,7 +57,8 @@ namespace Talos.Enumerations
         AiteName,
         DionName,
         RegenName,
-        PramhName
+        PramhName,
+        ArmachdName
     }
 
     public enum CreatureType : byte

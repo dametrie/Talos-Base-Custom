@@ -3313,7 +3313,7 @@ namespace Talos.Base
                             continue;
                         }
 
-                        ProcessPlayers();
+                        ProcessPlayersAndCreatures();
                         ProcessCreatureText();
 
                         if (Client.CurrentHP <= 1U && Client.IsSkulled)
@@ -3345,13 +3345,14 @@ namespace Talos.Base
                             FilterStrangerPlayers();
                         }
 
-                        /*                        double botCheckSeconds = DateTime.UtcNow.Subtract(_botChecks).TotalSeconds;
+                        double botCheckSeconds = DateTime.UtcNow.Subtract(_botChecks).TotalSeconds;
 
-                                                if (botCheckSeconds < 2.5)
-                                                {
-                                                    continue;
-                                                }*/
+                        if (botCheckSeconds < 2.5)
+                        {
+                            continue;
+                        }
 
+                        UpdateVineTimer();
                         PerformActions();
                     }
                     catch (Exception ex)
@@ -3365,6 +3366,14 @@ namespace Talos.Base
             catch (Exception ex)
             {
                 Console.WriteLine($"[BotLoop] Exception caught in outer try: {ex.Message}");
+            }
+        }
+
+        private void UpdateVineTimer()
+        {
+            if (Client.HasSpell("Lyliac Vineyard") && !Client.Spellbook["Lyliac Vineyard"].CanUse)
+            {
+                _lastVineCast = DateTime.UtcNow;
             }
         }
 
@@ -3429,9 +3438,9 @@ namespace Talos.Base
                    (Client.Bot._hasDeposited && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
                    Client.ExchangeOpen || Client.ClientTab == null || Client.Dialog != null || _dontCast;
         }
-        private void ProcessPlayers()
+        private void ProcessPlayersAndCreatures()
         {
-            NearbyAllies = Client.GetNearbyAllies();
+            NearbyAllies = Client.GetNearbyGroupedPlayers();
             _nearbyValidCreatures = Client.GetNearbyValidCreatures(11);
             var nearbyPlayers = Client.GetNearbyPlayers();
             _playersExistingOver250ms = nearbyPlayers?
@@ -3495,13 +3504,7 @@ namespace Talos.Base
                    DateTime.UtcNow.Subtract(_lastEXP).TotalSeconds > 20.0 &&
                    DateTime.UtcNow.Subtract(_lastRefresh).TotalSeconds > 30.0;
         }
-        private void CheckAndHandleSpells()
-        {
-            if (Client.HasSpell("Lyliac Vineyard") && !Client.Spellbook["Lyliac Vineyard"].CanUse)
-            {
-                _lastVineCast = DateTime.UtcNow;
-            }
-        }
+
         private bool AutoRedConditionsMet()
         {
             return Client.ClientTab != null && _playersExistingOver250ms != null && Client.ClientTab.autoRedCbox.Checked;
@@ -3650,9 +3653,7 @@ namespace Talos.Base
             AoSuain();
             WakeScroll();
             AutoGem();
-
             UpdatePlayersListBasedOnStrangers();
-
             CheckFasSpioradRequirement();
 
             try
@@ -3710,7 +3711,6 @@ namespace Talos.Base
             Fas();
             AiteAllies();
             FasAllies();
-
             DragonScale();
             Armachd();
             ArmachdAllies();
@@ -3720,15 +3720,118 @@ namespace Talos.Base
                      //Aegis Spehre, ao beag suain, Muscle Stim, Nerve Stim, Mist, Mana Ward
                      //Vanish Elixir, Regens, Mantid Scent, Repair hammer
             Comlhas();
+            Lyliac();
             return true;
         }
 
-        private bool Comlhas()
+        private void Lyliac()
         {
-            if (AllyPage == null)
+            if (Client == null || Client.ClientTab == null)
             {
+                return;
+            }
+
+            HandleLyliac();
+            HandleVineyard();
+        }
+
+        public bool HandleLyliac()
+        {
+            foreach (Ally ally in ReturnAllyList())
+            {
+                if (!ally.AllyPage.miscLyliacCbox.Checked)
+                    continue;
+
+                bool casted = TryCastLyliacPlantForAlly(ally);
+
+                if (casted)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool TryCastLyliacPlantForAlly(Ally ally)
+        {
+            if (!IsAlly(ally, out Player player, out Client alt))
+                return false;
+
+            if (!int.TryParse(ally.AllyPage.miscLyliacTbox.Text, out int threshold))
+                return false;
+
+            // If we have an alt client, check its MP
+            if (alt != null)
+            {
+                if (alt.CurrentMP < threshold)
+                {
+                    Client.UseSpell("Lyliac Plant", player, _autoStaffSwitch);
+                    alt.Bot._needFasSpiorad = false;
+                    return true;
+                }
+            }
+            // Otherwise, check user's last animation time
+            else
+            {
+                if (player.AnimationHistory.TryGetValue(84, out DateTime animStart))
+                {
+                    TimeSpan elapsed = DateTime.UtcNow - animStart;
+                    if (elapsed.TotalMilliseconds <= threshold)
+                        return false;
+                }
+
+                Client.UseSpell("Lyliac Plant", player, _autoStaffSwitch);
                 return true;
             }
+
+            return false;
+        }
+
+
+        public void HandleVineyard()
+        {
+
+            if (!int.TryParse(Client.ClientTab.vineText.Text, out int vineDelay))
+                return;
+
+            if (!Client.ClientTab.vineyardCbox.Checked
+                || !Client.HasSpell("Lyliac Vineyard")
+                || !Client.Spellbook["Lyliac Vineyard"].CanUse)
+                return;
+
+            bool shouldCast = ShouldCastVineyard(vineDelay, Client.ClientTab.vineCombox.Text);
+
+            if (shouldCast)
+            {
+                Client.UseSpell("Lyliac Vineyard", staffSwitch: _autoStaffSwitch);
+            }
+
+            return;
+        }
+
+        private bool ShouldCastVineyard(int vineDelay, string comboText)
+        {
+            // If the combo box is not "Delay", use group MP-based logic
+            if (comboText != "Delay")
+            {
+                return Server.Clients.Any(c =>
+                    c != null
+                    && !string.IsNullOrEmpty(c.Name)
+                    && !c.Name.Contains("[")
+                    && Client.GroupedPlayers.Any(g => g.Equals(c.Name, StringComparison.OrdinalIgnoreCase))
+                    && c.CurrentMP < vineDelay);
+            }
+            else
+            {
+                TimeSpan timeSince = DateTime.UtcNow - _lastVineCast;
+                return timeSince.TotalMilliseconds > vineDelay;
+            }
+        }
+
+
+        private bool Comlhas()
+        {
+            if (AllyPage == null) { return false; }
 
             if (AllyPage.allyMDCRbtn.Checked)
             {
@@ -4000,10 +4103,6 @@ namespace Talos.Base
 
         private bool DispellAllySuain()
         {
-            if (AllyPage == null)
-            {
-                return false;
-            }
 
             foreach (Ally ally in ReturnAllyList())
             {
@@ -4098,10 +4197,6 @@ namespace Talos.Base
 
         private bool BeagCradhAllies()
         {
-            if (AllyPage == null)
-            {
-                return false;
-            }
 
             foreach (Ally ally in ReturnAllyList())
             {
@@ -4194,10 +4289,6 @@ namespace Talos.Base
 
         private bool AoPoisonForAllies(bool shouldUseFungusExtract)
         {
-            if (AllyPage == null)
-            {
-                return false;
-            }
 
             foreach (Ally ally in ReturnAllyList())
             {
@@ -4253,70 +4344,34 @@ namespace Talos.Base
 
         private bool AiteAllies()
         {
-            if (AllyPage == null)
-            {
-                return false;
-            }
-
             foreach (Ally ally in ReturnAllyList())
             {
-                // Check if the Aite spell is enabled for the ally and get the spell name
-                if (!ally.AllyPage.dbAiteCbox.Checked || string.IsNullOrEmpty(ally.AllyPage.dbAiteCombox.Text))
-                {
-                    continue;
-                }
+                bool isAiteChecked = ally.AllyPage.dbAiteCbox.Checked;
+                string spellName = ally.AllyPage.dbAiteCombox.Text;
 
-                // Ensure the ally is valid and retrieve the player and client
-                if (!IsAlly(ally, out Player player, out Client client) || client == null || player == null)
+                if (isAiteChecked && IsAlly(ally, out Player player, out Client client) && !player.IsAited)
                 {
-                    continue;
+                    Client.UseSpell(spellName, player, _autoStaffSwitch, false);
+                    return true;
                 }
-
-                // Skip if the client already has aite or the player is the client itself
-                if (client.HasEffect(EffectsBar.NaomhAite) || player == client.Player || player.IsAited)
-                {
-                    continue;
-                }
-
-                Client.UseSpell(ally.AllyPage.dbAiteCombox.Text, player, _autoStaffSwitch, false);
-                return false;
             }
-
-            return true;
+            return false;
         }
 
         private bool FasAllies()
         {
-            if (AllyPage == null)
-            {
-                return false;
-            }
-
             foreach (Ally ally in ReturnAllyList())
             {
-                // Check if the Fas spell is enabled for the ally and get the spell name
-                if (!ally.AllyPage.dbFasCbox.Checked || string.IsNullOrEmpty(ally.AllyPage.dbFasCombox.Text))
-                {
-                    continue;
-                }
+                bool isFasChecked = ally.AllyPage.dbFasCbox.Checked;
+                string spellName = ally.AllyPage.dbFasCombox.Text;
 
-                // Ensure the ally is valid and retrieve the player and client
-                if (!IsAlly(ally, out Player player, out Client client) || client == null || player == null)
+                if (isFasChecked && IsAlly(ally, out Player player, out Client client) && !player.IsFassed)
                 {
-                    continue;
+                    Client.UseSpell(spellName, player, _autoStaffSwitch, false);
+                    return true;
                 }
-
-                // Skip if the client already has fas or the player is the client itself
-                if (client.HasEffect(EffectsBar.FasNadur) || player == client.Player || player.IsFassed)
-                {
-                    continue;
-                }
-
-                Client.UseSpell(ally.AllyPage.dbFasCombox.Text, player, _autoStaffSwitch, false);
-                return false;
             }
-
-            return true;
+            return false;
         }
 
         private bool Fas()
@@ -4444,37 +4499,21 @@ namespace Talos.Base
 
         private bool ArmachdAllies()
         {
-            if (AllyPage == null)
-            {
-                return false;
-            }
-
             foreach (Ally ally in ReturnAllyList())
             {
-                bool isArmachdChecked = ally.AllyPage.dbArmachdCbox.Checked;
+                bool isArmChecked = ally.AllyPage.dbArmachdCbox.Checked;
 
-                if (!isArmachdChecked || !IsAlly(ally, out Player player, out Client client))
+                if (isArmChecked && IsAlly(ally, out Player player, out Client allyClient) && !player.HasArmachd)
                 {
-                    continue;
+                    if (!allyClient.HasEffect(EffectsBar.Armachd))
+                    {
+                        Client.UseSpell("armachd", player, _autoStaffSwitch, false);
+                        return true;
+                    }
+
                 }
-
-                if (client == null || client.HasEffect(EffectsBar.Armachd))
-                {
-                    continue;
-                }
-
-                if (player == null || player == client.Player || player.HasArmachd)
-                {
-                    continue;
-                }
-
-                Client.UseSpell("armachd", player, _autoStaffSwitch, false);
-
-                return false;
-
             }
-
-            return true;
+            return false;
         }
 
         private bool UseDionOrStone()
@@ -4540,10 +4579,6 @@ namespace Talos.Base
         }
         private bool DispellAllyCurse()
         {
-            if (AllyPage == null)
-            {
-                return false;
-            }
 
             foreach (Ally ally in ReturnAllyList())
             {
@@ -4590,26 +4625,18 @@ namespace Talos.Base
         internal bool IsAlly(Ally ally, out Player player, out Client client)
         {
             player = Client.GetNearbyPlayer(ally.Name);
-
-            if (player == null)
-            {
-                client = null;
-                return false;
-            }
-
             client = Server.GetClient(ally.Name);
 
-            if (client != null && client != Client)
-            {
-                return true;
-            }
+            if (player == null || client == Client)
+                return false;
 
-            return false;
+            player = client?.Player ?? player;
+            return true;
         }
 
         private bool Heal()
         {
-            if (Client.HasEffect(EffectsBar.FasSpiorad) || Client.ClientTab == null || AllyPage == null)
+            if (Client.HasEffect(EffectsBar.FasSpiorad) || Client.ClientTab == null)
             {
                 return false;
             }
@@ -4622,49 +4649,93 @@ namespace Talos.Base
                 {
                     if (IsAllyAlreadyListed(player.Name) || player == Client.Player)
                     {
-                        Ally ally = ReturnAllyList().FirstOrDefault(a => a.Name == player.Name);
+                        Ally ally = ReturnAllyList().FirstOrDefault(a =>
+                                            string.Equals(a.Name?.ToLowerInvariant(), player.Name?.ToLowerInvariant(), StringComparison.OrdinalIgnoreCase));
                         AllyPage allyPage = ally?.AllyPage;
-                        Client client = Server.GetClient(player.Name);
+                        Client allyClient = Server.GetClient(player.Name);
 
-                        if (client == null) continue;
 
-                        if ((allyPage == null && client != Client) || (client == Client && !Client.ClientTab.healCbox.Checked) || (client != Client && !allyPage.dbIocCbox.Checked))
+                        if (allyClient == null) continue;
+                        if ((allyPage == null && allyClient != Client) ||
+                               (allyClient == Client && !Client.ClientTab.healCbox.Checked) ||
+                               (allyClient != Client && !allyPage.dbIocCbox.Checked))
                         {
                             continue;
                         }
 
                         if (ShouldExcludePlayer(player)) continue;
 
-                        string healSpell = player == client.Player ? client.ClientTab.healCombox.Text : allyPage.dbIocCombox.Text;
+                        string healSpell = player == allyClient.Player
+                            ? allyClient.ClientTab.healCombox.Text
+                            : allyPage.dbIocCombox.Text;
 
-                        //Console.WriteLine($"[CastDefensiveSpells] heal spell: {healSpell}");
 
-                        if (loopPercentThreshold == 20 && player != client.Player && (client.HasSpell("Nuadhiach Le Cheile") || client.HasSpell("ard ioc comlha") || client.HasSpell("mor ioc comlha")))
+                        if (loopPercentThreshold == 20 && player != Client.Player &&
+                            (Client.HasSpell("Nuadhiach Le Cheile") ||
+                             Client.HasSpell("ard ioc comlha") ||
+                             Client.HasSpell("mor ioc comlha")))
                         {
+                            // Refresh heal states for all nearby grouped players
+                            foreach (var p in Client.GetNearbyGroupedPlayers())
+                            {
+                                Client allyC = Server.GetClient(p.Name); // Check if the player is a bot-controlled Client
+                                int healAtPercent = (int)(p == Client.Player ? Client.ClientTab.healPctNum.Value : 20); // Default to 20% for non-Client
 
-                            int alliesInNeed = Client.GetNearbyAllies().Count(p => p != Client.Player && IsAllyInNeed(p));
+                                RefreshPlayerHealStates(p, allyC, healAtPercent);
+                            }
 
+                            // Calculate how many allies are in need of healing
+                            int alliesInNeed = Client.GetNearbyGroupedPlayers()
+                                                     .Count(p => p != Client.Player && IsAllyInNeed(p));
+
+                            Console.WriteLine("ALLIES IN NEED: " + alliesInNeed);
+
+                            // Determine if we should cast an AoE heal spell
                             if (alliesInNeed > 2)
                             {
                                 healSpell = Client.HasSpell("Nuadhiach Le Cheile")
-                                            ? "Nuadhiach Le Cheile"
-                                            : Client.HasSpell("ard ioc comlha")
-                                                ? "ard ioc comlha"
-                                                : "mor ioc comhla";
+                                             ? "Nuadhiach Le Cheile"
+                                             : Client.HasSpell("ard ioc comlha")
+                                                 ? "ard ioc comlha"
+                                                 : "mor ioc comhla";
+
+                                Console.WriteLine($"Cast group heal spell: {healSpell}");
+
+                                // Cast the AoE heal spell
+                                if (Client.UseSpell(healSpell, null, _autoStaffSwitch, false))
+                                {
+                                    Console.WriteLine($"[Debug] Successfully cast AoE heal spell: {healSpell}");
+                                }
                             }
                         }
 
+
                         if (!Client.GetNearbyPlayers().Any(player => ShouldExcludePlayer(player)) || player == Client.Player || healSpell.Contains("comlha"))
                         {
+                            //Console.WriteLine($"[Debug] Evaluating healing for player: {player.Name}");
+                            //Console.WriteLine($"[Debug] HealSpell: {healSpell}, PlayerIsSelf: {player == Client.Player}, ContainsComlha: {healSpell.Contains("comlha")}");
 
-                            int healAtPercent = (int)((player == Client.Player) ? Client.ClientTab.healPctNum.Value : allyPage.dbIocNumPct.Value);
-                            healAtPercent = ((healAtPercent > loopPercentThreshold) ? loopPercentThreshold : healAtPercent);
-                            bool shouldHeal = player.NeedsHeal || (client.CurrentHP * 100 / client.MaximumHP) <= healAtPercent;
+                            int healAtPercent = (int)(player == Client.Player
+                                ? Client.ClientTab.healPctNum.Value
+                                : allyPage.dbIocNumPct.Value);
 
-                            if (player.NeedsHeal || shouldHeal)
+                            healAtPercent = healAtPercent > loopPercentThreshold ? loopPercentThreshold : healAtPercent;
+
+                            //Console.WriteLine($"[Debug] HealAtPercent: {healAtPercent}, LoopThreshold: {loopPercentThreshold}");
+
+                            uint currentHealthPct = allyClient != null
+                                ? allyClient.HealthPct
+                                : (uint)player.HealthPercent;
+
+                            bool shouldHeal = player.NeedsHeal || currentHealthPct <= healAtPercent;
+
+                             Console.WriteLine($"[Debug] {player.Name} NeedsHeal: {player.NeedsHeal}, ShouldHeal: {shouldHeal}, CurrentHP: {allyClient?.Stats.CurrentHP}, MaximumHP: {allyClient?.Stats.MaximumHP}");
+                            
+                            if (shouldHeal)
                             {
 
                                 uint healAmount = (uint)Client.CalculateHealAmount(healSpell);
+                                Console.WriteLine($"[Debug] Calculated Heal Amount: {healAmount} for player: {player.Name}");
 
                                 List<Player> playersHealed = new List<Player>();
 
@@ -4672,29 +4743,43 @@ namespace Talos.Base
                                 {
                                     if (Client.UseSpell(healSpell, player, _autoStaffSwitch, false))
                                     {
+                                        Console.WriteLine($"[Debug] Cast single-target heal spell: {healSpell} on {player.Name}");
                                         playersHealed.Add(player);
+                                        Thread.Sleep(200);
+                                        RefreshPlayerHealStates(player, allyClient, healAtPercent);
                                     }
                                 }
                                 else if (Client.UseSpell(healSpell, null, _autoStaffSwitch, false))
                                 {
-                                    playersHealed.AddRange(Client.GetNearbyAllies());
+                                    var AoETargets = Client.GetNearbyGroupedPlayers();
+                                    playersHealed.AddRange(AoETargets);
+
+                                    Console.WriteLine($"[Debug] Cast AoE heal spell: {healSpell}");
+
+                                    // Refresh each player's state if you have an accurate Client for them
+                                    foreach (var p2 in AoETargets)
+                                    {
+                                        var p2Client = Server.GetClient(p2.Name);
+                                        Thread.Sleep(200);
+                                        RefreshPlayerHealStates(p2, p2Client, healAtPercent);
+                                    }
                                 }
                                 foreach (Player p in playersHealed)
                                 {
 
-                                    if (((client != null) ? client.Player : null) == player)
+                                    if (allyClient?.Player?.Name == player.Name)
                                     {
 
-                                        // Calculate the new health, ensuring it does not exceed the maximum
-                                        uint newHealth = Math.Min(client.CurrentHP + healAmount, client.MaximumHP);
+                                        uint newHealth = Math.Min(allyClient.Stats.CurrentHP + healAmount, allyClient.Stats.MaximumHP);
+                                        allyClient.Stats.CurrentHP = newHealth;
 
-                                        // Update the health and print the debug message
-                                        client.CurrentHP = newHealth;
-                                        Console.WriteLine($"[Heal] {client.Name} healed for {healAmount} HP. New HP: {client.CurrentHP} / {client.MaximumHP}");
+                                        Console.WriteLine($"[Heal] {allyClient.Name} healed for {healAmount} HP. New HP: {allyClient.CurrentHP} / {allyClient.MaximumHP}");
+
                                         // Update health percentage and needs heal status
-                                        p.HealthPercent = (byte)(client.CurrentHP * 100 / client.MaximumHP);
-                                        p.NeedsHeal = p.HealthPercent <= healAtPercent;
+                                        p.HealthPercent = (byte)allyClient.HealthPct;
+                                        p.NeedsHeal = p.HealthPercent < healAtPercent;
 
+                                        Console.WriteLine($"[Debug] Updated Player: {p.Name}, New Health Percent: {p.HealthPercent}, NeedsHeal: {p.NeedsHeal}");
                                     }
                                     else
                                     {
@@ -4705,6 +4790,8 @@ namespace Talos.Base
                                         // Update health percentage and needs heal status
                                         p.HealthPercent = newHealthPercent;
                                         p.NeedsHeal = p.HealthPercent <= healAtPercent;
+
+                                        Console.WriteLine($"[Debug] Updated Nearby Player: {p.Name}, New Health Percent: {p.HealthPercent}, NeedsHeal: {p.NeedsHeal}");
                                     }
 
                                 }
@@ -4717,6 +4804,42 @@ namespace Talos.Base
             }
             return true;
         }
+
+        private void RefreshPlayerHealStates(Player player, Client allyClient, int healAtPercent)
+        {
+            // If the player is also a bot-controlled Client
+            if (allyClient != null)
+            {
+                // The Client.HealthPct is generally more accurate because the bot is actually logged in as that character
+                uint clientPct = allyClient.HealthPct;
+                byte playerPct = player.HealthPercent; // packet-based healthbar
+
+                // Check for a mismatch
+                if (clientPct != playerPct)
+                {
+                    Console.WriteLine(
+                        $"[Debug] Discrepancy for {player.Name}: " +
+                        $"Client side = {clientPct}%, Player object = {playerPct}%"
+                    );
+                    // Take some action? — override the Player object's HP with the client’s more accurate HP?
+                    // Because the client is more up-to-date, we’ll trust the client’s data?
+                    player.HealthPercent = (byte)clientPct;
+                }
+
+                // Recompute whether they still need a heal based on the new player.HealthPercent
+                player.NeedsHeal = player.HealthPercent < healAtPercent;
+            }
+            else
+            {
+                // Fallback for non-bot players:
+                // We only have the overhead-bar / packet-based HP to go by.
+                // So just rely on player.HealthPercent as is.
+                player.NeedsHeal = player.HealthPercent < healAtPercent;
+            }
+
+            Console.WriteLine($"[Debug] Refreshed {player.Name} -> HealthPercent: {player.HealthPercent}, NeedsHeal: {player.NeedsHeal}");
+        }
+
 
         private bool IsAllyInNeed(Player player)
         {
@@ -5942,8 +6065,10 @@ namespace Talos.Base
         {
             lock (_lock)
             {
+                ally.Name = ally.Name.Trim().ToLowerInvariant(); // Normalize to lowercase
                 _allyList.Add(ally);
                 _allyListName.Add(ally.Name);
+                //Console.WriteLine($"[Debug] Adding normalized Ally Name: {ally.Name}");
             }
         }
 
@@ -5983,6 +6108,7 @@ namespace Talos.Base
         {
             lock (_lock)
             {
+                //Console.WriteLine($"[Debug] Ally List: {string.Join(", ", _allyList.Select(a => a.Name))}");
                 return new List<Ally>(_allyList);
             }
         }

@@ -40,6 +40,22 @@ namespace Talos.Helper
                     _targetCreature.HealthPercent = 0;
                     break;
 
+                case (ushort)SpellAnimation.Armachd:
+                    if (_targetCreature is Player)
+                    {
+                        var armStateUpdates = new Dictionary<CreatureState, object>
+                        {
+                            { CreatureState.HasArmachd, true },
+                            { CreatureState.LastArmachd, DateTime.UtcNow },
+                            { CreatureState.ArmachdName, "armachd" },
+                            { CreatureState.ArmachdDuration, Spell.GetSpellDuration("armachd") }
+                        };
+
+                        CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, armStateUpdates);
+
+                    }
+                    break;
+
                 case (ushort)SpellAnimation.AsgallFaileas:
                     if (_targetCreature is Player)
                     {

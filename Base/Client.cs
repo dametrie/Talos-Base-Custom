@@ -127,8 +127,8 @@ namespace Talos.Base
         internal ConcurrentDictionary<int, Location> LastSeenLocations { get; set; } = new ConcurrentDictionary<int, Location>();
         internal ConcurrentDictionary<int, WorldObject> WorldObjects { get; private set; } = new ConcurrentDictionary<int, WorldObject>();
         internal ConcurrentDictionary<int, Player> NearbyHiddenPlayers { get; private set; } = new ConcurrentDictionary<int, Player>();
-        internal ConcurrentDictionary<string, Player> NearbyPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
-        internal ConcurrentDictionary<string, Player> NearbyGhosts { get; private set; } = new ConcurrentDictionary<string, Player>();
+        internal ConcurrentDictionary<string, Player> NearbyPlayers { get; private set; } = new ConcurrentDictionary<string, Player>(StringComparer.OrdinalIgnoreCase);
+        internal ConcurrentDictionary<string, Player> NearbyGhosts { get; private set; } = new ConcurrentDictionary<string, Player>(StringComparer.OrdinalIgnoreCase);
         internal ConcurrentDictionary<string, Creature> NearbyNPC { get; private set; } = new ConcurrentDictionary<string, Creature>();
         internal ConcurrentDictionary<string, int> ObjectID { get; private set; } = new ConcurrentDictionary<string, int>();
         internal ConcurrentDictionary<string, Player> DeadPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
@@ -563,7 +563,7 @@ namespace Talos.Base
             //}
             return nearbyPlayers;
         }
-        internal List<Player> GetNearbyAllies()
+        internal List<Player> GetNearbyGroupedPlayers()
         {
 
             if (!Monitor.TryEnter(Server.SyncObj, 1000))
@@ -989,7 +989,7 @@ namespace Talos.Base
                     case 195270534: // Wake Scroll
                         if (spell == "Wake Scroll")
                         {
-                            foreach (Player player in GetNearbyAllies())
+                            foreach (Player player in GetNearbyGroupedPlayers())
                             {
                                 player.AnimationHistory[(ushort)SpellAnimation.Mesmerize] = DateTime.MinValue;
                                 player.AnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.MinValue;
@@ -1034,7 +1034,7 @@ namespace Talos.Base
                         }
 
                     case 2756163491: // Fungus Beetle Extract
-                        foreach (Player player in GetNearbyAllies())
+                        foreach (Player player in GetNearbyGroupedPlayers())
                         {
                             player.AnimationHistory[(ushort)SpellAnimation.PinkPoison] = DateTime.MinValue;
                             player.AnimationHistory[(ushort)SpellAnimation.GreenBubblePoison] = DateTime.MinValue;

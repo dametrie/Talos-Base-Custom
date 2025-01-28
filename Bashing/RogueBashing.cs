@@ -27,7 +27,7 @@ namespace Talos.Bashing
         "dual crystal arrows1",
         "crystal arrow1",
         "crystal arrow"
-    };
+        };
 
         private int EngageRange => Convert.ToInt32(Client.ClientTab.engageRangeNum.Value);
         private int AttackRange => Convert.ToInt32(Client.ClientTab.atkRangeNum.Value);
