@@ -14,6 +14,7 @@ using Talos.Extensions;
 using Talos.Forms;
 using Talos.Forms.UI;
 using Talos.Helper;
+using Talos.Maps;
 using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
@@ -137,7 +138,58 @@ namespace Talos.Base
             AddTask(new BotLoop(SoundLoop));
             AddTask(new BotLoop(WalkLoop));
             AddTask(new BotLoop(MultiLoop));
+            AddTask(new BotLoop(AnimationLoop));
         }
+
+        private void AnimationLoop()
+        {
+            while (!_shouldThreadStop)
+            {
+                try
+                {
+                    if (Client.Map == null || !Client.Map.IsLoaded)
+                    {
+                        Thread.Sleep(1000); // Wait for map to load
+                        continue;
+                    }
+
+                    // Ensure we are checking a valid MapID in the blacklist
+                    if (!Pathfinder.BlackList.TryGetValue(Client.Map.MapID, out Location[] blacklistTiles))
+                    {
+                        Thread.Sleep(1000); // If no blacklist for this map, just wait and retry
+                        continue;
+                    }
+
+                    // Iterate through blacklisted tiles
+                    foreach (var loc in blacklistTiles)
+                    {
+                        if (Client.Map.Tiles.ContainsKey(loc.Point))
+                        {
+                            // Confirm that the unwalkable tile exists in the map
+                            Console.WriteLine($"Confirmed unwalkable tile at ({loc.X}, {loc.Y}) exists in Map.Tiles");
+
+                            // Send animation packet if needed (Modify with your actual animation logic)
+                            Client.SendAnimation(96, 100, loc.Point);
+                        }
+                        else
+                        {
+                            // Report missing tiles
+                            Console.WriteLine($"WARNING: Expected unwalkable tile ({loc.X}, {loc.Y}) is missing from Map.Tiles!");
+                        }
+                    }
+
+                    // Sleep to prevent excessive looping and CPU usage
+                    Thread.Sleep(2000);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[AnimationLoop] Exception occurred: {ex}");
+                }
+            }
+        }
+
+
+
 
         private void MultiLoop()
         {
@@ -6183,7 +6235,7 @@ namespace Talos.Base
             {
                 if (!IsStrangerNearby())
                 {
-                    var lootArea = new Structs.Rectangle(new Point(Client.ServerLocation.X - 2, Client.ServerLocation.Y - 2), new Point(5, 5));
+                    var lootArea = new Structs.Rectangle(new Point(Client.ServerLocation.X - 2, Client.ServerLocation.Y - 2), new Size(5, 5));
                     List<Objects.GroundItem> nearbyObjects = Client.GetNearbyGroundItems(4);
 
                     if (nearbyObjects.Count > 0)

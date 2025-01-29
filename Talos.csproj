@@ -305,6 +305,7 @@
     <Compile Include="Structs\Location.cs" />
     <Compile Include="Structs\Point.cs" />
     <Compile Include="Structs\Rectangle.cs" />
+    <Compile Include="Structs\Size.cs" />
     <Compile Include="Structs\Tile.cs" />
     <Compile Include="Utility\HashingUtils.cs" />
     <Compile Include="Utility\KeyboardUtility.cs" />

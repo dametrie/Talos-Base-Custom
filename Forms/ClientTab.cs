@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Xml.Serialization;
 using System.Xml;
+using Size = System.Drawing.Size;
 
 
 namespace Talos.Forms
@@ -2678,6 +2679,7 @@ namespace Talos.Forms
 
             _client.WalkSpeed = 150;
             walkSpeedLbl.Text = "150";
+            followText.Text = String.Empty;
 
             // Clear ally and enemy pages
             ClearAllyAndEnemyPages();

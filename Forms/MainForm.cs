@@ -136,6 +136,7 @@ namespace Talos
 
             LoadCharLoginData();
             LoadAutoAscendData();
+
             if (!new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
             {
                 int num1 = (int)MessageDialog.Show(this, "Make sure to run the bot as Admin or you will lose functionality.");
@@ -959,6 +960,8 @@ namespace Talos
                 optionsForm.ShowDialog();
             }
         }
+
+
     }
 }
 

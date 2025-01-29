@@ -3491,6 +3491,16 @@ namespace Talos.Base
             Enqueue(serverPacket);
 
         }
+        internal void SendAnimation(ushort animation, short speed, Point point)
+        {
+            ServerPacket serverPacket = new ServerPacket(41);
+            serverPacket.WriteUInt32(0u);
+            serverPacket.WriteUInt16(animation);
+            serverPacket.WriteInt16(speed);
+            serverPacket.WriteStruct(point);
+            Enqueue(serverPacket);
+
+        }
         internal void AddSkill(Skill skill)
         {
             ServerPacket serverPacket = new ServerPacket(44);

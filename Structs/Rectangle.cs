@@ -5,30 +5,11 @@ namespace Talos.Structs
 {
     internal struct Rectangle
     {
-        internal short X
-        {
-            get;
-            set;
-        }
-
-        internal short Y
-        {
-            get;
-            set;
-        }
-
-        internal short Width
-        {
-            get;
-            set;
-        }
-
-        internal short Height
-        {
-            get;
-            set;
-        }
-
+        internal short MapID { get; set; }
+        internal short X { get; set; }
+        internal short Y { get; set; }
+        internal short Width { get; set; }
+        internal short Height { get; set; }
         internal short Left => Y;
 
         internal short Top => X;
@@ -37,7 +18,7 @@ namespace Talos.Structs
 
         internal short Bottom => (short)(Y + Height);
 
-        internal List<Location> LocationList
+        internal List<Location> Points
         {
             get
             {
@@ -46,7 +27,7 @@ namespace Talos.Structs
                 {
                     for (int j = Y; j <= Y + Height; j++)
                     {
-                        list.Add(new Location(0, (short)i, (short)j));
+                        list.Add(new Location(MapID, (short)i, (short)j));
                     }
                 }
                 return list;
@@ -66,27 +47,29 @@ namespace Talos.Structs
             return list.ToArray();
         }
 
-        internal Rectangle(short x, short y, short width, short height) : this()
+        internal Rectangle(short mapID, short x, short y, short width, short height) : this()
         {
+            MapID = mapID;
             X = x;
             Y = y;
             Width = width;
             Height = height;
         }
 
-        internal Rectangle(Point location, Point size) : this()
+        internal Rectangle(Point location, Size size) : this()
         {
             X = location.X;
             Y = location.Y;
-            Width = size.X;
-            Height = size.Y;
+            Width = size.Width;
+            Height = size.Height;
         }
-        internal Rectangle(Location location, Point size) : this()
+        internal Rectangle(Location location, Size size) : this()
         {
+            MapID = location.MapID;
             X = location.X;
             Y = location.Y;
-            Width = size.X;
-            Height = size.Y;
+            Width = size.Width;
+            Height = size.Height;
         }
 
         public static bool Equal(Rectangle rect1, Rectangle rect2)

@@ -1,4 +1,4 @@
-﻿namespace Talos.Forms.UI
+﻿    namespace Talos.Forms.UI
 {
     internal class Enemy
     {

@@ -76,11 +76,11 @@ namespace Talos.Structs
             }
         }
 
-        internal Size Size
+        internal System.Drawing.Size Size
         {
             get
             {
-                return new Size(Width, Height);
+                return new System.Drawing.Size(Width, Height);
             }
             set
             {

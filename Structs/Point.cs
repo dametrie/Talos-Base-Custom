@@ -66,10 +66,7 @@ namespace Talos.Structs
         {
             unchecked
             {
-                int hash = 17;
-                hash = hash * 23 + X.GetHashCode();
-                hash = hash * 23 + Y.GetHashCode();
-                return hash;
+                return (X << 16) | (ushort)Y; // Ensures uniqueness in dictionary lookups
             }
         }
 
