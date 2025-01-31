@@ -2702,10 +2702,10 @@ namespace Talos
             Item item = new Item(slot, sprite, color, itemName, 1, maxDurability, currDurability);
             client.EquippedItems[slot] = item;
 
-            Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} added to slot: " + slot);
-            Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} current durability {client.EquippedItems[slot].CurrentDurability}");
-            Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} maximum durability {client.EquippedItems[slot].MaximumDurability}");
-            Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} ushort sprite {client.EquippedItems[slot].Sprite - CONSTANTS.ITEM_SPRITE_OFFSET}");
+            //Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} added to slot: " + slot);
+            //Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} current durability {client.EquippedItems[slot].CurrentDurability}");
+            //Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} maximum durability {client.EquippedItems[slot].MaximumDurability}");
+            //Console.WriteLine($"[AddEquipment] Item name {client.EquippedItems[slot].Name} ushort sprite {client.EquippedItems[slot].Sprite - CONSTANTS.ITEM_SPRITE_OFFSET}");
 
 
             // Find the staff or bow in the respective lists
@@ -2740,9 +2740,9 @@ namespace Talos
             if (slot == 2)
                 _itemToReEquip = client.EquippedItems[slot].Name;
 
-            Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} unequipped from slot: " + slot);
-            Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} current durability {client.EquippedItems[slot].CurrentDurability}");
-            Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} maximum durability {client.EquippedItems[slot].MaximumDurability}");
+            //Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} unequipped from slot: " + slot);
+            //Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} current durability {client.EquippedItems[slot].CurrentDurability}");
+            //Console.WriteLine($"[UNEQUIP] Item name {client.EquippedItems[slot].Name} maximum durability {client.EquippedItems[slot].MaximumDurability}");
 
             client.EquippedItems[slot] = null;
 

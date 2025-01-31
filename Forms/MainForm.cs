@@ -217,6 +217,13 @@ namespace Talos
 
                 // 2. Grab all JSON files. If none, exit.
                 string[] files = Directory.GetFiles(autoAscendPath, "*.json");
+                Console.WriteLine($"Number of JSON files found: {files.Length}"); // Log the count
+
+                foreach (var file in files)
+                {
+                    Console.WriteLine($"Found file: {file}"); // Log each file path
+                }
+
                 if (files.Length == 0) return;
 
                 // 3. Clear the list before reloading

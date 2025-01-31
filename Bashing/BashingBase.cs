@@ -20,7 +20,6 @@ namespace Talos.Bashing
         protected DateTime LastAssailed = DateTime.UtcNow;
         protected DateTime LastSendTarget = DateTime.UtcNow;
         protected DateTime LastUsedSkill { get; set; } = DateTime.Now;
-
         protected List<Player> NearbyPlayers { get; set; }
         protected List<Creature> NearbyMonsters { get; set; }
         protected List<Creature> KillableTargets { get; set; }
@@ -62,46 +61,78 @@ namespace Talos.Bashing
         {
             try
             {
+                Console.WriteLine($"[Bashing] [{Client.Name}] DoBashing started...");
+
                 if (!CanPerformActions)
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] Cannot perform actions.");
                     return true;
+                }
 
                 Update();
+                Console.WriteLine($"[Bashing] [{Client.Name}] Update complete.");
 
                 // Get filtered monsters and ordered potential targets
                 KillableTargets = FilterMonstersByCursedFased()?.ToList();
                 if (!ValidateKillableTargets())
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] No valid killable targets.");
                     return false;
+                }
+                Console.WriteLine($"[Bashing] [{Client.Name}] Found {KillableTargets.Count} valid targets.");
 
                 var potentialTargets = GetOrderedPotentialTargets()?.ToList();
                 if (!ValidatePotentialTargets(potentialTargets))
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] No valid potential targets.");
                     return false;
+                }
+                Console.WriteLine($"[Bashing] [{Client.Name}] Found {potentialTargets.Count} ordered potential targets.");
 
                 // Select the first valid target
                 Target = potentialTargets.FirstOrDefault(MeetsKillCriteria) ?? potentialTargets.FirstOrDefault();
                 if (Target == null)
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] No valid target selected.");
                     return false;
+                }
+
+                Console.WriteLine($"[Bashing] [{Client.Name}] Target selected: {Target.Name} at {Target.Location}");
 
                 // Manage target selection timing
                 if (ShouldSendBashingTarget())
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] Sending bashing target.");
                     SendBashingTarget(Target);
+                }
 
                 // Handle movement towards the target
                 if (!HandleMovement(Target))
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] Movement to target failed.");
                     return false;
+                }
 
                 // Perform refresh or equip actions if needed
                 if (RefreshIfNeeded() || EquipNecklaceIfNeeded(Target))
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] Refresh or equip action taken.");
                     return true;
+                }
 
                 // Perform bashing if enabled
                 if (Client.Bot?._dontBash == false)
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] Executing skills.");
                     UseSkills(Target);
+                }
 
+                Console.WriteLine($"[Bashing] [{Client.Name}] DoBashing completed successfully.");
                 return true;
             }
             catch (Exception ex)
             {
-                Log($"Exception in DoBashing: {ex.Message}\n{ex.StackTrace}");
+                Console.WriteLine($"[Bashing] [{Client.Name}] Exception in DoBashing: {ex.Message}\n{ex.StackTrace}"); 
                 return false;
             }
         }
@@ -163,26 +194,41 @@ namespace Talos.Bashing
 
         private bool HandleMovement(Creature target)
         {
-            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
+            Console.WriteLine($"[Bashing] [{Client.Name}] Handling movement to {target.Name} at {target.Location}.");
 
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
+            Console.WriteLine($"[Bashing] [{Client.Name}] Distance to target: {distanceToTarget}");
+
+            // Detect if the target is on top of the player
             if (distanceToTarget == 0)
+            {
                 return TryUnstuck();
+            }
 
             if (distanceToTarget > 1)
             {
                 if (!ShouldPathfindToTarget(target, distanceToTarget))
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding skipped.");
                     return true;
+                }
 
                 if (!TryPathfindToPoint(target.Location))
+                {
+                    Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding failed.");
                     return false;
+                }
             }
             else if (!TryFaceTarget(target))
             {
+                Console.WriteLine($"[Bashing] [{Client.Name}] Facing target failed.");
                 return true;
             }
 
+            Console.WriteLine($"[Bashing] [{Client.Name}] Movement handling completed.");
             return true;
         }
+
 
         private bool ShouldPathfindToTarget(Creature target, int distance)
         {
@@ -408,7 +454,18 @@ namespace Talos.Bashing
 
         protected virtual bool TryPathfindToPoint(Location location, short distance = 1)
         {
-            return CanMove && !Client.Bot._dontWalk && Client.Pathfind(location, distance);
+            Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding to {location}.");
+
+            if (!CanMove || Client.Bot._dontWalk)
+            {
+                Console.WriteLine($"[Bashing] [{Client.Name}] Cannot move or walking is disabled.");
+                return false;
+            }
+
+            bool success = Client.Pathfind(location, distance);
+
+            Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding {(success ? "succeeded" : "failed")}.");
+            return success;
         }
 
         protected IEnumerable<Creature> GetSurroundingCreatures(IEnumerable<Creature> creatures = null, int skillRange = 1)
@@ -482,6 +539,7 @@ namespace Talos.Bashing
             Client.UseItem(item.Name);
             return true;
         }
+
         protected virtual bool TryUnstuck()
         {
             if (!CanMove)

@@ -111,7 +111,7 @@ namespace Talos.Networking
             {
                 throw new EndOfStreamException();
             }
-            return _data[_position++] != 0;
+            return _data[_position++] > 0;
         }
 
         internal short ReadInt16()

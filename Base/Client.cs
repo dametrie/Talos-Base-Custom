@@ -404,11 +404,33 @@ namespace Talos.Base
         }
         internal bool CanUseSkill(Skill skill)
         {
-            return skill.CanUse
-                && Map.CanUseSkills
-                && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh)
-                && !EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain);
+            if (!skill.CanUse)
+            {
+                Console.WriteLine($"[DEBUG] Skill {skill.Name} cannot be used because it is on cooldown.");
+                return false;
+            }
+
+            if (!Map.CanUseSkills)
+            {
+                Console.WriteLine($"[DEBUG] Skills cannot be used on this map (Map.CanUseSkills is false).");
+                return false;
+            }
+
+            if (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh))
+            {
+                Console.WriteLine($"[DEBUG] Cannot use skill {skill.Name} because Pramh effect is active.");
+                return false;
+            }
+
+            if (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain))
+            {
+                Console.WriteLine($"[DEBUG] Cannot use skill {skill.Name} because Suain effect is active.");
+                return false;
+            }
+
+            return true;
         }
+
 
         internal bool CanUseSkill(string skillName)
         {
@@ -835,7 +857,7 @@ namespace Talos.Base
             //Console.WriteLine($"No valid locations found. Returning original target location: {targetLocation}");
             return targetLocation;
         }
-        internal List<Location> GetCreatureCoverage(Creature creature)
+        internal List<Location> BoroArea1(Creature creature)
         {
             if (HasEffect(Enumerations.EffectsBar.Hide))
             {
@@ -1957,7 +1979,7 @@ namespace Talos.Base
 
             if (NearbyHiddenPlayers.Count > 0 || IsCasting)
             {
-                //Console.WriteLine($"[Pathfind] [{this.Name}] Cannot walk because NearbyHiddenPlayers count is {NearbyHiddenPlayers.Count} or is casting {_isCasting}");
+                //Console.WriteLine($"[Pathfind] [{this.Name}] Cannot walk because NearbyHiddenPlayers count is {NearbyHiddenPlayers.Count} or is casting {IsCasting}");
                 if (!IsWalking)
                 {
                     //Console.WriteLine($"[Pathfind] [{this.Name}] Not currently walking.");
@@ -1977,6 +1999,12 @@ namespace Talos.Base
                 //Console.WriteLine($"[Pathfind] [{this.Name}] isWall or isStuck, refreshing. Setting _hasWalked to false and returning false");
                 RefreshRequest();
                 HasWalked = false;
+                return false;
+            }
+
+            // Avoid recalculating path if already near the target
+            if (distance > 0 && ClientLocation.DistanceFrom(destination) <= distance)
+            {
                 return false;
             }
 
@@ -2007,28 +2035,22 @@ namespace Talos.Base
                 elapsedMilliseconds = DateTime.UtcNow.Subtract(LastStep).TotalMilliseconds;
             }
 
-            if (Equals(ClientLocation, destination))
-            {
-                //Console.WriteLine($"[Pathfind] [{this.Name}] Destination reached.");
-                RefreshRequest();
-                return true;
-            }
 
-            if (Location.NotEquals(destination, _lastDestination) || _pathStack.Count == 0)
+            // Only recalculate the path if necessary
+            if (destination != _lastDestination || _pathStack.Count == 0)
             {
                 //Console.WriteLine($"[Pathfind] [{this.Name}] New destination or empty path stack. Calculating new path.");
                 _lastDestination = destination;
-                _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps);
+                _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps, distance);
 
             }
 
-            if (_pathStack.Count == 0 && Location.NotEquals(ClientLocation, ServerLocation) && HasWalked)
+            // Handle cases where path is empty
+            if (_pathStack.Count == 0 && ClientLocation != ServerLocation && HasWalked)
             {
-                _pathStack = Pathfinder.FindPath(ServerLocation, destination, avoidWarps);
-                if (_pathStack.Count == 0)
-                {
-                    return false;
-                }
+                _pathStack = Pathfinder.FindPath(ServerLocation, destination, avoidWarps, distance   );
+                if (_pathStack.Count == 0) return false;
+
                 //Console.WriteLine($"[Pathfind] [{this.Name}] Location difference detected, requesting refresh.");
                 RefreshRequest();
                 HasWalked = false;
@@ -2038,42 +2060,38 @@ namespace Talos.Base
             if (_pathStack.Count == 0)
             {
                 //Console.WriteLine($"[Pathfind] [{this.Name}] Path stack is empty, no further movement possible.");
-                RefreshRequest();
                 return false;
             }
 
+            // Clone _pathStack before iterating to prevent modification while looping.
+            // List<Location> pathList = _pathStack.ToList();
 
-            List<Creature> nearbyCreatures = (from creature in GetNearbyObjects().OfType<Creature>()
-                                              where creature.Type != CreatureType.WalkThrough && creature != Player && creature.Location.DistanceFrom(ServerLocation) <= 11
-                                              select creature).ToList();
+            List<Creature> nearbyCreatures = GetNearbyObjects()
+                .OfType<Creature>()
+                .Where(c => c.Type != CreatureType.WalkThrough && c != Player && c.Location.DistanceFrom(ServerLocation) <= 11)
+                .ToList();
 
-            foreach (Location loc in _pathStack)
+            foreach (Location loc in _pathStack.ToList())
             {
                 Door door = Doors.Values.FirstOrDefault(d => d.Location.Equals(loc));
-                if (door != null)
+                if (door != null && door.Closed && !door.RecentlyClicked)
                 {
-                    //Console.WriteLine($"[Pathfind] [{this.Name}] Door at {loc}, Closed: {door.Closed}, RecentlyClicked: {door.RecentlyClicked}");
-                    if (door.Closed && !door.RecentlyClicked)
-                    {
-                        //Console.WriteLine($"[Pathfind] [{this.Name}] Attempting to click door.");
-                        ClickObject(loc);
-                        door.LastClicked = DateTime.UtcNow;
-                    }
+                    ClickObject(loc);
+                    door.LastClicked = DateTime.UtcNow;
                 }
-                if (nearbyCreatures.Count > 0 && nearbyCreatures.Any(creature => Location.NotEquals(loc, destination) && Location.Equals(creature.Location, loc) || (!HasEffect(Enumerations.EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID) && GetCreatureCoverage(creature).Contains(loc))))
+
+                if (nearbyCreatures.Any(creature =>
+                    Location.NotEquals(loc, destination) &&
+                    Location.Equals(creature.Location, loc) ||
+                    (!HasEffect(Enumerations.EffectsBar.Hide) && CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID) && BoroArea1(creature).Contains(loc))))
                 {
-                    if (isStuck)
-                    {
-                        //Console.WriteLine($"[Pathfind] [{this.Name}] Stuck in creature intreaction if statement.");
-                        break;
-                    }
-                    //Console.WriteLine($"[Pathfind] [{this.Name}] Creature interaction required at {loc}, recalculating path.");
-                    _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps);
+                    _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps, distance);
                     return false;
                 }
             }
 
             Location nextPosition = _pathStack.Peek();
+
             if (nextPosition.Equals(ClientLocation))
             {
                 _pathStack.Pop();
@@ -2098,32 +2116,27 @@ namespace Talos.Base
                     }
                     HasWalked = false;
                 }
-                _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps);
+                _pathStack = Pathfinder.FindPath(ClientLocation, destination, avoidWarps, distance);
                 return false;
             }
 
             Direction directionToWalk = nextPosition.GetDirection(ClientLocation);
+           
             if (shouldBlock)
             {
                 lock (CastLock)
                 {
-                    if (!HasEffect(Enumerations.EffectsBar.Pramh))
+                    if (!HasEffect(Enumerations.EffectsBar.Pramh) &&
+                        !HasEffect(Enumerations.EffectsBar.Suain) &&
+                        (!HasEffect(Enumerations.EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
                     {
-                        if (!HasEffect(Enumerations.EffectsBar.Suain))
-                        {
-                            if (HasEffect(Enumerations.EffectsBar.Skull))
-                            {
-                                if (ClientTab.ascendBtn.Text != "Ascending")
-                                {
-                                    return true;
-                                }
-                            }
-                            Walk(directionToWalk);
-                        }
+                        Walk(directionToWalk);
                     }
                 }
             }
-            else if (!HasEffect(Enumerations.EffectsBar.Pramh) && !HasEffect(Enumerations.EffectsBar.Suain) && (!HasEffect(Enumerations.EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
+            else if (!HasEffect(Enumerations.EffectsBar.Pramh) &&
+                    !HasEffect(Enumerations.EffectsBar.Suain) &&
+                    (!HasEffect(Enumerations.EffectsBar.Skull) || ClientTab.ascendBtn.Text == "Ascending"))
             {
                 Walk(directionToWalk);
             }
@@ -2134,10 +2147,10 @@ namespace Talos.Base
         {
             try
             {
-                Console.WriteLine($"[RouteFind] [{Name}] Starting RouteFind to {destination}");
+                //Console.WriteLine($"[RouteFind] [{Name}] Starting RouteFind to {destination}");
                 if (Server._stopWalking)
                 {
-                    Console.WriteLine($"[RouteFind] [{Name}] Not supposed to walk.");
+                    //Console.WriteLine($"[RouteFind] [{Name}] Not supposed to walk.");
                     return false;
                 }
 
@@ -2175,7 +2188,7 @@ namespace Talos.Base
                     return false;
                 }
 
-                if (Location.NotEquals(_routeDestination, adjustedDestination) || _routeStack.Count == 0)
+                if (_routeStack.Count == 0 || Location.NotEquals(_routeDestination, adjustedDestination))
                 {
                     //Console.WriteLine($"[RouteFind] [{this.Name}] Finding new route.");
                     _routeDestination = adjustedDestination;
@@ -2197,6 +2210,10 @@ namespace Talos.Base
                     return false;
                 }
 
+                // Clone _routeStack before iterating
+                List<Location> routeList = _routeStack.ToList();
+                routeList.Reverse();
+
                 Location nextLocation = _routeStack.Peek();
 
                 //if (routeStack.Count != 1)
@@ -2205,22 +2222,28 @@ namespace Talos.Base
                 //    distance = 0;
                 //}
 
-                if (_routeStack.Count > 1 && Location.Equals(nextLocation, ServerLocation))
+                if (_routeStack.Count > 1)
                 {
-                    //Console.WriteLine($"[RouteFind] [{this.Name}] routeStack.Count > 1 & nextLocaiton = _serverLocation");
-                    _routeStack.Pop();
-                    nextLocation = _routeStack.Peek();
+                    Location tempNext = _routeStack.Peek();
+                    if (Location.Equals(tempNext, ServerLocation))
+                    {
+                        _routeStack.Pop();
+                        if (_routeStack.Count > 0)
+                        {
+                            nextLocation = _routeStack.Peek();
+                        }
+                    }
                 }
 
                 if (WorldMap != null)
                 {
-                    //Console.WriteLine($"[RouteFind] [{this.Name}] World map is not null, processing world map navigation.");
-                    List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
+                    // Console.WriteLine($"[RouteFind] [{this.Name}] World map is not null, processing world map navigation.");
+                    // List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
                     if (DateTime.UtcNow.Subtract(_lastClickedWorldMap).TotalSeconds < 1.0)
                     {
                         return false;
                     }
-                    foreach (Location location in list)
+                    foreach (Location location in routeList)
                     {
                         //Console.WriteLine($"[RouteFind] [{this.Name}] Checking world map node for location {location}");
 
@@ -2998,15 +3021,16 @@ namespace Talos.Base
         internal bool UseSkill(string skillName)
         {
             Skill skill = Skillbook[skillName];
+
             if (skill == null)
             {
-                Console.WriteLine($"[Client] You do not have skill {skillName}");
+                //Console.WriteLine($"[UseSkill] You do not have skill {skillName}");
                 return false;
             }
 
             if (!CanUseSkill(skill))
             {
-                Console.WriteLine($"[Client] Skill '{skillName}' cannot be used. Check conditions in CanUseSkill.");
+                //Console.WriteLine($"[UseSkill] Skill '{skillName}' cannot be used. Check conditions in CanUseSkill.");
                 return false;
             }
 
@@ -3021,7 +3045,7 @@ namespace Talos.Base
                     ThreadPool.QueueUserWorkItem(_ => ClientTab.DelayedUpdateStrangerList());
                 }
             }
-            Console.WriteLine($"[Client] Using skill {skillName}");
+            Console.WriteLine($"[UseSkill] Using skill {skillName}");
             Enqueue(clientPacket);
 
             return true;
@@ -3875,6 +3899,7 @@ namespace Talos.Base
         private bool HandleServerPacket(ServerPacket serverPacket)
         {
             ServerMessageHandler serverHandler = Server.ServerMessage[serverPacket.Opcode];
+            //Console.WriteLine($"[DEBUG] ({Name}) Received ServerPacket. Opcode: {serverPacket.Opcode} ({serverPacket.ToString()}), Length: {serverPacket.Data.Length}");
             return TryHandleServerPacket(serverHandler, serverPacket);
         }
 

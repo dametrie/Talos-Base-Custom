@@ -153,6 +153,12 @@ namespace Talos.Options
         {
             try
             {
+                // Ensure the group is included before saving
+                if (!playerData.ContainsKey("Group"))
+                {
+                    playerData["Group"] = DetermineActiveGroup();
+                }
+
                 // Serialize player data to JSON
                 string jsonData = JsonConvert.SerializeObject(playerData, GetSerializerSettings());
 
@@ -165,10 +171,10 @@ namespace Talos.Options
             }
             catch (Exception ex)
             {
-                // Log any errors encountered during the save process
                 Console.WriteLine($"Error saving player data: {ex.Message}");
             }
         }
+
         private JsonSerializerSettings GetSerializerSettings()
         {
             var serializerSettings = new JsonSerializerSettings

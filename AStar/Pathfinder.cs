@@ -55,87 +55,118 @@ internal class Pathfinder
         InitializeBlockLists();
     }
 
-    internal void InitializePathNodes(bool full, Location location = default(Location), bool avoidWarps = true)
+    internal void InitializePathNodes(bool full, Location destination = default, bool avoidWarps = true)
     {
+        // Initialize lockstep walking variables
         _isLockstepWalking = false;
         _followPlayerName = _client.ClientTab.followText.Text;
 
-        List<Location> obstacles = new List<Location>();
+        // Collect obstacles
+        List<Location> obstacles = (
+            from creature in _client.GetNearbyObjects().OfType<Creature>()
+            where ShouldIncludeInObstacles(creature)
+            select creature.Location).ToList();
 
-        // Collect blacklisted tiles immediately
-        if (Pathfinder.BlackList.TryGetValue(_map.MapID, out Location[] blacklistedTiles))
-        {
-            obstacles.AddRange(blacklistedTiles);
-            Console.WriteLine($"Loaded {blacklistedTiles.Length} blacklisted tiles for MapID {_map.MapID}");
-        }
-        else
-        {
-            Console.WriteLine($"No blacklist found for MapID {_map.MapID}");
-        }
-
-        // Collect obstacles from creatures
-        obstacles.AddRange(
-            _client.GetNearbyObjects()
-            .OfType<Creature>()
-            .Where(ShouldIncludeInObstacles)
-            .Select(creature => creature.Location)
-        );
-
-        // Handle other clients' positions
+        // Handle other clients on the same map
         foreach (Client otherClient in _client.Server.Clients.Where(cli => cli != _client && cli.Map.MapID == _client.Map.MapID))
         {
             if (!(_isLockstepWalking && otherClient.Player.Name.Equals(_followPlayerName, StringComparison.OrdinalIgnoreCase)))
             {
-                obstacles.AddRange(FindSimplePath(otherClient.ClientLocation.Point, otherClient.ServerLocation.Point).Take(3).Select(p => new Location(_map.MapID, p.X, p.Y)));
+                // Add up to 3 points from their path to the obstacles
+                var pathPoints = FindSimplePath(otherClient.ClientLocation.Point, otherClient.ServerLocation.Point).Take(3);
+                foreach (Point point in pathPoints)
+                {
+                    Location loc = new Location(_map.MapID, point.X, point.Y);
+                    if (!obstacles.Contains(loc))
+                    {
+                        obstacles.Add(loc);
+                    }
+                }
             }
         }
-
-        // Collect warp points if avoiding warps
-        if (avoidWarps)
-        {
-            obstacles.AddRange(_client.GetWarpPoints(location));
-        }
-
-        // Initialize path nodes if `full` is requested
         if (full)
         {
             _pathNodes = new PathNode[_mapWidth, _mapHeight];
 
+            // Initialize all path nodes with wall data
             for (short x = 0; x < _mapWidth; x++)
             {
                 for (short y = 0; y < _mapHeight; y++)
                 {
+                    bool isWall = _map.IsWall(x, y);
+                    Point currentPoint = new Point(x, y);
+                    bool isExit = _map.Exits.ContainsKey(currentPoint);
+
                     _pathNodes[x, y] = new PathNode(_map.MapID, x, y)
                     {
-                        Walkable = !_map.IsWall(x, y) || _map.Exits.ContainsKey(new Point(x, y))
+                        Walkable = !isWall || isExit  // Nodes are open if not a wall or if it's an exit
                     };
+                    //Console.WriteLine($"Node at ({x}, {y}) initialized as " + (_pathNodes[x, y].IsOpen ? "Open" : "Closed"));
                 }
             }
 
-            // Assign neighbors
-            for (short x = 0; x < _mapWidth; x++)
+        }
+
+        // Setting neighbors for each node
+        for (short x = 0; x < _mapWidth; x++)
+        {
+            for (short y = 0; y < _mapHeight; y++)
             {
-                for (short y = 0; y < _mapHeight; y++)
+                PathNode node = _pathNodes[x, y];
+                if (y > 0) node.Neighbors[0] = _pathNodes[x, y - 1]; // Up
+                if (x < _mapWidth - 1) node.Neighbors[1] = _pathNodes[x + 1, y]; // Right
+                if (y < _mapHeight - 1) node.Neighbors[2] = _pathNodes[x, y + 1]; // Down
+                if (x > 0) node.Neighbors[3] = _pathNodes[x - 1, y]; // Left
+            }
+        }
+
+        if (BlackList.TryGetValue(_map.MapID, out Location[] specialObstacles))
+        {
+            foreach (var obstacle in specialObstacles)
+            {
+                //Console.WriteLine($"- {obstacle}");
+                if (!obstacles.Contains(obstacle))
                 {
-                    PathNode currentNode = _pathNodes[x, y];
-                    if (y > 0) currentNode.Neighbors[0] = _pathNodes[x, y - 1]; // Up
-                    if (x < _mapWidth - 1) currentNode.Neighbors[1] = _pathNodes[x + 1, y]; // Right
-                    if (y < _mapHeight - 1) currentNode.Neighbors[2] = _pathNodes[x, y + 1]; // Down
-                    if (x > 0) currentNode.Neighbors[3] = _pathNodes[x - 1, y]; // Left
+                    obstacles.Add(obstacle);
                 }
             }
         }
 
-        // Mark all collected obstacles as unwalkable
-        foreach (Location loc in obstacles)
+        //Console.WriteLine("Obstacles from creature coverage:");
+        foreach (Creature creature in _client.GetAllNearbyMonsters(12, CONSTANTS.GREEN_BOROS.ToArray()))
         {
-            if (loc.X >= 0 && loc.X < _mapWidth && loc.Y >= 0 && loc.Y < _mapHeight)
+            foreach (Location loc in _client.BoroArea1(creature))
             {
-                _pathNodes[loc.X, loc.Y].Walkable = false;
-                //Console.WriteLine($"Setting ({loc.X}, {loc.Y}) as UNWALKABLE (Obstacle)");
+                //Console.WriteLine($"- {loc}");
+                if (!obstacles.Contains(loc))
+                {
+                    obstacles.Add(loc);
+                }
+            }
+        }
+
+        // Reevaluating each node after obstacle collection
+        for (short x = 0; x < _mapWidth; x++)
+        {
+            for (short y = 0; y < _mapHeight; y++)
+            {
+                PathNode currentNode = _pathNodes[x, y];
+                currentNode.Walkable = !_map.IsWall(x, y) || _map.Exits.ContainsKey(new Point(x, y));
+
+                if (obstacles.Contains(new Location(_map.MapID, x, y)))
+                {
+                    currentNode.Walkable = false;
+                }
+
+                currentNode.IsClosed = false;
+                currentNode.ParentNode = null;
+                currentNode.IsOpen = false;
+                currentNode.Steps = 0;
+                currentNode.Iterations = 0;
             }
         }
     }
+
 
 
 
@@ -195,12 +226,6 @@ internal class Pathfinder
                 InitializePathNodes(false, end, avoidWarps);
                 //Console.WriteLine($"Starting pathfinding from {start} to {end}.");
 
-                //if (!_pathNodes[start.X, start.Y].Walkable)
-                //{
-                //    Console.WriteLine("Start location is blocked.");
-                //    return new Stack<Location>();
-                //}
-
                 if (end.X < 0 || end.X >= _mapWidth || end.Y < 0 || end.Y >= _mapHeight)
                 {
                     Console.WriteLine("End location is outside map boundaries.");
@@ -209,16 +234,27 @@ internal class Pathfinder
 
                 PathNode startNode = _pathNodes[start.X, start.Y];
                 PathNode endNode = _pathNodes[end.X, end.Y];
-                startNode.GCost = 0;
-                startNode.FCost = CalculateHeuristic(startNode.Location, endNode.Location);
+
+                startNode.IsOpen = true;
+                startNode.Steps = CalculateHeuristic(startNode.Location, endNode.Location);
+                startNode.Iterations = 0.0f;
+
                 _openNodes = new PriorityQueue<PathNode>();
                 _openNodes.Enqueue(startNode);
-                startNode.IsOpen = true;
 
                 while (_openNodes.Count > 0)
                 {
                     PathNode currentNode = _openNodes.Dequeue();
-                    //Console.WriteLine($"Processing node at {currentNode.Location}, FCost: {currentNode.FCost}");
+
+                    if (currentNode == null)
+                    {
+                        _client.RefreshRequest();
+                        Console.WriteLine("No optimal node found.");
+                        return new Stack<Location>();
+                    }
+
+                    //Console.WriteLine($"Processing node at {currentNode.Location}, Steps: {currentNode.Steps}");
+  
 
                     if (currentNode == endNode)
                     {
@@ -228,30 +264,42 @@ internal class Pathfinder
 
                     currentNode.IsClosed = true;
 
-                    //Console.WriteLine($"Processing node at {currentNode.Location}, Neighbors: {currentNode.Neighbors.Length}");
                     foreach (var neighbor in currentNode.Neighbors)
                     {
-                        if (neighbor == null || neighbor.IsClosed)
+                        if (neighbor == null)
+                        {
+                            //Console.WriteLine($"  Neighbor at (null) skipped.");
                             continue;
+                        }
+
+                        if (neighbor.IsClosed)
+                        {
+                            //Console.WriteLine($"  Neighbor at ({neighbor.Location.X}, {neighbor.Location.Y}) is already closed. Skipping.");
+                            continue;
+                        }
 
                         if (!neighbor.Walkable && neighbor != endNode)
-                            continue;
-
-                        //Console.WriteLine($"Neighbor at {neighbor.Location} is walkable and will be evaluated.");
-
-                        float tentativeGCost = currentNode.GCost + 1;
-
-                        if (!neighbor.IsOpen || tentativeGCost < neighbor.GCost)
                         {
+                            //Console.WriteLine($"  Neighbor at ({neighbor.Location.X}, {neighbor.Location.Y}) is unwalkable. Skipping.");
+                            continue;
+                        }
+
+
+                        float newIterations = currentNode.Iterations + 1;
+                        float newSteps = newIterations + CalculateHeuristic(neighbor.Location, end);
+
+                        if (!neighbor.IsOpen || newIterations < neighbor.Iterations)
+                        {
+                            //Console.WriteLine($"  Updating neighbor at ({neighbor.Location.X}, {neighbor.Location.Y})");
+
                             neighbor.ParentNode = currentNode;
-                            neighbor.GCost = tentativeGCost;
-                            neighbor.FCost = tentativeGCost + CalculateHeuristic(neighbor.Location, end);
+                            neighbor.Iterations = newIterations;
+                            neighbor.Steps = newSteps;
 
                             if (!neighbor.IsOpen)
                             {
-                                _openNodes.Enqueue(neighbor);
                                 neighbor.IsOpen = true;
-                                //Console.WriteLine($"Enqueued neighbor at {neighbor.Location} with GCost: {tentativeGCost}, FCost: {neighbor.FCost}");
+                                _openNodes.Enqueue(neighbor);
                             }
                             else
                             {
@@ -278,14 +326,14 @@ internal class Pathfinder
 
         while (node != null)
         {
-            //// Check if we have already visited this node to detect cycles.
-            //if (visitedLocations.Contains(node.Location))
-            //{
-            //    Console.WriteLine($"Cycle detected at location {node.Location}. Breaking out of loop.");
-            //    break;
-            //}
+            // Check if we have already visited this node to detect cycles.
+            if (visitedLocations.Contains(node.Location))
+            {
+                Console.WriteLine($"Cycle detected at location {node.Location}. Breaking out of loop.");
+                break;
+            }
 
-            //visitedLocations.Add(node.Location);
+            visitedLocations.Add(node.Location);
             path.Push(node.Location);
             node = node.ParentNode;
         }
@@ -588,24 +636,30 @@ internal sealed class PathNode : IComparable<PathNode>
     public PathNode ParentNode { get; set; }
     public bool IsClosed { get; set; }
     public bool IsOpen { get; set; }
-    public float GCost { get; set; } = float.MaxValue; // Set high default cost
-    public float FCost { get; set; } = float.MaxValue;
+    public float Iterations { get; set; }
+    public float Steps { get; set; }
 
     public PathNode(short mapID, short x, short y)
     {
         Location = new Location(mapID, x, y);
         Neighbors = new PathNode[4];
+        Walkable = true;
+        IsClosed = false;
+        IsOpen = false;
+        Iterations = 0; // Start at zero, as in the original
+        Steps = 0; // Start at zero, as in the original
     }
 
     public int CompareTo(PathNode other)
     {
         if (other == null)
             return -1;
-        int compare = FCost.CompareTo(other.FCost);
+
+        int compare = Steps.CompareTo(other.Steps);
         if (compare == 0)
         {
-            // Break ties using GCost
-            compare = GCost.CompareTo(other.GCost);
+            // Break ties using Iterations
+            compare = Iterations.CompareTo(other.Iterations);
         }
         return compare;
     }

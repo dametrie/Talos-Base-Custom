@@ -25,6 +25,7 @@ namespace Talos.Base
 {
     internal class Bot : BotBase
     {
+
         private static object _lock { get; set; } = new object();
         private Dictionary<int, bool> routeFindPerformed = new Dictionary<int, bool>();
         private int _dropCounter;
@@ -123,6 +124,7 @@ namespace Talos.Base
         internal bool toldUsAboutPotofGold;
         internal bool madeLepNet;
 
+
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
         public bool RecentlyUsedFungusExtract { get; set; } = false;
@@ -166,7 +168,7 @@ namespace Talos.Base
                         if (Client.Map.Tiles.ContainsKey(loc.Point))
                         {
                             // Confirm that the unwalkable tile exists in the map
-                            Console.WriteLine($"Confirmed unwalkable tile at ({loc.X}, {loc.Y}) exists in Map.Tiles");
+                            // Console.WriteLine($"Confirmed unwalkable tile at ({loc.X}, {loc.Y}) exists in Map.Tiles");
 
                             // Send animation packet if needed (Modify with your actual animation logic)
                             Client.SendAnimation(96, 100, loc.Point);
@@ -375,6 +377,7 @@ namespace Talos.Base
                     EnsureOneLineWalkEnabled();
                     ProcessBashingTargets();
                 }
+
             }
             catch (Exception ex)
             {
@@ -1923,6 +1926,7 @@ namespace Talos.Base
                 }
             }
         }
+
         private void TavalyWallHacks()
         {
             if (Client.ClientTab.chkTavWallStranger.Checked && IsStrangerNearby() && Client.ClientTab.chkTavWallHacks.Checked && !Client.Map.IsWall(Client.ServerLocation))
@@ -2820,219 +2824,122 @@ namespace Talos.Base
             }
         }
 
+        private DateTime lastRoutefindTime = DateTime.UtcNow;
+        private DateTime lastRefreshTime = DateTime.UtcNow;
+        private DateTime lastBacktrackTime = DateTime.UtcNow;
+        private DateTime lastPickupAttempt = DateTime.UtcNow;
+
         private void WayPointWalking(bool skip = false)
         {
             try
             {
-                // Check if there are any waypoints to walk to
+
                 if (ways.Count == 0 ||
-                    (Server.ClientStateList.ContainsKey(Client.Name)
-                    && Server.ClientStateList[Client.Name] == CharacterState.WaitForSpells))
+                    (Server.ClientStateList.ContainsKey(Client.Name) &&
+                     Server.ClientStateList[Client.Name] == CharacterState.WaitForSpells))
                 {
-                    //Console.WriteLine($"[Waypoints] [{Client.Name}] No waypoints available or client in WaitForSpells state.");
                     return;
                 }
 
                 if (currentWay < ways.Count)
                 {
-
                     Client.WalkSpeed = Client.ClientTab.walkSpeedSldr.Value;
 
-
-                    if (skip && Client.GetNearbyObjects().OfType<Creature>()
+                    // Handle skipping waypoint due to creature presence
+                    if (skip && Client.GetNearbyObjects()
+                        .OfType<Creature>()
                         .Any(creature => creature.Type != CreatureType.WalkThrough && creature.Location.Point == ways[currentWay].Point))
                     {
-                        //Console.WriteLine($"[Waypoints] [{Client.Name}] Skipping waypoint {currentWay} due to nearby creature.");
                         currentWay++;
                     }
                     else
                     {
                         WayForm waysForm = Client.ClientTab.WayForm;
+                        Point currentPoint = Client.ServerLocation.Point;
+                        Location targetWay = ways[currentWay];
+                        int distanceToTarget = Client.ClientLocation.Point.Distance(targetWay.Point);
 
-                        // Special door proximity condition
-                        if (DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 2.5 &&
-                            Client.ClientLocation.Point.Distance(_doorPoint) < 6)
+                        // **Throttle Routefind Calls (500ms)**
+                        if (distanceToTarget > waysForm.distanceUpDwn.Value)
                         {
-                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Near door, adjusting walking speed.");
-                            Client.WalkSpeed = Client.WalkSpeed > 350.0 ? 350.0 : Client.WalkSpeed;
+                            if ((DateTime.UtcNow - lastRoutefindTime).TotalMilliseconds > 500)
+                            {
+                                lastRoutefindTime = DateTime.UtcNow;
+                                bool routeFindResult = Client.Routefind(targetWay, (short)waysForm.distanceUpDwn.Value);
+                                Client.IsWalking = routeFindResult;
+                            }
+                            return;
                         }
                         else
                         {
+                            Client.IsWalking = false;
 
-                            List<Creature> nearbyCreatures = Client.GetNearbyValidCreatures(12);
-
-                            // Filter out creatures that are walled in and cannot be reached if selected
-                            //if (Client.ClientTab._isBashing && Client.ClientTab.ignoreWalledInCbox.Checked)
-                            //{
-                            //    // Remove creatures that are walled in
-                            //    nearbyCreatures = nearbyCreatures
-                            //        .Where(creature => !Client.IsLocationSurrounded(creature.Location))
-                            //        .ToList();
-                            //    Console.WriteLine("Filtered out walled-in creatures while bashing.");
-                            //}
-
-                            // Filter out creatures that are dioned if selected
-                            if (Client.ClientTab.chkIgnoreDionWaypoints.Checked)
+                            // **Throttle Refresh Requests (1s)**
+                            if (Client.ClientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
                             {
-                                // Remove creatures that are dioned
-                                nearbyCreatures = nearbyCreatures
-                                    .Where(creature => !creature.IsDioned)
-                                    .ToList();
-                                Console.WriteLine($"[Waypoints] [{Client.Name}] Filtered out dioned creatures");
-                            }
-
-
-                            // Condition 1
-                            if (GetCheckBoxChecked(waysForm.condition1)
-                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn1)))
-                                    >= GetNumericUpDownValue(waysForm.mobSizeUpDwn1)
-                                && !Client.ClientTab.IsBashing)
-                            {
-                                Client.WalkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn1);
-                                //Console.WriteLine("Condition 1 met, adjusting walking speed.");
-                            }
-
-                            // Condition 2
-                            if (GetCheckBoxChecked(waysForm.condition2)
-                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn2)))
-                                    >= GetNumericUpDownValue(waysForm.mobSizeUpDwn2)
-                                && !Client.ClientTab.IsBashing)
-                            {
-                                Client.WalkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn2);
-                                //Console.WriteLine("Condition 2 met, adjusting walking speed.");
-                            }
-
-                            // Condition 3
-                            if (GetCheckBoxChecked(waysForm.condition3)
-                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn3)))
-                                    >= GetNumericUpDownValue(waysForm.mobSizeUpDwn3)
-                                && !Client.ClientTab.IsBashing)
-                            {
-                                Client.WalkSpeed = (double)GetNumericUpDownValue(waysForm.walkSlowUpDwn3);
-                                //Console.WriteLine("Condition 3 met, adjusting walking speed.");
-                            }
-
-                            // Condition 4
-                            if (GetCheckBoxChecked(waysForm.condition4)
-                                && nearbyCreatures.Count(c => Client.WithinRange(c, (int)GetNumericUpDownValue(waysForm.proximityUpDwn4)))
-                                    >= GetNumericUpDownValue(waysForm.mobSizeUpDwn4))
-                            {
-                                //Console.WriteLine("Condition 4 met, stopping movement and checking bubble conditions.");
-                                Client.Stopped = true;
-
-                                if (BackTracking())
+                                if (Client.Map.MapID == targetWay.MapID)
                                 {
-                                    return;
-                                }
-
-                                if (Client.Map.Name.Contains("Lost Ruins") || Client.Map.Name.Contains("Assassin Dungeon")
-                                    || _nearbyValidCreatures.Any(monster => monster.Location.DistanceFrom(Client.ServerLocation) <= 6))
-                                {
-                                    Client.OkToBubble = true;
-                                }
-
-                                // Also apply bubble to the bot's follow chain
-                                foreach (Client client in Server.GetFollowChain(Client))
-                                {
-                                    if (!client.OkToBubble)
+                                    if (Client.ServerLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
                                     {
-                                        client.OkToBubble = true;
+                                        if ((DateTime.UtcNow - lastRefreshTime).TotalMilliseconds > 1000)
+                                        {
+                                            lastRefreshTime = DateTime.UtcNow;
+                                            Client.RefreshRequest();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        currentWay++;
                                     }
                                 }
-
-                                Client.IsWalking = false;
-                                return;
                             }
                         }
 
-                        // Reset stop status if none of the conditions applied
-                        Client.Stopped = false;
-                        foreach (Client client in Server.GetFollowChain(Client))
+                        // **Throttle Backtracking (2s)**
+                        if ((DateTime.UtcNow - lastBacktrackTime).TotalMilliseconds > 2000)
                         {
-                            client.OkToBubble = false;
-                        }
-                        Client.OkToBubble = false;
-
-                        // Check if the bot needs to backtrack
-                        if (BackTracking())
-                        {
-                            Console.WriteLine($"[Waypoints] [{Client.Name}] Backtracking logic triggered, stopping waypoint navigation.");
-                            return;
-                        }
-
-                        // Handle specific status effects and conditions on followers
-                        foreach (Client client in Server.GetFollowChain(Client))
-                        {
-                            if (client.HasEffect(EffectsBar.Pramh) || client.HasEffect(EffectsBar.Suain)
-                                || client.HasEffect(EffectsBar.BeagSuain) || client.HasEffect(EffectsBar.Skull)
-                                || client.Player.IsSkulled)
+                            lastBacktrackTime = DateTime.UtcNow;
+                            if (BackTracking())
                             {
-                                Console.WriteLine($"[Waypoints] [{Client.Name}] Cannot move due to effect, stopping waypoint navigation.");
+                                Console.WriteLine($"[Waypoints] [{Client.Name}] Backtracking triggered.");
                                 return;
                             }
                         }
 
-
-                        // Handle item pickup logic if configured
+                        // **Item Pickup Logic (Cooldown 500ms)**
                         if (Client.ClientTab.toggleOverrideCbox.Checked && Client.ClientTab.overrideList.Items.Count > 0)
                         {
-                            try
+                            if ((DateTime.UtcNow - lastPickupAttempt).TotalMilliseconds > 500)
                             {
-                                List<ushort> itemsToPickUp = new List<ushort>();
+                                lastPickupAttempt = DateTime.UtcNow;
 
-                                foreach (string item in Client.ClientTab.overrideList.Items.OfType<string>())
-                                {
-                                    if (ushort.TryParse(item, out ushort itemID))
-                                    {
-                                        itemsToPickUp.Add(itemID);
-                                    }
-                                }
+                                List<ushort> itemsToPickUp = Client.ClientTab.overrideList.Items
+                                    .OfType<string>()
+                                    .Select(item => ushort.TryParse(item, out ushort itemID) ? itemID : (ushort)0)
+                                    .Where(id => id != 0)
+                                    .ToList();
 
-                                if (itemsToPickUp.Count != 1 && itemsToPickUp[0] != 140 && !Client.InventoryFull)
-                                    return;
-
+                                if (itemsToPickUp.Count == 0 || Client.InventoryFull) return;
 
                                 List<GroundItem> nearbyGroundItems = Client.GetNearbyGroundItems(12, itemsToPickUp.ToArray());
 
-                                foreach (GroundItem groundItem in nearbyGroundItems)
+                                if (nearbyGroundItems.Count > 0)
                                 {
-                                    int count = Client.Pathfinder.FindPath(Client.ClientLocation, groundItem.Location).Count;
+                                    GroundItem closestItem = nearbyGroundItems
+                                        .OrderBy(item => item.Location.DistanceFrom(Client.ClientLocation))
+                                        .FirstOrDefault();
 
-                                    if (count == 0)
-                                    {
-                                        count = Client.Pathfinder.FindPath(Client.ClientLocation, groundItem.Location).Count;
-                                    }
-
-                                    if (count == 0 || count > Client.ClientTab.overrideDistanceNum.Value)
-                                    {
-                                        nearbyGroundItems.Remove(groundItem);
-                                    }
-                                }
-
-                                if (nearbyGroundItems.Any())
-                                {
-                                    GroundItem closestItem = nearbyGroundItems.OrderBy(item => item.Location.DistanceFrom(Client.ClientLocation)).FirstOrDefault();
                                     if (closestItem != null && Client.ClientLocation.DistanceFrom(closestItem.Location) > 2)
                                     {
-                                        // Move to the item
-                                        Client.IsWalking = Client.Pathfind(closestItem.Location, 2)
-                                                                && !Client.ClientTab.oneLineWalkCbox.Checked
-                                                                && !Server._toggleWalk;
+                                        Client.IsWalking = Client.Pathfind(closestItem.Location, 2);
                                         return;
                                     }
 
-                                    if (Client.ClientLocation.DistanceFrom(closestItem.Location) <= 2 && Client.ServerLocation.DistanceFrom(closestItem.Location) > 2)
-                                    {
-                                        Client.RefreshRequest(true);
-                                    }
-
-                                    // Pick up the item if nearby
                                     if (Monitor.TryEnter(Client.CastLock, 200))
                                     {
                                         try
                                         {
                                             Client.Pickup(0, closestItem.Location);
-                                            Console.WriteLine("Picked up item.");
                                         }
                                         finally
                                         {
@@ -3042,88 +2949,14 @@ namespace Talos.Base
                                     Client.IsWalking = false;
                                     return;
                                 }
-
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error during item pickup: {ex.Message}");
-                                Client.IsWalking = false;
-                            }
-                        }
-
-                        Point currentPoint = Client.ServerLocation.Point;
-
-                        if (Client.ClientTab.IsBashing)
-                        {
-                            Location currentWay = ways[this.currentWay];
-                            Location nextWay = this.currentWay < ways.Count - 1 ? ways[this.currentWay + 1] : ways[0];
-
-                            int distanceToCurrentWay = currentPoint.Distance(currentWay.Point);
-                            int distanceToNextWay = currentWay.Point.Distance(nextWay.Point);
-                            Direction currentDirection = currentPoint.GetDirection(currentWay.Point);
-                            Direction nextDirection = nextWay.Point.GetDirection(currentWay.Point);
-
-                            if (currentWay.MapID == Client.Map.MapID && currentWay.MapID == nextWay.MapID && distanceToCurrentWay > 3 && distanceToCurrentWay < distanceToNextWay && currentDirection == nextDirection)
-                            {
-                                this.currentWay++;
-                                return;
-                            }
-                        }
-
-                        Location targetWay = ways[currentWay];
-                        int distanceToTarget = Client.ClientLocation.Point.Distance(targetWay.Point);
-
-                        if (distanceToTarget > waysForm.distanceUpDwn.Value)
-                        {
-                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target ({distanceToTarget}) is greater than allowed value ({waysForm.distanceUpDwn.Value}). Initiating RouteFind.");
-
-
-                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
-
-                            bool routeFindResult = Client.Routefind(targetWay, (short)waysForm.distanceUpDwn.Value);
-                            //Console.WriteLine($"[Waypoints] [{Client.Name}] RouteFind to {targetWay} returned: {routeFindResult}");
-
-                            bool canWalk = !Client.ClientTab.oneLineWalkCbox.Checked && !Server._toggleWalk;
-                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Can walk conditions - oneLineWalkCbox.Checked: {this.Client.ClientTab.oneLineWalkCbox.Checked}, _toggleWalk: {this.Server._toggleWalk}, Result: {canWalk}");
-
-                            Client.IsWalking = routeFindResult && canWalk;
-                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
-
-
-                        }
-                        else
-                        {
-                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Distance to target waypoint({distanceToTarget}) is within allowed value ({waysForm.distanceUpDwn.Value}). Stopping movement.");
-
-                            Client.IsWalking = false;
-                            //Console.WriteLine($"[Waypoints] [{Client.Name}] Client._isWalking set to: {this.Client._isWalking}");
-
-                            if (Client.ClientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
-                            {
-                                //Console.WriteLine($"[Waypoints] [{Client.Name}] Client is within the allowed distance to the target.");
-
-                                if (Client.Map.MapID == targetWay.MapID)
-                                {
-                                    //Console.WriteLine($"[Waypoints] [{Client.Name}] Client and target waypoint are on the same map (MapID: {this.Client._map.MapID}).");
-
-                                    if (Client.ServerLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
-                                    {
-                                        //Console.WriteLine($"[Waypoints] [{Client.Name}] Server's location is beyond the allowed distance. Requesting position refresh.");
-                                        Client.RefreshRequest();
-                                    }
-                                    else
-                                    {
-                                        //Console.WriteLine($"[Waypoints] [{Client.Name}] Both client and server positions are within the allowed distance. Advancing to the next waypoint.");
-                                        currentWay++;
-                                    }
-                                }
                             }
                         }
                     }
-
                 }
                 else
+                {
                     currentWay = 0;
+                }
             }
             catch (ThreadAbortException ex)
             {
@@ -3131,15 +2964,13 @@ namespace Talos.Base
             }
             catch (Exception ex)
             {
-                string str = AppDomain.CurrentDomain.BaseDirectory + "PathfinderCrashLogs\\";
-                if (!Directory.Exists(str))
-                    Directory.CreateDirectory(str);
-                File.WriteAllText(str + DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log", ex.ToString());
+                string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PathfinderCrashLogs");
+                if (!Directory.Exists(logPath))
+                    Directory.CreateDirectory(logPath);
+                File.WriteAllText(Path.Combine(logPath, DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log"), ex.ToString());
             }
-
-
-
         }
+
 
         private bool BackTracking()
         {
@@ -4743,7 +4574,7 @@ namespace Talos.Base
                             int alliesInNeed = Client.GetNearbyGroupedPlayers()
                                                      .Count(p => p != Client.Player && IsAllyInNeed(p));
 
-                            Console.WriteLine("ALLIES IN NEED: " + alliesInNeed);
+                            //Console.WriteLine("ALLIES IN NEED: " + alliesInNeed);
 
                             // Determine if we should cast an AoE heal spell
                             if (alliesInNeed > 2)
@@ -4759,7 +4590,7 @@ namespace Talos.Base
                                 // Cast the AoE heal spell
                                 if (Client.UseSpell(healSpell, null, _autoStaffSwitch, false))
                                 {
-                                    Console.WriteLine($"[Debug] Successfully cast AoE heal spell: {healSpell}");
+                                    //Console.WriteLine($"[Debug] Successfully cast AoE heal spell: {healSpell}");
                                 }
                             }
                         }
@@ -4784,7 +4615,7 @@ namespace Talos.Base
 
                             bool shouldHeal = player.NeedsHeal || currentHealthPct <= healAtPercent;
 
-                             Console.WriteLine($"[Debug] {player.Name} NeedsHeal: {player.NeedsHeal}, ShouldHeal: {shouldHeal}, CurrentHP: {allyClient?.Stats.CurrentHP}, MaximumHP: {allyClient?.Stats.MaximumHP}");
+                             //Console.WriteLine($"[Debug] {player.Name} NeedsHeal: {player.NeedsHeal}, ShouldHeal: {shouldHeal}, CurrentHP: {allyClient?.Stats.CurrentHP}, MaximumHP: {allyClient?.Stats.MaximumHP}");
                             
                             if (shouldHeal)
                             {
@@ -4828,13 +4659,13 @@ namespace Talos.Base
                                         uint newHealth = Math.Min(allyClient.Stats.CurrentHP + healAmount, allyClient.Stats.MaximumHP);
                                         allyClient.Stats.CurrentHP = newHealth;
 
-                                        Console.WriteLine($"[Heal] {allyClient.Name} healed for {healAmount} HP. New HP: {allyClient.CurrentHP} / {allyClient.MaximumHP}");
+                                        //Console.WriteLine($"[Heal] {allyClient.Name} healed for {healAmount} HP. New HP: {allyClient.CurrentHP} / {allyClient.MaximumHP}");
 
                                         // Update health percentage and needs heal status
                                         p.HealthPercent = (byte)allyClient.HealthPct;
                                         p.NeedsHeal = p.HealthPercent < healAtPercent;
 
-                                        Console.WriteLine($"[Debug] Updated Player: {p.Name}, New Health Percent: {p.HealthPercent}, NeedsHeal: {p.NeedsHeal}");
+                                        //Console.WriteLine($"[Debug] Updated Player: {p.Name}, New Health Percent: {p.HealthPercent}, NeedsHeal: {p.NeedsHeal}");
                                     }
                                     else
                                     {
@@ -4846,7 +4677,7 @@ namespace Talos.Base
                                         p.HealthPercent = newHealthPercent;
                                         p.NeedsHeal = p.HealthPercent <= healAtPercent;
 
-                                        Console.WriteLine($"[Debug] Updated Nearby Player: {p.Name}, New Health Percent: {p.HealthPercent}, NeedsHeal: {p.NeedsHeal}");
+                                        //Console.WriteLine($"[Debug] Updated Nearby Player: {p.Name}, New Health Percent: {p.HealthPercent}, NeedsHeal: {p.NeedsHeal}");
                                     }
 
                                 }
@@ -4873,8 +4704,8 @@ namespace Talos.Base
                 if (clientPct != playerPct)
                 {
                     Console.WriteLine(
-                        $"[Debug] Discrepancy for {player.Name}: " +
-                        $"Client side = {clientPct}%, Player object = {playerPct}%"
+                        //$"[Debug] Discrepancy for {player.Name}: " +
+                        //$"Client side = {clientPct}%, Player object = {playerPct}%"
                     );
                     // Take some action? — override the Player object's HP with the client’s more accurate HP?
                     // Because the client is more up-to-date, we’ll trust the client’s data?
@@ -4892,7 +4723,7 @@ namespace Talos.Base
                 player.NeedsHeal = player.HealthPercent < healAtPercent;
             }
 
-            Console.WriteLine($"[Debug] Refreshed {player.Name} -> HealthPercent: {player.HealthPercent}, NeedsHeal: {player.NeedsHeal}");
+            //Console.WriteLine($"[Debug] Refreshed {player.Name} -> HealthPercent: {player.HealthPercent}, NeedsHeal: {player.NeedsHeal}");
         }
 
 

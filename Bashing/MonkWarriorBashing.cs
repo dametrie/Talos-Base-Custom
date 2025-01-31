@@ -121,7 +121,7 @@ namespace Talos.Bashing
             if (!ShouldUseSkillsOnTarget(target))
                 return false;
 
-            return axisAligned && directionMatch && Client.UseSkill("Strikedown");
+            return axisAligned && directionMatch && Client.NumberedSkill("Strikedown");
         }
 
         private bool DoActionForRange1(Creature target)

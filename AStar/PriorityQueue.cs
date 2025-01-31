@@ -5,7 +5,7 @@ namespace Talos.AStar
 {
     class PriorityQueue<T> where T : IComparable<T>
     {
-        private List<T> _heap;
+        internal List<T> _heap;
 
         public PriorityQueue()
         {
@@ -14,8 +14,11 @@ namespace Talos.AStar
 
         public void Enqueue(T item)
         {
-            _heap.Add(item);
-            HeapifyUp(_heap.Count - 1);
+            if (!_heap.Contains(item))
+            {
+                _heap.Add(item);
+                HeapifyUp(_heap.Count - 1);
+            }
         }
 
         public T Dequeue()
@@ -29,6 +32,11 @@ namespace Talos.AStar
             _heap.RemoveAt(_heap.Count - 1);
             HeapifyDown(0);
             return root;
+        }
+
+        public void Clear()
+        {
+            _heap.Clear();
         }
 
         public int Count => _heap.Count;

@@ -167,6 +167,7 @@ namespace Talos.Helper
         }
         private void CheckAndSetHuntingActivity()
         {
+            if (_client.Map == null) return;
             // Check if the player is in a hunting area
             bool isInHuntingArea = IsPlayerInHuntingArea(_client.Map.Name);
 

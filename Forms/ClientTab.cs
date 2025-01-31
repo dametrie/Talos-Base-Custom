@@ -2124,7 +2124,7 @@ namespace Talos.Forms
                     NumMonsterWalkInterval1Value = monsterWalkIntervalNum1.Value,
                     NumAtkRangeValue = atkRangeNum.Value,
                     NumEngageRangeValue = engageRangeNum.Value,
-                    //ChkTavWallHacksChecked = chkTavWallHacks.Checked,
+                    ChkTavWallHacksChecked = chkTavWallHacks.Checked,
                     ChkTavWallStrangerChecked = chkTavWallStranger.Checked,
                     RbtnLeaderTargetChecked = radioLeaderTarget.Checked,
                     RbtnAssistantStrayChecked = radioAssitantStray.Checked,
@@ -4009,6 +4009,18 @@ namespace Talos.Forms
                 useKillerCbx.Checked = false;
                 killerNameTbx.Enabled = false;
             }
+        }
+
+        private void btnAutoAscendState_Click(object sender, EventArgs e)
+        {
+            string str = autoAscendSelectorCombox.SelectedItem?.ToString();
+
+            _client.Server.ClientStateList.TryGetValue(_client.Name, out CharacterState characterState);
+
+            if (string.IsNullOrEmpty(str) || !Enum.TryParse<CharacterState>(str, out characterState))
+                return;
+
+            _client.Server.ClientStateList[_client.Name] = characterState;
         }
 
         private void ComboButton_Click(object sender, EventArgs e)

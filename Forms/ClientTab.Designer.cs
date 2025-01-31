@@ -92,6 +92,8 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
+            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
+            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -210,6 +212,9 @@ namespace Talos.Forms
             this.nearbyEnemyTab = new System.Windows.Forms.TabPage();
             this.nearbyEnemyTable = new System.Windows.Forms.TableLayoutPanel();
             this.bashingTab = new System.Windows.Forms.TabPage();
+            this.groupBox13 = new System.Windows.Forms.GroupBox();
+            this.chkTavWallHacks = new System.Windows.Forms.CheckBox();
+            this.chkTavWallStranger = new System.Windows.Forms.CheckBox();
             this.rogueGbox = new System.Windows.Forms.GroupBox();
             this.label16 = new System.Windows.Forms.Label();
             this.atkRangeNum = new System.Windows.Forms.NumericUpDown();
@@ -280,6 +285,9 @@ namespace Talos.Forms
             this.bashingSkillsToUseGrp = new System.Windows.Forms.GroupBox();
             this.btnBashingNew = new System.Windows.Forms.Button();
             this.toolsTab = new System.Windows.Forms.TabPage();
+            this.groupBox14 = new System.Windows.Forms.GroupBox();
+            this.autoAscendSelectorCombox = new System.Windows.Forms.ComboBox();
+            this.button14 = new System.Windows.Forms.Button();
             this.durabilityGrp = new System.Windows.Forms.GroupBox();
             this.pictureBox17 = new System.Windows.Forms.PictureBox();
             this.pictureBox18 = new System.Windows.Forms.PictureBox();
@@ -600,8 +608,6 @@ namespace Talos.Forms
             this.currentAction = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
-            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -635,6 +641,7 @@ namespace Talos.Forms
             this.monsterTabControl.SuspendLayout();
             this.nearbyEnemyTab.SuspendLayout();
             this.bashingTab.SuspendLayout();
+            this.groupBox13.SuspendLayout();
             this.rogueGbox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.atkRangeNum)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.engageRangeNum)).BeginInit();
@@ -658,6 +665,7 @@ namespace Talos.Forms
             ((System.ComponentModel.ISupportInitialize)(this.numPFCounter)).BeginInit();
             this.groupBox2.SuspendLayout();
             this.toolsTab.SuspendLayout();
+            this.groupBox14.SuspendLayout();
             this.durabilityGrp.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox17)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox18)).BeginInit();
@@ -1443,6 +1451,35 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chatPanel2
+            // 
+            this.chatPanel2.AutoDetectUrls = true;
+            this.chatPanel2.BackColor = System.Drawing.Color.White;
+            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel2.Name = "chatPanel2";
+            this.chatPanel2.ReadOnly = true;
+            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel2.TabIndex = 0;
+            this.chatPanel2.Text = "";
+            // 
+            // chatBox
+            // 
+            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatBox.ForeColor = System.Drawing.Color.Black;
+            this.chatBox.Location = new System.Drawing.Point(121, 484);
+            this.chatBox.MaxLength = 53;
+            this.chatBox.Name = "chatBox";
+            this.chatBox.Size = new System.Drawing.Size(508, 23);
+            this.chatBox.TabIndex = 13;
+            this.chatBox.TabStop = false;
+            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
+            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
+            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
+            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
             // mainAislingsTab
             // 
@@ -2980,6 +3017,7 @@ namespace Talos.Forms
             // 
             // bashingTab
             // 
+            this.bashingTab.Controls.Add(this.groupBox13);
             this.bashingTab.Controls.Add(this.rogueGbox);
             this.bashingTab.Controls.Add(this.groupBox12);
             this.bashingTab.Controls.Add(this.groupBox11);
@@ -3002,6 +3040,37 @@ namespace Talos.Forms
             this.bashingTab.TabIndex = 13;
             this.bashingTab.Text = "Bashing";
             this.bashingTab.UseVisualStyleBackColor = true;
+            // 
+            // groupBox13
+            // 
+            this.groupBox13.Controls.Add(this.chkTavWallHacks);
+            this.groupBox13.Controls.Add(this.chkTavWallStranger);
+            this.groupBox13.Location = new System.Drawing.Point(694, 362);
+            this.groupBox13.Name = "groupBox13";
+            this.groupBox13.Size = new System.Drawing.Size(143, 80);
+            this.groupBox13.TabIndex = 180;
+            this.groupBox13.TabStop = false;
+            this.groupBox13.Text = "Tavaly";
+            // 
+            // chkTavWallHacks
+            // 
+            this.chkTavWallHacks.AutoSize = true;
+            this.chkTavWallHacks.Location = new System.Drawing.Point(4, 14);
+            this.chkTavWallHacks.Name = "chkTavWallHacks";
+            this.chkTavWallHacks.Size = new System.Drawing.Size(130, 34);
+            this.chkTavWallHacks.TabIndex = 192;
+            this.chkTavWallHacks.Text = "Tavaly Wall Mode\r\n*USE AT OWN RISK*";
+            this.chkTavWallHacks.UseVisualStyleBackColor = true;
+            // 
+            // chkTavWallStranger
+            // 
+            this.chkTavWallStranger.AutoSize = true;
+            this.chkTavWallStranger.Location = new System.Drawing.Point(4, 50);
+            this.chkTavWallStranger.Name = "chkTavWallStranger";
+            this.chkTavWallStranger.Size = new System.Drawing.Size(144, 19);
+            this.chkTavWallStranger.TabIndex = 193;
+            this.chkTavWallStranger.Text = "Disable Near Strangers";
+            this.chkTavWallStranger.UseVisualStyleBackColor = true;
             // 
             // rogueGbox
             // 
@@ -3538,9 +3607,9 @@ namespace Talos.Forms
             // groupBox7
             // 
             this.groupBox7.Controls.Add(this.chkRandomWaypoints);
-            this.groupBox7.Location = new System.Drawing.Point(686, 393);
+            this.groupBox7.Location = new System.Drawing.Point(542, 358);
             this.groupBox7.Name = "groupBox7";
-            this.groupBox7.Size = new System.Drawing.Size(153, 51);
+            this.groupBox7.Size = new System.Drawing.Size(147, 50);
             this.groupBox7.TabIndex = 186;
             this.groupBox7.TabStop = false;
             this.groupBox7.Text = "Random Waypoints";
@@ -3549,7 +3618,7 @@ namespace Talos.Forms
             // chkRandomWaypoints
             // 
             this.chkRandomWaypoints.AutoSize = true;
-            this.chkRandomWaypoints.Location = new System.Drawing.Point(9, 22);
+            this.chkRandomWaypoints.Location = new System.Drawing.Point(9, 21);
             this.chkRandomWaypoints.Name = "chkRandomWaypoints";
             this.chkRandomWaypoints.Size = new System.Drawing.Size(139, 19);
             this.chkRandomWaypoints.TabIndex = 179;
@@ -3874,6 +3943,7 @@ namespace Talos.Forms
             // 
             // toolsTab
             // 
+            this.toolsTab.Controls.Add(this.groupBox14);
             this.toolsTab.Controls.Add(this.durabilityGrp);
             this.toolsTab.Controls.Add(this.groupBox6);
             this.toolsTab.Controls.Add(this.groupBox9);
@@ -3891,6 +3961,47 @@ namespace Talos.Forms
             this.toolsTab.TabIndex = 8;
             this.toolsTab.Text = "Tools";
             this.toolsTab.UseVisualStyleBackColor = true;
+            // 
+            // groupBox14
+            // 
+            this.groupBox14.Controls.Add(this.autoAscendSelectorCombox);
+            this.groupBox14.Controls.Add(this.button14);
+            this.groupBox14.Location = new System.Drawing.Point(565, 290);
+            this.groupBox14.Name = "groupBox14";
+            this.groupBox14.Size = new System.Drawing.Size(266, 48);
+            this.groupBox14.TabIndex = 136;
+            this.groupBox14.TabStop = false;
+            this.groupBox14.Text = "Auto Ascend";
+            // 
+            // autoAscendSelectorCombox
+            // 
+            this.autoAscendSelectorCombox.Items.AddRange(new object[] {
+                "Idle",
+                "Hunting",
+                "LoadingHuntingProfile",
+                "LoadingWalkingProfile",
+                "WantsToAscend",
+                "Ascending",
+                "AscendingComplete",
+                "Walking",
+                "Waiting"});
+            this.autoAscendSelectorCombox.FormattingEnabled = true;
+            this.autoAscendSelectorCombox.Location = new System.Drawing.Point(18, 19);
+            this.autoAscendSelectorCombox.Name = "autoAscendSelectorCombox";
+            this.autoAscendSelectorCombox.Size = new System.Drawing.Size(112, 23);
+            this.autoAscendSelectorCombox.TabIndex = 137;
+            this.autoAscendSelectorCombox.Text = "Select State";
+            // 
+            // button14
+            // 
+            this.button14.Location = new System.Drawing.Point(164, 19);
+            this.button14.Name = "button14";
+            this.button14.Size = new System.Drawing.Size(75, 23);
+            this.button14.TabIndex = 0;
+            this.button14.Text = "Change State";
+            this.button14.UseVisualStyleBackColor = true;
+            this.button14.Click += new EventHandler(btnAutoAscendState_Click);
+
             // 
             // durabilityGrp
             // 
@@ -3914,14 +4025,14 @@ namespace Talos.Forms
             this.durabilityGrp.Controls.Add(this.pictureBoxBelt);
             this.durabilityGrp.Location = new System.Drawing.Point(565, 6);
             this.durabilityGrp.Name = "durabilityGrp";
-            this.durabilityGrp.Size = new System.Drawing.Size(272, 294);
+            this.durabilityGrp.Size = new System.Drawing.Size(272, 278);
             this.durabilityGrp.TabIndex = 136;
             this.durabilityGrp.TabStop = false;
             this.durabilityGrp.Text = "Durability";
             // 
             // pictureBox17
             // 
-            this.pictureBox17.Location = new System.Drawing.Point(219, 148);
+            this.pictureBox17.Location = new System.Drawing.Point(219, 134);
             this.pictureBox17.Name = "pictureBox17";
             this.pictureBox17.Size = new System.Drawing.Size(47, 40);
             this.pictureBox17.TabIndex = 17;
@@ -3929,7 +4040,7 @@ namespace Talos.Forms
             // 
             // pictureBox18
             // 
-            this.pictureBox18.Location = new System.Drawing.Point(219, 102);
+            this.pictureBox18.Location = new System.Drawing.Point(219, 88);
             this.pictureBox18.Name = "pictureBox18";
             this.pictureBox18.Size = new System.Drawing.Size(47, 40);
             this.pictureBox18.TabIndex = 16;
@@ -3937,7 +4048,7 @@ namespace Talos.Forms
             // 
             // pictureBoxShield
             // 
-            this.pictureBoxShield.Location = new System.Drawing.Point(164, 148);
+            this.pictureBoxShield.Location = new System.Drawing.Point(164, 134);
             this.pictureBoxShield.Name = "pictureBoxShield";
             this.pictureBoxShield.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxShield.TabIndex = 15;
@@ -3945,7 +4056,7 @@ namespace Talos.Forms
             // 
             // pictureBox15
             // 
-            this.pictureBox15.Location = new System.Drawing.Point(164, 102);
+            this.pictureBox15.Location = new System.Drawing.Point(164, 88);
             this.pictureBox15.Name = "pictureBox15";
             this.pictureBox15.Size = new System.Drawing.Size(47, 40);
             this.pictureBox15.TabIndex = 14;
@@ -3953,7 +4064,7 @@ namespace Talos.Forms
             // 
             // pictureBoxNeck
             // 
-            this.pictureBoxNeck.Location = new System.Drawing.Point(164, 51);
+            this.pictureBoxNeck.Location = new System.Drawing.Point(164, 37);
             this.pictureBoxNeck.Name = "pictureBoxNeck";
             this.pictureBoxNeck.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxNeck.TabIndex = 13;
@@ -3961,7 +4072,7 @@ namespace Talos.Forms
             // 
             // pictureBoxEarrings
             // 
-            this.pictureBoxEarrings.Location = new System.Drawing.Point(58, 51);
+            this.pictureBoxEarrings.Location = new System.Drawing.Point(58, 37);
             this.pictureBoxEarrings.Name = "pictureBoxEarrings";
             this.pictureBoxEarrings.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxEarrings.TabIndex = 12;
@@ -3969,7 +4080,7 @@ namespace Talos.Forms
             // 
             // pictureBoxHelm
             // 
-            this.pictureBoxHelm.Location = new System.Drawing.Point(111, 26);
+            this.pictureBoxHelm.Location = new System.Drawing.Point(111, 12);
             this.pictureBoxHelm.Name = "pictureBoxHelm";
             this.pictureBoxHelm.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxHelm.TabIndex = 11;
@@ -3977,7 +4088,7 @@ namespace Talos.Forms
             // 
             // pictureBoxHeadAcessory
             // 
-            this.pictureBoxHeadAcessory.Location = new System.Drawing.Point(111, 73);
+            this.pictureBoxHeadAcessory.Location = new System.Drawing.Point(111, 59);
             this.pictureBoxHeadAcessory.Name = "pictureBoxHeadAcessory";
             this.pictureBoxHeadAcessory.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxHeadAcessory.TabIndex = 10;
@@ -3985,7 +4096,7 @@ namespace Talos.Forms
             // 
             // pictureBoxOverCoat
             // 
-            this.pictureBoxOverCoat.Location = new System.Drawing.Point(6, 102);
+            this.pictureBoxOverCoat.Location = new System.Drawing.Point(6, 88);
             this.pictureBoxOverCoat.Name = "pictureBoxOverCoat";
             this.pictureBoxOverCoat.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxOverCoat.TabIndex = 9;
@@ -3993,7 +4104,7 @@ namespace Talos.Forms
             // 
             // pictureBoxArmor
             // 
-            this.pictureBoxArmor.Location = new System.Drawing.Point(58, 102);
+            this.pictureBoxArmor.Location = new System.Drawing.Point(58, 88);
             this.pictureBoxArmor.Name = "pictureBoxArmor";
             this.pictureBoxArmor.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxArmor.TabIndex = 8;
@@ -4001,7 +4112,7 @@ namespace Talos.Forms
             // 
             // pictureBoxWeapon
             // 
-            this.pictureBoxWeapon.Location = new System.Drawing.Point(58, 148);
+            this.pictureBoxWeapon.Location = new System.Drawing.Point(58, 134);
             this.pictureBoxWeapon.Name = "pictureBoxWeapon";
             this.pictureBoxWeapon.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxWeapon.TabIndex = 7;
@@ -4009,7 +4120,7 @@ namespace Talos.Forms
             // 
             // pictureBoxRightGaunt
             // 
-            this.pictureBoxRightGaunt.Location = new System.Drawing.Point(219, 194);
+            this.pictureBoxRightGaunt.Location = new System.Drawing.Point(219, 180);
             this.pictureBoxRightGaunt.Name = "pictureBoxRightGaunt";
             this.pictureBoxRightGaunt.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxRightGaunt.TabIndex = 6;
@@ -4017,7 +4128,7 @@ namespace Talos.Forms
             // 
             // pictureBoxRightRing
             // 
-            this.pictureBoxRightRing.Location = new System.Drawing.Point(164, 194);
+            this.pictureBoxRightRing.Location = new System.Drawing.Point(164, 180);
             this.pictureBoxRightRing.Name = "pictureBoxRightRing";
             this.pictureBoxRightRing.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxRightRing.TabIndex = 5;
@@ -4025,7 +4136,7 @@ namespace Talos.Forms
             // 
             // pictureBoxLeftRing
             // 
-            this.pictureBoxLeftRing.Location = new System.Drawing.Point(58, 194);
+            this.pictureBoxLeftRing.Location = new System.Drawing.Point(58, 180);
             this.pictureBoxLeftRing.Name = "pictureBoxLeftRing";
             this.pictureBoxLeftRing.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxLeftRing.TabIndex = 4;
@@ -4033,7 +4144,7 @@ namespace Talos.Forms
             // 
             // pictureBoxLeftGaunt
             // 
-            this.pictureBoxLeftGaunt.Location = new System.Drawing.Point(6, 194);
+            this.pictureBoxLeftGaunt.Location = new System.Drawing.Point(6, 180);
             this.pictureBoxLeftGaunt.Name = "pictureBoxLeftGaunt";
             this.pictureBoxLeftGaunt.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxLeftGaunt.TabIndex = 3;
@@ -4041,7 +4152,7 @@ namespace Talos.Forms
             // 
             // pictureBoxGreaves
             // 
-            this.pictureBoxGreaves.Location = new System.Drawing.Point(58, 238);
+            this.pictureBoxGreaves.Location = new System.Drawing.Point(58, 224);
             this.pictureBoxGreaves.Name = "pictureBoxGreaves";
             this.pictureBoxGreaves.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxGreaves.TabIndex = 2;
@@ -4049,7 +4160,7 @@ namespace Talos.Forms
             // 
             // pictureBoxBoots
             // 
-            this.pictureBoxBoots.Location = new System.Drawing.Point(111, 238);
+            this.pictureBoxBoots.Location = new System.Drawing.Point(111, 224);
             this.pictureBoxBoots.Name = "pictureBoxBoots";
             this.pictureBoxBoots.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxBoots.TabIndex = 1;
@@ -4057,7 +4168,7 @@ namespace Talos.Forms
             // 
             // pictureBoxBelt
             // 
-            this.pictureBoxBelt.Location = new System.Drawing.Point(164, 238);
+            this.pictureBoxBelt.Location = new System.Drawing.Point(164, 224);
             this.pictureBoxBelt.Name = "pictureBoxBelt";
             this.pictureBoxBelt.Size = new System.Drawing.Size(47, 40);
             this.pictureBoxBelt.TabIndex = 0;
@@ -4629,9 +4740,9 @@ namespace Talos.Forms
             this.renamedStaffsGrp.Controls.Add(this.addRenameBtn);
             this.renamedStaffsGrp.Controls.Add(this.renameText);
             this.renamedStaffsGrp.Controls.Add(this.renameCombox);
-            this.renamedStaffsGrp.Location = new System.Drawing.Point(462, 300);
+            this.renamedStaffsGrp.Location = new System.Drawing.Point(462, 323);
             this.renamedStaffsGrp.Name = "renamedStaffsGrp";
-            this.renamedStaffsGrp.Size = new System.Drawing.Size(375, 213);
+            this.renamedStaffsGrp.Size = new System.Drawing.Size(375, 190);
             this.renamedStaffsGrp.TabIndex = 129;
             this.renamedStaffsGrp.TabStop = false;
             this.renamedStaffsGrp.Text = "Renamed Staffs";
@@ -7574,35 +7685,6 @@ namespace Talos.Forms
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
-            // chatPanel2
-            // 
-            this.chatPanel2.AutoDetectUrls = true;
-            this.chatPanel2.BackColor = System.Drawing.Color.White;
-            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel2.Name = "chatPanel2";
-            this.chatPanel2.ReadOnly = true;
-            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel2.TabIndex = 0;
-            this.chatPanel2.Text = "";
-            // 
-            // chatBox
-            // 
-            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatBox.ForeColor = System.Drawing.Color.Black;
-            this.chatBox.Location = new System.Drawing.Point(121, 484);
-            this.chatBox.MaxLength = 53;
-            this.chatBox.Name = "chatBox";
-            this.chatBox.Size = new System.Drawing.Size(508, 23);
-            this.chatBox.TabIndex = 13;
-            this.chatBox.TabStop = false;
-            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
-            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
-            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
-            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
-            // 
             // ClientTab
             // 
             this.AllowDrop = true;
@@ -7667,6 +7749,8 @@ namespace Talos.Forms
             this.nearbyEnemyTab.ResumeLayout(false);
             this.bashingTab.ResumeLayout(false);
             this.bashingTab.PerformLayout();
+            this.groupBox13.ResumeLayout(false);
+            this.groupBox13.PerformLayout();
             this.rogueGbox.ResumeLayout(false);
             this.rogueGbox.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.atkRangeNum)).EndInit();
@@ -7702,6 +7786,7 @@ namespace Talos.Forms
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.toolsTab.ResumeLayout(false);
+            this.groupBox14.ResumeLayout(false);
             this.durabilityGrp.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox17)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox18)).EndInit();
@@ -7836,6 +7921,8 @@ namespace Talos.Forms
             this.PerformLayout();
 
         }
+
+ 
 
 
 
@@ -8405,5 +8492,9 @@ namespace Talos.Forms
         internal Label label18;
         internal TextBox killerNameTbx;
         internal CheckBox deathOptionCbx;
+        private GroupBox groupBox13;
+        internal GroupBox groupBox14;
+        internal ComboBox autoAscendSelectorCombox;
+        private Button button14;
     }
 }
