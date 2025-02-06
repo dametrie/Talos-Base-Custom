@@ -69,6 +69,9 @@ namespace Talos.Base
 
         internal Crypto Crypto { get; set; }
         internal Server Server { get; set; }
+
+        private DateTime _lastPacketSent = DateTime.UtcNow;
+        private readonly TimeSpan _minSendInterval = TimeSpan.FromMilliseconds(50);
         #endregion
 
         private Location _routeDestination;
@@ -2003,10 +2006,10 @@ namespace Talos.Base
             }
 
             // Avoid recalculating path if already near the target
-            if (distance > 0 && ClientLocation.DistanceFrom(destination) <= distance)
+            /*if (distance > 0 && ClientLocation.DistanceFrom(destination) <= distance)
             {
                 return false;
-            }
+            }*/
 
 
             if (ClientLocation == destination)
@@ -2237,8 +2240,8 @@ namespace Talos.Base
 
                 if (WorldMap != null)
                 {
-                    // Console.WriteLine($"[RouteFind] [{this.Name}] World map is not null, processing world map navigation.");
-                    // List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
+                     //Console.WriteLine($"[RouteFind] [{this.Name}] World map is not null, processing world map navigation.");
+                     List<Location> list = RouteFinder.FindRoute(currentLocation, adjustedDestination).Reverse().ToList();
                     if (DateTime.UtcNow.Subtract(_lastClickedWorldMap).TotalSeconds < 1.0)
                     {
                         return false;
@@ -2273,6 +2276,7 @@ namespace Talos.Base
                     }
                     return false;
                 }
+
                 if (nextLocation.MapID != Map.MapID)
                 {
                     if (!Server._maps.TryGetValue(Map.MapID, out Map value))
@@ -2332,7 +2336,7 @@ namespace Talos.Base
             }
             if (_routeStack.Count <= 0)
             {
-                Console.WriteLine($"[RouteFind] [{Name}] Route stack empty, returning false.");
+                //Console.WriteLine($"[RouteFind] [{Name}] Route stack empty, returning false.");
                 return false;
             }
 

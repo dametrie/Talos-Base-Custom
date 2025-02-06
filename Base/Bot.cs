@@ -358,265 +358,94 @@ namespace Talos.Base
             try
             {
                 if (!bashClassSet)
+                {
                     SetBashClass();
-
+                }
 
                 if (!Client?.ClientTab?.IsBashing ?? true)
+                {
                     return;
+                }
 
                 if (_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked)
+                {
                     return;
+                }
 
                 EnsureOneLineWalkEnabled();
 
-                if (!BashingBase.DoBashing())
-                    WayPointWalking(true);
+                BashingBase.EnableProtection = Client.ClientTab.Protect1Cbx.Checked || Client.ClientTab.Protect2Cbx.Checked;
+                BashingBase.ProtectName1 = Client.ClientTab.Protect1Cbx.Checked
+                    ? Client.ClientTab.Protected1Tbx.Text
+                    : null;
+                BashingBase.ProtectName2 = Client.ClientTab.Protect2Cbx.Checked
+                    ? Client.ClientTab.Protected2Tbx.Text
+                    : null;
 
-                if (Client?.ClientTab?.IsBashing ?? false && !(_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked))
+                BashingBase.AssistBasherEnabled = Client.ClientTab.assistBasherChk.Checked;
+                BashingBase.AssistBasherName = Client.ClientTab.leadBasherTxt.Text;
+                BashingBase.AssistBasherStray = (int)Client.ClientTab.numAssitantStray.Value;
+
+                bool result = BashingBase.DoBashing();
+
+                if (!result)
                 {
-                    EnsureOneLineWalkEnabled();
-                    ProcessBashingTargets();
+                    WayPointWalking(true);
                 }
 
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[DEBUG] Exception caught in HandleBashingCycle: {ex.Message}");
                 LogException("HandleBashingCycle", ex);
             }
+
         }
 
-        private void ProcessBashingTargets()
-        {
-            try
-            {
-                if (Client.ClientTab?.btnBashingNew.Text != "Stop Bashing")
-                    return;
-
-                if (_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked || Client.IsSkulled)
-                    return;
-
-                EnsureOneLineWalkEnabled();
-
-                if (!Client.ClientTab.assistBasherChk.Checked)
-                {
-                    HandleProtectionAndBashing();
-                }
-                else
-                {
-                    AssistBasherLogic();
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException("ProcessBashingTargets", ex);
-            }
-        }
-
-        private void AssistBasherLogic()
-        {
-            string leadBasherName = Client.ClientTab.leadBasherTxt.Text;
-
-            // Get valid monsters near the lead basher
-            var nearbyMonsters = Client.GetNearbyValidCreatures(8)
-                .Where(mob => !Client.IsLocationSurrounded(mob.Location) && !Client.Map.IsWall(mob.Location))
-                .Where(mob => mob.Location.DistanceFrom(Server.GetClient(leadBasherName).ClientLocation) <= Client.ClientTab.numAssitantStray.Value)
-                .ToList();
-
-            // Assign the target
-            target = Client.ClientTab.radioAssitantStray.Checked
-                ? nearbyMonsters
-                    .OrderBy(mob => mob.Location.DistanceFrom(Client.ClientLocation))
-                    .FirstOrDefault(mob => ShouldEngageTarget(mob))
-                : Server.GetClient(leadBasherName).Bot.target;
-
-            if (target != null)
-            {
-                HandleAssistTargetMovement(target);
-            }
-            else
-            {
-                HandleAssistIdleState();
-            }
-        }
-
-        private bool ShouldEngageTarget(Creature mob)
-        {
-            return (!Client.ClientTab.chkWaitForCradh.Checked || mob.IsCursed)
-                   && (!Client.ClientTab.chkWaitForFas.Checked || mob.IsFassed);
-        }
-
-        private void HandleAssistTargetMovement(Creature target)
-        {
-            if (target.Location.DistanceFrom(Client.ClientLocation) > 1)
-            {
-                // Pathfind towards the target
-                Client.Pathfind(target.Location, shouldBlock: false);
-
-                // Check if we can use skills from range
-                if (Client.ClientTab.chkUseSkillsFromRange.Checked &&
-                    (target.Location.X == Client.ClientLocation.X || target.Location.Y == Client.ClientLocation.Y))
-                {
-                    // Face the target
-                    Direction direction = target.Location.GetDirection(Client.ClientLocation);
-                    if (Client.ClientDirection != direction)
-                        Client.Turn(direction);
-
-                    // Use skills
-                    InitiateBashing();
-                }
-            }
-            else
-            {
-                // Handle close-range interactions
-                HandleCloseRangeMovement(target);
-            }
-        }
-
-        private void HandleAssistIdleState()
-        {
-            // Enable follow mode if no valid targets exist
-            if (!Client.ClientTab.followCbox.Checked)
-            {
-                Client.ClientTab.followCbox.Checked = true; // Start following the lead basher or group
-                Client.ServerMessage((byte)ServerMessageType.TopRight, "No valid targets. Enabling follow mode...");
-                return;
-            }
-
-            // Handle random waypoints if enabled
-            if (Client.ClientTab.chkRandomWaypoints.Checked)
-            {
-                HandleRandomWaypoints();
-                return;
-            }
-
-            // Check if the bot is stuck and needs to refresh or move randomly
-            if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
-            {
-                Client.RefreshRequest(false);
-                Client.Walk(RandomUtils.RandomEnumValue<Direction>());
-                _lastUnstick = DateTime.UtcNow;
-                Client.ServerMessage((byte)ServerMessageType.TopRight, "No valid actions. Unsticking...");
-            }
-        }
-
-
-        private void HandleProtectionAndBashing()
-        {
-            var nearbyPlayers = Client.GetNearbyPlayers();
-            var nearbyMonsters = Client.GetNearbyValidCreatures(10);
-
-            Player whoToProtect = FindWhoToProtect(nearbyPlayers, nearbyMonsters);
-
-            var validTargets = FilterValidTargets(nearbyMonsters, whoToProtect);
-
-            if (validTargets.Any())
-            {
-                HandleTargetingAndMovement(validTargets, whoToProtect);
-            }
-            else
-            {
-                HandleRandomWaypoints();
-            }
-        }
-
-        private void HandleTargetingAndMovement(List<Creature> validTargets, Player whoToProtect)
-        {
-            target = validTargets.FirstOrDefault(mob =>
-                ShouldEngageTarget(mob) ||
-                (whoToProtect != null && mob.Location.DistanceFrom(whoToProtect.Location) < 5)) ?? target;
-
-            if (target == null)
-                return;
-
-            if (target.Location.DistanceFrom(Client.ClientLocation) > 1)
-            {
-                if (target.Location.DistanceFrom(Client.ClientLocation) > 4 && IsAnyGroupMemberPramhed())
-                {
-                    Client.ServerMessage((byte)ServerMessageType.TopRight, "Waiting for pramh...");
-                    return;
-                }
-
-                MoveTowardsTarget(target);
-            }
-            else
-            {
-                FaceAndBashTarget(target);
-            }
-        }
-
-        private bool IsAnyGroupMemberPramhed()
-        {
-            return NearbyAllies != null && NearbyAllies.Any(member => member.IsAsleep);
-        }
-
-        private void MoveTowardsTarget(Creature target)
-        {
-            Direction direction = target.Location.GetDirection(Client.ClientLocation);
-            Client.Pathfind(target.Location);
-
-            if (Client.ClientTab.chkUseSkillsFromRange.Checked &&
-                (target.Location.X == Client.ClientLocation.X || target.Location.Y == Client.ClientLocation.Y))
-            {
-                if (Client.ClientDirection != direction)
-                    Client.Turn(direction);
-
-                InitiateBashing();
-            }
-        }
-
-        private void FaceAndBashTarget(Creature target)
-        {
-            if (target.Location == Client.ClientLocation && !Client.HasEffect(EffectsBar.BeagSuain) &&
-                !Client.HasEffect(EffectsBar.Pramh) && !Client.HasEffect(EffectsBar.Suain))
-            {
-                if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
-                {
-                    Client.RefreshRequest(false);
-                    Client.Walk(RandomUtils.RandomEnumValue<Direction>());
-                    _lastUnstick = DateTime.UtcNow;
-                    return;
-                }
-            }
-
-            Direction direction = target.Location.GetDirection(Client.ClientLocation);
-            if (Client.ClientDirection != direction)
-                Client.Turn(direction);
-
-            InitiateBashing();
-        }
-
-
-
-
+        //ADAM
         private void HandleRandomWaypoints()
         {
+            Console.WriteLine("[DEBUG] Entering HandleRandomWaypoints method...");
             if (!Client.ClientTab.chkRandomWaypoints.Checked)
+            {
+                Console.WriteLine("[DEBUG] Random waypoints not checked, exiting method...");
                 return;
+            }
 
             if (!generaterandom)
             {
+                Console.WriteLine("[DEBUG] Generating new random waypoints...");
                 GenerateRandomWaypoints();
                 generaterandom = true;
             }
             else
             {
+                Console.WriteLine("[DEBUG] Navigating to next random waypoint...");
                 if (!NavigateToNextWaypoint())
                 {
+                    Console.WriteLine("[DEBUG] Navigation failed, forcing new random generation next time...");
                     generaterandom = false; // Regenerate if navigation fails
                 }
             }
+            Console.WriteLine("[DEBUG] Exiting HandleRandomWaypoints method...");
         }
-
 
         private bool NavigateToNextWaypoint()
         {
+            Console.WriteLine("[DEBUG] Entering NavigateToNextWaypoint method...");
             // Ensure there are waypoints to navigate
             if (!Client.Bot.ways.Any())
+            {
+                Console.WriteLine("[DEBUG] No waypoints available, exiting with false...");
                 return false;
+            }
 
             // Reset index if out of bounds
             if (currentWaypointIndex >= Client.Bot.ways.Count)
+            {
+                Console.WriteLine("[DEBUG] Waypoint index out of bounds, resetting to 0...");
                 currentWaypointIndex = 0; // Wrap around
+            }
 
             // Get the next waypoint
             var nextWaypoint = Client.Bot.ways[currentWaypointIndex];
@@ -626,34 +455,31 @@ namespace Talos.Base
             var path = Client.Pathfinder.FindPath(Client.ServerLocation, nextWaypoint);
             if (path.Count > 0)
             {
+                Console.WriteLine("[DEBUG] Valid path found, pathfinding to next waypoint...");
                 // Path exists; attempt to move
                 Client.Pathfind(nextWaypoint);
 
                 // Verify if we've reached the waypoint
                 if (Client.ClientLocation == nextWaypoint)
                 {
-                    //Console.WriteLine($"[NavigateToNextWaypoint] Successfully reached waypoint: {nextWaypoint}");
+                    Console.WriteLine("[DEBUG] Successfully reached waypoint, moving to next...");
                     currentWaypointIndex++; // Move to the next waypoint
-                }
-                else
-                {
-                    //Console.WriteLine($"[NavigateToNextWaypoint] Pathfinding incomplete; still moving towards: {nextWaypoint}");
                 }
                 return true;
             }
             else
             {
-                // Pathfinding failed; log and skip this waypoint
-                //Console.WriteLine($"[NavigateToNextWaypoint] Cannot find valid path to waypoint: {nextWaypoint}. Skipping...");
+                Console.WriteLine("[DEBUG] No valid path found, skipping this waypoint...");
                 currentWaypointIndex++;
             }
 
+            Console.WriteLine("[DEBUG] Exiting NavigateToNextWaypoint with false...");
             return false;
         }
 
-
         private void GenerateRandomWaypoints()
         {
+            Console.WriteLine("[DEBUG] Entering GenerateRandomWaypoints method...");
             Client.ClientTab.WayForm.waypointsLBox.Items.Clear();
             Client.Bot.ways.Clear();
 
@@ -679,110 +505,12 @@ namespace Talos.Base
                     }
                 }
             }
+            Console.WriteLine("[DEBUG] Exiting GenerateRandomWaypoints method...");
         }
-
-        private void HandleCloseRangeMovement(Creature target)
-        {
-            // Ensure the bot is not stuck or standing on the same point as the target
-            if (target.Location == Client.ClientLocation && !Client.HasEffect(EffectsBar.BeagSuain) &&
-                !Client.HasEffect(EffectsBar.Pramh) && !Client.HasEffect(EffectsBar.Suain))
-            {
-                // Unstick logic
-                if ((DateTime.UtcNow - _lastUnstick).TotalMilliseconds > 3000)
-                {
-                    Client.RefreshRequest(false);
-                    Client.Walk(RandomUtils.RandomEnumValue<Direction>());
-                    _lastUnstick = DateTime.UtcNow;
-                    return;
-                }
-            }
-
-            // Face the target
-            Direction direction = target.Location.GetDirection(Client.ClientLocation);
-            if (Client.ClientDirection != direction)
-                Client.Turn(direction);
-
-            // Initiate bashing
-            InitiateBashing();
-        }
-
-
-
-        private Player FindWhoToProtect(List<Player> users, List<Creature> monsters)
-        {
-            Player protect1 = Client.ClientTab.Protect1Cbx.Checked
-                ? users.FirstOrDefault(u => u.Name.Equals(Client.ClientTab.Protected1Tbx.Text, StringComparison.OrdinalIgnoreCase))
-                : null;
-
-            Player protect2 = Client.ClientTab.Protect2Cbx.Checked
-                ? users.FirstOrDefault(u => u.Name.Equals(Client.ClientTab.Protected2Tbx.Text, StringComparison.OrdinalIgnoreCase))
-                : null;
-
-            return protect1 != null && monsters.Any(mob => mob.IsNear(protect1))
-                ? protect1
-                : protect2;
-        }
-
-        private List<Creature> FilterValidTargets(List<Creature> monsters, Player whoToProtect)
-        {
-            var filteredPlayers = Client.GetNearbyPlayers()
-                .Where(p => p != Client.Player &&
-                               !Client.ClientTab.friendList.Items.Contains(p.Name))
-                .ToList();
-
-            var validMonsters = monsters
-                .Where(mob =>
-                    !Client.IsLocationSurrounded(mob.Location) &&                 // Not surrounded
-                    !Client.IsWalledIn(mob.Location) &&                          // Not walled in
-                    !filteredPlayers.Any(user => user.Location.DistanceFrom(mob.Location) <= 4) &&  // No blocking players nearby
-                    !Client.GetNearbyPlayers().Any(user => user.Location == mob.Location) &&      // No users on top
-                    PathIsValid(mob) &&                                          // Path exists
-                    (whoToProtect == null || mob.IsNear(whoToProtect))           // Protect logic
-                )
-                .OrderBy(mob =>
-                    whoToProtect != null
-                        ? mob.Location.DistanceFrom(Client.ClientLocation) / 6.0
-                          + mob.Location.DistanceFrom(whoToProtect.Location)
-                        : mob.Location.DistanceFrom(Client.ClientLocation))     // Priority adjustment
-                .ToList();
-
-            return validMonsters;
-        }
-
-
-
-        private bool PathIsValid(Creature mob)
-        {
-            try
-            {
-                // Use the Pathfinder to find a path to the creature's location
-                Stack<Location> path = Client.Pathfinder.FindPath(Client.ServerLocation, mob.Location);
-
-                // Validate the path
-                return path.Count > 0 && path.Count < 15;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[PathIsValid] Exception: {ex.Message}");
-                return false;
-            }
-        }
-
-
-        private bool HasNearbyUsersBlocking(Location monsterLocation, int blockingRange = 4)
-        {
-            // Check for any nearby users blocking the monster's location
-            return Client.GetNearbyPlayers().Any(p =>
-                p.Location.DistanceFrom(monsterLocation) <= blockingRange || // User is within the blocking range
-                p.Location == monsterLocation // User is exactly at the monster's location
-            );
-        }
-
 
 
         private void SetBashClass()
         {
-
             BashingBase = null; // Clear any previously set base
 
             if (Client.PreviousClassFlag == PreviousClass.Pure &&
@@ -818,7 +546,6 @@ namespace Talos.Base
             }
 
             bashClassSet = (BashingBase != null);
-
         }
 
         private void EnsureOneLineWalkEnabled()
@@ -827,9 +554,9 @@ namespace Talos.Base
                 Client.ClientTab.oneLineWalkCbox.Checked = true;
         }
 
-
         private void LogException(string methodName, Exception ex)
         {
+            Console.WriteLine($"[DEBUG] Logging exception from {methodName}: {ex.Message}");
             string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bashCrashLogs");
             if (!Directory.Exists(logPath))
                 Directory.CreateDirectory(logPath);
@@ -838,40 +565,22 @@ namespace Talos.Base
             File.WriteAllText(filePath, $"{methodName}: {ex}");
         }
 
-        private void InitiateBashing()
+
+        internal bool EnsureWeaponEquipped()
         {
-            if (_dontBash || target == null || Client.HasEffect(EffectsBar.Pramh))
-            {
-                Thread.Sleep(50);
-                return;
-            }
-
-            if (!EnsureWeaponEquipped())
-                return;
-
-            HandleNecklaceSwapping();
-
-            // Sync client and server positions if misaligned
-            SyncWithServer();
-
-            // If the target isn't at a distance = 1 or the correct direction
-            // skip further bashing logic
-            if (!IsTargetInRange())
-                return;
-
-            UseSkillsOnTarget();
-        }
-
-        private bool EnsureWeaponEquipped()
-        {
+            Console.WriteLine("[DEBUG] Entering EnsureWeaponEquipped method...");
             string equippedWeapName = Client.EquippedItems[1]?.Name;
             bool hasValidWeapon = Client.Weapons.Any(w => equippedWeapName != null && equippedWeapName.Equals(w.Name));
 
             if (hasValidWeapon)
+            {
+                Console.WriteLine("[DEBUG] Valid weapon is already equipped, exiting with true.");
                 return true;
+            }
 
             if (!equipattempted)
             {
+                Console.WriteLine("[DEBUG] No valid weapon found. Attempting to equip one for current class...");
                 if (!Client.SafeScreen)
                     Client.ServerMessage((byte)ServerMessageType.TopRight, "Equipping Weapon");
 
@@ -881,14 +590,17 @@ namespace Talos.Base
             }
             else
             {
+                Console.WriteLine("[DEBUG] Second attempt at equipping weapon failed; stopping bashing...");
                 ShowWeaponErrorAndStop();
             }
 
+            Console.WriteLine("[DEBUG] Exiting EnsureWeaponEquipped method with false...");
             return false;
         }
 
         private string EquipWeaponForClass(TemuairClass classFlag)
         {
+            // Minimal debug to avoid clutter; add if needed
             return classFlag switch
             {
                 TemuairClass.Warrior => Client.EquipGlad(),
@@ -898,60 +610,53 @@ namespace Talos.Base
             };
         }
 
-
         private void WaitForWeaponToEquip(string weaponToEquip)
         {
+            Console.WriteLine("[DEBUG] Entering WaitForWeaponToEquip method...");
             var timer = Utility.Timer.FromMilliseconds(1500);
             while (!timer.IsTimeExpired && Client.EquippedItems[1]?.Name != weaponToEquip)
             {
                 Thread.Sleep(100);
             }
+            Console.WriteLine("[DEBUG] Exiting WaitForWeaponToEquip method...");
         }
 
         private void ShowWeaponErrorAndStop()
         {
+            Console.WriteLine("[DEBUG] Entering ShowWeaponErrorAndStop method...");
             MessageBox.Show("A supported weapon is not equipped. Bashing stopped.");
             if (Client.ClientTab?.btnBashingNew.Text == "Stop Bashing")
             {
                 Client.ClientTab.btnBashingNew.Text = "Start Bashing";
             }
+            Console.WriteLine("[DEBUG] Exiting ShowWeaponErrorAndStop method...");
         }
 
-        private void HandleNecklaceSwapping()
+        internal void SwapNecklace(string element)
         {
-            if (!Client.Map.Name.Contains("Shinewood Forest"))
-                return;
-
-            TimeSpan sinceLastSwap = DateTime.UtcNow.Subtract(neckSwap);
-
-            if (CONSTANTS.SHINEWOOD_HOLY.Contains(target.SpriteID) && Client.OffenseElement != "Light" && sinceLastSwap.TotalSeconds > 2.0 && !autoForm)
-            {
-                SwapNecklace("Light");
-            }
-            else if (CONSTANTS.SHINEWOOD_DARK.Contains(target.SpriteID) && Client.OffenseElement != "Dark" && sinceLastSwap.TotalSeconds > 2.0 && !autoForm)
-            {
-                SwapNecklace("Dark");
-            }
-        }
-
-        private void SwapNecklace(string element)
-        {
+            Console.WriteLine($"[DEBUG] Entering SwapNecklace method for element: {element}...");
             autoForm = true;
             RemoveDruidForm();
 
             if (element == "Light")
                 Client.EquipLightNeck();
             else if (element == "Dark")
-                Client.EquipDarkNeck(); 
+                Client.EquipDarkNeck();
 
             neckSwap = DateTime.UtcNow;
             EnterDruidForm();
             autoForm = false;
+            Console.WriteLine("[DEBUG] Exiting SwapNecklace method...");
         }
+
         private void EnterDruidForm()
         {
+            Console.WriteLine("[DEBUG] Entering EnterDruidForm method...");
             if (!Client.ClientTab.druidFormCbox.Checked)
+            {
+                Console.WriteLine("[DEBUG] druidFormCbox not checked, exiting...");
                 return;
+            }
 
             if (Client.TemuairClassFlag == TemuairClass.Monk &&
                 Client.MedeniaClassFlag == MedeniaClass.Druid &&
@@ -959,6 +664,7 @@ namespace Talos.Base
                 !Client.HasEffect(EffectsBar.KaruraForm) &&
                 !Client.HasEffect(EffectsBar.KomodasForm))
             {
+                Console.WriteLine("[DEBUG] Attempting to enter a druid form...");
                 foreach (var spell in CONSTANTS.DRUID_FORMS)
                 {
                     if (Client.UseSpell(spell, null, _autoStaffSwitch))
@@ -967,19 +673,25 @@ namespace Talos.Base
             }
 
             Thread.Sleep(80);
+            Console.WriteLine("[DEBUG] Exiting EnterDruidForm method...");
         }
 
         private void RemoveDruidForm()
         {
+            Console.WriteLine("[DEBUG] Entering RemoveDruidForm method...");
             if (!Client.ClientTab.druidFormCbox.Checked)
+            {
+                Console.WriteLine("[DEBUG] druidFormCbox not checked, exiting...");
                 return;
+            }
 
             if (Client.TemuairClassFlag == TemuairClass.Monk &&
                 Client.MedeniaClassFlag == MedeniaClass.Druid &&
-                Client.HasEffect(EffectsBar.FeralForm) ||
-                Client.HasEffect(EffectsBar.KaruraForm) ||
-                Client.HasEffect(EffectsBar.KomodasForm))
+                (Client.HasEffect(EffectsBar.FeralForm) ||
+                 Client.HasEffect(EffectsBar.KaruraForm) ||
+                 Client.HasEffect(EffectsBar.KomodasForm)))
             {
+                Console.WriteLine("[DEBUG] Attempting to remove druid form...");
                 foreach (var spell in CONSTANTS.DRUID_FORMS)
                 {
                     if (Client.UseSpell(spell, null, _autoStaffSwitch))
@@ -988,65 +700,9 @@ namespace Talos.Base
             }
 
             Thread.Sleep(80);
-        }
-        private void SyncWithServer()
-        {
-            if (Client.ClientLocation != Client.ServerLocation)
-            {
-                if (!Client.SafeScreen)
-                    Client.ServerMessage((byte)ServerMessageType.TopRight, "Syncing with server");
-
-                TimeSpan sinceLastSync = DateTime.UtcNow.Subtract(LastPointInSync);
-
-                if (sinceLastSync.TotalMilliseconds > 1000.0)
-                {
-                    Client.RefreshRequest(false);
-                    Client.ClientDirection = Client.ServerDirection;
-                    LastPointInSync = DateTime.UtcNow;
-                    LastDirectionInSync = DateTime.UtcNow;
-
-                    Direction targetDirection = target.Location.GetDirection(Client.ClientLocation);
-                    if (targetDirection != Client.ClientDirection)
-                        Client.Turn(targetDirection);
-                }
-            }
-            else
-            {
-                LastPointInSync = DateTime.UtcNow;
-            }
+            Console.WriteLine("[DEBUG] Exiting RemoveDruidForm method...");
         }
 
-        private bool IsTargetInRange()
-        {
-            int? distanceToTarget = target?.Location.DistanceFrom(Client.ClientLocation);
-            Direction? targetDirection = target?.Location.GetDirection(Client.ClientLocation);
-
-            return distanceToTarget == 1 && targetDirection == Client.ClientDirection;
-        }
-
-        private void UseSkillsOnTarget()
-        {
-            if (Client.ClientTab.chkFrostStrike.Checked && target.HealthPercent > 30)
-            {
-                Client.UseSkill("Frost Strike");
-            }
-
-            if (Client.ClientTab.chkBashAssails.Checked && !bashWffUsed)
-            {
-                Client.Assail();
-            }
-
-            if (Client.ClientTab.chkBashDion.Checked)
-            {
-                CrasherDionTargets();
-            }
-
-            if (!ShouldUseSkills())
-                return;
-
-            UseBashingSkills();
-
-        }
 
         private bool ShouldUseCrasher()
         {
@@ -1070,30 +726,35 @@ namespace Talos.Base
                 if (Client.CanUseItem(Client.Inventory["Damage Scroll"]) &&
                     DateTime.UtcNow.Subtract(Client.Inventory["Damage Scroll"].LastUsed).TotalSeconds > 28)
                 {
-                    {
-                        return true;
-                    }
-
+                    return true;
                 }
             }
 
             return false;
         }
+
         private void CrasherDionTargets()
         {
+            Console.WriteLine("[DEBUG] Entering CrasherDionTargets method...");
             if (!ShouldUseCrasher())
+            {
+                Console.WriteLine("[DEBUG] Conditions not met for Crasher, exiting...");
                 return;
+            }
 
             if (Client.ClientTab.chkCrasherAboveHP.Checked &&
                 Client.HealthPct > Client.ClientTab.numCrasherHealth.Value &&
                 (!target.IsAsgalled || Client.ClientTab.chkCrasherOnlyAsgall.Checked))
             {
+                Console.WriteLine("[DEBUG] ExecuteCrasher logic triggered...");
                 ExecuteCrasher();
             }
-
+            Console.WriteLine("[DEBUG] Exiting CrasherDionTargets method...");
         }
+
         private void ExecuteCrasher()
         {
+            Console.WriteLine("[DEBUG] Entering ExecuteCrasher method...");
             Client.UseSkill("Sacrifice");
             Client.UseSkill("Mad Soul");
             Client.UseSkill("Auto Hemloch");
@@ -1102,31 +763,15 @@ namespace Talos.Base
             Client.UseSkill("Execute");
             Client.UseItem("Damage Scroll");
             skillUse = DateTime.UtcNow;
+            Console.WriteLine("[DEBUG] Exiting ExecuteCrasher method...");
         }
 
-
-
-
-        private bool ShouldUseSkills()
+         private void UseBashingSkills()
         {
-            bool waitForCradh = Client.ClientTab.chkWaitForCradh.Checked;
-            bool waitForFas = Client.ClientTab.chkWaitForFas.Checked;
-
-            // Check conditions for Cradh and Fas
-            bool cradhReady = !waitForCradh || target.IsCursed;
-            bool fasReady = !waitForFas || target.IsFassed;
-
-            // Ensure the target is in the correct direction and the skill delay has passed
-            bool isDirectionAligned = Client.ClientDirection == target.Location.GetDirection(Client.ClientLocation);
-            bool isSkillDelayElapsed = DateTime.UtcNow.Subtract(skillUse).TotalMilliseconds > (double)(Client.ClientTab?.numBashSkillDelay.Value ?? 0);
-
-            return cradhReady && fasReady && isDirectionAligned && isSkillDelayElapsed;
-        }
-
-        private void UseBashingSkills()
-        {
+            Console.WriteLine("[DEBUG] Entering UseBashingSkills method...");
             foreach (string skillName in Client.ClientTab._bashingSkillList)
             {
+                // 1) "Sprint Potion"
                 if (skillName.Equals("Sprint Potion", StringComparison.OrdinalIgnoreCase) && Client.IsRegistered)
                 {
                     if ((DateTime.UtcNow - _sprintPotionLastUsed).TotalSeconds > 16.0)
@@ -1139,6 +784,7 @@ namespace Talos.Base
                     }
                 }
 
+                // 2) "Two Move Combo"
                 if (skillName.Equals("Two Move Combo", StringComparison.OrdinalIgnoreCase))
                 {
                     if ((DateTime.UtcNow - Client.ComboScrollLastUsed).TotalMinutes > 1.0 && Client.CurrentMP > 1500U)
@@ -1151,6 +797,7 @@ namespace Talos.Base
                     }
                 }
 
+                // 3) "Three Move Combo"
                 if (skillName.Equals("Three Move Combo", StringComparison.OrdinalIgnoreCase))
                 {
                     if ((DateTime.UtcNow - Client.ComboScrollLastUsed).TotalMinutes > 2.0 && Client.CurrentMP > 1500U)
@@ -1181,16 +828,16 @@ namespace Talos.Base
                     .Where(m => !Client.Map.IsWall(m.Location))
                     .ToList();
 
-                // Example: "PF" usage if aligned, and min mob count is met
+                // PF skill usage
                 if (isPFSkill)
                 {
-                    // Make sure direction is aligned (like original checks)
+                    // Make sure direction is aligned
                     if (Client.ClientLocation.GetDirection(target.Location) == target.Location.GetDirection(Client.ClientLocation))
                     {
                         // Check if we need a certain mob count to use PF
                         if (nearbyMobs.Count >= (int)Client.ClientTab.numPFCounter.Value)
                         {
-                            // If skill is "Paralyze Force," check last use < 27 ms or so
+                            // If skill is "Paralyze Force," check last use
                             if (skillName.Equals("Paralyze Force", StringComparison.OrdinalIgnoreCase))
                             {
                                 TimeSpan sinceLastUse = DateTime.UtcNow - skill.LastUsed;
@@ -1209,6 +856,7 @@ namespace Talos.Base
                     continue;
                 }
 
+                // 4) "Special Arrow Attack"
                 if (skillName.Equals("Special Arrow Attack", StringComparison.OrdinalIgnoreCase))
                 {
                     TimeSpan timeSinceLastUse = DateTime.UtcNow - skill.LastUsed;
@@ -1216,6 +864,7 @@ namespace Talos.Base
                         continue;
                 }
 
+                // "Perfect Defense" skill usage
                 if (skillName.Equals("Perfect Defense", StringComparison.OrdinalIgnoreCase))
                 {
                     if (nearbyMobs.Count <= (int)Client.ClientTab.numPFCounter.Value)
@@ -1226,11 +875,10 @@ namespace Talos.Base
                         skillUse = DateTime.UtcNow;
                         return;
                     }
-                    // else, continue
                     continue;
                 }
 
-                // Sneak Flight or Ambush type logic: Cancel if a wall is detected
+                // Sneak Flight or Ambush type logic
                 if (skillName.StartsWith("Sneak Flight", StringComparison.OrdinalIgnoreCase)
                     && Client.Map.IsWall(target.Location))
                 {
@@ -1253,8 +901,6 @@ namespace Talos.Base
 
                 // Distance-based checks for 5-, 3-, 2-tile attacks
                 bool inRange = false;
-
-                // Check if the skill is in any of the tile-based dictionaries
                 bool isTileBasedSkill = CONSTANTS.FIVE_TILE_ATTACKS_MED.Contains(skillName) ||
                                         CONSTANTS.THREE_TILE_ATTACKS_MED.Contains(skillName) ||
                                         CONSTANTS.TWO_TILE_ATTACKS_MED.Contains(skillName);
@@ -1272,19 +918,17 @@ namespace Talos.Base
                         continue; // Skip the skill if it's a tile-based skill but not in range
                 }
 
-                // If we reached here, we can use the skill normally
-
                 if (!Client.SafeScreen)
                     Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
                 Client.UseSkill(skillName);
                 skillUse = DateTime.UtcNow;
                 bashWffUsed = false;
-   
-                continue;
             }
-        }
 
+            Console.WriteLine("[DEBUG] Exiting UseBashingSkills method...");
+        }
         #endregion
+
 
         #region TaskLoop
         private void TaskLoop()
