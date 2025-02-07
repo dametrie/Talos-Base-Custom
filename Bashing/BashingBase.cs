@@ -63,9 +63,7 @@ namespace Talos.Bashing
         /// <param name="bot">The bot instance used by this bashing class.</param>
         internal BashingBase(Bot bot)
         {
-            Console.WriteLine("[DEBUG] Entering BashingBase constructor...");
             Bot = bot;
-            Console.WriteLine("[DEBUG] Exiting BashingBase constructor.");
         }
 
         /// <summary>
@@ -111,15 +109,12 @@ namespace Talos.Bashing
                 // Manage target selection timing
                 if (ShouldSendBashingTarget())
                 {
-                    Console.WriteLine($"[Bashing] [{Client.Name}] Sending bashing target.");
                     SendBashingTarget(Target);
                 }
 
                 // Handle movement towards the target
                 if (!HandleMovement(Target))
                 {
-                    Console.WriteLine($"[Bashing] [{Client.Name}] Movement to target failed.");
-                    Console.WriteLine("[DEBUG] Exiting DoBashing method (movement failure).");
                     return false;
                 }
 
@@ -128,26 +123,22 @@ namespace Talos.Bashing
                 // Perform refresh or equip actions if needed
                 if (RefreshIfNeeded() || EquipNecklaceIfNeeded(Target))
                 {
-                    Console.WriteLine($"[Bashing] [{Client.Name}] Refresh or equip action taken.");
-                    Console.WriteLine("[DEBUG] Exiting DoBashing method (refresh/equip performed).");
                     return true;
                 }
 
                 // Perform bashing if enabled
                 if (Client.Bot?._dontBash == false)
                 {
-                    Console.WriteLine($"[Bashing] [{Client.Name}] Executing skills.");
                     UseSkills(Target);
                 }
 
-                Console.WriteLine($"[Bashing] [{Client.Name}] DoBashing completed successfully.");
                 Console.WriteLine("[DEBUG] Exiting DoBashing method normally.");
                 return true;
             }
             catch (Exception ex)
             {
+                Log($"[Bashing] [{Client.Name}] Exception in DoBashing: {ex.Message}\n{ex.StackTrace}");
                 Console.WriteLine($"[Bashing] [{Client.Name}] Exception in DoBashing: {ex.Message}\n{ex.StackTrace}");
-                Console.WriteLine("[DEBUG] Exiting DoBashing method (exception encountered).");
                 return false;
             }
         }
@@ -182,14 +173,10 @@ namespace Talos.Bashing
         /// <returns>True if valid, otherwise false.</returns>
         private bool ValidateKillableTargets()
         {
-            Console.WriteLine("[DEBUG] Entering ValidateKillableTargets method...");
             if (KillableTargets == null)
             {
-                Log("KillableTargets is null.");
-                Console.WriteLine("[DEBUG] Exiting ValidateKillableTargets method with false.");
                 return false;
             }
-            Console.WriteLine("[DEBUG] Exiting ValidateKillableTargets method with true.");
             return true;
         }
 
@@ -200,20 +187,15 @@ namespace Talos.Bashing
         /// <returns>True if valid, otherwise false.</returns>
         private bool ValidatePotentialTargets(List<Creature> potentialTargets)
         {
-            Console.WriteLine("[DEBUG] Entering ValidatePotentialTargets method...");
             if (potentialTargets == null)
             {
-                Log("potentialTargets is null.");
-                Console.WriteLine("[DEBUG] Exiting ValidatePotentialTargets with false (null).");
                 return false;
             }
             if (!potentialTargets.Any())
             {
-                Console.WriteLine("[DEBUG] Exiting ValidatePotentialTargets with false (empty).");
                 return false;
             }
 
-            Console.WriteLine("[DEBUG] Exiting ValidatePotentialTargets with true.");
             return true;
         }
 
@@ -223,9 +205,7 @@ namespace Talos.Bashing
         /// <returns>True if target sending is needed, otherwise false.</returns>
         private bool ShouldSendBashingTarget()
         {
-            Console.WriteLine("[DEBUG] Entering ShouldSendBashingTarget method...");
             bool result = (DateTime.UtcNow - LastSendTarget).TotalMilliseconds > SendTargetIntervalMs;
-            Console.WriteLine($"[DEBUG] Exiting ShouldSendBashingTarget with {result}.");
             return result;
         }
 
@@ -235,11 +215,12 @@ namespace Talos.Bashing
         /// <param name="target">The creature to be displayed as the target.</param>
         private void SendBashingTarget(Creature target)
         {
-            Console.WriteLine("[DEBUG] Entering SendBashingTarget method...");
             Client.DisplayTextOverTarget(2, target.ID, "[Target]");
             LastSendTarget = DateTime.UtcNow;
-            Console.WriteLine("[DEBUG] Exiting SendBashingTarget method.");
         }
+
+        private DateTime _lastPathfind = DateTime.MinValue;
+        private TimeSpan _minPathInterval = TimeSpan.FromMilliseconds(25);
 
         /// <summary>
         /// Handles movement logic towards the specified target, including pathfinding and facing the target.
@@ -263,7 +244,6 @@ namespace Talos.Bashing
             if (distanceToTarget == 0)
             {
                 bool unstuckResult = TryUnstuck();
-                Console.WriteLine("[DEBUG] Exiting HandleMovement method with " + unstuckResult);
                 return unstuckResult;
             }
 
@@ -272,25 +252,28 @@ namespace Talos.Bashing
                 if (!ShouldPathfindToTarget(target, distanceToTarget))
                 {
                     Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding skipped.");
-                    Console.WriteLine("[DEBUG] Exiting HandleMovement method with true (skipped pathfinding).");
                     return true;
                 }
 
+                if ((DateTime.UtcNow - _lastPathfind) < _minPathInterval)
+                {
+                    // skip pathfinding this cycle
+                    return true;
+                }
+
+                _lastPathfind = DateTime.UtcNow;
                 if (!TryPathfindToPoint(target.Location))
                 {
                     Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding failed.");
-                    Console.WriteLine("[DEBUG] Exiting HandleMovement method with false (pathfinding failed).");
                     return false;
                 }
             }
             else if (!TryFaceTarget(target))
             {
                 Console.WriteLine($"[Bashing] [{Client.Name}] Facing target failed.");
-                Console.WriteLine("[DEBUG] Exiting HandleMovement method with true (face target failed but ignoring).");
                 return true;
             }
 
-            Console.WriteLine($"[Bashing] [{Client.Name}] Movement handling completed.");
             return true;
         }
 
@@ -322,12 +305,10 @@ namespace Talos.Bashing
         /// <returns>An enumerable of <see cref="Player"/> objects representing strangers.</returns>
         protected IEnumerable<Player> GetStrangers()
         {
-            Console.WriteLine("[DEBUG] Entering GetStrangers method...");
             // Create a HashSet with OrdinalIgnoreCase for fast lookups
             var friendSet = new HashSet<string>(Client.FriendBindingList, StringComparer.OrdinalIgnoreCase);
 
             var strangers = NearbyPlayers.Where(user => !friendSet.Contains(user.Name));
-            Console.WriteLine("[DEBUG] Exiting GetStrangers method.");
             return strangers;
         }
 
@@ -379,7 +360,6 @@ namespace Talos.Bashing
                 TimeSpan upperBound = TimeSpan.FromMilliseconds(MonsterWalkIntervalMs + PingCompensation);
 
                 bool withinFacingBounds = timeSinceLastStep < lowerBound || timeSinceLastStep > upperBound;
-                Console.WriteLine($"[DEBUG] Exiting ShouldUseSkillsOnTarget with {withinFacingBounds} (facing logic).");
                 return withinFacingBounds;
             }
 
@@ -387,7 +367,6 @@ namespace Talos.Bashing
             TimeSpan generalUpperBound = TimeSpan.FromMilliseconds(MonsterWalkIntervalMs + PingCompensation * 2);
 
             bool result = timeSinceLastStep < generalLowerBound || timeSinceLastStep > generalUpperBound;
-            Console.WriteLine($"[DEBUG] Exiting ShouldUseSkillsOnTarget with {result} (general logic).");
             return result;
         }
 
@@ -400,14 +379,12 @@ namespace Talos.Bashing
             // Check if risky skills are enabled
             if (!UseRiskySkills)
             {
-                Console.WriteLine("[DEBUG] Exiting CanUseRiskySkills with false (not enabled).");
                 return false;
             }
 
             // Check for Dion requirement
             if (RequireDionForRiskySkills && !Client.Player.IsDioned)
             {
-                Console.WriteLine("[DEBUG] Exiting CanUseRiskySkills with false (Dion requirement not met).");
                 return false;
             }
 
@@ -418,7 +395,6 @@ namespace Talos.Bashing
 
             if (hasDisabledFollowers)
             {
-                Console.WriteLine("[DEBUG] Exiting CanUseRiskySkills with false (disabled follower found).");
                 return false;
             }
 
@@ -428,7 +404,6 @@ namespace Talos.Bashing
 
             if (surroundingCreaturesCount > 3)
             {
-                Console.WriteLine("[DEBUG] Exiting CanUseRiskySkills with false (too many mobs).");
                 return false;
             }
 
@@ -441,7 +416,6 @@ namespace Talos.Bashing
 
                 if (dionTimeRemaining <= 2.0)
                 {
-                    Console.WriteLine("[DEBUG] Exiting CanUseRiskySkills with false (Dion time too short).");
                     return false;
                 }
             }
@@ -476,7 +450,6 @@ namespace Talos.Bashing
         /// <returns>An ordered enumerable of creatures.</returns>
         protected virtual IEnumerable<Creature> GetOrderedPotentialTargets(IEnumerable<Creature> monsters = null)
         {
-            Console.WriteLine("[DEBUG] Entering GetOrderedPotentialTargets method...");
 
             // If assist mode is on, see if we have a target from the lead basher
             if (AssistBasherEnabled)
@@ -484,7 +457,6 @@ namespace Talos.Bashing
                 var assistList = GetAssistBasherTargets();
                 if (assistList != null && assistList.Any())
                 {
-                    Console.WriteLine("[DEBUG] AssistBasherEnabled => returning assist target(s).");
                     return assistList;
                 }
                 // else fall through to normal logic
@@ -518,7 +490,6 @@ namespace Talos.Bashing
                 finalCreatures = ApplyProtectionOrdering(finalCreatures);
             }
 
-            Console.WriteLine("[DEBUG] Exiting GetOrderedPotentialTargets method.");
             return finalCreatures;
         }
 
@@ -722,10 +693,8 @@ namespace Talos.Bashing
         /// <returns>True if the facing logic executes, otherwise false if actions can't be performed.</returns>
         protected virtual bool TryFaceTarget(Creature target)
         {
-            Console.WriteLine("[DEBUG] Entering TryFaceTarget method...");
             if (!CanPerformActions)
             {
-                Console.WriteLine("[DEBUG] Exiting TryFaceTarget method with false (cannot perform actions).");
                 return false;
             }
 
@@ -753,7 +722,6 @@ namespace Talos.Bashing
                 Client.Turn(targetDirection);
             }
 
-            Console.WriteLine("[DEBUG] Exiting TryFaceTarget method with true.");
             return true;
         }
 
@@ -765,19 +733,16 @@ namespace Talos.Bashing
         /// <returns>True if pathfinding succeeds, otherwise false.</returns>
         protected virtual bool TryPathfindToPoint(Location location, short distance = 1)
         {
-            Console.WriteLine("[DEBUG] Entering TryPathfindToPoint method...");
             Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding to {location}.");
 
             if (!CanMove || Client.Bot._dontWalk)
             {
                 Console.WriteLine($"[Bashing] [{Client.Name}] Cannot move or walking is disabled.");
-                Console.WriteLine("[DEBUG] Exiting TryPathfindToPoint with false.");
                 return false;
             }
 
             bool success = Client.Pathfind(location, distance);
             Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding {(success ? "succeeded" : "failed")}.");
-            Console.WriteLine($"[DEBUG] Exiting TryPathfindToPoint with {success}.");
             return success;
         }
 
@@ -815,10 +780,8 @@ namespace Talos.Bashing
         /// <returns>True if a necklace swap occurred, otherwise false.</returns>
         internal virtual bool EquipNecklaceIfNeeded(Creature target)
         {
-            Console.WriteLine("[DEBUG] Entering EquipNecklaceIfNeeded method...");
             if (!Client.Map.Name.Contains("Shinewood Forest"))
             {
-                Console.WriteLine("[DEBUG] Exiting EquipNecklaceIfNeeded with false (not in Shinewood Forest).");
                 return false;
             }
 
@@ -841,7 +804,6 @@ namespace Talos.Bashing
                 }
             }
 
-            Console.WriteLine("[DEBUG] Exiting EquipNecklaceIfNeeded with false (no swap).");
             return false;
         }
 
@@ -904,16 +866,13 @@ namespace Talos.Bashing
         /// <returns>True if used successfully, otherwise false.</returns>
         private bool TryUseItem(string itemName)
         {
-            Console.WriteLine("[DEBUG] Entering TryUseItem method...");
             Item item = Client.Inventory[itemName];
             if (item == null)
             {
-                Console.WriteLine("[DEBUG] Exiting TryUseItem with false (item not found).");
                 return false;
             }
 
             Client.UseItem(item.Name);
-            Console.WriteLine("[DEBUG] Exiting TryUseItem with true.");
             return true;
         }
 
@@ -1002,11 +961,9 @@ namespace Talos.Bashing
         /// <returns>True if a refresh is required, otherwise false.</returns>
         private bool IsRefreshRequired(DateTime currentTime)
         {
-            Console.WriteLine("[DEBUG] Entering IsRefreshRequired method...");
             bool result = (currentTime - Client.LastStep).TotalSeconds > 5.0 &&
                           (currentTime - Client.Bot._lastEXP).TotalSeconds > 5.0 &&
                           (currentTime - Client.Bot._lastRefresh).TotalSeconds > 5.0;
-            Console.WriteLine($"[DEBUG] Exiting IsRefreshRequired with {result}.");
             return result;
         }
 
@@ -1033,7 +990,6 @@ namespace Talos.Bashing
         /// <param name="message">The message to log.</param>
         private void Log(string message)
         {
-            Console.WriteLine("[DEBUG] Entering Log method...");
             string logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bashCrashLogs");
             string fileName = DateTime.Now.ToString("MM-dd-yyyy_HH-mm-ss-tt") + ".log";
             string logFilePath = Path.Combine(logDirectory, fileName);
@@ -1043,7 +999,6 @@ namespace Talos.Bashing
 
             File.WriteAllText(logFilePath, message);
             Console.WriteLine(message);
-            Console.WriteLine("[DEBUG] Exiting Log method.");
         }
     }
 }

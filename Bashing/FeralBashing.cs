@@ -19,7 +19,7 @@ namespace Talos.Bashing
 
             // Time since last used skill and last assail
             bool canUseSkill = (currentTime - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
-            bool canAssail = (currentTime - LastAssailed) > TimeSpan.FromMilliseconds(100.0);
+            bool canAssail = (currentTime - LastAssailed) > TimeSpan.FromMilliseconds(1000.0);
 
             // Attempt AOE or multi-target logic first if enough time has passed
             if (canUseSkill && DoActionForSurroundingCreatures())

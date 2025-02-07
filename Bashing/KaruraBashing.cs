@@ -17,7 +17,7 @@ namespace Talos.Bashing
             DateTime currentTime = DateTime.UtcNow;
 
             bool canUseSkill = (currentTime - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
-            bool canAssail = (currentTime - LastAssailed) > TimeSpan.FromMilliseconds(100);
+            bool canAssail = (currentTime - LastAssailed) > TimeSpan.FromMilliseconds(1000.0);
 
             // Attempt AOE or multi-target logic first if enough time has passed
             if (canUseSkill && DoActionForSurroundingCreatures())

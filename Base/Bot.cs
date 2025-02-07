@@ -19,6 +19,7 @@ using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;
 using Talos.Utility;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace Talos.Base
@@ -2206,14 +2207,33 @@ namespace Talos.Base
                 if (Client == null || Client.ClientTab == null)
                     return;
 
-                // Check if follow is enabled and player name is provided
+                // Is follow enabled? Do we have a follow name?
                 if (!Client.ClientTab.followCbox.Checked || string.IsNullOrEmpty(Client.ClientTab.followText.Text))
                     return;
 
-                // Try to identify the leader (bot or player)
+
+                bool overlapped = Client.GetNearbyObjects()
+                    .OfType<Creature>()
+                    .Any(creature => creature.Location == Client.ClientLocation
+                                     && creature.ID != Client.Player?.ID);
+
+                if (overlapped)
+                {
+                    Console.WriteLine($"[FollowWalking] [{Client.Name}] Overlapped by creature - attempting random unstick.");
+                    if (!TryFollowUnstuck()) // If random unstick fails, we return and try again next cycle
+                    {
+                        return;
+                    }
+                }
+
+                // Identify the leader (bot or player)
                 Client botClientToFollow = Server.GetClient(followName);
-                Player leader = botClientToFollow?.Player ?? Client.WorldObjects.Values.OfType<Player>()
-                    .FirstOrDefault(p => p.Name.Equals(followName, StringComparison.CurrentCultureIgnoreCase));
+                Player leader = botClientToFollow?.Player
+                    ?? Client.WorldObjects.Values.OfType<Player>()
+                       .FirstOrDefault(p => p.Name.Equals(followName, StringComparison.CurrentCultureIgnoreCase));
+
+
+                var leaderClient = botClientToFollow;
 
                 if (Client != null && (Client.ClientTab.IsBashing || !Client.Stopped))
                 {
@@ -2221,89 +2241,127 @@ namespace Talos.Base
                 }
 
 
+                if (Client.ClientTab.chkLastStepF5.Checked
+                    && botClientToFollow != null
+                    && (botClientToFollow.ClientTab.IsBashing || !botClientToFollow.Stopped))
+                {
+                    double idleSeconds = (DateTime.UtcNow - Client.LastStep).TotalSeconds;
+                    double requiredIdle = (double)Client.ClientTab.numLastStepTime.Value;
+                    if (idleSeconds > requiredIdle)
+                    {
+                        // Perform a forced refresh if we've been idle too long
+                        Console.WriteLine($"[FollowWalking] Idle for {idleSeconds:F1}s, forcing refresh (LastStepF5).");
+                        Client.RefreshRequest();
+                    }
+                }
+
+                // If the leader is null, fallback to last known location
                 if (leader == null)
                 {
-                    // If no visible leader, check the last seen location
                     if (_leaderID.HasValue && Client.LastSeenLocations.TryGetValue(_leaderID.Value, out Location lastSeenLocation))
                     {
-                        // If we have the last seen location, use it
-                        //Console.WriteLine($"[FollowWalking] [{Client.Name}] Using last seen location for player {followName}: {lastSeenLocation}");
+                        // Use last seen location
                         Client.IsWalking = Client.Routefind(lastSeenLocation)
-                                            && !Client.ClientTab.oneLineWalkCbox.Checked
-                                            && !Server._toggleWalk;
+                            && !Client.ClientTab.oneLineWalkCbox.Checked
+                            && !Server._toggleWalk;
                     }
                     else
                     {
-                        //Console.WriteLine($"[FollowWalking] [{Client.Name}] No known location for player.");
                         Client.IsWalking = false;
-                        return;
+                    }
+                    return;
+                }
+
+                // If we found a leader, store their ID
+                _leaderID = leader.ID;
+                Location leaderLocation = leader.Location;
+                int distance = leaderLocation.DistanceFrom(Client.ClientLocation);
+
+
+                if (botClientToFollow != null
+                    && botClientToFollow.Bot != null
+                    && botClientToFollow.Bot.currentWay < botClientToFollow.Bot.ways.Count)
+                {
+                    Location leadersCurrentWaypoint = botClientToFollow.Bot.ways[botClientToFollow.Bot.currentWay];
+                    if (leadersCurrentWaypoint == Client.ServerLocation)
+                    {
+                        Console.WriteLine($"[FollowWalking] [{Client.Name}] My location matches leader's current waypoint => random step + short sleep");
+
+                        // Attempt random direction
+                        Client.Walk(RandomUtils.RandomEnumValue<Direction>());
+
+                        Thread.Sleep(2500);
                     }
                 }
-                else
+
+                if (leaderClient?.ClientTab?.IsBashing == true
+                    && !Client.HasEffect(EffectsBar.BeagSuain)
+                    && !Client.HasEffect(EffectsBar.Pramh)
+                    && !Client.HasEffect(EffectsBar.Suain)
+                    && Client.GetAllNearbyMonsters(0).Any())
                 {
-                    // We have a visible leader, proceed with following logic
-                    _leaderID = leader.ID;
-                    Location leaderLocation = leader.Location;
-                    //Console.WriteLine($"[FollowWalking] [{Client.Name}] Current leader name: {leader.Name}, ID: {_leaderID}, location: {leaderLocation}");
+                    Console.WriteLine($"[FollowWalking] Shake loose logic => random direction + short sleep + refresh");
+                    Client.Walk(RandomUtils.RandomEnumValue<Direction>());
+                    Thread.Sleep(300);
+                    Client.RefreshRequest(false);
+                }
 
-                    int distance = leaderLocation.DistanceFrom(Client.ClientLocation);
-                    //Console.WriteLine($"[FollowWalking] [{Client.Name}] is {distance} spaces from leader named: {leader.Name}");
 
-                    // UnStucker logic if necessary
-                    if (!UnStucker(leader))
+                if (!UnStucker(leader))
+                {
+                    short followDistance = (leaderLocation.MapID == Client.Map.MapID)
+                        ? (short)Client.ClientTab.followDistanceNum.Value
+                        : (short)0;
+
+                    // Lockstep logic
+                    if (Client.ClientTab.lockstepCbox.Checked && leaderLocation.MapID == Client.Map.MapID)
                     {
-                        // Determine follow distance
-                        short followDistance = (leaderLocation.MapID == Client.Map.MapID)
-                            ? (short)Client.ClientTab.followDistanceNum.Value
-                            : (short)0;
-
-                        // Apply lockstep logic
-                        if (Client.ClientTab.lockstepCbox.Checked && leaderLocation.MapID == Client.Map.MapID)
+                        if (distance > followDistance)
                         {
-                            if (distance > followDistance)
-                            {
-                                if (Client == null || Client.ClientTab == null)
-                                    return;
-
-                                //Console.WriteLine($"[FollowWalking] [{Client.Name}] Lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
-                                Client.ConfirmBubble = false;
-                                Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
-                                                    && !Client.ClientTab.oneLineWalkCbox.Checked
-                                                    && !Server._toggleWalk;
-                            }
-                        }
-                        else if (distance > followDistance)
-                        {
-                            if (Client == null || Client.ClientTab == null)
-                                return;
-
-                            //Console.WriteLine($"[FollowWalking] [{Client.Name}] Non-lockstep: Distance ({distance}) exceeds follow distance ({followDistance}). Recalculating path.");
                             Client.ConfirmBubble = false;
                             Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
-                                                && !Client.ClientTab.oneLineWalkCbox.Checked
-                                                && !Server._toggleWalk;
+                                && !Client.ClientTab.oneLineWalkCbox.Checked
+                                && !Server._toggleWalk;
+                        }
+                    }
+                    else if (distance > followDistance)
+                    {
+                        Client.ConfirmBubble = false;
+                        Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
+                            && !Client.ClientTab.oneLineWalkCbox.Checked
+                            && !Server._toggleWalk;
+                    }
+                    else
+                    {
+                        Client.IsWalking = false;
+                    }
+
+                    if (Client.OkToBubble)
+                    {
+                        if (leaderClient != null)
+                        {
+                            TimeSpan t1 = DateTime.UtcNow - leaderClient.LastStep;
+                            if (t1.TotalMilliseconds <= 1000.0)
+                                return;
+
+                            TimeSpan t2 = DateTime.UtcNow - Client.LastStep;
+                            if (t2.TotalMilliseconds <= 500.0)
+                                return;
+
+                        }
+
+                        if (Client.ServerLocation != Client.ClientLocation)
+                        {
+                            Client.ConfirmBubble = false;
+                            Client.RefreshRequest(true);
                         }
                         else
                         {
-                            //Console.WriteLine($"[FollowWalking] [{Client.Name}] else block triggered, setting _isWalking to false");
-                            Client.IsWalking = false;
-                        }
-
-                        // Apply bubble logic for synchronization
-                        if (Client.OkToBubble && 
-                            DateTime.UtcNow.Subtract(Client.LastStep).TotalMilliseconds > 500.0)
-                        {
-                            //Console.WriteLine("Bubble conditions met, checking for refresh.");
-                            if (Client.ServerLocation != Client.ClientLocation)
+                            // If map is Lost Ruins or Assassin Dungeon or if any valid creature is close
+                            if (Client.Map.Name.Contains("Lost Ruins")
+                                || Client.Map.Name.Contains("Assassin Dungeon")
+                                || _nearbyValidCreatures.Any(m => Client.ServerLocation.DistanceFrom(m.Location) <= 6))
                             {
-                                //Console.WriteLine($"[FollowWalking] [{Client.Name}] Client position differs from server, requesting refresh.");
-                                Client.ConfirmBubble = false;
-                                Client.RefreshRequest(true);
-                            }
-                            else if (Client.Map.Name.Contains("Lost Ruins") || Client.Map.Name.Contains("Assassin Dungeon")
-                                     || _nearbyValidCreatures.Any(c => Client.ServerLocation.DistanceFrom(c.Location) <= 6))
-                            {
-                                //Console.WriteLine("Bubble confirmed for specific maps or valid creatures nearby.");
                                 Client.ConfirmBubble = true;
                             }
                         }
@@ -2317,6 +2375,29 @@ namespace Talos.Base
             }
         }
 
+
+        private bool TryFollowUnstuck()
+        {
+            // Randomly shuffle directions
+            var dirs = Enum.GetValues(typeof(Direction))
+                           .Cast<Direction>()
+                           .OrderBy(_ => RandomUtils.Random())
+                           .ToList();
+
+            foreach (var dir in dirs)
+            {
+                // The tile in that direction
+                var nextLoc = Client.ClientLocation.Offsetter(dir);
+                // Check if walkable
+                if (Client.Map.IsWalkable(Client, nextLoc))
+                {
+                    // Perform the walk
+                    Client.Walk(dir);
+                    return true; // success
+                }
+            }
+            return false; // no walkable direction found
+        }       
 
         private bool UnStucker(Player leader)
         {
@@ -2468,122 +2549,195 @@ namespace Talos.Base
             }
         }
 
-        private DateTime lastRoutefindTime = DateTime.UtcNow;
-        private DateTime lastRefreshTime = DateTime.UtcNow;
-        private DateTime lastBacktrackTime = DateTime.UtcNow;
-        private DateTime lastPickupAttempt = DateTime.UtcNow;
-
         private void WayPointWalking(bool skip = false)
         {
             try
             {
-
-                if (ways.Count == 0 ||
-                    (Server.ClientStateList.ContainsKey(Client.Name) &&
-                     Server.ClientStateList[Client.Name] == CharacterState.WaitForSpells))
-                {
+                // 1) Basic checks
+                if (ways.Count == 0) return;
+                if (Server.ClientStateList.ContainsKey(Client.Name)
+                    && Server.ClientStateList[Client.Name] == CharacterState.WaitForSpells)
                     return;
-                }
 
+                // If we still have waypoints left
                 if (currentWay < ways.Count)
                 {
                     Client.WalkSpeed = Client.ClientTab.walkSpeedSldr.Value;
 
-                    // Handle skipping waypoint due to creature presence
-                    if (skip && Client.GetNearbyObjects()
-                        .OfType<Creature>()
-                        .Any(creature => creature.Type != CreatureType.WalkThrough && creature.Location.Point == ways[currentWay].Point))
+                    // Skip waypoint if there's a monster on top
+                    if (skip)
                     {
-                        currentWay++;
+                        bool anyCreatureOnTop = Client.GetNearbyObjects()
+                            .OfType<Creature>()
+                            .Any(z => z.Type != CreatureType.WalkThrough
+                                      && z.Location.Point == ways[currentWay].Point);
+
+                        if (anyCreatureOnTop)
+                        {
+                            currentWay++;
+                            return;
+                        }
+                    }
+
+                    // 3) Door Time logic: If you were near a door recently, clamp speed
+                    if ((DateTime.UtcNow - _doorTime).TotalSeconds < 2.5
+                        && Client.ClientLocation.Point.DistanceFrom(_doorPoint) < 6)
+                    {
+                        if (Client.WalkSpeed > 350.0)
+                            Client.WalkSpeed = 350.0;
                     }
                     else
                     {
+                        // 4) Monster-based slowdown logic
+                        //    (a) Get nearby creatures not matching certain filters
+                        List<Creature> nearbyMobs = Client.GetNearbyValidCreatures()
+                            .Where(e => e.Location != Client.ServerLocation)
+                            .ToList();
+
+                        // If "ignoreWalledInCbox" is checked, remove walled-in
+                        if (Client.ClientTab.ignoreWalledInCbox.Checked)
+                        {
+                            nearbyMobs = nearbyMobs
+                                .Where(z => !Client.IsWalledIn(z.Location))
+                                .ToList();
+                        }
+
+                        // If "chkIgnoreDionWaypoints" is checked, remove "dioned" mobs
+                        if (Client.ClientTab.chkIgnoreDionWaypoints.Checked)
+                        {
+                            nearbyMobs = nearbyMobs
+                                .Where(z => !z.IsDioned)
+                                .ToList();
+                        }
+
+                        // 5) Slowing conditions (condition1..3) if not bashing
+                        //    E.g. if (# of mobs in proximityUpDwn1 >= mobSizeUpDwn1) => slow
+                        //    The old code does each "conditionX" in order; if matched => set walkspeed
                         WayForm waysForm = Client.ClientTab.WayForm;
-                        Point currentPoint = Client.ServerLocation.Point;
-                        Location targetWay = ways[currentWay];
-                        int distanceToTarget = Client.ClientLocation.Point.Distance(targetWay.Point);
-
-                        // **Throttle Routefind Calls (500ms)**
-                        if (distanceToTarget > waysForm.distanceUpDwn.Value)
+                        if (waysForm.condition1.Checked && !Client.ClientTab.IsBashing)
                         {
-                            if ((DateTime.UtcNow - lastRoutefindTime).TotalMilliseconds > 500)
+                            int count = nearbyMobs.Count(c =>
+                                Client.WithinRange(c, (int)waysForm.proximityUpDwn1.Value));
+                            if (count >= waysForm.mobSizeUpDwn1.Value)
                             {
-                                lastRoutefindTime = DateTime.UtcNow;
-                                bool routeFindResult = Client.Routefind(targetWay, (short)waysForm.distanceUpDwn.Value);
-                                Client.IsWalking = routeFindResult;
+                                Client.WalkSpeed = (double)waysForm.walkSlowUpDwn1.Value;
                             }
-                            return;
                         }
-                        else
+                        if (waysForm.condition2.Checked && !Client.ClientTab.IsBashing)
                         {
-                            Client.IsWalking = false;
-
-                            // **Throttle Refresh Requests (1s)**
-                            if (Client.ClientLocation.Point.Distance(targetWay.Point) <= waysForm.distanceUpDwn.Value)
+                            int count = nearbyMobs.Count(c =>
+                                Client.WithinRange(c, (int)waysForm.proximityUpDwn2.Value));
+                            if (count >= waysForm.mobSizeUpDwn2.Value)
                             {
-                                if (Client.Map.MapID == targetWay.MapID)
+                                Client.WalkSpeed = (double)waysForm.walkSlowUpDwn2.Value;
+                            }
+                        }
+                        if (waysForm.condition3.Checked && !Client.ClientTab.IsBashing)
+                        {
+                            int count = nearbyMobs.Count(c =>
+                                Client.WithinRange(c, (int)waysForm.proximityUpDwn3.Value));
+                            if (count >= waysForm.mobSizeUpDwn3.Value)
+                            {
+                                Client.WalkSpeed = (double)waysForm.walkSlowUpDwn3.Value;
+                            }
+                        }
+
+                        // 6) "condition4" logic: if many mobs => STOP
+                        if (waysForm.condition4.Checked)
+                        {
+                            int count = nearbyMobs.Count(c =>
+                                Client.WithinRange(c, (int)waysForm.proximityUpDwn4.Value));
+                            if (count >= waysForm.mobSizeUpDwn4.Value)
+                            {
+                                // old code sets "stopped" or triggers backtracking
+                                Client.Stopped = true;
+                                if (BackTracking()) return;
+
+                                // Possibly handle "okToBubble" logic for certain dungeons
+                                if (Client.Map.Name.Contains("Lost Ruins")
+                                    || Client.Map.Name.Contains("Assassin Dungeon"))
                                 {
-                                    if (Client.ServerLocation.Point.Distance(targetWay.Point) > waysForm.distanceUpDwn.Value)
-                                    {
-                                        if ((DateTime.UtcNow - lastRefreshTime).TotalMilliseconds > 1000)
-                                        {
-                                            lastRefreshTime = DateTime.UtcNow;
-                                            Client.RefreshRequest();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        currentWay++;
-                                    }
+                                    Client.OkToBubble = true;
+                                    foreach (Client follower in Server.GetFollowChain(Client))
+                                        follower.OkToBubble = true;
                                 }
-                            }
-                        }
 
-                        // **Throttle Backtracking (2s)**
-                        if ((DateTime.UtcNow - lastBacktrackTime).TotalMilliseconds > 2000)
-                        {
-                            lastBacktrackTime = DateTime.UtcNow;
-                            if (BackTracking())
-                            {
-                                Console.WriteLine($"[Waypoints] [{Client.Name}] Backtracking triggered.");
+                                Client.IsWalking = false;
                                 return;
                             }
                         }
 
-                        // **Item Pickup Logic (Cooldown 500ms)**
-                        if (Client.ClientTab.toggleOverrideCbox.Checked && Client.ClientTab.overrideList.Items.Count > 0)
-                        {
-                            if ((DateTime.UtcNow - lastPickupAttempt).TotalMilliseconds > 500)
-                            {
-                                lastPickupAttempt = DateTime.UtcNow;
+                        // If condition4 not triggered => we resume normal
+                        Client.Stopped = false;
+                        foreach (Client follower in Server.GetFollowChain(Client))
+                            follower.OkToBubble = false;
+                        Client.OkToBubble = false;
 
-                                List<ushort> itemsToPickUp = Client.ClientTab.overrideList.Items
-                                    .OfType<string>()
-                                    .Select(item => ushort.TryParse(item, out ushort itemID) ? itemID : (ushort)0)
-                                    .Where(id => id != 0)
+                        // 7) Check for BackTracking
+                        if (BackTracking()) return;
+
+                        // 8) Make sure followers are not pramh / suain, etc.
+                        foreach (Client follower in Server.GetFollowChain(Client))
+                        {
+                            if (follower.HasEffect(EffectsBar.Pramh)
+                                || follower.HasEffect(EffectsBar.Suain)
+                                || follower.HasEffect(EffectsBar.BeagSuain)
+                                || follower.HasEffect(EffectsBar.Skull)
+                                || follower.Player.IsSkulled)
+                            {
+                                return;
+                            }
+                        }
+
+                        // 9) If override item pickup is checked, handle item pickup
+                        if (Client.ClientTab.toggleOverrideCbox.Checked
+                            && Client.ClientTab.overrideList.Items.Count > 0)
+                        {
+                            try
+                            {
+                                List<ushort> itemsToPickup = new();
+                                foreach (var item in Client.ClientTab.overrideList.Items.OfType<string>())
+                                {
+                                    if (ushort.TryParse(item, out ushort num))
+                                        itemsToPickup.Add(num);
+                                }
+
+                                // If we only have itemID=140? old code's logic => skip if inventory full
+                                if ((itemsToPickup.Count != 1 || itemsToPickup[0] != 140)
+                                    && Client.InventoryFull)
+                                    return;
+
+                                List<GroundItem> groundItems = Client.GetNearbyGroundItems(12, itemsToPickup.ToArray());
+                                // Filter out unreachable or too distant items
+                                groundItems = groundItems
+                                    .Where(g =>
+                                    {
+                                        int pathCount = Client.Pathfinder.FindPath(Client.ClientLocation, g.Location).Count;
+                                        return pathCount > 0 && pathCount <= (int)Client.ClientTab.overrideDistanceNum.Value;
+                                    })
+                                    .OrderBy(g => g.Location.DistanceFrom(Client.ClientLocation))
                                     .ToList();
 
-                                if (itemsToPickUp.Count == 0 || Client.InventoryFull) return;
-
-                                List<GroundItem> nearbyGroundItems = Client.GetNearbyGroundItems(12, itemsToPickUp.ToArray());
-
-                                if (nearbyGroundItems.Count > 0)
+                                if (groundItems.Count > 0)
                                 {
-                                    GroundItem closestItem = nearbyGroundItems
-                                        .OrderBy(item => item.Location.DistanceFrom(Client.ClientLocation))
-                                        .FirstOrDefault();
+                                    GroundItem closest = groundItems[0];
+                                    int dist = Client.ClientLocation.DistanceFrom(closest.Location);
 
-                                    if (closestItem != null && Client.ClientLocation.DistanceFrom(closestItem.Location) > 2)
+                                    if (dist > 2)
                                     {
-                                        Client.IsWalking = Client.Pathfind(closestItem.Location, 2);
+                                        // pathfind up to distance=2
+                                        Client.IsWalking = Client.Pathfind(closest.Location, 2)
+                                                           && !Client.ClientTab.oneLineWalkCbox.Checked
+                                                           && !Server._toggleWalk;
                                         return;
                                     }
 
+                                    // If we are close enough
                                     if (Monitor.TryEnter(Client.CastLock, 200))
                                     {
                                         try
                                         {
-                                            Client.Pickup(0, closestItem.Location);
+                                            Client.Pickup(0, closest.Location);
                                         }
                                         finally
                                         {
@@ -2594,26 +2748,67 @@ namespace Talos.Base
                                     return;
                                 }
                             }
+                            catch
+                            {
+                                Client.IsWalking = false;
+                            }
+                        }
+                    } // end of "else" from doorTime check
+
+                    // 10) Routefind to the next waypoint if needed
+                    // old code logic:
+                    WayForm wform = Client.ClientTab.WayForm;
+                    Location currentLocation = ways[currentWay];
+                    // If we're already within range => check map ID etc.
+                    if (Client.ClientLocation.DistanceFrom(currentLocation)
+                        <= (int)wform.distanceUpDwn.Value)
+                    {
+                        // same map => see if server point is also close
+                        if ((int)Client.Map.MapID == (int)currentLocation.MapID)
+                        {
+                            if (Client.ServerLocation.DistanceFrom(currentLocation)
+                                > (int)wform.distanceUpDwn.Value)
+                            {
+                                // do a quick refresh
+                                Client.RefreshRequest();
+                            }
+                            else
+                            {
+                                // move to next waypoint
+                                currentWay++;
+                            }
                         }
                     }
+                    else
+                    {
+                        // Attempt the routefind
+                        bool routeOk = Client.Routefind(currentLocation, (short)wform.distanceUpDwn.Value);
+                        // Possibly respect "oneLineWalkCbox" or "Server.toggleWalk"
+                        Client.IsWalking = routeOk && !Client.ClientTab.oneLineWalkCbox.Checked
+                                                   && !Server._toggleWalk;
+                    }
+
                 }
                 else
                 {
+                    // If we've passed the last waypoint, reset
                     currentWay = 0;
                 }
             }
-            catch (ThreadAbortException ex)
+            catch (ThreadAbortException)
             {
-                Console.WriteLine($"[Waypoints] [{Client.Name}] Thread aborted: {ex.Message}");
+                Console.WriteLine($"[Waypoints] [{Client.Name}] Thread aborted: ");
             }
             catch (Exception ex)
             {
-                string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PathfinderCrashLogs");
-                if (!Directory.Exists(logPath))
-                    Directory.CreateDirectory(logPath);
-                File.WriteAllText(Path.Combine(logPath, DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log"), ex.ToString());
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PathfinderCrashLogs");
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+
+                File.WriteAllText(Path.Combine(path, DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log"), ex.ToString());
             }
         }
+
 
 
         private bool BackTracking()
