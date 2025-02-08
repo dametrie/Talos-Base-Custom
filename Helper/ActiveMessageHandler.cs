@@ -866,6 +866,14 @@ namespace Talos.Helper
 
         private void HandleAlreadyCastMessage(Client client, string message)
         {
+            client.AlreadyCastMessageCount++;
+
+            // If it exceeds a threshold (3 here), refresh and reset
+            if (client.AlreadyCastMessageCount > 3)
+            {
+                client.RefreshRequest();
+                client.AlreadyCastMessageCount = 0;
+            }
 
             if (client.SpellHistory.Count > 0)
             {
@@ -881,7 +889,7 @@ namespace Talos.Helper
                     Creature creature = client.SpellHistory[0].Creature;
                     string fasName = client.CastedSpell.Name;
 
-                    //Console.WriteLine($"[HandleAlreadyCastMessage] Received 'You already cast' message for {fasName} on Creature ID: {client._spellHistory[0].Creature?.ID}, Hash: {client._spellHistory[0].Creature?.GetHashCode()} Updating LastFassed.");
+                    Console.WriteLine($"[HandleAlreadyCastMessage] Fas: Received 'You already cast' message for {fasName} on Creature ID: {client.SpellHistory[0].Creature?.ID}, Creature name: {creature.Name}, Hash: {client.SpellHistory[0].Creature?.GetHashCode()} Updating LastFassed.");
 
                     double fasDuration = Spell.GetSpellDuration(fasName);
 
@@ -896,7 +904,7 @@ namespace Talos.Helper
                     // Update the creature's state across all clients
                     CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
 
-                    //Console.WriteLine($"[HandleAlreadyCastMessage] Fas state updated for Creature ID: {creature.ID}");
+                    Console.WriteLine($"[HandleAlreadyCastMessage] Fas state updated for Creature ID: {creature.ID}, Creature name: {creature.Name}");
 
                     client.CastedSpell = null;
                 }

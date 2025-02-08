@@ -88,14 +88,14 @@ namespace Talos.Bashing
                 {
                     return false;
                 }
-                Console.WriteLine($"[Bashing] [{Client.Name}] Found {KillableTargets.Count} valid targets.");
+                //Console.WriteLine($"[Bashing] [{Client.Name}] Found {KillableTargets.Count} valid targets.");
 
                 var potentialTargets = GetOrderedPotentialTargets()?.ToList();
                 if (!ValidatePotentialTargets(potentialTargets))
                 {
                     return false;
                 }
-                Console.WriteLine($"[Bashing] [{Client.Name}] Found {potentialTargets.Count} ordered potential targets.");
+                //Console.WriteLine($"[Bashing] [{Client.Name}] Found {potentialTargets.Count} ordered potential targets.");
 
                 // Select the first valid target
                 Target = potentialTargets.FirstOrDefault(MeetsKillCriteria) ?? potentialTargets.FirstOrDefault();
@@ -104,7 +104,7 @@ namespace Talos.Bashing
                     return false;
                 }
 
-                Console.WriteLine($"[Bashing] [{Client.Name}] Target selected: {Target.Name} at {Target.Location}");
+                //Console.WriteLine($"[Bashing] [{Client.Name}] Target selected: {Target.Name} at {Target.Location}");
 
                 // Manage target selection timing
                 if (ShouldSendBashingTarget())
@@ -132,7 +132,7 @@ namespace Talos.Bashing
                     UseSkills(Target);
                 }
 
-                Console.WriteLine("[DEBUG] Exiting DoBashing method normally.");
+                //Console.WriteLine("[DEBUG] Exiting DoBashing method normally.");
                 return true;
             }
             catch (Exception ex)
@@ -148,7 +148,7 @@ namespace Talos.Bashing
         /// </summary>
         internal void Update()
         {
-            Console.WriteLine("[DEBUG] Entering Update method...");
+            //Console.WriteLine("[DEBUG] Entering Update method...");
             NearbyPlayers = Client.GetNearbyPlayers();
             NearbyMonsters = Client.GetNearbyValidCreatures(10);
             Warps = Client.GetAllWarpPoints();
@@ -164,7 +164,7 @@ namespace Talos.Bashing
                                     .Select(ushort.Parse)
                                     .ToList();
             }
-            Console.WriteLine("[DEBUG] Exiting Update method.");
+            //Console.WriteLine("[DEBUG] Exiting Update method.");
         }
 
         /// <summary>
@@ -229,10 +229,12 @@ namespace Talos.Bashing
         /// <returns>True if movement logic succeeds, otherwise false.</returns>
         private bool HandleMovement(Creature target)
         {
-            Console.WriteLine($"[Bashing] [{Client.Name}] Handling movement to {target.Name} at {target.Location}.");
+            if (Client.Bot?._dontWalk == true) return false;
+
+            //Console.WriteLine($"[Bashing] [{Client.Name}] Handling movement to {target.Name} at {target.Location}.");
 
             int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
-            Console.WriteLine($"[Bashing] [{Client.Name}] Distance to target: {distanceToTarget}");
+            //Console.WriteLine($"[Bashing] [{Client.Name}] Distance to target: {distanceToTarget}");
 
 
             if (NearbyMonsters.Any(m => m.Location == Client.ClientLocation))
@@ -251,26 +253,26 @@ namespace Talos.Bashing
             {
                 if (!ShouldPathfindToTarget(target, distanceToTarget))
                 {
-                    Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding skipped.");
+                    //Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding skipped.");
                     return true;
                 }
 
                 if ((DateTime.UtcNow - _lastPathfind) < _minPathInterval)
                 {
-                    // skip pathfinding this cycle
+                    Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding skipped due to interval 25ms.");
                     return true;
                 }
 
                 _lastPathfind = DateTime.UtcNow;
                 if (!TryPathfindToPoint(target.Location))
                 {
-                    Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding failed.");
+                    //Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding failed.");
                     return false;
                 }
             }
             else if (!TryFaceTarget(target))
             {
-                Console.WriteLine($"[Bashing] [{Client.Name}] Facing target failed.");
+                //Console.WriteLine($"[Bashing] [{Client.Name}] Facing target failed.");
                 return true;
             }
 
@@ -290,12 +292,12 @@ namespace Talos.Bashing
                 var lastStepTime = DateTime.UtcNow - target.LastStep;
                 bool result = !(lastStepTime > TimeSpan.FromMilliseconds(MonsterWalkIntervalMs - PingCompensation * 2) &&
                                 lastStepTime < TimeSpan.FromMilliseconds(MonsterWalkIntervalMs + PingCompensation * 2));
-                Console.WriteLine($"[DEBUG] Exiting ShouldPathfindToTarget with {result} (close range logic).");
+                //Console.WriteLine($"[DEBUG] Exiting ShouldPathfindToTarget with {result} (close range logic).");
                 return result;
             }
 
             bool hasAsleepAllies = Bot.NearbyAllies?.Any(u => u.IsAsleep) ?? false;
-            Console.WriteLine($"[DEBUG] Exiting ShouldPathfindToTarget with {hasAsleepAllies} (based on nearby asleep allies).");
+            //Console.WriteLine($"[DEBUG] Exiting ShouldPathfindToTarget with {hasAsleepAllies} (based on nearby asleep allies).");
             return !hasAsleepAllies;
         }
 
@@ -733,16 +735,16 @@ namespace Talos.Bashing
         /// <returns>True if pathfinding succeeds, otherwise false.</returns>
         protected virtual bool TryPathfindToPoint(Location location, short distance = 1)
         {
-            Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding to {location}.");
+            //Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding to {location}.");
 
             if (!CanMove || Client.Bot._dontWalk)
             {
-                Console.WriteLine($"[Bashing] [{Client.Name}] Cannot move or walking is disabled.");
+                //Console.WriteLine($"[Bashing] [{Client.Name}] Cannot move or walking is disabled.");
                 return false;
             }
 
             bool success = Client.Pathfind(location, distance);
-            Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding {(success ? "succeeded" : "failed")}.");
+            //Console.WriteLine($"[Bashing] [{Client.Name}] Pathfinding {(success ? "succeeded" : "failed")}.");
             return success;
         }
 
@@ -815,15 +817,15 @@ namespace Talos.Bashing
         /// <returns>True if both the sleep skill and the subsequent skill/item were used, otherwise false.</returns>
         internal bool TryComboWithSleepSkill(string name, bool isItem = false)
         {
-            Console.WriteLine("[DEBUG] Entering TryComboWithSleepSkill method...");
+            //Console.WriteLine("[DEBUG] Entering TryComboWithSleepSkill method...");
             if (!UseSleepSkill())
             {
-                Console.WriteLine("[DEBUG] Exiting TryComboWithSleepSkill with false (failed sleep skill).");
+                //Console.WriteLine("[DEBUG] Exiting TryComboWithSleepSkill with false (failed sleep skill).");
                 return false;
             }
 
             bool result = isItem ? TryUseItem(name) : TryUseSkill(name);
-            Console.WriteLine($"[DEBUG] Exiting TryComboWithSleepSkill with {result}.");
+            //Console.WriteLine($"[DEBUG] Exiting TryComboWithSleepSkill with {result}.");
             return result;
         }
 
@@ -833,9 +835,9 @@ namespace Talos.Bashing
         /// <returns>True if one of the sleep skills was used, otherwise false.</returns>
         private bool UseSleepSkill()
         {
-            Console.WriteLine("[DEBUG] Entering UseSleepSkill method...");
+            //Console.WriteLine("[DEBUG] Entering UseSleepSkill method...");
             bool skillUsed = Client.UseSkill("Lullaby Punch") || Client.UseSkill("Wolf Fang Fist");
-            Console.WriteLine($"[DEBUG] Exiting UseSleepSkill with {skillUsed}.");
+            //Console.WriteLine($"[DEBUG] Exiting UseSleepSkill with {skillUsed}.");
             return skillUsed;
         }
 
@@ -846,16 +848,16 @@ namespace Talos.Bashing
         /// <returns>True if used successfully, otherwise false.</returns>
         private bool TryUseSkill(string skillName)
         {
-            Console.WriteLine("[DEBUG] Entering TryUseSkill method...");
+            //Console.WriteLine("[DEBUG] Entering TryUseSkill method...");
             Skill skill = Client.Skillbook[skillName] ?? Client.Skillbook.GetNumberedSkill(skillName);
             if (skill == null || !skill.CanUse)
             {
-                Console.WriteLine("[DEBUG] Exiting TryUseSkill with false (skill null or not usable).");
+                //Console.WriteLine("[DEBUG] Exiting TryUseSkill with false (skill null or not usable).");
                 return false;
             }
 
             Client.UseSkill(skill.Name);
-            Console.WriteLine("[DEBUG] Exiting TryUseSkill with true.");
+            //Console.WriteLine("[DEBUG] Exiting TryUseSkill with true.");
             return true;
         }
 
@@ -882,10 +884,10 @@ namespace Talos.Bashing
         /// <returns>True if the unstuck logic succeeded, otherwise false.</returns>
         protected virtual bool TryUnstuck()
         {
-            Console.WriteLine("[DEBUG] Entering TryUnstuck method...");
+            //Console.WriteLine("[DEBUG] Entering TryUnstuck method...");
             if (!CanMove)
             {
-                Console.WriteLine("[DEBUG] Exiting TryUnstuck with false (cannot move).");
+                //Console.WriteLine("[DEBUG] Exiting TryUnstuck with false (cannot move).");
                 return false;
             }
 
@@ -902,12 +904,12 @@ namespace Talos.Bashing
                 if (Client.Map.IsWalkable(Client, targetPoint))
                 {
                     Client.Walk(dir);
-                    Console.WriteLine("[DEBUG] Exiting TryUnstuck with true (walked).");
+                    //Console.WriteLine("[DEBUG] Exiting TryUnstuck with true (walked).");
                     return true;
                 }
             }
 
-            Console.WriteLine("[DEBUG] Exiting TryUnstuck with false (no walkable tile found).");
+            //Console.WriteLine("[DEBUG] Exiting TryUnstuck with false (no walkable tile found).");
             return false;
         }
 
@@ -917,7 +919,7 @@ namespace Talos.Bashing
         /// <returns>True if a refresh request was made, otherwise false.</returns>
         internal virtual bool RefreshIfNeeded()
         {
-            Console.WriteLine("[DEBUG] Entering RefreshIfNeeded method...");
+            //Console.WriteLine("[DEBUG] Entering RefreshIfNeeded method...");
             DateTime currentTime = DateTime.UtcNow;
             TimeSpan pingDelay = TimeSpan.FromMilliseconds(PingCompensation * 2);
 
@@ -926,7 +928,7 @@ namespace Talos.Bashing
             {
                 Client.RefreshRequest();
                 LastPointInSync = currentTime;
-                Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with true (activity-based refresh).");
+                //Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with true (activity-based refresh).");
                 return true;
             }
 
@@ -950,7 +952,7 @@ namespace Talos.Bashing
                 LastPointInSync = currentTime;
             }
 
-            Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with false (no refresh needed).");
+            //Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with false (no refresh needed).");
             return false;
         }
 
@@ -974,14 +976,14 @@ namespace Talos.Bashing
         /// <param name="startTime">The time we started the sync wait.</param>
         private void WaitForSync(TimeSpan pingDelay, DateTime startTime)
         {
-            Console.WriteLine("[DEBUG] Entering WaitForSync method...");
+            //Console.WriteLine("[DEBUG] Entering WaitForSync method...");
             while ((DateTime.UtcNow - startTime) < pingDelay)
             {
                 Thread.Sleep(25);
                 if (Client.ClientLocation == Client.ServerLocation)
                     break;
             }
-            Console.WriteLine("[DEBUG] Exiting WaitForSync method.");
+            //Console.WriteLine("[DEBUG] Exiting WaitForSync method.");
         }
 
         /// <summary>

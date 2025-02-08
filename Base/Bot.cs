@@ -569,19 +569,19 @@ namespace Talos.Base
 
         internal bool EnsureWeaponEquipped()
         {
-            Console.WriteLine("[DEBUG] Entering EnsureWeaponEquipped method...");
+            //Console.WriteLine("[DEBUG] Entering EnsureWeaponEquipped method...");
             string equippedWeapName = Client.EquippedItems[1]?.Name;
             bool hasValidWeapon = Client.Weapons.Any(w => equippedWeapName != null && equippedWeapName.Equals(w.Name));
 
             if (hasValidWeapon)
             {
-                Console.WriteLine("[DEBUG] Valid weapon is already equipped, exiting with true.");
+                //Console.WriteLine("[DEBUG] Valid weapon is already equipped, exiting with true.");
                 return true;
             }
 
             if (!equipattempted)
             {
-                Console.WriteLine("[DEBUG] No valid weapon found. Attempting to equip one for current class...");
+                //Console.WriteLine("[DEBUG] No valid weapon found. Attempting to equip one for current class...");
                 if (!Client.SafeScreen)
                     Client.ServerMessage((byte)ServerMessageType.TopRight, "Equipping Weapon");
 
@@ -591,11 +591,11 @@ namespace Talos.Base
             }
             else
             {
-                Console.WriteLine("[DEBUG] Second attempt at equipping weapon failed; stopping bashing...");
+                //Console.WriteLine("[DEBUG] Second attempt at equipping weapon failed; stopping bashing...");
                 ShowWeaponErrorAndStop();
             }
 
-            Console.WriteLine("[DEBUG] Exiting EnsureWeaponEquipped method with false...");
+            //Console.WriteLine("[DEBUG] Exiting EnsureWeaponEquipped method with false...");
             return false;
         }
 
@@ -2247,7 +2247,7 @@ namespace Talos.Base
                 {
                     double idleSeconds = (DateTime.UtcNow - Client.LastStep).TotalSeconds;
                     double requiredIdle = (double)Client.ClientTab.numLastStepTime.Value;
-                    if (idleSeconds > requiredIdle)
+                    if (idleSeconds >= requiredIdle)
                     {
                         // Perform a forced refresh if we've been idle too long
                         Console.WriteLine($"[FollowWalking] Idle for {idleSeconds:F1}s, forcing refresh (LastStepF5).");
@@ -2406,7 +2406,7 @@ namespace Talos.Base
                 return false;
             }
 
-            if (DateTime.UtcNow.Subtract(leader.GetState<DateTime>(CreatureState.LastStep)).TotalSeconds > 5.0
+            if (DateTime.UtcNow.Subtract(leader.LastStep).TotalSeconds > 5.0
                 && leader.Location.MapID == Client.Map.MapID
                 && (DateTime.UtcNow.Subtract(_lastEXP).TotalSeconds > 5.0
                 || DateTime.UtcNow.Subtract(_doorTime).TotalSeconds < 10.0))
@@ -3983,56 +3983,68 @@ namespace Talos.Base
                 return false;
             }
 
+            // Process allies first.
+            AoPoisonForAllies();
+
+            // Then process the local player.
             bool isAoPoisonChecked = clientTab.aoPoisonCbox.Checked;
             bool isPlayerPoisoned = Client.Player.IsPoisoned;
-            bool isFungusExtractChecked = clientTab.fungusExtractCbox.Checked;
-            bool shouldUseFungusExtract = DateTime.UtcNow.Subtract(_lastUsedFungusBeetle).TotalSeconds > 1.0;
-
-            // Process allies for Ao poison dispel
-            if (!AoPoisonForAllies(shouldUseFungusExtract))
-            {
-                return false;
-            }
 
             if (isAoPoisonChecked && Client.HasEffect(EffectsBar.Poison) && isPlayerPoisoned)
             {
-                if (isFungusExtractChecked && Client.IsRegistered)
+                // Check the cooldown for fungus extract.
+                bool canUseFungusExtract = DateTime.UtcNow.Subtract(_lastUsedFungusBeetle).TotalSeconds > 1.0;
+                if (clientTab.fungusExtractCbox.Checked && Client.IsRegistered && Client.HasItem("Fungus Beetle Extract") && canUseFungusExtract)
                 {
                     UseFungusBeetleExtract();
+                    _lastUsedFungusBeetle = DateTime.UtcNow;
                 }
                 else
                 {
                     Client.UseSpell("ao puinsein", Client.Player, _autoStaffSwitch, false);
-                    return false;
                 }
             }
 
             return true;
         }
 
-        private bool AoPoisonForAllies(bool shouldUseFungusExtract)
+        private void AoPoisonForAllies()
         {
+            var clientTab = Client.ClientTab;
+            if (clientTab == null)
+            {
+                return;
+            }
 
             foreach (Ally ally in ReturnAllyList())
             {
-                if (ally.Page.dispelPoisonCbox.Checked && IsAlly(ally, out Player player, out Client client))
+                // Skip this ally if their dispel poison checkbox is not checked.
+                if (!ally.Page.dispelPoisonCbox.Checked)
+                    continue;
+
+                // Resolve the ally into a Player and, if available, a Client.
+                if (!IsAlly(ally, out Player allyPlayer, out Client allyClient))
+                    continue;
+
+                // Determine if the ally is poisoned by checking both the Player and Client (if available).
+                bool allyIsPoisoned = allyPlayer.IsPoisoned || (allyClient != null && allyClient.HasEffect(EffectsBar.Poison));
+                if (!allyIsPoisoned)
+                    continue;
+
+                // Check if we can use Fungus Beetle Extract based on the cooldown.
+                bool canUseFungusExtract = DateTime.UtcNow.Subtract(_lastUsedFungusBeetle).TotalSeconds > 1.0;
+                if (clientTab.fungusExtractCbox.Checked && Client.IsRegistered && Client.HasItem("Fungus Beetle Extract") && canUseFungusExtract)
                 {
-                    if (client.HasEffect(EffectsBar.Poison) && player.IsPoisoned && shouldUseFungusExtract)
-                    {
-                        if (Client.IsRegistered && Client.HasItem("Fungus Beetle Extract"))
-                        {
-                            UseFungusBeetleExtract();
-                        }
-                        else
-                        {
-                            Client.UseSpell("ao puinsein", player, _autoStaffSwitch, false);
-                        }
-                        return false;
-                    }
+                    UseFungusBeetleExtract();
+                    _lastUsedFungusBeetle = DateTime.UtcNow;
+                }
+                else
+                {
+                    Client.UseSpell("ao puinsein", allyPlayer, _autoStaffSwitch, false);
                 }
             }
-            return true;
         }
+
 
         private void UseFungusBeetleExtract()
         {

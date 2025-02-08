@@ -32,7 +32,7 @@ namespace Talos.Helper
                         creature.SetState(stateUpdate.Key, stateUpdate.Value);
                     }
 
-                    //Console.WriteLine($"[CreatureStateHelper] Updated Creature ID: {creatureID}, Creature Name: {creature.Name}, for Client: {client.Name}");
+                    Console.WriteLine($"[CreatureStateHelper] Updated Creature ID: {creatureID}, Creature Name: {creature.Name}, for Client: {client.Name}");
                 }
                 else
                 {
@@ -51,7 +51,11 @@ namespace Talos.Helper
                 if (client.WorldObjects.TryGetValue(creatureID, out var worldObject) && worldObject is Creature creature)
                 {
                     creature.SetState(state, value);
-                    //Console.WriteLine($"[CreatureStateHelper] Updated single state {state} for Creature ID: {creatureID}");
+                    if (state != CreatureState.LastStep)
+                    {
+                        Console.WriteLine($"[CreatureStateHelper] Updated single state {state} for Creature ID: {creatureID}");
+
+                    }
                 }
                 else
                 {
@@ -80,7 +84,7 @@ namespace Talos.Helper
                 return oldUpdates;
             });
 
-            //Console.WriteLine($"[CreatureStateHelper] Cached updates for Creature ID: {creatureID}");
+            Console.WriteLine($"[CreatureStateHelper] Cached updates for Creature ID: {creatureID}");
         }
 
         // Helper method to cache a single state update
@@ -97,7 +101,8 @@ namespace Talos.Helper
                 return oldUpdates;
             });
 
-            //Console.WriteLine($"[CreatureStateHelper] Cached single update for Creature ID: {creatureID}, State: {state}");
+            if (state != CreatureState.LastStep)
+                Console.WriteLine($"[CreatureStateHelper] Cached single update for Creature ID: {creatureID}, State: {state}");
         }
 
         // Method to apply cached updates when the creature becomes visible again
@@ -113,7 +118,7 @@ namespace Talos.Helper
                 // Remove cached updates after applying them
                 _pendingUpdates.TryRemove(creature.ID, out _);
 
-                //Console.WriteLine($"[CreatureStateHelper] Applied cached updates for Creature ID: {creature.ID}, Creature Name: {creature.Name}");
+                Console.WriteLine($"[CreatureStateHelper] Applied cached updates for Creature ID: {creature.ID}, Creature Name: {creature.Name}");
             }
         }
 

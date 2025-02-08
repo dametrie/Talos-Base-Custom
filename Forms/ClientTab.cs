@@ -2486,6 +2486,7 @@ namespace Talos.Forms
                         pickupGoldCbox.Checked = formState.AislingPage.PickupGoldCboxChecked;
                         pickupItemsCbox.Checked = formState.AislingPage.PickupItemsCboxChecked;
                         dropTrashCbox.Checked = formState.AislingPage.DropTrashCboxChecked;
+                        chkLastStepF5.Checked = formState.AislingPage.ChkLastStepF5Checked;
                         //GMLogCBoxChecked = formState.AislingPage.gmLogCBox.Checked,
                         //ChkGMSoundsChecked = formState.AislingPage.chkGMSounds.Checked,
                         //ChkAltLoginChecked = formState.AislingPage.chkAltLogin.Checked,
@@ -2546,6 +2547,8 @@ namespace Talos.Forms
                         chkExkuranum.Checked = formState.BashingPage.ChkExkuraChecked;
                         Protect1Cbx.Checked = formState.BashingPage.ChkProtect1CboxChecked;
                         Protect2Cbx.Checked = formState.BashingPage.ChkProtect2CboxChecked;
+                        Protect1Cbx.Text = formState.BashingPage.TextProtect1Value;
+                        Protect2Cbx.Text = formState.BashingPage.TextProtect2Value;
                         chkBashAsgall.Checked = formState.BashingPage.ChkBashAsgallChecked;
                         ignoreCollisionCbox.Checked = formState.BashingPage.ChkIgnoreWalledInChecked;
                         riskySkillsCbox.Checked = formState.BashingPage.ChkRiskySkillsChecked;
@@ -2554,8 +2557,6 @@ namespace Talos.Forms
                         chkCrasher.Checked = formState.BashingPage.ChkUseCrashersChecked;
                         chkCrasherOnlyAsgall.Checked = formState.BashingPage.ChkCrasherOnlyAsgallChecked;
                         chkCrasherAboveHP.Checked = formState.BashingPage.ChkCrasherAboveHPChecked;
-                        Protect1Cbx.Text = formState.BashingPage.TextProtect1Value;
-                        Protect2Cbx.Text = formState.BashingPage.TextProtect2Value;
                         priorityCbox.Checked = formState.BashingPage.ChkPrioritizeChecked;
                         priorityOnlyCbox.Checked = formState.BashingPage.ChkPriorityOnlyChecked;
                         priorityLBox.Items.Clear();

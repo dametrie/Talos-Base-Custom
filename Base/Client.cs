@@ -208,6 +208,7 @@ namespace Talos.Base
         internal int SpellCounter { get; set; }
         internal int Identifier { get; set; }
         internal int StuckCounter { get; set; }
+        public int AlreadyCastMessageCount { get; set; } = 0;
         public int CurrentWaypoint { get; internal set; }
         internal uint ExchangeID { get; set; }
         internal uint PlayerID { get; set; }
@@ -409,25 +410,25 @@ namespace Talos.Base
         {
             if (!skill.CanUse)
             {
-                Console.WriteLine($"[DEBUG] Skill {skill.Name} cannot be used because it is on cooldown.");
+                //Console.WriteLine($"[DEBUG] Skill {skill.Name} cannot be used because it is on cooldown.");
                 return false;
             }
 
             if (!Map.CanUseSkills)
             {
-                Console.WriteLine($"[DEBUG] Skills cannot be used on this map (Map.CanUseSkills is false).");
+                //Console.WriteLine($"[DEBUG] Skills cannot be used on this map (Map.CanUseSkills is false).");
                 return false;
             }
 
             if (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Pramh))
             {
-                Console.WriteLine($"[DEBUG] Cannot use skill {skill.Name} because Pramh effect is active.");
+                //Console.WriteLine($"[DEBUG] Cannot use skill {skill.Name} because Pramh effect is active.");
                 return false;
             }
 
             if (EffectsBar.Contains((ushort)Enumerations.EffectsBar.Suain))
             {
-                Console.WriteLine($"[DEBUG] Cannot use skill {skill.Name} because Suain effect is active.");
+                //Console.WriteLine($"[DEBUG] Cannot use skill {skill.Name} because Suain effect is active.");
                 return false;
             }
 
@@ -3191,12 +3192,12 @@ namespace Talos.Base
                 return false;
             }
 
-            //if (target != null)
-            //{
-            //    int test = _clientLocation.DistanceFrom(target.Location);
-            //    ServerMessage((byte)ServerMessageType.TopRight, $"Casting on {target.ID}, {test} spaces");
-            //    DisplayTextOverTarget(2, target.ID, $"[Target]");
-            //}
+            if (target != null)
+            {
+                int test = ClientLocation.DistanceFrom(target.Location);
+                ServerMessage((byte)ServerMessageType.TopRight, $"Casting on {target.ID}, {test} spaces");
+                DisplayTextOverTarget(2, target.ID, $"[Spell Target]");
+            }
 
 
             Spell spell = Spellbook[spellName];
