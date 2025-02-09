@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -26,7 +27,11 @@ namespace Talos.Base
 {
     internal class Bot : BotBase
     {
-
+        private const int LONG_SLEEP_MS = 150000;
+        private const int RESCUE_SLEEP_MS = 100;
+        private const int MERCHANT_WAIT_MS = 2500;
+        private const short SPECIAL_MAP_ID = 5271;
+        private const short DOJO_MAP_ID = 3071;
         private static object _lock { get; set; } = new object();
         private Dictionary<int, bool> routeFindPerformed = new Dictionary<int, bool>();
         private int _dropCounter;
@@ -108,7 +113,10 @@ namespace Talos.Base
         private bool _together;
         private DateTime _followerTimer;
         internal DateTime _lastMushroomBonusAppliedTime;
-        internal object _mushroomBonusElapsedTime;
+        internal DateTime _lastSkillBonusAppliedTime;
+
+        internal TimeSpan _mushroomBonusElapsedTime;
+
         internal bool _netRepair = false;
         internal DateTime _hammerTimer = DateTime.MinValue;
         internal bool _spikeGameToggle;
@@ -127,6 +135,9 @@ namespace Talos.Base
         internal bool toldUsAboutPotofGold;
         internal bool madeLepNet;
         private DateTime _lastUsedHealingPotion;
+        private Creature nonMainTarget;
+        private Thread dojoSpellThread;
+        private Location dojoPoint;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -210,8 +221,8 @@ namespace Talos.Base
 
 
                     //CheckScrollTimers();
-                    HandleBashingCycle();
-                    //DojoLoop();
+                    BashLoop();
+                    DojoLoop();
 
                     // Block if conditions for ranger or exchange are not met
                     if ((_rangerNear && Client.ClientTab.rangerStopCbox.Checked) || Client.ExchangeOpen)
@@ -239,6 +250,456 @@ namespace Talos.Base
                 }
             }
         }
+
+        #region DojoLoop
+        private bool IsDojoEnabled() => string.Equals(Client.ClientTab.toggleDojoBtn.Text, "Disable");
+        private void ExecuteRescue()
+        {
+            Client.UseSkill("Rescue");
+            Thread.Sleep(RESCUE_SLEEP_MS);
+        }
+        internal void DojoLoop()
+        {
+            // Exit if Dojo is not enabled
+            if (!IsDojoEnabled())
+                return;
+
+            bool isRangerNear = IsRangerNearBy();
+            if (isRangerNear)
+            {
+                Thread.Sleep(LONG_SLEEP_MS);
+            }
+
+            if (Client.ClientTab.rescueCbox.Checked)
+            {
+                ExecuteRescue();
+                return;
+            }
+
+            // If we are not on a dojo map and regeneration is not checked, perform map transition logic.
+            if (!CONSTANTS.DOJO_MAPS.ContainsKey(Client.Map.MapID) && !Client.ClientTab.regenCaHere.Checked)
+            {
+                HandleMapTransition(isRangerNear);
+            }
+            else
+            {
+                DoTrainingDojo();
+            }
+        }
+
+        private void HandleMapTransition(bool isRangerNear)
+        {
+            if (Client.Map.MapID == SPECIAL_MAP_ID)
+            {
+                // Wait until we can get the merchant "Mionope"
+                Creature merchant = null;
+                while (merchant == null)
+                {
+                    merchant = Client.GetNearbyNPC("Mionope");
+                    Client.Pathfind(new Location(5271, 2, 2), shouldBlock: false, avoidWarps: false);
+                }
+                Client.ClickObject(merchant.ID);
+                Thread.Sleep(MERCHANT_WAIT_MS);
+            }
+
+            if (Client.Map.MapID != DOJO_MAP_ID && !isRangerNear)
+            {
+                Client.Routefind(new Location(DOJO_MAP_ID, 0, 0));
+            }
+            else
+            {
+                EnterDojo(isRangerNear);
+            }
+        }
+
+        private void EnterDojo(bool isRangerNear)
+        {
+            Location entryPoint = new Location(DOJO_MAP_ID, 4, 5);
+            if (Client.ServerLocation.DistanceFrom(entryPoint) > 5)
+            {
+                Client.Pathfind(entryPoint);
+            }
+            else
+            {
+                if (isRangerNear)
+                    Thread.Sleep(MERCHANT_WAIT_MS);
+
+                Creature merchant = Client.GetNearbyNPC("Niomope");
+                if (merchant == null)
+                    return;
+
+                if (Client.RequestNamedPursuit(merchant, "Enter Training Dojo", false))
+                {
+                    Client.ReplyDialog(1, merchant.ID, 0, 2, 1);
+                }
+                if (Client.ClientTab.dojoAutoStaffCbox.Checked)
+                {
+                    Client.RemoveWeapon();
+                    Client.RemoveShield();
+                }
+                Thread.Sleep(MERCHANT_WAIT_MS);
+            }
+        }
+
+        private void DoTrainingDojo()
+        {
+            if (Client.ClientTab.chkDachaidh.Checked)
+            {
+                DojoDachaidh();
+                return;
+            }
+            if (Client.ClientTab.regenCaHere.Checked)
+            {
+                DojoCounterRegen();
+                return;
+            }
+            if (Client.ClientTab.flowerCbox.Checked && !string.IsNullOrEmpty(Client.ClientTab.flowerText.Text))
+            {
+                DojoFlower();
+                return;
+            }
+            if (!UpdateDojoTarget())
+                return;
+
+            // Use extra spacing if needed
+            if (Client.ClientTab.dojo2SpaceCbox.Checked)
+            {
+                HandleDojo2Space();
+                return;
+            }
+            else if (nonMainTarget.Location.DistanceFrom(Client.ServerLocation) != 1 && !_rangerNear)
+            {
+                Client.Pathfind(nonMainTarget.Location);
+                return;
+            }
+
+            // Face the target if not already in the correct direction
+            Direction desiredDirection = nonMainTarget.Location.GetDirection(Client.ServerLocation);
+            if (desiredDirection != Client.ServerDirection)
+            {
+                Client.Turn(desiredDirection);
+            }
+            else
+            {
+                // Start the dojo spells thread if it’s not running
+                if (dojoSpellThread == null || !dojoSpellThread.IsAlive)
+                {
+                    BotThreads.Remove(dojoSpellThread);
+                    dojoSpellThread = new Thread(new ThreadStart(DojoSpells));
+                    BotThreads.Add(dojoSpellThread);
+                    dojoSpellThread.Start();
+                }
+                DojoSkills();
+                DojoCounterRegen();
+                Thread.Sleep(50);
+            }
+        }
+
+        private void HandleDojo2Space()
+        {
+            // Calculate candidate points around the target
+            List<Location> candidates = new List<Location>
+            {
+                new Location(Client.ServerLocation.MapID, (short)(nonMainTarget.Location.X + 2), nonMainTarget.Location.Y),
+                new Location(Client.ServerLocation.MapID, (short)(nonMainTarget.Location.X - 2), nonMainTarget.Location.Y),
+                new Location(Client.ServerLocation.MapID, nonMainTarget.Location.X, (short)(nonMainTarget.Location.Y + 2)),
+                new Location(Client.ServerLocation.MapID, nonMainTarget.Location.X, (short)(nonMainTarget.Location.Y - 2))
+            };
+
+            // Select the valid candidate (not walled and no nearby monsters)
+            var targetPoint = candidates
+                .Where(p => !Client.IsWalledIn(p) && !Client.GetAllNearbyMonsters().Any(c => c.Type == 0 && c.Location == p))
+                .OrderBy(p => p.DistanceFrom(Client.ServerLocation))
+                .FirstOrDefault();
+
+            if (targetPoint.DistanceFrom(Client.ServerLocation) != 0 && !_rangerNear)
+            {
+                Client.Pathfind(targetPoint, 0);
+            }
+        }
+
+        private bool UpdateDojoTarget()
+        {
+            // If nonMainTarget is valid, keep it; otherwise, try to select a new target.
+            if (nonMainTarget != null &&
+                nonMainTarget.Location.MapID == Client.Map.MapID &&
+                Client.WithinRange(nonMainTarget) &&
+                !Client.IsWalledIn(nonMainTarget.Location))
+            {
+                return true;
+            }
+
+            nonMainTarget = Client.GetAllNearbyMonsters(12, CONSTANTS.DOJO_MAPS[Client.Map.MapID])
+                .Where(c => !Client.IsWalledIn(c.Location))
+                .OrderBy(c => c.Location.DistanceFrom(Client.ServerLocation))
+                .FirstOrDefault();
+
+            return nonMainTarget != null;
+        }
+
+
+        private void DojoSpells()
+        {
+            while (string.Equals(Client.ClientTab.toggleDojoBtn.Text, "Disable"))
+            {
+                if (_shouldThreadStop)
+                    break;
+                try
+                {
+                    // Example: process lists of dojo spells and skills
+                    bool waitForBowEquip = false;
+                    List<string> disarmSkills = Client.ClientTab.dojoSkillList
+                        .Where(skill => CONSTANTS.REQUIRE_DISARM.Any(dis => skill.Contains(dis)))
+                        .ToList();
+                    List<string> stabSkills = Client.ClientTab.dojoSkillList
+                        .Where(skill => CONSTANTS.STABS.Contains(skill))
+                        .ToList();
+                    bool hasArrowShot = Client.ClientTab.dojoSkillList.Any(skill => skill.Contains("Arrow Shot"));
+
+                    if (Client.ClientTab.dojoSpellList.Count == 0)
+                        Client.ClientTab.dojoSpellList.Add("filler");
+
+                    foreach (string dojoSpell in Client.ClientTab.dojoSpellList)
+                    {
+                        foreach (string skill in disarmSkills.Where(s => Client.CanUseSkill(Client.Skillbook[s])))
+                        {
+                            if (skill.Contains("Claw Slash"))
+                            {
+                                if (!Client.UseItem("Blackstar Night Claw") &&
+                                    !Client.UseItem("Yowien's Fist") &&
+                                    !Client.UseItem("Yowien's Fist1") &&
+                                    !Client.UseItem("Yowien's Claw") &&
+                                    !Client.UseItem("Yowien's Claw1"))
+                                {
+                                    Client.UseItem("Tilian Claw");
+                                }
+                            }
+                            else
+                            {
+                                Client.RemoveWeapon();
+                                Client.RemoveShield();
+                            }
+                            if (Client.UseSkill(skill))
+                            {
+                                Client.RemoveWeapon();
+                                Client.RemoveShield();
+                                while (Client.EquippedItems[1] != null || Client.EquippedItems[3] != null)
+                                {
+                                    Thread.Sleep(5);
+                                }
+                                Thread.Sleep(5);
+                            }
+                        }
+                        foreach (string skill in stabSkills.Where(s => Client.CanUseSkill(Client.Skillbook[s])))
+                        {
+                            string currentWeapon = Client.EquippedItems[1]?.Name;
+                            if ((currentWeapon == null || !CONSTANTS.BOWS.Concat(CONSTANTS.DAGGERS).Any(e => currentWeapon.Contains(e))) &&
+                                string.IsNullOrEmpty(Client.EquipBow()))
+                            {
+                                foreach (Item item in Client.Inventory)
+                                {
+                                    if (CONSTANTS.DAGGERS.Any(d => item.Name.Contains(d)))
+                                    {
+                                        Client.UseItem(item.Name);
+                                        break;
+                                    }
+                                }
+                            }
+                            Client.UseSkill(skill);
+                        }
+                        // Check and wait for bow equip if necessary
+                        string equippedWeapon = Client.EquippedItems[1]?.Name;
+                        if (hasArrowShot && (equippedWeapon == null || !CONSTANTS.BOWS.Any(b => equippedWeapon.Contains(b))) &&
+                            !string.IsNullOrEmpty(Client.EquipBow()))
+                        {
+                            waitForBowEquip = true;
+                        }
+                        DateTime startWait = DateTime.UtcNow;
+                        while (waitForBowEquip &&
+                              (equippedWeapon == null || !CONSTANTS.BOWS.Concat(CONSTANTS.DAGGERS).Any(e => equippedWeapon.Contains(e))) &&
+                              DateTime.UtcNow.Subtract(startWait).TotalMilliseconds <= 500)
+                        {
+                            Thread.Sleep(5);
+                        }
+                        waitForBowEquip = false;
+                        Thread.Sleep(5);
+                        if (!string.Equals(dojoSpell, "filler"))
+                        {
+                            if (_needFasSpiorad)
+                            {
+                                Client.UseSpell("fas spiorad", staffSwitch: Client.ClientTab.dojoAutoStaffCbox.Checked, wait: false);
+                            }
+                            else
+                            {
+                                ManageSpellHistory();
+                                if (!string.Equals(dojoSpell, "creag neart") && !string.Equals(dojoSpell, "Salvation"))
+                                {
+                                    Client.UseSpell(dojoSpell, nonMainTarget, Client.ClientTab.dojoAutoStaffCbox.Checked, false);
+                                }
+                                else
+                                {
+                                    Client.UseSpell(dojoSpell, (Creature)Client.Player, Client.ClientTab.dojoAutoStaffCbox.Checked, false);
+                                }
+                            }
+                        }
+                    }
+                    Thread.Sleep(5);
+                }
+                catch
+                {
+                    // Optionally log or handle exceptions
+                }
+            }
+        }
+
+        private void DojoSkills()
+        {
+            try
+            {
+                // Bonus spells every 5+ seconds
+                if (!Client.HasEffect(EffectsBar.SpellSkillBonus1) &&
+                    (DateTime.UtcNow - _lastSkillBonusAppliedTime).TotalSeconds > 5 &&
+                    Client.ClientTab.dojoBonusCbox.Checked)
+                {
+                    if (!Client.UseItem("Skill/Spell Quadruple Bonus") &&
+                        !Client.UseItem("Skill/Spell Triple Bonus"))
+                    {
+                        Client.UseItem("Skill/Spell Leveling Bonus");
+                    }
+                    _lastSkillBonusAppliedTime = DateTime.UtcNow;
+                }
+
+                List<string> crasherSkills = Client.ClientTab.dojoSkillList
+                    .Where(skill => CONSTANTS.CRASHERS.Contains(skill))
+                    .ToList();
+                if (crasherSkills.Any() && !Client.HasEffect(EffectsBar.Poison))
+                {
+                    Client.DisplayChant("Poison Please");
+                }
+                if (Client.HealthPct <= 1)
+                {
+                    foreach (string skill in crasherSkills)
+                        Client.UseSkill(skill);
+                }
+                else
+                {
+                    foreach (string skill in crasherSkills)
+                    {
+                        if (Client.CanUseSkill(Client.Skillbook[skill]) && Client.UseSkill("Auto Hemloch"))
+                        {
+                            foreach (string s in crasherSkills)
+                                Client.UseSkill(s);
+                            break;
+                        }
+                    }
+                }
+
+                foreach (string skill in Client.ClientTab.dojoSkillList
+                    .Where(s => !CONSTANTS.CRASHERS.Contains(s) &&
+                                !CONSTANTS.REQUIRE_DISARM.Any(r => s.Contains(r)) &&
+                                !CONSTANTS.STABS.Contains(s))
+                    .ToList())
+                {
+                    Client.UseSkill(skill);
+                }
+            }
+            catch
+            {
+                // Handle exceptions as needed
+            }
+        }
+
+        private void DojoFlower()
+        {
+            Client targetClient = Server.GetClient(Client.ClientTab.flowerText.Text);
+            if (targetClient == null)
+                return;
+
+            // Regenerate a valid point if current dojoPoint is not walkable or too close to boundaries
+            while (!Client.Map.IsWalkable(Client, dojoPoint) ||
+                   dojoPoint.X < 6 ||
+                   dojoPoint.Y < 6 ||
+                   (targetClient.Map.Name.Contains("Training Dojo") &&
+                    targetClient.Player.Location.DistanceFrom(dojoPoint) > 9))
+            {
+                dojoPoint = new Location(targetClient.Map.MapID, (short)RandomUtils.Random(1, Client.Map.Width - 1),
+                                       (short)RandomUtils.Random(1, Client.Map.Height - 1));
+            }
+
+            if (Client.Map.MapID != targetClient.Map.MapID)
+            {
+                Creature merchant = Client.GetNearbyNPC("Pionome");
+                if (merchant == null)
+                    return;
+                Client.ClickObject(merchant.ID);
+                while (Client.Dialog == null)
+                    Thread.Sleep(25);
+                byte gameObjectType = Client.Dialog.ObjectType;
+                int gameObjectId = Client.Dialog.ObjectID;
+                ushort pursuitId = Client.Dialog.PursuitID;
+                ushort dialogId = Client.Dialog.DialogID;
+                if (byte.TryParse(targetClient.Map.Name.Replace("Training Dojo ", ""), out byte option))
+                {
+                    Client.ReplyDialog(gameObjectType, gameObjectId, pursuitId, (ushort)(dialogId + 1), 2);
+                    Client.ReplyDialog(gameObjectType, gameObjectId, pursuitId, (ushort)(dialogId + 1), option);
+                }
+                Thread.Sleep(2000);
+            }
+            else
+            {
+                if (Client.ServerLocation.DistanceFrom(dojoPoint) > 2 && Client.Pathfind(dojoPoint))
+                    return;
+                if (_needFasSpiorad)
+                {
+                    Client.UseSpell("fas spiorad", staffSwitch: Client.ClientTab.dojoAutoStaffCbox.Checked, wait: false);
+                }
+                else
+                {
+                    Client.UseSpell("Lyliac Plant", (Creature)targetClient.Player, Client.ClientTab.dojoAutoStaffCbox.Checked, false);
+                    _needFasSpiorad = true;
+                }
+            }
+        }
+
+
+        private void DojoDachaidh()
+        {
+            ManageSpellHistory();
+            Client.UseSpell("dachaidh");
+        }
+
+        private void DojoCounterRegen()
+        {
+            var nearbyCreatures = Client.GetNearbyObjects().OfType<Creature>()
+                .Where(obj => !(obj is Player player && player.IsHidden) && !obj.IsPoisoned)
+                .ToList();
+
+            if (Client.ClientTab.dojoRegenerationCbox.Checked)
+            {
+                foreach (Creature cr in nearbyCreatures.Where(c =>
+                     !c.AnimationHistory.ContainsKey(187) ||
+                     (DateTime.UtcNow - c.AnimationHistory[187]).TotalSeconds > 4))
+                {
+                    ManageSpellHistory();
+                    Client.NumberedSpell("Regeneration", cr, wait: false);
+                }
+            }
+            if (Client.ClientTab.dojoCounterAttackCbox.Checked)
+            {
+                foreach (Creature cr in nearbyCreatures
+                             .Where(c => c is Player &&
+                                  (!c.AnimationHistory.ContainsKey(184) ||
+                                   (DateTime.UtcNow - c.AnimationHistory[184]).TotalSeconds > 22))
+                             .OrderBy(_ => RandomUtils.Random()))
+                {
+                    ManageSpellHistory();
+                    Client.NumberedSpell("Counter Attack", cr, wait: false);
+                }
+            }
+        }
+
+
+        #endregion
 
         private void VeltainChests()
         {
@@ -355,8 +816,8 @@ namespace Talos.Base
            
         }
 
-        #region HandleBashingCycle
-        private void HandleBashingCycle()
+        #region BashLoop
+        private void BashLoop()
         {
             try
             {
@@ -3184,7 +3645,7 @@ namespace Talos.Base
             {
                 foreach (var otherPlayer in _playersExistingOver250ms)
                 {
-                    if (player != otherPlayer && (player.Location.Equals(otherPlayer.Location) || otherPlayer._isHidden) && !duplicateOrHiddenPlayers.Contains(player))
+                    if (player != otherPlayer && (player.Location.Equals(otherPlayer.Location) || otherPlayer.IsHidden) && !duplicateOrHiddenPlayers.Contains(player))
                     {
                         duplicateOrHiddenPlayers.Add(player);
                     }
@@ -3514,7 +3975,7 @@ namespace Talos.Base
             {
                 foreach (Player ally in NearbyAllies)
                 {
-                    if (!ally._isHidden)
+                    if (!ally.IsHidden)
                     {
                         Client.UseItem("Vanishing Elixir");
                     }
@@ -4426,7 +4887,7 @@ namespace Talos.Base
         {
             // Checks if playerToCheck is not in friend list, is not the reference player,
             // and is either at the same location as reference player or is hidden
-            return !Client.ClientTab.friendList.Items.OfType<string>().Contains(player.Name, StringComparer.CurrentCultureIgnoreCase) && player != Client.Player && (Equals(player.Location, Client.Player.Location) || player._isHidden);
+            return !Client.ClientTab.friendList.Items.OfType<string>().Contains(player.Name, StringComparer.CurrentCultureIgnoreCase) && player != Client.Player && (Equals(player.Location, Client.Player.Location) || player.IsHidden);
         }
 
         private bool BubbleBlock()

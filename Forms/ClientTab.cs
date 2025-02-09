@@ -72,8 +72,8 @@ namespace Talos.Forms
         internal List<string> _recentWhispers = new List<string> { "", "", "", "", "" };
 
         internal List<string> _bashingSkillList = new List<string>();
-        internal List<string> _unmaxedSkills = new List<string>();
-        internal List<string> _unmaxedSpells = new List<string>();
+        internal List<string> dojoSkillList = new List<string>();
+        internal List<string> dojoSpellList = new List<string>();
 
         internal BindingList<string> _trashToDrop = new BindingList<string>
         {
@@ -578,12 +578,12 @@ namespace Talos.Forms
             if (button.BackColor == Color.DodgerBlue)
             {
                 button.BackColor = Color.White;
-                _unmaxedSpells.Remove(name);
+                dojoSpellList.Remove(name);
             }
             else
             {
                 button.BackColor = Color.DodgerBlue;
-                _unmaxedSpells.Add(name);
+                dojoSpellList.Add(name);
             }
         }
 
@@ -594,12 +594,12 @@ namespace Talos.Forms
             if (button.BackColor == Color.DodgerBlue)
             {
                 button.BackColor = Color.White;
-                _unmaxedSkills.Remove(name);
+                dojoSkillList.Remove(name);
             }
             else
             {
                 button.BackColor = Color.DodgerBlue;
-                _unmaxedSkills.Add(name);
+                dojoSkillList.Add(name);
             }
         }
 
@@ -1330,8 +1330,8 @@ namespace Talos.Forms
                 _client.ClientTab._isLoading = true;
                 _client.Staffs.Clear();
                 _client.LoadStavesAndBows();
-                _unmaxedSkills.Clear();
-                _unmaxedSpells.Clear();
+                dojoSkillList.Clear();
+                dojoSpellList.Clear();
                 setoaArchive = DATArchive.FromFile(Settings.Default.DarkAgesPath.Replace("Darkages.exe", "setoa.dat"));
                 spellImageArchive = EPFImage.FromArchive("spell001.epf", setoaArchive);
                 skillImageArchive = EPFImage.FromArchive("skill001.epf", setoaArchive);

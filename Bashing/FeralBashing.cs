@@ -27,7 +27,6 @@ namespace Talos.Bashing
         private Skill AnimalFeast => Client.Skillbook["Animal Feast"];
         private Skill Crasher => Client.Skillbook["Crasher"];
         private Skill WhirlwindAttack => Client.Skillbook["Whirlwind Attack"];
-        private Skill SpinningKelb => Client.Skillbook["Spinning Kelberoth Strike"];
 
         public FeralBashing(Bot bot)
             : base(bot)
@@ -106,6 +105,12 @@ namespace Talos.Bashing
 
                 if (FuriousBash != null && Client.UseSkill(FuriousBash.Name))
                     return true;
+
+                if (CanUseCrashers() && WhirlwindAttack != null && Client.UseSkill(WhirlwindAttack.Name))
+                {
+                    Client.Player.NeedsHeal = true;
+                    return true;
+                }
             }
 
             return false;
@@ -228,8 +233,6 @@ namespace Talos.Bashing
                 Client.UseSkill(Crasher.Name);
             if (WhirlwindAttack != null)
                 Client.UseSkill(WhirlwindAttack.Name);
-            if (SpinningKelb != null)
-                Client.UseSkill(SpinningKelb.Name);
 
             if (Client.HasItem("Damage Scroll"))
                 Client.UseItem("Damage Scroll");

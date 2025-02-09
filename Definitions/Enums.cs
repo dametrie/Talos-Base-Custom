@@ -262,6 +262,7 @@ namespace Talos.Enumerations
         Purify = 143,
         Silenced = 143,
         Regeneration = 146,
+        SpellSkillBonus1 = 147,
         BonusMushroom = 148,
         CounterAttack = 150,
         IncreasedRegeneration = 181, //incorrect on Vorlof
@@ -276,7 +277,7 @@ namespace Talos.Enumerations
         Coma = 252,
 
         PotentMantidScent = 254,
-        SpellSkillBonus1 = 255
+
     }
 
     internal enum Element : byte

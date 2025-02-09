@@ -220,6 +220,7 @@ namespace Talos.Forms
             this.engageRangeNum = new System.Windows.Forms.NumericUpDown();
             this.groupBox12 = new System.Windows.Forms.GroupBox();
             this.chkCrasherOnlyAsgall = new System.Windows.Forms.CheckBox();
+            this.riskySkillsDionCbox = new System.Windows.Forms.CheckBox();
             this.chkCrasher = new System.Windows.Forms.CheckBox();
             this.groupBox11 = new System.Windows.Forms.GroupBox();
             this.chkAutoRepairBash = new System.Windows.Forms.CheckBox();
@@ -240,7 +241,6 @@ namespace Talos.Forms
             this.assistBasherChk = new System.Windows.Forms.CheckBox();
             this.radioLeaderTarget = new System.Windows.Forms.RadioButton();
             this.leadBasherTxt = new System.Windows.Forms.TextBox();
-            this.riskySkillsDionCbox = new System.Windows.Forms.CheckBox();
             this.priorityGrpBx = new System.Windows.Forms.GroupBox();
             this.priorityAddBtn = new System.Windows.Forms.Button();
             this.priorityRemoveBtn = new System.Windows.Forms.Button();
@@ -597,6 +597,8 @@ namespace Talos.Forms
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
             this.chatBox = new Talos.Forms.UI.ChatBox();
+            this.chkDachaidh = new System.Windows.Forms.CheckBox();
+            this.regenCaHere = new System.Windows.Forms.CheckBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -3130,6 +3132,16 @@ namespace Talos.Forms
             this.chkCrasherOnlyAsgall.Text = "Only use on asgalled mobs";
             this.chkCrasherOnlyAsgall.UseVisualStyleBackColor = true;
             // 
+            // riskySkillsDionCbox
+            // 
+            this.riskySkillsDionCbox.AutoSize = true;
+            this.riskySkillsDionCbox.Location = new System.Drawing.Point(11, 45);
+            this.riskySkillsDionCbox.Name = "riskySkillsDionCbox";
+            this.riskySkillsDionCbox.Size = new System.Drawing.Size(126, 19);
+            this.riskySkillsDionCbox.TabIndex = 180;
+            this.riskySkillsDionCbox.Text = "Only When Dioned";
+            this.riskySkillsDionCbox.UseVisualStyleBackColor = true;
+            // 
             // chkCrasher
             // 
             this.chkCrasher.AutoSize = true;
@@ -3401,16 +3413,6 @@ namespace Talos.Forms
             this.leadBasherTxt.Size = new System.Drawing.Size(114, 23);
             this.leadBasherTxt.TabIndex = 169;
             this.leadBasherTxt.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
-            // riskySkillsDionCbox
-            // 
-            this.riskySkillsDionCbox.AutoSize = true;
-            this.riskySkillsDionCbox.Location = new System.Drawing.Point(11, 45);
-            this.riskySkillsDionCbox.Name = "riskySkillsDionCbox";
-            this.riskySkillsDionCbox.Size = new System.Drawing.Size(126, 19);
-            this.riskySkillsDionCbox.TabIndex = 180;
-            this.riskySkillsDionCbox.Text = "Only When Dioned";
-            this.riskySkillsDionCbox.UseVisualStyleBackColor = true;
             // 
             // priorityGrpBx
             // 
@@ -5826,6 +5828,8 @@ namespace Talos.Forms
             // 
             // dojoTab
             // 
+            this.dojoTab.Controls.Add(this.regenCaHere);
+            this.dojoTab.Controls.Add(this.chkDachaidh);
             this.dojoTab.Controls.Add(this.flowerCbox);
             this.dojoTab.Controls.Add(this.dojo2SpaceCbox);
             this.dojoTab.Controls.Add(this.rescueCbox);
@@ -5886,7 +5890,7 @@ namespace Talos.Forms
             // dojoRefreshBtn
             // 
             this.dojoRefreshBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.dojoRefreshBtn.Location = new System.Drawing.Point(658, 329);
+            this.dojoRefreshBtn.Location = new System.Drawing.Point(658, 335);
             this.dojoRefreshBtn.Name = "dojoRefreshBtn";
             this.dojoRefreshBtn.Size = new System.Drawing.Size(132, 49);
             this.dojoRefreshBtn.TabIndex = 8;
@@ -7526,6 +7530,28 @@ namespace Talos.Forms
             this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
             this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
+            // chkDachaidh
+            // 
+            this.chkDachaidh.AutoSize = true;
+            this.chkDachaidh.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkDachaidh.Location = new System.Drawing.Point(658, 128);
+            this.chkDachaidh.Name = "chkDachaidh";
+            this.chkDachaidh.Size = new System.Drawing.Size(94, 25);
+            this.chkDachaidh.TabIndex = 13;
+            this.chkDachaidh.Text = "Dachaidh";
+            this.chkDachaidh.UseVisualStyleBackColor = true;
+            // 
+            // regenCaHere
+            // 
+            this.regenCaHere.AutoSize = true;
+            this.regenCaHere.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.regenCaHere.Location = new System.Drawing.Point(658, 283);
+            this.regenCaHere.Name = "regenCaHere";
+            this.regenCaHere.Size = new System.Drawing.Size(140, 46);
+            this.regenCaHere.TabIndex = 14;
+            this.regenCaHere.Text = "Regen/CA/Dach\r\nHere";
+            this.regenCaHere.UseVisualStyleBackColor = true;
+            // 
             // ClientTab
             // 
             this.AllowDrop = true;
@@ -8321,5 +8347,7 @@ namespace Talos.Forms
         internal GroupBox groupBox14;
         internal ComboBox autoAscendSelectorCombox;
         private Button button14;
+        internal CheckBox chkDachaidh;
+        internal CheckBox regenCaHere;
     }
 }

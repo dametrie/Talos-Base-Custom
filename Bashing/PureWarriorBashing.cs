@@ -26,7 +26,6 @@ namespace Talos.Bashing
         private Skill AutoHemloch => Client.Skillbook["Auto Hemloch"];
         private Skill Execute => Client.Skillbook["Execute"];
         private Skill Crasher => Client.Skillbook["Crasher"];
-        private Skill SpinningKelb => Client.Skillbook["Spinning Kelberoth Strike"];
         private Skill Sacrifice => Client.Skillbook["Sacrifice"];
         private Skill MadSoul => Client.Skillbook["Mad Soul"];
 
@@ -233,8 +232,7 @@ namespace Talos.Bashing
                 Client.UseSkill(Execute.Name);
             if (Crasher != null)
                 Client.UseSkill(Crasher.Name);
-            if (SpinningKelb != null)
-                Client.UseSkill(SpinningKelb.Name);
+
 
             Client.Player.NeedsHeal = true;
             return true;

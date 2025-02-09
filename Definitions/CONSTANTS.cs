@@ -488,6 +488,64 @@ namespace Talos.Definitions
             "Charge"
         };
 
+        public static readonly IReadOnlyDictionary<short, ushort> DOJO_MAPS = new Dictionary<short, ushort>
+        {
+            { 5260, 153 },
+            { 5261, 539 },
+            { 5262, 68 },
+            { 5263, 54 },
+            { 5264, 339 },
+            { 5265, 345 },
+            { 5266, 399 },
+            { 5267, 17 },
+            { 5268, 97 }
+        };
+
+        public static readonly IReadOnlyList<string> REQUIRE_DISARM = new List<string>
+        {
+            "Mass Strike",
+            "Double Rake",
+            "Tail Sweep",
+            "Claw Slash",
+            "Mantis Kick",
+            "High Kick",
+            "Kick"
+        };
+
+        public static readonly IReadOnlyList<string> CRASHERS = new List<string>
+        {
+            "Crasher",
+            "Animal Feast",
+            "Execute"
+        };
+
+        public static readonly IReadOnlyList<string> STABS = new List<string>
+        {
+            "Stab Twice",
+            "Stab and Twist",
+            "Kidney Shot"
+        };
+
+        public static readonly IReadOnlyList<string> DAGGERS = new List<string>
+        {
+            "Blackstar Whip",
+            "Dagger",
+            "Azoth",
+            "Skewer",
+            "Kris",
+            "Skean",
+            "Inferno Blade"
+        };
+
+        public static readonly IReadOnlyList<string> BOWS = new List<string>
+        {
+            "Bow",
+            "Thunderfury"
+        };
+
+
+
+
         public static readonly IReadOnlyDictionary<string, (int Ability, int Level)> DARK_NECKS = new Dictionary<string, (int, int)>
         {
             { "Dark Necklace", (0, 11) },

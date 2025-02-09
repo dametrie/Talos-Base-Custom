@@ -464,6 +464,17 @@ namespace Talos.Base
             }
             return false;
         }
+
+        internal bool NumberedSpell(string spellName, Creature target = null, bool autoStaff = true, bool wait = true)
+        {
+            for (int i = 20; i > 0; --i)
+            {
+                if (UseSpell(spellName + " " + i.ToString(), target, autoStaff, wait))
+                    return true;
+            }
+            return false;
+        }
+
         internal void UseHammer()
         {
             Bot._dontWalk = true;
@@ -1653,6 +1664,41 @@ namespace Talos.Base
                 item.IsMeleeWeapon = true;
                 item.ThisWeapon = Weapons.First(MeleeWeapon => MeleeWeapon.Name == item.Name);
             }
+        }
+
+        internal string EquipBow()
+        {
+            // Mapping of bow names to their required ability level.
+            var bowRequirements = new Dictionary<string, int>
+            {
+                { "Wooden Bow", 1 },
+                { "Royal Bow", 8 },
+                { "Jenwir Bow", 15 },
+                { "Sen Bow", 22 },
+                { "Andor Bow", 30 },
+                { "Yumi Bow", 45 },
+                { "Empowered Yumi Bow", 55 },
+                { "Thunderfury", 95 }
+            };
+
+            // Select distinct bow names from Inventory that are present in bowRequirements.
+            var availableBows = Inventory
+                .Select(item => item.Name)
+                .Where(name => bowRequirements.ContainsKey(name))
+                .Distinct();
+
+            // Choose the bow with the highest required ability that is still within our current ability.
+            var candidateBow = availableBows
+                .Select(name => new { Name = name, Requirement = bowRequirements[name] })
+                .Where(b => b.Requirement <= (int)Ability)
+                .OrderByDescending(b => b.Requirement)
+                .FirstOrDefault();
+
+            if (candidateBow == null)
+                return string.Empty; // or return null depending on your error-handling preference
+
+            UseItem(candidateBow.Name);
+            return candidateBow.Name;
         }
 
         private string EquipBestWeapon(
@@ -2937,6 +2983,74 @@ namespace Talos.Base
             else
                 IsRefreshingData = 0;
         }
+
+        internal bool RequestNamedPursuit(Creature merchant, string pursuitName, bool wait)
+        {
+            if (merchant == null)
+                return false;
+
+            // If the pursuit name is not already in the server’s pursuits, force a dialog trigger.
+            if (!Server.PursuitIDs.Values.Contains(pursuitName))
+            {
+                if (!EnsureDialogForMerchant(merchant))
+                    return false;
+            }
+
+            // Reset dialog before requesting a new pursuit.
+            Dialog = null;
+
+            // Look up the pursuit key from Server.Pursuits.
+            ushort pursuitKey = Server.PursuitIDs
+                .FirstOrDefault(p => string.Equals(p.Value, pursuitName))
+                .Key;
+            PursuitRequest(1, merchant.ID, pursuitKey);
+
+            if (wait)
+            {
+                // Wait for the Dialog to appear with a 2-second timeout.
+                if (!WaitForDialog(TimeSpan.FromSeconds(2)))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool EnsureDialogForMerchant(Creature merchant)
+        {
+            bool reClickPerformed = false;
+            ClickObject(merchant.ID);
+            Timer timer = Timer.FromSeconds(2);
+
+            // Wait until a Dialog appears.
+            while (Dialog == null)
+            {
+                if (timer.IsTimeExpired)
+                {
+                    if (reClickPerformed)
+                        return false;
+                    ClickObject(merchant.ID);
+                    reClickPerformed = true;
+                    timer = Timer.FromSeconds(2); // Reset timer after re-click.
+                }
+                Thread.Sleep(10);
+            }
+            Dialog.Close();
+            return true;
+        }
+
+        private bool WaitForDialog(TimeSpan timeout)
+        {
+            Timer timer = Timer.FromSeconds((int)timeout.TotalSeconds);
+            while (Dialog == null)
+            {
+                if (timer.IsTimeExpired)
+                    return false;
+                Thread.Sleep(10);
+            }
+            return true;
+        }
+
+
         internal void PursuitRequest(byte objType, int objID, ushort pursuitID, params object[] args)
         {
             ClientPacket clientPacket = new ClientPacket(57);
@@ -3602,7 +3716,7 @@ namespace Talos.Base
                 serverPacket.WriteUInt16(player.OvercoatSprite);
                 serverPacket.WriteByte(player.OvercoatColor);
                 serverPacket.WriteByte(player.BodyColor);
-                serverPacket.WriteBoolean(player._isHidden);
+                serverPacket.WriteBoolean(player.IsHidden);
                 serverPacket.WriteByte(player.FaceSprite);
             }
             else

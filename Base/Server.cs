@@ -1777,7 +1777,7 @@ namespace Talos
             Spell spell = new Spell(slot, name, type, sprite, prompt, castLines, currentLevel, maximumLevel);
             client.Spellbook.AddOrUpdateSpell(spell);
             
-            if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client.Map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab._unmaxedSpells.Contains(spell.Name)))))
+            if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client.Map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab.dojoSpellList.Contains(spell.Name)))))
             {
                 client.ClientTab.SpellToUse(client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name], new EventArgs());
                 client.ClientTab.unmaxedSpellsGroup.Controls[spell.Name].Dispose();
@@ -1801,11 +1801,22 @@ namespace Talos
 
         private bool ServerMessage_0x19_Sound(Client client, ServerPacket serverPacket)
         {
-            byte num = serverPacket.ReadByte();
-            //Console.WriteLine($"[SERVER] Sound index: {num}");
-            if (num == 19) // That god-awful sound that plays constantly in Tavaly
+            byte soundCode = serverPacket.ReadByte();
+            Console.WriteLine($"[SERVER] Sound index: {soundCode}");
+            
+            if (soundCode == 19) // That god-awful sound that plays constantly in Tavaly
                 return false;
-            return !client.AssailNoise || num != 1 && num != 101 && num != 16;
+
+            // If assail noise filtering is disabled (client.AssailNoise is false),
+            // block the assail sounds (codes 1, 101, and 16).
+            if (!client.AssailNoise && (soundCode == 1 || soundCode == 101 || soundCode == 16))
+            {
+                 return false;
+            }
+
+            // If none of the conditions are met, allow the sound.
+            return true;
+
         }
 
         private bool ServerMessage_0x1A_BodyAnimation(Client client, ServerPacket serverPacket)
@@ -1936,7 +1947,7 @@ namespace Talos
 
             Skill skill = new Skill(slot, name, sprite, currentLevel, maximumLevel);
 
-            if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client.Map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab._unmaxedSkills.Contains(skill.Name)))))
+            if ((client.ClientTab != null) && ((currentLevel == maximumLevel) && (client.Map.Name.Contains("Dojo") && ((client.ClientTab.toggleDojoBtn.Text == "Disable") && client.ClientTab.dojoSkillList.Contains(skill.Name)))))
             {
                 client.ClientTab.SkillToUse(client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name], new EventArgs());
                 client.ClientTab.unmaxedSkillsGroup.Controls[skill.Name].Dispose();
@@ -2360,7 +2371,7 @@ namespace Talos
             player.LanternSize = lanternSize;
             player.RestPosition = restPosition;
             player.OvercoatColor = overcoatColor;
-            player._isHidden = isHidden;
+            player.IsHidden = isHidden;
             player.NameTagStyle = nameTagStyle;
             player.GroupName = groupName;
             //if ((bodySprite == 0) || ((id == client.PlayerID) || client.InArena))
