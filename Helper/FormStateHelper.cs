@@ -88,6 +88,12 @@ namespace Talos.Helper
         public bool PickupGoldCboxChecked { get; set; }
         public bool PickupItemsCboxChecked { get; set; }
         public bool DropTrashCboxChecked { get; set; }
+        public bool ChkSpeedStrangersChecked { get; set; }
+        public bool SafeFSCboxChecked { get; set; }
+        public bool EquipmentRepairCboxChecked { get; set; }
+        public bool RangerLogCboxChecked { get; set; }
+        public bool ChkLastStepF5Checked { get; set; }
+        public bool LockstepCboxChecked { get; set; }
 
         // Lists
         public List<string> TrashList { get; set; }
@@ -101,15 +107,12 @@ namespace Talos.Helper
         // TextBox values
         public string FasSpioradText { get; set; }
         public string VineText { get; set; }
-        public bool ChkSpeedStrangersChecked { get;  set; }
-        public bool SafeFSCboxChecked { get;  set; }
-        public bool EquipmentRepairCboxChecked { get;  set; }
-        public bool RangerLogCboxChecked { get;  set; }
-        public bool ChkLastStepF5Checked { get;  set; }
-        public bool LockstepCboxChecked { get;  set; }
+
         public int WalkSpeedSldrValue { get;  set; }
         public decimal NumLastStepTimeValue { get;  set; }
         public string WalkSpeedTlbl { get;  set; }
+        public bool ChkIgnoreDionWaypointsChecked { get; set; }
+        public bool ChkNoCastOffsenseChecked { get; set; }
     }
 
     [Serializable]
@@ -146,7 +149,6 @@ namespace Talos.Helper
         public decimal NumPFCounterValue { get; set; }
         public decimal NumCrasherHealthValue { get; set; }
         public decimal NumExHealValue { get; set; }
-        public decimal NumBashSkillDelayValue { get; set; }
         public decimal NumSkillIntValue { get; set; }
         public decimal NumPingCompensation1Value { get; set; }
         public decimal NumMonsterWalkInterval1Value { get; set; }

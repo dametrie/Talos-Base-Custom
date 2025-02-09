@@ -677,8 +677,8 @@ namespace Talos.Forms
             button.MouseEnter += ShowAndBringToFrontTextBox;
             button.MouseLeave += HideTextBox;
             button.Click += BashSkillToUse;
-            bashingSkillsToUseGrp.Controls.Add(button);
-            bashingSkillsToUseGrp.Controls.Add(textBox);
+            //bashingSkillsToUseGrp.Controls.Add(button);
+            //bashingSkillsToUseGrp.Controls.Add(textBox);
         }
         internal void BashSkillToUse(object sender, EventArgs e)
         {
@@ -2078,6 +2078,8 @@ namespace Talos.Forms
                     WalkSpeedTlbl = walkSpeedLbl.Text,
                     FasSpioradText = fasSpioradText.Text,
                     VineText = vineText.Text,
+                    ChkIgnoreDionWaypointsChecked = chkIgnoreDionWaypoints.Checked,
+                    ChkNoCastOffsenseChecked = chkNoCastOffense.Checked,
                     //GMLogCBoxChecked = gmLogCBox.Checked,
                     //ChkGMSoundsChecked = chkGMSounds.Checked,
                     //ChkAltLoginChecked = chkAltLogin.Checked,
@@ -2116,9 +2118,7 @@ namespace Talos.Forms
                     NumAssitantStrayValue = numAssitantStray.Value,
                     NumPFCounterValue = numPFCounter.Value,
                     TextLeadBasherValue = leadBasherTxt.Text,
-                    NumCrasherHealthValue = numCrasherHealth.Value,
                     NumExHealValue = numExHeal.Value,
-                    NumBashSkillDelayValue = numBashSkillDelay.Value,
                     NumSkillIntValue = numSkillInt.Value,
                     NumPingCompensation1Value = pingCompensationNum1.Value,
                     NumMonsterWalkInterval1Value = monsterWalkIntervalNum1.Value,
@@ -2133,17 +2133,15 @@ namespace Talos.Forms
                     ChkProtect1CboxChecked = Protect1Cbx.Checked,
                     ChkProtect2CboxChecked = Protect2Cbx.Checked,
                     ChkBashAsgallChecked = chkBashAsgall.Checked,
-                    ChkIgnoreWalledInChecked = ignoreCollisionCbox.Checked,
-                    ChkRiskySkillsChecked = riskySkillsCbox.Checked,
+                    ChkIgnoreWalledInChecked = ignoreWalledInCbox.Checked,
                     ChkRiskySkillsDionChecked = riskySkillsDionCbox.Checked,
-                    ChkCrasherCboxChecked = crasherCbox.Checked,
                     ChkUseCrashersChecked = chkCrasher.Checked,
                     ChkCrasherOnlyAsgallChecked = chkCrasherOnlyAsgall.Checked,
-                    ChkCrasherAboveHPChecked = chkCrasherAboveHP.Checked,
+
                     ChkPrioritizeChecked = priorityCbox.Checked,
                     ChkPriorityOnlyChecked = priorityOnlyCbox.Checked,
-                    TextProtect1Value = Protect1Cbx.Text,
-                    TextProtect2Value = Protect2Cbx.Text,
+                    TextProtect1Value = Protected1Tbx.Text,
+                    TextProtect2Value = Protected2Tbx.Text,
                     PriorityLboxItems = new List<string>(priorityLBox.Items.Cast<string>()),
                 }
             };
@@ -2422,6 +2420,7 @@ namespace Talos.Forms
                         dontCBox4.Checked = formState.ComboBoxPage.DontCBox4Checked;
 
                         // AislingPage controls
+                        walkSpeedSldr.Value = formState.AislingPage.WalkSpeedSldrValue;
                         followDistanceNum.Value = formState.AislingPage.FollowDistanceNumValue;
                         followText.Text = formState.AislingPage.FollowText;
                         doublesCombox.Text = formState.AislingPage.DoublesComboxText;
@@ -2487,6 +2486,11 @@ namespace Talos.Forms
                         pickupItemsCbox.Checked = formState.AislingPage.PickupItemsCboxChecked;
                         dropTrashCbox.Checked = formState.AislingPage.DropTrashCboxChecked;
                         chkLastStepF5.Checked = formState.AislingPage.ChkLastStepF5Checked;
+                        chkIgnoreDionWaypoints.Checked = formState.AislingPage.ChkIgnoreDionWaypointsChecked;
+                        chkNoCastOffense.Checked = formState.AislingPage.ChkNoCastOffsenseChecked;
+                        safeFSCbox.Checked = formState.AislingPage.SafeFSCboxChecked;
+                        equipmentrepairCbox.Checked = formState.AislingPage.EquipmentRepairCboxChecked;
+                       
                         //GMLogCBoxChecked = formState.AislingPage.gmLogCBox.Checked,
                         //ChkGMSoundsChecked = formState.AislingPage.chkGMSounds.Checked,
                         //ChkAltLoginChecked = formState.AislingPage.chkAltLogin.Checked,
@@ -2531,9 +2535,7 @@ namespace Talos.Forms
                         numAssitantStray.Value = formState.BashingPage.NumAssitantStrayValue;
                         numPFCounter.Value = formState.BashingPage.NumPFCounterValue;
                         leadBasherTxt.Text = formState.BashingPage.TextLeadBasherValue;
-                        numCrasherHealth.Value = formState.BashingPage.NumCrasherHealthValue;
                         numExHeal.Value = formState.BashingPage.NumExHealValue;
-                        numBashSkillDelay.Value = formState.BashingPage.NumBashSkillDelayValue;
                         numSkillInt.Value = formState.BashingPage.NumSkillIntValue;
                         pingCompensationNum1.Value = formState.BashingPage.NumPingCompensation1Value;
                         monsterWalkIntervalNum1.Value = formState.BashingPage.NumMonsterWalkInterval1Value;
@@ -2547,16 +2549,13 @@ namespace Talos.Forms
                         chkExkuranum.Checked = formState.BashingPage.ChkExkuraChecked;
                         Protect1Cbx.Checked = formState.BashingPage.ChkProtect1CboxChecked;
                         Protect2Cbx.Checked = formState.BashingPage.ChkProtect2CboxChecked;
-                        Protect1Cbx.Text = formState.BashingPage.TextProtect1Value;
-                        Protect2Cbx.Text = formState.BashingPage.TextProtect2Value;
+                        Protected1Tbx.Text = formState.BashingPage.TextProtect1Value;
+                        Protected2Tbx.Text = formState.BashingPage.TextProtect2Value;
                         chkBashAsgall.Checked = formState.BashingPage.ChkBashAsgallChecked;
-                        ignoreCollisionCbox.Checked = formState.BashingPage.ChkIgnoreWalledInChecked;
-                        riskySkillsCbox.Checked = formState.BashingPage.ChkRiskySkillsChecked;
+                        ignoreWalledInCbox.Checked = formState.BashingPage.ChkIgnoreWalledInChecked;
                         riskySkillsDionCbox.Checked = formState.BashingPage.ChkRiskySkillsDionChecked;
-                        crasherCbox.Checked = formState.BashingPage.ChkCrasherCboxChecked;
                         chkCrasher.Checked = formState.BashingPage.ChkUseCrashersChecked;
                         chkCrasherOnlyAsgall.Checked = formState.BashingPage.ChkCrasherOnlyAsgallChecked;
-                        chkCrasherAboveHP.Checked = formState.BashingPage.ChkCrasherAboveHPChecked;
                         priorityCbox.Checked = formState.BashingPage.ChkPrioritizeChecked;
                         priorityOnlyCbox.Checked = formState.BashingPage.ChkPriorityOnlyChecked;
                         priorityLBox.Items.Clear();

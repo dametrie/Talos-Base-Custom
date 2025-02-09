@@ -198,24 +198,25 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.Fas:
+                    DateTime now = DateTime.UtcNow;
+
                     if ((_sourceID != _client.Player.ID) || (_client.SpellHistory.Count <= 0)) //we didn't cast it or our creature to spell list is empty
                     {
-
-                        double fasDuration = Spell.GetSpellDuration("ard fas nadur");
+                        double fasDuration = Spell.GetSpellDuration("mor fas nadur");
 
                         var fasStateUpdate = new Dictionary<CreatureState, object> //Adam new
                         {
                             { CreatureState.IsFassed, true },
                             { CreatureState.LastFassed, DateTime.UtcNow },
-                            { CreatureState.FasName, "ard fas nadur" },//we didnt cast it so we assume it's max?
+                            { CreatureState.FasName, "mor fas nadur" },//we didnt cast it so we assume it's max?
                             { CreatureState.FasDuration, fasDuration } // Duration in seconds
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, fasStateUpdate);
+                        Console.WriteLine($"[AnimationHandler] Someone else casted Fas on Creature ID: {_targetCreature?.ID}. LastFassed updated to {_targetCreature?.GetState<DateTime>(CreatureState.LastFassed)}");
+                        Console.WriteLine($"[AnimationHandler] (Other) Updating fas state for Creature ID: {_targetCreature.ID} using 'mor fas nadur' with Duration: {fasDuration} sec at {now}");
 
 
-                        //_targetCreature.FasDuration = Spell.GetSpellDuration("ard fas nadur");
-                        //_targetCreature.LastFassed = DateTime.UtcNow;
                     }
                     else
                     {
@@ -232,9 +233,10 @@ namespace Talos.Helper
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, fasStateUpdate);
+                        Console.WriteLine($"[AnimationHandler] We casted fas: {spellName} on Creature ID: {_targetCreature?.ID}. LastFassed updated to {_targetCreature?.GetState<DateTime>(CreatureState.LastFassed)}");
+                        Console.WriteLine($"[AnimationHandler] (We cast) Updating fas state for Creature ID: {_targetCreature.ID} using '{spellName}' with Duration: {fasDuration} sec at {now}");
 
-                        //_targetCreature.FasDuration = Spell.GetSpellDuration(_client._spellHistory[0].Spell.Name);
-                        //_targetCreature.LastFassed = DateTime.UtcNow;
+
                     }
                     break;
 

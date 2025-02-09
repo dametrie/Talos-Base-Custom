@@ -25,6 +25,7 @@ using Talos.Properties;
 using Talos.Structs;
 using Talos.Utility;
 using GroundItem = Talos.Objects.GroundItem;
+using Timer = Talos.Utility.Timer;
 
 
 
@@ -99,6 +100,7 @@ namespace Talos.Base
         internal Map Map { get; set; }
         internal WorldMap WorldMap { get; set; }
         internal Spell CastedSpell { get; set; }
+        internal Spell LastSpell { get; set; }
         internal Pathfinder Pathfinder { get; set; }
         internal RouteFinder RouteFinder { get; set; }
         internal Bot Bot { get; set; }
@@ -408,6 +410,11 @@ namespace Talos.Base
         }
         internal bool CanUseSkill(Skill skill)
         {
+            if (skill == null) 
+            { 
+                return false; 
+            }
+
             if (!skill.CanUse)
             {
                 //Console.WriteLine($"[DEBUG] Skill {skill.Name} cannot be used because it is on cooldown.");
@@ -436,17 +443,6 @@ namespace Talos.Base
         }
 
 
-        internal bool CanUseSkill(string skillName)
-        {
-            if (string.IsNullOrEmpty(skillName))
-                return false;
-
-            Skill skill = Skillbook[skillName] ?? Skillbook.GetNumberedSkill(skillName);
-            if (skill == null)
-                return false;
-
-            return CanUseSkill(skill);
-        }
 
         internal bool CanUseSpell(Spell spell, Creature creature = null)
         {
@@ -1252,23 +1248,20 @@ namespace Talos.Base
         
         internal bool WaitForSpellChant()
         {
-            DateTime utcNow = DateTime.UtcNow;
-            while (true)
+            Timer timer = Timer.FromMilliseconds(1500);
+            while (CastedSpell != null)
             {
-                if (CastedSpell != null)
+                if (timer.IsTimeExpired)
                 {
-                    if (!(DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 1.5))
-                    {
-                        break;
-                    }
-                    //Thread.Sleep(5);
-                    continue;
+                    CastedSpell = null;
+                    LastSpell = null;
+                    return false;
                 }
-                return true;
+                Thread.Sleep(5);
             }
-            CastedSpell = null;
-            return false;
+            return true;
         }
+        
         internal void SeeGhosts(Player player)
         {
             player.NakedPlayer();
@@ -2832,6 +2825,14 @@ namespace Talos.Base
             Enqueue(clientPacket);
             return true;
         }
+        internal bool UseItemIgnoreCase(Client client, string itemName)
+        {
+            if (client.Inventory.Any(item => item.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase)))
+            {
+                return client.UseItem(itemName);
+            }
+            return false;
+        }
         internal bool UseItem(string itemName)
         {
             Item item = Inventory.FirstOrDefault((Item item2) => item2.Name.Equals(itemName, StringComparison.CurrentCultureIgnoreCase));
@@ -3203,7 +3204,6 @@ namespace Talos.Base
             Spell spell = Spellbook[spellName];
             byte castLines = spell.CastLines;
 
-            //Console.WriteLine($"[UseSpell] Attempting to cast {spell.Name}, LastUsed: {spell.LastUsed}, Cooldown: {spell.Cooldown}, Ticks: {spell.Ticks}, Hash: {spell.GetHashCode()}");
 
             lock (BashLock)
             {
@@ -3230,10 +3230,11 @@ namespace Talos.Base
                 //{
                 //    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {CastedTarget.GetState<double>(CreatureState.CurseDuration)}");
                 //}
-                //if (spellName.Contains("fas"))
-                //{
-                //    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {CastedTarget.GetState<double>(CreatureState.FasDuration)}");
-                //}
+                if (spellName.Contains("fas"))
+                {
+                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {CastedTarget.GetState<double>(CreatureState.FasDuration)}");
+                }
+
 
                 if (ReadyToSpell(spell.Name))
                 {
@@ -3243,13 +3244,13 @@ namespace Talos.Base
                     {
                         if (existingEntry.CooldownEndTime > DateTime.UtcNow)
                         {
-                            //Console.WriteLine($"[Debug] Skipped adding {CreatureTarget.ID} to _spellHistory due to cooldown.");
+                            Console.WriteLine($"[Debug] Skipped adding {CastedTarget.ID} to _spellHistory due to cooldown.");
                         }
                         else
                         {
                             // Update cooldown end time for re-casting
                             existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(1);
-                            //Console.WriteLine($"[Debug] Updated cooldown for {CreatureTarget.ID} in _spellHistory.");
+                            Console.WriteLine($"[Debug] Updated cooldown for {CastedTarget.ID} in _spellHistory.");
                         }
                     }
                     else
@@ -3259,8 +3260,8 @@ namespace Talos.Base
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
                         SpellHistory.Add(newEntry);
-                        //Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
-                        //Console.WriteLine($"[Debug] Added to _spellHistory: Spell = {spell.Name}, Creature ID = {CreatureTarget.ID}, Time = {DateTime.UtcNow}");
+                        Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
+                        Console.WriteLine($"[Debug] Added to _spellHistory: Spell = {spell.Name}, Creature ID = {CastedTarget.ID}, Time = {DateTime.UtcNow}");
                     }
                 }
                 //else
@@ -3269,7 +3270,7 @@ namespace Talos.Base
                 //}
 
 
-                if (CastedSpell != spell)
+                if (LastSpell != spell)
                 {
                     UpdateClientActionText($"{Action} Casting {spellName}");
                 }
@@ -3371,7 +3372,7 @@ namespace Talos.Base
                 CastedSpell = (wait ? spell : null);
                 if (spell.Name != "Gem Polishing" || spell.Name.Contains("Prayer"))
                 {
-                    CastedSpell = spell;
+                    LastSpell = spell;
                 }
                 return !wait || WaitForSpellChant();
             }

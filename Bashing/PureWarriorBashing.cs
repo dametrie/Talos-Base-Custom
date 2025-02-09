@@ -8,216 +8,256 @@ namespace Talos.Bashing
 {
     internal sealed class PureWarriorBashing : BashingBase
     {
+        // Standard skills 
+        private Skill DarksMegaBlade => Client.Skillbook["Dark's Mega Blade"];
+        private Skill CycloneKick => Client.Skillbook["Cyclone Kick"];
+        private Skill Charge => Client.Skillbook["Charge"];
+        private Skill WindBlade => Client.Skillbook["Wind Blade"];
+        private Skill CycloneBlade => Client.Skillbook["Cyclone Blade"];
+        private Skill Sever => Client.Skillbook["Sever"];
+
+        // Numbered skills: try direct lookup first, then fall back to the numbered lookup.
+        private Skill Strikedown => Client.Skillbook["Strikedown"] ?? Client.Skillbook.GetNumberedSkill("Strikedown");
+        private Skill DuneSwipe => Client.Skillbook["Dune Swipe"] ?? Client.Skillbook.GetNumberedSkill("Dune Swipe");
+        private Skill WheelKick => Client.Skillbook["Wheel Kick"] ?? Client.Skillbook.GetNumberedSkill("Wheel Kick");
+
+
+        // Crasher skills
+        private Skill AutoHemloch => Client.Skillbook["Auto Hemloch"];
+        private Skill Execute => Client.Skillbook["Execute"];
+        private Skill Crasher => Client.Skillbook["Crasher"];
+        private Skill SpinningKelb => Client.Skillbook["Spinning Kelberoth Strike"];
+        private Skill Sacrifice => Client.Skillbook["Sacrifice"];
+        private Skill MadSoul => Client.Skillbook["Mad Soul"];
+
+
         public PureWarriorBashing(Bot bot)
             : base(bot)
         {
         }
 
+        /// <summary>
+        /// Tries to use the best possible skill(s) on the given target.
+        /// </summary>
+        /// <param name="target">The creature we're fighting.</param>
         internal override void UseSkills(Creature target)
         {
-            DateTime currentTime = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            bool canUseSkill = (now - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
+            bool canAssail = (now - LastAssailed) > TimeSpan.FromMilliseconds(1000.0);
 
-            // Time since last skill usage
-            bool canUseSkill = (currentTime - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
-            // Time since last assail usage
-            bool canAssail = (currentTime - LastAssailed) > TimeSpan.FromMilliseconds(1000.0);
-
-            // Attempt AOE or multi-target logic first if enough time has passed
             if (canUseSkill && DoActionForSurroundingCreatures())
             {
-                LastUsedSkill = currentTime;
+                LastUsedSkill = now;
                 return;
             }
 
-            // Check distance to target
             int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget > 3)
-                return; // Too far to do anything else
+                return;
 
-            // Melee range = 1 tile
             if (distanceToTarget == 1)
             {
-                // If target is Asgalled but can use risky skills, attempt them
-                if (target.IsAsgalled && canUseSkill && CanUseRiskySkills() && DoRiskySkills())
+                if (target.IsAsgalled && canUseSkill && CanUseCrashers())
                 {
-                    LastUsedSkill = currentTime;
+                    if (DoCrashers())
+                    {
+                        LastUsedSkill = now;
+                    }
                 }
 
-                // If target is Asgalled but player not invulnerable and not bashing Asgall, bail out
                 if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
                     return;
 
-                // Attempt assails if we can and we’re allowed to bash asgall or target is not asgalled
                 if (canAssail && (BashAsgall || !target.IsAsgalled))
                 {
                     UseAssails();
-                    LastAssailed = currentTime;
+                    LastAssailed = now;
                 }
 
-                // If we can use skill and do something for range=1
                 if (canUseSkill && DoActionForRange1(target))
-                {
-                    LastUsedSkill = currentTime;
-                }
+                    LastUsedSkill = now;
             }
-            else
+            else // Distance is 2 or 3 tiles.
             {
-                // Range is <3 but not 1 (i.e., 2 or 3)
-                // If target is Asgalled but player not invulnerable & not bashing asgall => bail
                 if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
                     return;
 
-                // Check if we can use skill, do something for range <3
                 if (canUseSkill && DoActionForRangeLessThan3(target))
-                {
-                    LastUsedSkill = currentTime;
-                }
+                    LastUsedSkill = now;
             }
         }
 
+        /// <summary>
+        /// Checks surrounding creatures for an AOE opportunity.
+        /// </summary>
+        /// <returns>True if an AOE attack was performed; otherwise false.</returns>
         private bool DoActionForSurroundingCreatures()
         {
-            // Filter creatures we can use skills on
-            List<Creature> surroundingTargets = GetSurroundingCreatures(KillableTargets)
-                .Where(ShouldUseSkillsOnTarget)
-                .ToList();
+            var nearby = GetSurroundingCreatures(KillableTargets)
+                         .Where(ShouldUseSkillsOnTarget)
+                         .ToList();
 
-            int count = surroundingTargets.Count;
-            if (count < 3)
+            if (nearby.Count >= 3 || (nearby.Count == 2 && nearby.Any(mob => mob.HealthPercent >= 80)))
             {
-                if (count == 2)
-                {
-                    // If any have >= 80% HP, try AOE combos
-                    bool hasHighHpMob = surroundingTargets.Any(mob => mob.HealthPercent >= 80);
-                    if (hasHighHpMob)
-                    {
-                        if (TryUnsilentAoeCombo("Dark's Mega Blade") ||
-                            TryUnsilentAoeCombo("Cyclone Kick") ||
-                            TryUnsilentAoeCombo("Wheel Kick") ||
-                            Client.NumberedSkill("Dune Swipe"))
-                            return true;
-                    }
-                    else
-                    {
-                        // If not high HP, attempt a single "Dune Swipe"
-                        if (Client.NumberedSkill("Dune Swipe"))
-                            return true;
-                    }
-                }
-            }
-            else
-            {
-                // If >= 3 surrounding
-                if (TryUnsilentAoeCombo("Dark's Mega Blade") ||
-                    TryUnsilentAoeCombo("Cyclone Kick") ||
-                    TryUnsilentAoeCombo("Wheel Kick") ||
-                    Client.NumberedSkill("Dune Swipe"))
+                if (DarksMegaBlade != null && TryUnsilentAoeCombo(DarksMegaBlade))
+                    return true;
+
+                if (CycloneKick != null && TryUnsilentAoeCombo(CycloneKick))
+                    return true;
+
+                if (DuneSwipe != null && TryUnsilentAoeCombo(DuneSwipe))
+                    return true;
+
+                if (WheelKick != null && TryUnsilentAoeCombo(WheelKick))
                     return true;
             }
             return false;
         }
 
-
+        /// <summary>
+        /// Attempts to use a skill if the target is 2-3 tiles away and aligned.
+        /// </summary>
+        /// <param name="target">The target creature.</param>
+        /// <returns>True if a skill was used successfully, otherwise false.</returns>
         private bool DoActionForRangeLessThan3(Creature target)
         {
-            // Must be able to use skills on target, and must be aligned to X or Y
-            // Also must be facing the correct direction to use "Strikedown"
-            bool alignedToTarget =
-                (target.Location.X == Client.ClientLocation.X || target.Location.Y == Client.ClientLocation.Y) &&
-                target.Location.GetDirection(Client.ClientLocation) == Client.ClientDirection;
+            bool axisAligned = (target.Location.X == Client.ClientLocation.X ||
+                                target.Location.Y == Client.ClientLocation.Y);
+            bool directionMatch = (target.Location.GetDirection(Client.ClientLocation) == Client.ClientDirection);
 
-            return ShouldUseSkillsOnTarget(target) &&
-                   alignedToTarget &&
-                   Client.UseSkill("Strikedown");
+            if (!ShouldUseSkillsOnTarget(target))
+                return false;
+
+            return axisAligned && directionMatch &&
+                   (Strikedown != null && Client.UseSkill(Strikedown.Name));
         }
 
+        /// <summary>
+        /// Attempts to use a melee-range skill based on the target's health.
+        /// </summary>
+        /// <param name="target">The target in melee range.</param>
+        /// <returns>True if a skill was successfully used; otherwise false.</returns>
         private bool DoActionForRange1(Creature target)
         {
-            // Check if we want to kill this target and we can use skills
             if (!MeetsKillCriteria(target) || !ShouldUseSkillsOnTarget(target))
                 return false;
 
-            Skill lullabyPunch = Client.Skillbook["Lullaby Punch"];
-            bool lullabyPunchAvailable = (lullabyPunch != null && lullabyPunch.CanUse);
             byte hp = target.HealthPercent;
 
-            // 1) If HP >= 80 and Lullaby Punch is available => combo with "Charge", "Strikedown", or "Dune Swipe"
-            if (hp >= 80 && lullabyPunchAvailable &&
-                (TryComboWithSleepSkill("Charge") ||
-                 TryComboWithSleepSkill("Strikedown") ||
-                 TryComboWithSleepSkill("Dune Swipe")))
+            // For high-health targets (>=80%), try a combo using Lullaby Punch with Charge/Strikedown/Dune Swipe.
+            if (hp >= 80 && 
+                (TryComboWithSleepSkill(Charge.Name) ||
+                 TryComboWithSleepSkill(Strikedown.Name) ||
+                 TryComboWithSleepSkill(DuneSwipe.Name)))
             {
                 return true;
             }
 
-            // 2) HP >= 20 => NumberedSkill("Strikedown")
-            if (hp >= 20 && Client.NumberedSkill("Strikedown"))
+            // For targets with higher health (>=60%), try either Dark's Mega Blade, Cyclone Kick, or Sever
+            if (hp >= 60 &&
+                ((DarksMegaBlade != null && Client.UseSkill(DarksMegaBlade.Name)) ||
+                 (CycloneKick != null && Client.UseSkill(CycloneKick.Name)) || 
+                 (Sever != null && Client.UseSkill(Sever.Name))))
+            {
                 return true;
+            }
 
-            // 3) HP >= 40 => NumberedSkill("Dune Swipe")
-            if (hp >= 40 && Client.NumberedSkill("Dune Swipe"))
+            // For moderate targets (>=40%), try Dune Swipe or Strikedown.
+            if (hp >= 40 &&
+                ((Strikedown != null && Client.UseSkill(Strikedown.Name)) ||
+                 (DuneSwipe != null && Client.UseSkill(DuneSwipe.Name))))
+            {
                 return true;
+            }
 
-            // 4) HP >= 60 => UseSkill("Sever")
-            if (hp >= 60 && Client.UseSkill("Sever"))
-                return true;
+            // Try to crasher
+            if (hp >= 40 && CanUseCrashers())
+            {
+                // If OnlyCrasherAsgall is false, or the target is Asgalled
+                if (!OnlyCrasherAsgall || target.IsAsgalled)
+                {
+                    if (DoCrashers())
+                    {
+                        return true;
+                    }
+                }
+            }
 
-            // 5) HP >= 40 => risky skills
-            if (hp >= 40 && CanUseRiskySkills() && DoRiskySkills())
-                return true;
-
-            // 6) HP >= 60 => either "Dark's Mega Blade" or "Cyclone Kick"
-            if (hp >= 60 && (Client.UseSkill("Dark's Mega Blade") || Client.UseSkill("Cyclone Kick")))
-                return true;
-
-            // 7) HP <= 20 => "Wind Blade"
-            if (hp <= 20 && Client.UseSkill("Wind Blade"))
+            // For very low-health targets (<=20%), try Wind Blade.
+            if (hp <= 20 && WindBlade != null && Client.UseSkill(WindBlade.Name))
                 return true;
 
             return false;
         }
 
-        private bool DoRiskySkills()
+        /// <summary>
+        /// Executes risky skill sequences such as Sacrifice/Mad Soul or the crasher combo.
+        /// </summary>
+        /// <returns>True if a risky combo was successfully used, otherwise false.</returns>
+        private bool DoCrashers()
         {
-            // If HP >=66 => use "Sacrifice" or "Mad Soul"
-            if (Client.HealthPct >= 66 && (Client.UseSkill("Sacrifice") || Client.UseSkill("Mad Soul")))
+            // If player's health is high enough, try Sacrifice or Mad Soul.
+            if (Client.HealthPct >= 66 &&
+                ((Sacrifice != null && Client.UseSkill(Sacrifice.Name)) ||
+                 (MadSoul != null && Client.UseSkill(MadSoul.Name))))
             {
                 Client.Player.NeedsHeal = true;
                 return true;
             }
 
-            // Check if we want to do the crasher sequence
-            if (!UseCrasher)
+            // Otherwise, try the crasher sequence.
+            if (!UseCrashers)
                 return false;
 
-            Skill autoHemloch = Client.Skillbook["Auto Hemloch"];
-            bool canAutoHemloch = (autoHemloch != null && autoHemloch.CanUse) || Client.Player.HealthPercent <= 5;
+            bool hasHemloch = Client.Inventory.Contains("Hemloch");
+            bool autoHemlochAvailable = (AutoHemloch?.CanUse ?? false);
+            bool canHemloch = autoHemlochAvailable || Client.Player.HealthPercent <= 5 || hasHemloch;
 
-            Skill execute = Client.Skillbook["Execute"];
-            bool canExecute = (execute != null && execute.CanUse);
+            bool canExecute = (Execute?.CanUse ?? false);
+            bool canCrasher = (Crasher?.CanUse ?? false);
 
-            Skill crasher = Client.Skillbook["Crasher"];
-            bool canCrasher = (crasher != null && crasher.CanUse);
-
-            if (!canAutoHemloch || !(canExecute || canCrasher))
+            if (!canHemloch || !(canExecute || canCrasher))
                 return false;
 
-            Client.UseSkill("Auto Hemloch");
-            Client.UseSkill("Execute");
-            Client.UseSkill("Crasher");
+            if (AutoHemloch != null && autoHemlochAvailable)
+            {
+                Client.UseSkill(AutoHemloch.Name);
+            }
+            else if (hasHemloch)
+            {
+                Client.UseItem("Hemloch");
+            }
+
+            if (Execute != null)
+                Client.UseSkill(Execute.Name);
+            if (Crasher != null)
+                Client.UseSkill(Crasher.Name);
+            if (SpinningKelb != null)
+                Client.UseSkill(SpinningKelb.Name);
+
             Client.Player.NeedsHeal = true;
             return true;
         }
 
-        private bool TryUnsilentAoeCombo(string skillName)
+        /// <summary>
+        /// Attempts an unsilent AOE combo by using the given skill and then Cyclone Blade.
+        /// </summary>
+        /// <param name="skill">The initial AOE skill to try.</param>
+        /// <returns>True if both skills were used successfully; otherwise false.</returns>
+        private bool TryUnsilentAoeCombo(Skill skill)
         {
-            Skill skill = Client.Skillbook[skillName] ?? Client.Skillbook.GetNumberedSkill(skillName);
+            var now = DateTime.UtcNow;
             if (skill == null || !Client.UseSkill(skill.Name))
+            {
+                Console.WriteLine($"[{now:HH:mm:ss.fff}] [PUREWARRIORBASH] {skill?.Name ?? "Skill"} is null or usage returned false.");
                 return false;
+            }
 
-            Client.UseSkill("Cyclone Blade");
+            if (CycloneBlade != null)
+                Client.UseSkill(CycloneBlade.Name);
+
             return true;
         }
     }
-
 }

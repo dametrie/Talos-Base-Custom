@@ -7,89 +7,110 @@ namespace Talos.Bashing
 {
     internal sealed class KaruraBashing : BashingBase
     {
+
+        // Standard skills
+        private Skill ClawFist => Client.Skillbook["Claw Fist"];
+        private Skill RagingAttack => Client.Skillbook["Raging Attack"];
+        private Skill FuriousBash => Client.Skillbook["Furious Bash"];
+        private Skill MantisKick => Client.Skillbook["Mantis Kick"];
+        private Skill HighKick => Client.Skillbook["High Kick"];
+        private Skill Kick => Client.Skillbook["Kick"];
+
+        // Numbered skills: try direct lookup first, then fall back to the numbered lookup.
+        private Skill TalonKick => Client.Skillbook["Talon Kick"] ?? Client.Skillbook.GetNumberedSkill("Talon Kick");
+        private Skill SneakFlight => Client.Skillbook["Sneak Flight"] ?? Client.Skillbook.GetNumberedSkill("Sneak Flight");
+
+        // Crasher skills
+        private Skill AutoHemloch => Client.Skillbook["Auto Hemloch"];
+        private Skill AnimalFeast => Client.Skillbook["Animal Feast"];
+        private Skill Crasher => Client.Skillbook["Crasher"];
+        private Skill WhirlwindAttack => Client.Skillbook["Whirlwind Attack"];
+        private Skill SpinningKelb => Client.Skillbook["Spinning Kelberoth Strike"];
+
+
+
         public KaruraBashing(Bot bot)
             : base(bot)
         {
         }
 
+        /// <summary>
+        /// Tries to use the best possible skill(s) on the given target.
+        /// </summary>
+        /// <param name="target">The creature we're fighting.</param>
         internal override void UseSkills(Creature target)
         {
-            DateTime currentTime = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            bool canUseSkill = (now - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
+            bool canAssail = (now - LastAssailed) > TimeSpan.FromMilliseconds(1000.0);
 
-            bool canUseSkill = (currentTime - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
-            bool canAssail = (currentTime - LastAssailed) > TimeSpan.FromMilliseconds(1000.0);
-
-            // Attempt AOE or multi-target logic first if enough time has passed
             if (canUseSkill && DoActionForSurroundingCreatures())
             {
-                LastUsedSkill = currentTime;
+                LastUsedSkill = now;
                 return;
             }
 
-            // Check distance to target
             int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
-            if (distanceToTarget != 1)
+            if (distanceToTarget > 3)
                 return;
 
-            // If the target is Asgalled, and we can do a "Crasher" combo, do it
-            if (target.IsAsgalled && canUseSkill && CanUseRiskySkills() && DoRiskySkills())
+            if (distanceToTarget == 1)
             {
-                LastUsedSkill = currentTime;
+                if (target.IsAsgalled && canUseSkill && CanUseCrashers())
+                {
+                    if (DoCrashers())
+                    {
+                        LastUsedSkill = now;
+                    }
+                }
+
+                if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
+                    return;
+
+                if (canAssail && (BashAsgall || !target.IsAsgalled))
+                {
+                    if (ClawFist != null)
+                        Client.UseSkill(ClawFist.Name);
+                    UseAssails();
+                    LastAssailed = now;
+                }
+
+                if (canUseSkill && DoActionForRange1(target))
+                    LastUsedSkill = now;
             }
-
-            // If target is Asgalled but player not invulnerable and not bashing Asgall, bail out
-            if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
-                return;
-
-            // Attempt assails if we can and we’re allowed to bash asgall or target is not asgalled
-            if (canAssail && (BashAsgall || !target.IsAsgalled))
+            else // Distance is 2 or 3 tiles.
             {
-                Client.UseSkill("Claw Fist"); 
-                UseAssails();
-                LastAssailed = currentTime;
-            }
+                if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
+                    return;
 
-            // If we can use skill and do something for range=1
-            if (canUseSkill && DoActionForRange1(target))
-                LastUsedSkill = currentTime;
+                if (canUseSkill && DoActionForRangeLessThan3(target))
+                    LastUsedSkill = now;
+            }
         }
 
+        /// <summary>
+        /// Checks surrounding creatures for an AOE opportunity.
+        /// </summary>
+        /// <returns>True if an AOE attack was performed; otherwise false.</returns>
         private bool DoActionForSurroundingCreatures()
         {
             var nearby = GetSurroundingCreatures(KillableTargets)
-                .Where(ShouldUseSkillsOnTarget)
-                .ToList();
+                         .Where(ShouldUseSkillsOnTarget)
+                         .ToList();
 
-            int count = nearby.Count;
-            if (count < 3)
+
+            if (nearby.Count >= 3 || (nearby.Count == 2 && nearby.Any(mob => mob.HealthPercent >= 80)))
             {
-                if (count == 2)
-                {
-                    // If at least one mob >=80% HP
-                    bool hasHighHpMob = nearby.Any(mob => mob.HealthPercent >= 80);
-                    if (hasHighHpMob)
-                    {
-                        if (Client.UseSkill("Raging Attack"))
-                            return true;
+                if (RagingAttack != null && Client.UseSkill(RagingAttack.Name))
+                    return true;
 
-                        if (CanUseRiskySkills() && Client.UseSkill("Whirlwind Attack"))
-                        {
-                            Client.Player.NeedsHeal = true;
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        // Attempt "Talon Kick" if no high HP mob
-                        if (Client.NumberedSkill("Talon Kick"))
-                            return true;
-                    }
-                }
+                if (FuriousBash != null && Client.UseSkill(FuriousBash.Name))
+                    return true;
+
             }
-            else
+            else if (nearby.Count == 2 && !nearby.Any(mob => mob.HealthPercent >= 80))
             {
-                // If >=3 mobs, try Raging Attack or Furious Bash
-                if (Client.UseSkill("Raging Attack") || Client.UseSkill("Furious Bash"))
+                if (TalonKick != null && Client.UseSkill(TalonKick.Name))
                     return true;
             }
 
@@ -97,83 +118,126 @@ namespace Talos.Bashing
         }
 
         /// <summary>
-        /// If the target is Asgalled and we can do a crasher combo (Auto Hemloch + Animal Feast + Damage Scroll).
+        /// Attempts to use a skill if the target is 2-3 tiles away and aligned.
         /// </summary>
-        private bool DoRiskySkills()
+        /// <param name="target">The target creature.</param>
+        /// <returns>True if a skill was used successfully, otherwise false.</returns>
+        private bool DoActionForRangeLessThan3(Creature target)
         {
-            if (!UseCrasher)
+            bool axisAligned = (target.Location.X == Client.ClientLocation.X ||
+                                 target.Location.Y == Client.ClientLocation.Y);
+            bool directionMatch = (target.Location.GetDirection(Client.ClientLocation) == Client.ClientDirection);
+
+            if (!ShouldUseSkillsOnTarget(target))
                 return false;
 
-            Skill autoHemloch = Client.Skillbook["Auto Hemloch"];
-            bool canHemloch = (autoHemloch?.CanUse ?? false) || Client.Player.HealthPercent <= 5;
-
-            Skill animalFeast = Client.Skillbook["Animal Feast"];
-            bool canAnimalFeast = (animalFeast != null && animalFeast.CanUse);
-
-            Skill crasher = Client.Skillbook["Crasher"];
-            bool canCrasher = (crasher?.CanUse ?? false);
-
-            if (!canHemloch || !(canAnimalFeast || canCrasher))
-                return false;
-
-            Client.UseSkill("Auto Hemloch");
-            Client.UseSkill("Animal Feast");
-            Client.UseSkill("Crasher");
-            if (Client.HasItem("Damage Scroll"))
-                Client.UseItem("Damage Scroll");
-            Client.Player.NeedsHeal = true;
-            return true;
-
+            return axisAligned && directionMatch &&
+                   (TalonKick != null && Client.UseSkill(TalonKick.Name));
         }
 
-
+        /// <summary>
+        /// Attempts to use a melee-range skill based on the target's health.
+        /// </summary>
+        /// <param name="target">The target in melee range.</param>
+        /// <returns>True if a skill was successfully used; otherwise false.</returns>
         private bool DoActionForRange1(Creature target)
         {
             if (!MeetsKillCriteria(target) || !ShouldUseSkillsOnTarget(target))
                 return false;
 
-            Skill wolfFangFist = Client.Skillbook["Wolf Fang Fist"];
-            bool wolfFangAvail = (wolfFangFist != null && wolfFangFist.CanUse);
-
             byte hp = target.HealthPercent;
 
-            // 1) If hp >=80 & WolfFang is available => combos w/ "Sprint Potion", "Sneak Flight", or "Talon Kick"
-            if (hp >= 80 && wolfFangAvail &&
-                (TryComboWithSleepSkill("Sprint Potion", true) ||
-                 TryComboWithSleepSkill("Sneak Flight") ||
-                 TryComboWithSleepSkill("Talon Kick")))
+            // For high-health targets (>=80%), try a combo using Wolf Fang Fist with Sprint Potion, Sneak Flight, or Talon Kick.
+            if (hp >= 80 && (TryComboWithSleepSkill("Sprint Potion", true) ||
+                 (SneakFlight != null && TryComboWithSleepSkill(SneakFlight.Name)) ||
+                 (TalonKick != null && TryComboWithSleepSkill(TalonKick.Name))))
             {
                 return true;
             }
 
-            // 2) If hp <= 20 => "Mantis Kick" OR "High Kick" OR "Kick"
-            if (hp <= 20 &&
-               (Client.UseSkill("Mantis Kick") | Client.UseSkill("High Kick") | Client.UseSkill("Kick")))
+            // For targets with higher health (>=60%), try Raging Attack or (if available) a risky Whirlwind Attack combo.
+            if (hp >= 60 &&
+                (RagingAttack != null && Client.UseSkill(RagingAttack.Name)))
             {
-                return true;
-            }
-
-            // 3) If hp >= 20 => "Sneak Flight" or "Talon Kick"
-            if (hp >= 20 && (Client.NumberedSkill("Sneak Flight") || Client.NumberedSkill("Talon Kick")))
-            {
-                return true;
-            }
-
-            // 4) If hp >= 60 => Raging Attack or Whirlwind Attack (if risky)
-            if (hp >= 60)
-            {
-                if (Client.UseSkill("Raging Attack"))
                     return true;
+            }
 
-                if (CanUseRiskySkills() && DoRiskySkills() && Client.UseSkill("Whirlwind Attack"))
+            // Try to crasher
+            if (hp >= 40 && CanUseCrashers())
+            {
+                // If OnlyCrasherAsgall is false, or the target is Asgalled
+                if (!OnlyCrasherAsgall || target.IsAsgalled)
                 {
-                    Client.Player.NeedsHeal = true;
-                    return true;
+                    if (DoCrashers())
+                    {
+                        return true;
+                    }
                 }
+            }
+
+            // For moderate targets (>=40%), try Sneak Flight or Talon Kick
+            if (hp >= 20 &&
+                ((SneakFlight != null && Client.UseSkill(SneakFlight.Name)) ||
+                    (TalonKick != null && Client.UseSkill(TalonKick.Name))))
+            {
+                    return true;
+            }
+
+            // For very low-health targets (<=20%), try Mantis Kick, High Kick, or Kick
+            if (hp <= 20 && 
+                ((MantisKick != null && Client.UseSkill(MantisKick.Name)) ||
+                    (HighKick != null && Client.UseSkill(HighKick.Name)) ||
+                    (Kick != null && Client.UseSkill(Kick.Name))))
+            {
+
+                    return true;
             }
 
             return false;
         }
-    }
 
+        /// <summary>
+        /// Executes risky skill sequences such as Sacrifice/Mad Soul or the crasher combo.
+        /// </summary>
+        /// <returns>True if a risky combo was successfully used, otherwise false.</returns>
+        private bool DoCrashers()
+        {
+            if (!UseCrashers)
+                return false;
+
+            bool hasHemloch = Client.Inventory.Contains("Hemloch");
+            bool autoHemlochAvailable = (AutoHemloch?.CanUse ?? false);
+            bool canHemloch = autoHemlochAvailable || Client.Player.HealthPercent <= 5 || hasHemloch;
+
+            bool canAnimalFeast = (AnimalFeast?.CanUse ?? false);
+            bool canCrasher = (Crasher?.CanUse ?? false);
+
+            if (!canHemloch || !(canAnimalFeast || canCrasher))
+                return false;
+
+            if (AutoHemloch != null && autoHemlochAvailable)
+            {
+                Client.UseSkill(AutoHemloch.Name);
+            }
+            else if (hasHemloch)
+            {
+                Client.UseItem("Hemloch");
+            }
+
+            if (AnimalFeast != null)
+                Client.UseSkill(AnimalFeast.Name);
+            if (Crasher != null)
+                Client.UseSkill(Crasher.Name);
+            if (WhirlwindAttack != null)
+                Client.UseSkill(WhirlwindAttack.Name);
+            if (SpinningKelb != null)
+                Client.UseSkill(SpinningKelb.Name);
+
+            if (Client.HasItem("Damage Scroll"))
+                Client.UseItem("Damage Scroll");
+
+            Client.Player.NeedsHeal = true;
+            return true;
+        }
+    }
 }

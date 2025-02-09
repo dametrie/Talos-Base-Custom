@@ -22,12 +22,12 @@ namespace Talos.Structs
 
         public virtual bool Equals(object obj)
         {
-            return obj is Size size && (int)size.Width == (int)Width && (int)size.Height == (int)Height;
+            return obj is Size size && size.Width == Width && size.Height == Height;
         }
-        public virtual int GetHashCode() => ((int)Height << 16) + (int)Height;
+        public virtual int GetHashCode() => (Height << 16) + Height;
         public virtual string ToString()
         {
-            return string.Format("{0}x{1}", (object)Height, (object)Height);
+            return string.Format("{0}x{1}", Height, Height);
         }
     }
 }

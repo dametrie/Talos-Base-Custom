@@ -33,9 +33,11 @@ namespace Talos.Bashing
         protected int SkillIntervalMs => Convert.ToInt32(Client.ClientTab.numSkillInt.Value);
         protected int SendTargetIntervalMs { get; set; } = 250;
 
-        protected bool RequireDionForRiskySkills => Client.ClientTab.riskySkillsDionCbox.Checked;
-        protected bool UseRiskySkills => Client.ClientTab.riskySkillsCbox.Checked;
-        protected bool UseCrasher => Client.ClientTab.crasherCbox.Checked;
+        protected bool RequireDionForCrashers => Client.ClientTab.riskySkillsDionCbox.Checked;
+        protected bool UseCrashers => Client.ClientTab.chkCrasher.Checked;
+        protected bool OnlyCrasherAsgall => Client.ClientTab.chkCrasherOnlyAsgall.Checked;
+
+
         protected HashSet<Location> Warps { get; set; }
         public Creature Target { get; set; }
         protected List<ushort> PrioritySprites { get; set; }
@@ -373,19 +375,19 @@ namespace Talos.Bashing
         }
 
         /// <summary>
-        /// Determines if risky skills can be used, based on user settings, Dion requirements, and current game status.
+        /// Determines if crashers can be used, based on user settings, Dion requirements, and current game status.
         /// </summary>
-        /// <returns>True if risky skills can be used, otherwise false.</returns>
-        internal bool CanUseRiskySkills()
+        /// <returns>True if crashers skills can be used, otherwise false.</returns>
+        internal bool CanUseCrashers()
         {
-            // Check if risky skills are enabled
-            if (!UseRiskySkills)
+            // Check if crashers are enabled
+            if (!UseCrashers)
             {
                 return false;
             }
 
             // Check for Dion requirement
-            if (RequireDionForRiskySkills && !Client.Player.IsDioned)
+            if (RequireDionForCrashers && !Client.Player.IsDioned)
             {
                 return false;
             }
@@ -409,8 +411,8 @@ namespace Talos.Bashing
                 return false;
             }
 
-            // Final Dion length check if required
-            if (RequireDionForRiskySkills)
+            // Dion length check if required
+            if (RequireDionForCrashers)
             {
                 DateTime lastDioned = Client.Player.GetState<DateTime>(CreatureState.LastDioned);
                 double dionDuration = Client.Player.GetState<double>(CreatureState.DionDuration);
@@ -830,13 +832,13 @@ namespace Talos.Bashing
         }
 
         /// <summary>
-        /// Attempts to use either "Lullaby Punch" or "Wolf Fang Fist".
+        /// Attempts to use either "Lullaby Punch" or "Wolf Fang Fist" or "Frozen Strike".
         /// </summary>
         /// <returns>True if one of the sleep skills was used, otherwise false.</returns>
         private bool UseSleepSkill()
         {
             //Console.WriteLine("[DEBUG] Entering UseSleepSkill method...");
-            bool skillUsed = Client.UseSkill("Lullaby Punch") || Client.UseSkill("Wolf Fang Fist");
+            bool skillUsed = Client.UseSkill("Lullaby Punch") || Client.UseSkill("Wolf Fang Fist") || Client.UseSkill("Frozen Strike");
             //Console.WriteLine($"[DEBUG] Exiting UseSleepSkill with {skillUsed}.");
             return skillUsed;
         }

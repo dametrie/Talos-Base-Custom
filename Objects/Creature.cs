@@ -10,6 +10,7 @@ namespace Talos.Objects
     {
         private readonly ConcurrentDictionary<CreatureState, object> _states;
 
+        private readonly object _stateLock = new object();
         private byte _health;
         private string _dion;
         internal int _clickCounter;
@@ -24,6 +25,7 @@ namespace Talos.Objects
         internal Dictionary<ushort, DateTime> AnimationHistory { get; set; }
         internal Dictionary<ushort, DateTime> ForeignAnimationHistory { get; set; }
         internal CreatureType Type { get; set; }
+
 
         internal bool CanPND
         {
@@ -114,80 +116,113 @@ namespace Talos.Objects
             }
         }
 
+        internal bool IsAsgalled
+        {
+            get
+            {
+                // We treat Asgall as a special case of Dion 
+                return IsDioned && GetState<string>(CreatureState.DionName) == "Asgall Faileas";
+            }
+        }
 
 
+
+        /// <summary>
+        /// Checks whether the state is active (i.e. the flag is true and the elapsed time
+        /// since the timestamp is less than the given duration). If not, it resets the state.
+        /// </summary>
+        private bool CheckAndResetState(
+            CreatureState flagKey, 
+            CreatureState timestampKey, 
+            CreatureState durationKey, 
+            CreatureState resetNameKey)
+        {
+            lock (_stateLock)
+            {
+                bool flag = GetState<bool>(flagKey);
+                DateTime timestamp = GetState<DateTime>(timestampKey);
+                double duration = GetState<double>(durationKey);
+                double elapsed = (DateTime.UtcNow - timestamp).TotalSeconds;
+
+                if (flag && elapsed < duration)
+                {
+                    return true;
+                }
+                else
+                {
+                    // Reset the associated state.
+                    SetState(flagKey, false);
+                    SetState(resetNameKey, string.Empty);
+                    SetState(timestampKey, DateTime.MinValue);
+                    SetState(durationKey, 0.0);
+                    return false;
+                }
+            }
+        }
 
         // CreatureState based checks
-        internal bool IsCursed
-        {
-            get
-            {
-                bool isCursed = GetState<bool>(CreatureState.IsCursed);
-                DateTime lastCursed = GetState<DateTime>(CreatureState.LastCursed);
-                double duration = GetState<double>(CreatureState.CurseDuration);
+        internal bool IsCursed => CheckAndResetState(
+             CreatureState.IsCursed,
+             CreatureState.LastCursed,
+             CreatureState.CurseDuration,
+             CreatureState.CurseName
+         );
 
-                if (isCursed && (DateTime.UtcNow - lastCursed).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    // Automatically reset the state if expired
-                    SetState(CreatureState.IsCursed, false);
-                    SetState(CreatureState.CurseName, string.Empty);
-                    SetState(CreatureState.LastCursed, DateTime.MinValue);
-                    SetState(CreatureState.CurseDuration, 0.0);
-                    return false;
-                }
-            }
-        }
+        internal bool IsFassed => CheckAndResetState(
+             CreatureState.IsFassed,
+             CreatureState.LastFassed,
+             CreatureState.FasDuration,
+             CreatureState.FasName
+         );
 
+        internal bool IsDioned => CheckAndResetState(
+             CreatureState.IsDioned,
+             CreatureState.LastDioned,
+             CreatureState.DionDuration,
+             CreatureState.DionName
+        );
 
-        internal bool IsFassed
-        {
-            get
-            {
-                bool isFassed = GetState<bool>(CreatureState.IsFassed);
-                DateTime lastFassed = GetState<DateTime>(CreatureState.LastFassed);
-                double duration = GetState<double>(CreatureState.FasDuration);
+        internal bool IsAited => CheckAndResetState(
+             CreatureState.IsAited,
+             CreatureState.LastAited,
+             CreatureState.AiteDuration,
+             CreatureState.AiteName
+        );
 
-                if (isFassed && (DateTime.UtcNow - lastFassed).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    SetState(CreatureState.IsFassed, false);
-                    SetState(CreatureState.FasName, string.Empty);
-                    SetState(CreatureState.LastFassed, DateTime.MinValue);
-                    SetState(CreatureState.FasDuration, 0.0);
-                    return false;
-                }
-            }
-        }
+        internal bool IsFrozen => CheckAndResetState(
+             CreatureState.IsFrozen,
+             CreatureState.LastFrostArrow,
+             CreatureState.FrostArrowDuration,
+             CreatureState.FrostArrowName
+        );
 
-        internal bool IsDioned
-        {
-            get
-            {
-                bool isDioned = GetState<bool>(CreatureState.IsDioned);
-                DateTime lastDioned = GetState<DateTime>(CreatureState.LastDioned);
-                double duration = GetState<double>(CreatureState.DionDuration);
+        internal bool HasCursedTunes => CheckAndResetState(
+             CreatureState.HasCursedTunes,
+             CreatureState.LastCursedTune,
+             CreatureState.CursedTuneDuration,
+             CreatureState.CursedTuneName
+        );
 
-                if (isDioned && (DateTime.UtcNow - lastDioned).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    SetState(CreatureState.IsDioned, false);
-                    SetState(CreatureState.DionName, string.Empty);
-                    SetState(CreatureState.LastDioned, DateTime.MinValue);
-                    SetState(CreatureState.DionDuration, 0.0);
-                    return false;
-                }
-            }
-        }
+        internal bool HasRegen => CheckAndResetState(
+             CreatureState.HasRegen,
+             CreatureState.LastRegen,
+             CreatureState.RegenDuration,
+             CreatureState.RegenName
+        );
+
+        internal bool HasIncreasedRegen => CheckAndResetState(
+             CreatureState.HasIncreasedRegen,
+             CreatureState.LastIncreasedRegen,
+             CreatureState.IncreasedRegenDuration,
+             CreatureState.RegenName
+        );
+
+        internal bool HasArmachd => CheckAndResetState(
+             CreatureState.HasArmachd,
+             CreatureState.LastArmachd,
+             CreatureState.ArmachdDuration,
+             CreatureState.ArmachdName
+        );
 
         internal double GetRemainingDionTime()
         {
@@ -202,152 +237,9 @@ namespace Talos.Objects
             return dionDuration - elapsedTime;
         }
 
-        internal bool IsAsgalled
-        {
-            get
-            {
-                // We treat Asgall as a special case of Dion 
-                return IsDioned && GetState<string>(CreatureState.DionName) == "Asgall Faileas";
-            }
-        }
-
-        internal bool IsAited
-        {
-            get
-            {
-                bool isAited = GetState<bool>(CreatureState.IsAited);
-                DateTime lastAited = GetState<DateTime>(CreatureState.LastAited);
-                double duration = GetState<double>(CreatureState.AiteDuration);
-
-                if (isAited && (DateTime.UtcNow - lastAited).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    SetState(CreatureState.IsAited, false);
-                    SetState(CreatureState.AiteName, string.Empty);
-                    SetState(CreatureState.LastAited, DateTime.MinValue);
-                    SetState(CreatureState.AiteDuration, 0.0);
-                    return false;
-                }
-            }
-        }
-
-        internal bool IsFrozen
-        {
-            get
-            {
-                bool isFrozen = GetState<bool>(CreatureState.IsFrozen);
-                DateTime lastFrostArrow = GetState<DateTime>(CreatureState.LastFrostArrow);
-                double duration = GetState<double>(CreatureState.FrostArrowDuration);
-
-                if (isFrozen && (DateTime.UtcNow - lastFrostArrow).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    SetState(CreatureState.IsFrozen, false);
-                    SetState(CreatureState.LastFrostArrow, DateTime.MinValue);
-                    SetState(CreatureState.FrostArrowDuration, 0.0);
-                    return false;
-                }
-            }
-        }
-
-        internal bool HasCursedTunes
-        {
-            get
-            {
-                bool hasCursedTunes = GetState<bool>(CreatureState.HasCursedTunes);
-                DateTime lastCursedTune = GetState<DateTime>(CreatureState.LastCursedTune);
-                double duration = GetState<double>(CreatureState.CursedTuneDuration);
-
-                if (hasCursedTunes && (DateTime.UtcNow - lastCursedTune).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    SetState(CreatureState.HasCursedTunes, false);
-                    SetState(CreatureState.LastCursedTune, DateTime.MinValue);
-                    SetState(CreatureState.CursedTuneDuration, 0.0);
-                    return false;
-                }
-            }
-        }
-
-        internal bool HasRegen
-        {
-            get
-            {
-                bool hasRegen = GetState<bool>(CreatureState.HasRegen);
-                DateTime lastRegen = GetState<DateTime>(CreatureState.LastRegen);
-                double duration = GetState<double>(CreatureState.RegenDuration);
-
-                if (hasRegen && (DateTime.UtcNow - lastRegen).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    SetState(CreatureState.HasRegen, false);
-                    SetState(CreatureState.LastRegen, DateTime.MinValue);
-                    SetState(CreatureState.RegenDuration, 0.0);
-                    SetState(CreatureState.RegenName, string.Empty);
-                    return false;
-                }
-            }
-        }
-
-        internal bool HasIncreasedRegen
-        {
-            get
-            {
-                bool hasIncreasedRegen = GetState<bool>(CreatureState.HasIncreasedRegen);
-                DateTime lastIncreasedRegen = GetState<DateTime>(CreatureState.LastIncreasedRegen);
-                double duration = GetState<double>(CreatureState.IncreasedRegenDuration);
-
-                if (hasIncreasedRegen && (DateTime.UtcNow - lastIncreasedRegen).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    SetState(CreatureState.HasIncreasedRegen, false);
-                    SetState(CreatureState.LastIncreasedRegen, DateTime.MinValue);
-                    SetState(CreatureState.IncreasedRegenDuration, 0.0);
-                    SetState(CreatureState.RegenName, string.Empty);
-                    return false;
-                }
-            }
-        }
-
-        internal bool HasArmachd
-        {
-            get
-            {
-                bool hasArmachd = GetState<bool>(CreatureState.HasArmachd);
-                DateTime lastArmachd = GetState<DateTime>(CreatureState.LastArmachd);
-                double duration = GetState<double>(CreatureState.ArmachdDuration);
-
-                if (hasArmachd && (DateTime.UtcNow - lastArmachd).TotalSeconds < duration)
-                {
-                    return true;
-                }
-                else
-                {
-                    // Reset state if expired
-                    SetState(CreatureState.HasArmachd, false);
-                    SetState(CreatureState.LastArmachd, DateTime.MinValue);
-                    SetState(CreatureState.ArmachdDuration, 0.0);
-                    return false;
-                }
-            }
-        }
 
 
+       
         internal Creature(int id, string name, ushort sprite, byte type, Location location, Direction direction)
             : base(id, name, sprite, location)
         {

@@ -11,6 +11,36 @@ namespace Talos.Bashing
 {
     internal class RogueBashing : BashingBase
     {
+
+        // Standard skills
+        private Skill ShadowStrike => Client.Skillbook["Shadow Strike"];
+        private Skill KidneyShot => Client.Skillbook["Kidney Shot"];
+        private Skill SpecialArrowAttack => Client.Skillbook["Special Arrow Attack"];
+        private Skill Amnesia => Client.Skillbook["Amnesia"];
+        private Skill ThrowSurigum => Client.Skillbook["Throw Surigum"];
+        private Skill StabAndTwist => Client.Skillbook["Stab and Twist"];
+        private Skill AssassinStrike => Client.Skillbook["Assassin Strike"];
+        private Skill ShadowFigure => Client.Skillbook["Shadow Figure"];
+        private Skill StabTwice => Client.Skillbook["Stab Twice"];
+
+        // Monk->Rogue Skills
+        private Skill Ambush => Client.Skillbook["Ambush"];
+        private Skill MantisKick => Client.Skillbook["Mantis Kick"];
+        private Skill HighKick => Client.Skillbook["High Kick"];
+        private Skill Kick => Client.Skillbook["Kick"];
+
+
+        // Numbered skills: try direct lookup first, then fall back to the numbered lookup.
+        private Skill ArrowShot => Client.Skillbook["Arrow Shot"] ?? Client.Skillbook.GetNumberedSkill("Arrow Shot");
+        private Skill RearStrike => Client.Skillbook["Rear Strike"] ?? Client.Skillbook.GetNumberedSkill("Rear Strike");
+
+
+        // Warrior-Rogue skills
+        private Skill Charge => Client.Skillbook["Charge"];
+        private Skill WindBlade => Client.Skillbook["Wind Blade"];
+        private Skill Crasher => Client.Skillbook["Crasher"];
+
+
         // Track arrow cooldowns
         private DateTime LastDualCrystalArrow1 = DateTime.MinValue;
         private DateTime LastDualCrystalArrow = DateTime.MinValue;
@@ -35,9 +65,101 @@ namespace Talos.Bashing
         public RogueBashing(Bot bot) : base(bot)
         {
             // Show the rogue settings in UI
+            // Adam check this
             Client.ClientTab.rogueGbox.Visible = true;
         }
 
+        /// <summary>
+        /// Tries to use the best possible skill(s) on the given target.
+        /// </summary>
+        /// <param name="target">The creature we're fighting.</param>
+        internal override void UseSkills(Creature target)
+        {
+            DateTime now = DateTime.UtcNow;
+            bool canUseSkill = (now - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
+            bool canAssail = (now - LastAssailed) > TimeSpan.FromMilliseconds(500);
+
+            // Attempt multi-target logic first
+            if (DoActionForSurroundingCreature())
+            {
+                LastUsedSkill = now;
+                return;
+            }
+
+            // Possibly back off if distance=2
+            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
+            if (distanceToTarget == 2)
+            {
+                if (TryBackOff(target, once: true) || TryApproach(target))
+                    return;
+            }
+
+            // Try again if that opened AOE or anything
+            if (DoActionForSurroundingCreature())
+            {
+                LastUsedSkill = now;
+                return;
+            }
+
+            // Re-check distance in case we moved
+            distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
+            if (distanceToTarget > 11)
+                return;
+
+            // Distances
+            if (distanceToTarget == 1)
+            {
+                // If asgalled but not bashing => skip
+                if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
+                    return;
+
+                // Use skills if possible
+                if (canUseSkill && DoActionForRange1(target))
+                {
+                    LastUsedSkill = now;
+                    target._hitCounter++;
+                }
+
+                // Possibly do assails if we can
+                if (canAssail && (BashAsgall || !target.IsAsgalled))
+                {
+                    UseAssails();
+                    LastAssailed = now;
+                    target._hitCounter++;
+                }
+            }
+            else if (distanceToTarget == 2)
+            {
+                // If we can do ranged assails
+                if (!canAssail)
+                    return;
+
+                UseRangedAssails();
+                LastAssailed = now;
+                target._hitCounter++;
+            }
+            else
+            {
+                // 3..11
+                if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
+                    return;
+
+                // If we can do skill
+                if (canUseSkill && DoActionForRangeLt11(target))
+                {
+                    LastUsedSkill = now;
+                    target._hitCounter++;
+                }
+
+                // Then do assails if time allows
+                if (!canAssail)
+                    return;
+
+                UseRangedAssails();
+                LastAssailed = now;
+                target._hitCounter++;
+            }
+        }
 
         internal override bool DoBashing()
         {
@@ -214,14 +336,6 @@ namespace Talos.Bashing
             }
         }
 
-        /// <summary>
-        /// Tries to unsnare or unstick the user if they're stuck on a monster.
-        /// </summary>
-        private bool TryUnstuck()
-        {
-            // original logic you had to unstick / refresh
-            return base.TryUnstuck();
-        }
 
         /// <summary>
         /// Helpers to track arrow usage cooldown.
@@ -274,7 +388,7 @@ namespace Talos.Bashing
             if (arrowItem.Slot != 0)
                 SwapItemToSlot1(arrowItem);
 
-            Client.UseSkill("Special Arrow Attack");
+            Client.UseSkill(SpecialArrowAttack.Name);
 
             // Swap arrow item back to original slot if needed
             if (arrowItem.Slot != 0)
@@ -348,9 +462,9 @@ namespace Talos.Bashing
             Location behindTarget = target.Location.Offsetter(userToTargetDir);
             if (!Client.Map.IsWalkable(Client, behindTarget) ||
                 Warps.Contains(behindTarget) ||
-                !(Client.UseSkill("Shadow Figure") ||
-                  Client.UseSkill("Shadow Strike") ||
-                  Client.UseSkill("Ambush")))
+                !(Client.UseSkill(ShadowFigure.Name) ||
+                  Client.UseSkill(ShadowStrike.Name) ||
+                  Client.UseSkill(Ambush.Name)))
             {
                 return false;
             }
@@ -384,8 +498,8 @@ namespace Talos.Bashing
         /// </summary>
         internal virtual void UseRangedAssails()
         {
-            Client.NumberedSkill("Arrow Shot");
-            Client.UseSkill("Throw Surigum");
+            Client.UseSkill(ArrowShot.Name);
+            Client.UseSkill(ThrowSurigum.Name);
         }
 
         /// <summary>
@@ -393,21 +507,21 @@ namespace Talos.Bashing
         /// </summary>
         internal bool TryComboWithAmnesia(string skillName)
         {
-            if (!Client.CanUseSkill("Amnesia"))
+            if (!Client.CanUseSkill(Amnesia))
                 return false;
 
             Skill skill = Client.Skillbook[skillName] ?? Client.Skillbook.GetNumberedSkill(skillName);
             if (!Client.CanUseSkill(skill))
                 return false;
 
-            Client.UseSkill("Amnesia");
+            Client.UseSkill(Amnesia.Name);
             Client.UseSkill(skill.Name);
             return true;
         }
 
         internal bool TryAmnesiaTech(Creature target, string skillName)
         {
-            if (!Client.CanUseSkill("Amnesia"))
+            if (!Client.CanUseSkill(Amnesia))
                 return false;
 
             Skill skill = Client.Skillbook[skillName] ?? Client.Skillbook.GetNumberedSkill(skillName);
@@ -421,102 +535,13 @@ namespace Talos.Bashing
             // Then turn, use "Amnesia," walk forward, and skill
             Direction dir = target.Location.GetDirection(Client.ClientLocation);
             Client.Turn(dir);
-            Client.UseSkill("Amnesia");
+            Client.UseSkill(Amnesia.Name);
             Client.Walk(dir);
             Client.UseSkill(skill.Name);
             return true;
         }
 
-        /// <summary>
-        /// Overridden logic to handle a variety of range-based attacks for Rogues.
-        /// </summary>
-        internal override void UseSkills(Creature target)
-        {
-            DateTime now = DateTime.UtcNow;
-            bool canUseSkill = (now - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
-            bool canAssail = (now - LastAssailed) > TimeSpan.FromMilliseconds(500);
-
-            // Attempt multi-target logic first
-            if (DoActionForSurroundingCreature())
-            {
-                LastUsedSkill = now;
-                return;
-            }
-
-            // Possibly back off if distance=2
-            int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
-            if (distanceToTarget == 2)
-            {
-                if (TryBackOff(target, once: true) || TryApproach(target))
-                    return;
-            }
-
-            // Try again if that opened AOE or anything
-            if (DoActionForSurroundingCreature())
-            {
-                LastUsedSkill = now;
-                return;
-            }
-
-            // Re-check distance in case we moved
-            distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
-            if (distanceToTarget > 11)
-                return;
-
-            // Distances
-            if (distanceToTarget == 1)
-            {
-                // If asgalled but not bashing => skip
-                if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
-                    return;
-
-                // Use skills if possible
-                if (canUseSkill && DoActionForRange1(target))
-                {
-                    LastUsedSkill = now;
-                    target._hitCounter++;
-                }
-
-                // Possibly do assails if we can
-                if (canAssail && (BashAsgall || !target.IsAsgalled))
-                {
-                    UseAssails();
-                    LastAssailed = now;
-                    target._hitCounter++;
-                }
-            }
-            else if (distanceToTarget == 2)
-            {
-                // If we can do ranged assails
-                if (!canAssail)
-                    return;
-
-                UseRangedAssails();
-                LastAssailed = now;
-                target._hitCounter++;
-            }
-            else
-            {
-                // 3..11
-                if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
-                    return;
-
-                // If we can do skill
-                if (canUseSkill && DoActionForRangeLt11(target))
-                {
-                    LastUsedSkill = now;
-                    target._hitCounter++;
-                }
-
-                // Then do assails if time allows
-                if (!canAssail)
-                    return;
-
-                UseRangedAssails();
-                LastAssailed = now;
-                target._hitCounter++;
-            }
-        }
+        
 
         private bool DoActionForRange1(Creature target)
         {
@@ -525,22 +550,43 @@ namespace Talos.Bashing
 
             byte hp = target.HealthPercent;
 
+            // For high-health targets (>=80%), try a combo using Wolf Fang Fist or Frozen Strike with Charge.
+            if (hp >= 80 &&
+                (TryComboWithSleepSkill(Charge.Name)))
+            {
+                return true;
+            }
+
             if (hp >= 60)
             {
-                if (target._hitCounter == 0 && (Client.UseSkill("Assassin Strike") || Client.NumberedSkill("Rear Strike")) ||
-                    TryComboWithSleepSkill("Stab Twice", true) ||
-                    TryComboWithSleepSkill("Kidney Shot", true) ||
-                    TryAmnesiaTech(target, "Assassin Strike") ||
-                    TryAmnesiaTech(target, "Rear Strike"))
+                if (target._hitCounter == 0 && (Client.UseSkill(AssassinStrike.Name) || Client.NumberedSkill(RearStrike.Name)) ||
+                    TryComboWithSleepSkill(StabTwice.Name, true) ||
+                    TryComboWithSleepSkill(KidneyShot.Name, true) ||
+                    TryAmnesiaTech(target, AssassinStrike.Name) ||
+                    TryAmnesiaTech(target, RearStrike.Name))
                 {
                     return true;
                 }
             }
 
-            if (hp >= 40)
+            if (hp >= 40 &&
+                ((KidneyShot != null && Client.UseSkill(KidneyShot.Name)) ||
+                    (StabTwice != null && Client.UseSkill(StabTwice.Name))))
             {
-                if (Client.UseSkill("Kidney Shot") || Client.UseSkill("Stab Twice"))
                     return true;
+            }
+
+            // Try to crasher
+            if (hp >= 40 && CanUseCrashers())
+            {
+                // If OnlyCrasherAsgall is false, or the target is Asgalled
+                if (!OnlyCrasherAsgall || target.IsAsgalled)
+                {
+                    if (DoCrashers())
+                    {
+                        return true;
+                    }
+                }
             }
 
             if (hp >= 20)
@@ -549,9 +595,13 @@ namespace Talos.Bashing
                     return true;
             }
 
-            if (hp <= 20)
+            if (hp <= 20 &&
+                ((MantisKick != null && Client.UseSkill(MantisKick.Name)) ||
+                    (HighKick != null && Client.UseSkill(HighKick.Name)) ||
+                    (Kick != null && Client.UseSkill(Kick.Name))) ||
+                    (StabAndTwist != null && Client.UseSkill(StabAndTwist.Name)) ||
+                    (WindBlade != null && Client.UseSkill(WindBlade.Name)))
             {
-                Client.UseSkill("Stab and Twist");
                 return true;
             }
 
@@ -567,8 +617,8 @@ namespace Talos.Bashing
 
             // 1) If hp>=60 & hits=0 => "Rear Strike" or "Amnesia + Rear Strike"
             if (hp >= 60 &&
-               ((target._hitCounter == 0 && Client.NumberedSkill("Rear Strike")) ||
-                (Client.ClientLocation.DistanceFrom(target.Location) == 3 && TryComboWithAmnesia("Rear Strike"))))
+               ((target._hitCounter == 0 && Client.NumberedSkill(RearStrike.Name)) ||
+                (Client.ClientLocation.DistanceFrom(target.Location) == 3 && TryComboWithAmnesia(RearStrike.Name))))
             {
                 return true;
             }
@@ -585,7 +635,7 @@ namespace Talos.Bashing
 
         private bool DoActionForSurroundingCreature()
         {
-            Skill rearStrike = Client.Skillbook.GetNumberedSkill("Rear Strike");
+            Skill rearStrike = Client.Skillbook.GetNumberedSkill(RearStrike.Name);
             bool canRearStrike = Client.CanUseSkill(rearStrike);
 
             // 1) Possibly do "Rear Strike" on a different target
@@ -598,12 +648,12 @@ namespace Talos.Bashing
                         MeetsKillCriteria(mob) &&
                         ShouldUseSkillsOnTarget(mob) &&
                         SharesAxis(Client.ClientLocation, mob.Location) &&
-                        (mob._hitCounter <= 0 || Client.CanUseSkill("Amnesia")))
+                        (mob._hitCounter <= 0 || Client.CanUseSkill(Amnesia)))
                     {
                         TurnForAction(mob, () =>
                         {
                             if (mob._hitCounter > 0)
-                                Client.UseSkill("Amnesia");
+                                Client.UseSkill(Amnesia.Name);
                             Client.UseSkill(rearStrike.Name);
                         });
                         return true;
@@ -612,7 +662,7 @@ namespace Talos.Bashing
             }
 
             // 2) If "Assassin Strike" is available for a close target
-            if (Client.CanUseSkill("Assassin Strike"))
+            if (Client.CanUseSkill(AssassinStrike))
             {
                 foreach (Creature mob in KillableTargets)
                 {
@@ -622,13 +672,39 @@ namespace Talos.Bashing
                         MeetsKillCriteria(mob) &&
                         ShouldUseSkillsOnTarget(mob))
                     {
-                        TurnForAction(mob, () => Client.UseSkill("Assassin Strike"));
+                        TurnForAction(mob, () => Client.UseSkill(AssassinStrike.Name));
                         return true;
                     }
                 }
             }
 
             return false;
+        }
+
+        private bool DoCrashers()
+        {
+            if (!UseCrashers)
+                return false;
+
+            bool hasHemloch = Client.Inventory.Contains("Hemloch");
+            bool canHemloch = Client.Player.HealthPercent <= 5 || hasHemloch;
+
+
+            bool canCrasher = (Crasher?.CanUse ?? false);
+
+            if (!canHemloch || canCrasher)
+                return false;
+
+            if (hasHemloch)
+            {
+                Client.UseItem("Hemloch");
+            }
+
+            if (Crasher != null)
+                Client.UseSkill(Crasher.Name);
+
+            Client.Player.NeedsHeal = true;
+            return true;
         }
     }
 

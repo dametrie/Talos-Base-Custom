@@ -333,7 +333,7 @@ namespace Talos.Helper
 
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
 
-                            //Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastFassed updated to {creature?.GetState<DateTime>(CreatureState.LastFassed)}");
+                            Console.WriteLine($"[HandleSpellCastMessage] {spellName} cast on Creature ID: {creature?.ID}. LastFassed updated to {creature?.GetState<DateTime>(CreatureState.LastFassed)}");
                             client.Server.RemoveFirstCreatureToSpell(client);
                         }
                         break;
@@ -892,6 +892,7 @@ namespace Talos.Helper
                     Console.WriteLine($"[HandleAlreadyCastMessage] Fas: Received 'You already cast' message for {fasName} on Creature ID: {client.SpellHistory[0].Creature?.ID}, Creature name: {creature.Name}, Hash: {client.SpellHistory[0].Creature?.GetHashCode()} Updating LastFassed.");
 
                     double fasDuration = Spell.GetSpellDuration(fasName);
+                    DateTime now = DateTime.UtcNow;
 
                     var fasStateUpdates = new Dictionary<CreatureState, object>
                     {
@@ -904,7 +905,8 @@ namespace Talos.Helper
                     // Update the creature's state across all clients
                     CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
 
-                    Console.WriteLine($"[HandleAlreadyCastMessage] Fas state updated for Creature ID: {creature.ID}, Creature name: {creature.Name}");
+                    //Console.WriteLine($"[HandleAlreadyCastMessage] Fas state updated for Creature ID: {creature.ID}, Creature name: {creature.Name}");
+                    Console.WriteLine($"[ActiveMessageHandler] Updating fas state for Creature ID: {creature.ID}, Creature name: {creature.Name} using '{fasName}' with Duration: {fasDuration} sec at {now}");
 
                     client.CastedSpell = null;
                 }
@@ -1068,6 +1070,9 @@ namespace Talos.Helper
                     { CreatureState.AiteName, "ard naomh aite" },// if we login and have aite there is no way to know the duration so we assume it is max
                     { CreatureState.AiteDuration, Spell.GetSpellDuration("ard naomh aite") } // Duration in seconds
                 };
+
+                CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, aiteStateUpdates);
+
             }
         }
 

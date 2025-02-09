@@ -69,6 +69,8 @@ namespace Talos.Base
         internal DateTime _lastExpBonusAppliedTime = DateTime.MinValue;
         internal DateTime _spellTimer = DateTime.MinValue;
         internal DateTime _lastUsedGem = DateTime.MinValue;
+        private DateTime _lastAoPoison = DateTime.MinValue;
+        private DateTime _lastWakeScroll = DateTime.MinValue;
         private DateTime _lastUsedFungusBeetle = DateTime.MinValue;
         private DateTime _lastUsedBeetleAid = DateTime.MinValue;
         internal TimeSpan _expBonusElapsedTime = TimeSpan.Zero;
@@ -124,7 +126,7 @@ namespace Talos.Base
         private bool _hasDeposited;
         internal bool toldUsAboutPotofGold;
         internal bool madeLepNet;
-
+        private DateTime _lastUsedHealingPotion;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
@@ -512,6 +514,8 @@ namespace Talos.Base
 
         private void SetBashClass()
         {
+            //Adam figure this out later
+            //Needs to work for lowbies too
             BashingBase = null; // Clear any previously set base
 
             if (Client.PreviousClassFlag == PreviousClass.Pure &&
@@ -519,31 +523,31 @@ namespace Talos.Base
                 Client.MedeniaClassFlag == (MedeniaClass.Gladiator))
             {
                 BashingBase = new PureWarriorBashing(this);
-                Console.WriteLine("Activated: PureWarriorTavalyBashing (Warrior + Gladiator).");
+                Console.WriteLine("Activated: PureWarriorBashing (Warrior + Gladiator).");
             }
             else if (Client.MedeniaClassFlag == MedeniaClass.Druid)
             {
                 if (Client.DruidFormFlag == DruidForm.Feral)
                 {
                     BashingBase = new FeralBashing(this);
-                    Console.WriteLine("Activated: PureFeralTavalyBashing (Druid Feral).");
+                    Console.WriteLine("Activated: FeralBashing (Druid Feral).");
                 }
                 else if (Client.DruidFormFlag == DruidForm.Karura)
                 {
                     BashingBase = new KaruraBashing(this);
-                    Console.WriteLine("Activated: PureKaruraTavalyBashing (Druid Karura).");
+                    Console.WriteLine("Activated: KaruraBashing (Druid Karura).");
                 }
             }
             else if (Client.PreviousClassFlag == PreviousClass.Monk &&
                      Client.MedeniaClassFlag == MedeniaClass.Gladiator)
             {
                 BashingBase = new MonkWarriorBashing(this);
-                Console.WriteLine("Activated: MonkWarriorTavalyBashing (PreviousClass Monk + Gladiator).");
+                Console.WriteLine("Activated: MonkWarriorBashing (PreviousClass Monk + Gladiator).");
             }
             else if (Client.MedeniaClassFlag == MedeniaClass.Archer)
             {
                 BashingBase = new RogueBashing(this);
-                Console.WriteLine("Activated: RogueTavalyBashing (Archer).");
+                Console.WriteLine("Activated: RogueBashing (Archer).");
             }
 
             bashClassSet = (BashingBase != null);
@@ -569,13 +573,13 @@ namespace Talos.Base
 
         internal bool EnsureWeaponEquipped()
         {
+            equipattempted = false;
             //Console.WriteLine("[DEBUG] Entering EnsureWeaponEquipped method...");
             string equippedWeapName = Client.EquippedItems[1]?.Name;
             bool hasValidWeapon = Client.Weapons.Any(w => equippedWeapName != null && equippedWeapName.Equals(w.Name));
 
             if (hasValidWeapon)
             {
-                //Console.WriteLine("[DEBUG] Valid weapon is already equipped, exiting with true.");
                 return true;
             }
 
@@ -705,229 +709,7 @@ namespace Talos.Base
         }
 
 
-        private bool ShouldUseCrasher()
-        {
-            // Use the configured health threshold if available, otherwise fallback to 60
-            int healthThreshold = Client.ClientTab.chkCrasherAboveHP.Checked
-                ? (int)Client.ClientTab.numCrasherHealth.Value
-                : 60;
-
-            // Ensure health is above the threshold and user is Dioned
-            if (target.HealthPercent < healthThreshold || !Client.Player.IsDioned)
-                return false;
-
-            // Check if any of the skills are available and usable
-            string[] skills = { "Crasher", "Execute", "Animal Feast" };
-            if (skills.Any(skill => Client.HasSkill(skill) && Client.CanUseSkill(Client.Skillbook[skill])))
-                return true;
-
-            // Check if the Damage Scroll item is available and usable
-            if (Client.HasItem("Damage Scroll"))
-            {
-                if (Client.CanUseItem(Client.Inventory["Damage Scroll"]) &&
-                    DateTime.UtcNow.Subtract(Client.Inventory["Damage Scroll"].LastUsed).TotalSeconds > 28)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private void CrasherDionTargets()
-        {
-            Console.WriteLine("[DEBUG] Entering CrasherDionTargets method...");
-            if (!ShouldUseCrasher())
-            {
-                Console.WriteLine("[DEBUG] Conditions not met for Crasher, exiting...");
-                return;
-            }
-
-            if (Client.ClientTab.chkCrasherAboveHP.Checked &&
-                Client.HealthPct > Client.ClientTab.numCrasherHealth.Value &&
-                (!target.IsAsgalled || Client.ClientTab.chkCrasherOnlyAsgall.Checked))
-            {
-                Console.WriteLine("[DEBUG] ExecuteCrasher logic triggered...");
-                ExecuteCrasher();
-            }
-            Console.WriteLine("[DEBUG] Exiting CrasherDionTargets method...");
-        }
-
-        private void ExecuteCrasher()
-        {
-            Console.WriteLine("[DEBUG] Entering ExecuteCrasher method...");
-            Client.UseSkill("Sacrifice");
-            Client.UseSkill("Mad Soul");
-            Client.UseSkill("Auto Hemloch");
-            Client.UseSkill("Crasher");
-            Client.UseSkill("Animal Feast");
-            Client.UseSkill("Execute");
-            Client.UseItem("Damage Scroll");
-            skillUse = DateTime.UtcNow;
-            Console.WriteLine("[DEBUG] Exiting ExecuteCrasher method...");
-        }
-
-         private void UseBashingSkills()
-        {
-            Console.WriteLine("[DEBUG] Entering UseBashingSkills method...");
-            foreach (string skillName in Client.ClientTab._bashingSkillList)
-            {
-                // 1) "Sprint Potion"
-                if (skillName.Equals("Sprint Potion", StringComparison.OrdinalIgnoreCase) && Client.IsRegistered)
-                {
-                    if ((DateTime.UtcNow - _sprintPotionLastUsed).TotalSeconds > 16.0)
-                    {
-                        if (!Client.SafeScreen)
-                            Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
-                        Client.UseItem(skillName);
-                        _sprintPotionLastUsed = DateTime.UtcNow;
-                        return;
-                    }
-                }
-
-                // 2) "Two Move Combo"
-                if (skillName.Equals("Two Move Combo", StringComparison.OrdinalIgnoreCase))
-                {
-                    if ((DateTime.UtcNow - Client.ComboScrollLastUsed).TotalMinutes > 1.0 && Client.CurrentMP > 1500U)
-                    {
-                        if (!Client.SafeScreen)
-                            Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
-                        Client.UseItem(skillName);
-                        Client.ComboScrollLastUsed = DateTime.UtcNow;
-                        return;
-                    }
-                }
-
-                // 3) "Three Move Combo"
-                if (skillName.Equals("Three Move Combo", StringComparison.OrdinalIgnoreCase))
-                {
-                    if ((DateTime.UtcNow - Client.ComboScrollLastUsed).TotalMinutes > 2.0 && Client.CurrentMP > 1500U)
-                    {
-                        if (!Client.SafeScreen)
-                            Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
-                        Client.UseItem(skillName);
-                        Client.ComboScrollLastUsed = DateTime.UtcNow;
-                        return;
-                    }
-                }
-
-                if (!Client.Skillbook.SkillbookDictionary.TryGetValue(skillName, out var skill)
-                    || !skill.CanUse)
-                {
-                    // If we don't have it or can't use it, continue
-                    continue;
-                }
-
-                // For distance-based sets like fiveTileAttacksMed, threeTileAttacksMed, twoTileAttacksMed
-                int distance = target.Location.DistanceFrom(Client.ClientLocation);
-
-                // --- PF Skills (e.g., "Paralyze Force") or "Perfect Defense" or other special conditions ---
-                bool isPFSkill = CONSTANTS.PF_SKILLS.Contains(skillName);
-
-                List<Creature> nearbyMobs = Client.GetNearbyValidCreatures(8)
-                    .Where(m => !Client.IsLocationSurrounded(m.Location))
-                    .Where(m => !Client.Map.IsWall(m.Location))
-                    .ToList();
-
-                // PF skill usage
-                if (isPFSkill)
-                {
-                    // Make sure direction is aligned
-                    if (Client.ClientLocation.GetDirection(target.Location) == target.Location.GetDirection(Client.ClientLocation))
-                    {
-                        // Check if we need a certain mob count to use PF
-                        if (nearbyMobs.Count >= (int)Client.ClientTab.numPFCounter.Value)
-                        {
-                            // If skill is "Paralyze Force," check last use
-                            if (skillName.Equals("Paralyze Force", StringComparison.OrdinalIgnoreCase))
-                            {
-                                TimeSpan sinceLastUse = DateTime.UtcNow - skill.LastUsed;
-                                if (sinceLastUse.TotalMilliseconds < 27.0)
-                                    continue;
-                            }
-
-                            if (!Client.SafeScreen)
-                                Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
-                            Client.UseSkill(skillName);
-                            skillUse = DateTime.UtcNow;
-                            return;
-                        }
-                    }
-                    // If PF conditions fail, continue to next skill
-                    continue;
-                }
-
-                // 4) "Special Arrow Attack"
-                if (skillName.Equals("Special Arrow Attack", StringComparison.OrdinalIgnoreCase))
-                {
-                    TimeSpan timeSinceLastUse = DateTime.UtcNow - skill.LastUsed;
-                    if (timeSinceLastUse.TotalMilliseconds < 11.0)
-                        continue;
-                }
-
-                // "Perfect Defense" skill usage
-                if (skillName.Equals("Perfect Defense", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (nearbyMobs.Count <= (int)Client.ClientTab.numPFCounter.Value)
-                    {
-                        if (!Client.SafeScreen)
-                            Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
-                        Client.UseSkill(skillName);
-                        skillUse = DateTime.UtcNow;
-                        return;
-                    }
-                    continue;
-                }
-
-                // Sneak Flight or Ambush type logic
-                if (skillName.StartsWith("Sneak Flight", StringComparison.OrdinalIgnoreCase)
-                    && Client.Map.IsWall(target.Location))
-                {
-                    if (!Client.SafeScreen)
-                        Client.ServerMessage((byte)ServerMessageType.TopRight, "Wall Detected: Cancel Ambush");
-                    continue;
-                }
-
-                // Wolf Fang Fist / Lullaby Punch logic 
-                if (skillName.Equals("Wolf Fang Fist", StringComparison.OrdinalIgnoreCase) ||
-                    skillName.Equals("Lullaby Punch", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!Client.SafeScreen)
-                        Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
-                    Client.UseSkill(skillName);
-                    bashWffUsed = true;
-                    skillUse = DateTime.UtcNow;
-                    return;
-                }
-
-                // Distance-based checks for 5-, 3-, 2-tile attacks
-                bool inRange = false;
-                bool isTileBasedSkill = CONSTANTS.FIVE_TILE_ATTACKS_MED.Contains(skillName) ||
-                                        CONSTANTS.THREE_TILE_ATTACKS_MED.Contains(skillName) ||
-                                        CONSTANTS.TWO_TILE_ATTACKS_MED.Contains(skillName);
-
-                if (isTileBasedSkill)
-                {
-                    if (distance <= 5 && CONSTANTS.FIVE_TILE_ATTACKS_MED.Contains(skillName))
-                        inRange = true;
-                    else if (distance <= 3 && CONSTANTS.THREE_TILE_ATTACKS_MED.Contains(skillName))
-                        inRange = true;
-                    else if (distance <= 2 && CONSTANTS.TWO_TILE_ATTACKS_MED.Contains(skillName))
-                        inRange = true;
-
-                    if (!inRange)
-                        continue; // Skip the skill if it's a tile-based skill but not in range
-                }
-
-                if (!Client.SafeScreen)
-                    Client.ServerMessage((byte)ServerMessageType.TopRight, $"Using {skillName}");
-                Client.UseSkill(skillName);
-                skillUse = DateTime.UtcNow;
-                bashWffUsed = false;
-            }
-
-            Console.WriteLine("[DEBUG] Exiting UseBashingSkills method...");
-        }
+   
         #endregion
 
 
@@ -935,6 +717,63 @@ namespace Talos.Base
         private void TaskLoop()
         {
             Ascending();
+            TryUsingHealingPotion();
+        }
+
+        /// <summary>
+        /// Checks if the client should use a healing potion and attempts to use one if needed.
+        /// </summary>
+        public void TryUsingHealingPotion()
+        {
+            if (ShouldUseHealingPotion())
+            {
+                TimeSpan timeSinceLastHeal = DateTime.UtcNow - _lastUsedHealingPotion;
+
+                if (timeSinceLastHeal.TotalSeconds > 1.0 && CanUseHealingPotion())
+                {
+                    if (UseHealingPotion())
+                    {
+                        _lastUsedHealingPotion = DateTime.UtcNow;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines whether healing potion logic should be executed.
+        /// </summary>
+        private bool ShouldUseHealingPotion()
+        {
+            return Client.ClientTab.chkExkuranum.Checked &&
+                   !Client.Player.NeedsHeal &&
+                   Client.HealthPct <= Client.ClientTab.numExHeal.Value;
+        }
+
+        /// <summary>
+        /// Checks whether the client is in a state that allows potion use.
+        /// </summary>
+        private bool CanUseHealingPotion()
+        {
+            return !Client.IsSkulled && !Client.HasEffect(EffectsBar.Pramh);
+        }
+
+        /// <summary>
+        /// Tries to use a healing potion from the available options.
+        /// </summary>
+        /// <returns>True if a potion was successfully used, otherwise false.</returns>
+        private bool UseHealingPotion()
+        {
+            string[] potions = { "Exkuranum", "hydele deum", "Brown Potion", "ard ioc deum" };
+
+            foreach (string potion in potions)
+            {
+                if (Client.UseItemIgnoreCase(Client, potion))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void Ascending()
@@ -2211,7 +2050,6 @@ namespace Talos.Base
                 if (!Client.ClientTab.followCbox.Checked || string.IsNullOrEmpty(Client.ClientTab.followText.Text))
                     return;
 
-
                 bool overlapped = Client.GetNearbyObjects()
                     .OfType<Creature>()
                     .Any(creature => creature.Location == Client.ClientLocation
@@ -2764,7 +2602,7 @@ namespace Talos.Base
                         <= (int)wform.distanceUpDwn.Value)
                     {
                         // same map => see if server point is also close
-                        if ((int)Client.Map.MapID == (int)currentLocation.MapID)
+                        if (Client.Map.MapID == currentLocation.MapID)
                         {
                             if (Client.ServerLocation.DistanceFrom(currentLocation)
                                 > (int)wform.distanceUpDwn.Value)
@@ -3075,8 +2913,10 @@ namespace Talos.Base
                             continue;
                         }
 
+                        ManageSpellHistory();
                         UpdateVineTimer();
                         PerformActions();
+
                     }
                     catch (Exception ex)
                     {
@@ -3391,9 +3231,6 @@ namespace Talos.Base
                 Console.WriteLine($"Exception in PerformSpellActions: {ex.Message}");
             }
 
-            //ManageSpellCastingDelay();
-
-
             Client currentClient = Client;
             byte? castLinesCountNullable;
 
@@ -3403,17 +3240,19 @@ namespace Talos.Base
             }
             else
             {
-                Spell castedSpell = currentClient.CastedSpell;
+                Spell castedSpell = currentClient.LastSpell;
                 castLinesCountNullable = (castedSpell != null) ? new byte?(castedSpell.CastLines) : null;
             }
 
             byte? castLinesCount = castLinesCountNullable;
             int? castLines = (castLinesCount != null) ? new int?(castLinesCount.GetValueOrDefault()) : null;
 
+            // Throttling for 0 line spells to prevent spamming
             if (castLines.GetValueOrDefault() <= 0 & castLines != null)
             {
                 Thread.Sleep(330);
             }
+                
 
             return true;
         }
@@ -3983,16 +3822,16 @@ namespace Talos.Base
                 return false;
             }
 
-            // Process allies first.
+            // Process allies first
             AoPoisonForAllies();
 
-            // Then process the local player.
+            // Then process the local player
             bool isAoPoisonChecked = clientTab.aoPoisonCbox.Checked;
             bool isPlayerPoisoned = Client.Player.IsPoisoned;
 
             if (isAoPoisonChecked && Client.HasEffect(EffectsBar.Poison) && isPlayerPoisoned)
             {
-                // Check the cooldown for fungus extract.
+                // Check the cooldown for fungus extract
                 bool canUseFungusExtract = DateTime.UtcNow.Subtract(_lastUsedFungusBeetle).TotalSeconds > 1.0;
                 if (clientTab.fungusExtractCbox.Checked && Client.IsRegistered && Client.HasItem("Fungus Beetle Extract") && canUseFungusExtract)
                 {
@@ -4462,7 +4301,7 @@ namespace Talos.Base
 
                             uint currentHealthPct = allyClient != null
                                 ? allyClient.HealthPct
-                                : (uint)player.HealthPercent;
+                                : player.HealthPercent;
 
                             bool shouldHeal = player.NeedsHeal || currentHealthPct <= healAtPercent;
 
@@ -5755,31 +5594,25 @@ namespace Talos.Base
             }
         }
 
-        private void ManageSpellCasting()
+        private void ManageSpellHistory()
         {
-            DateTime utcNow = DateTime.UtcNow;
+            Utility.Timer timer = Utility.Timer.FromSeconds(1);
+
             while (Client.SpellHistory.Count >= 3 || Client.SpellCounter >= 3)
             {
-                if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds > 1.0)
-                {
+                if (timer.IsTimeExpired)        
                     Client.SpellHistory.Clear();
-                }
                 Thread.Sleep(10);
             }
-            if (DateTime.UtcNow.Subtract(_spellTimer).TotalSeconds > 1.0)
-            {
-                Client.SpellHistory.Clear();
-            }
+
+            if (DateTime.UtcNow.Subtract(_spellTimer).TotalSeconds <= 1.0)
+                return;
+        
+            Client.SpellHistory.Clear();
+            
         }
 
-        private void ManageSpellCastingDelay()
-        {
-            var spellCastLines = Client?.CastedSpell?.CastLines ?? 0;
-            if (spellCastLines <= 0)
-            {
-                //Thread.Sleep(10); // Adjust the sleep time as needed
-            }
-        }
+   
 
         internal bool ContainsAlly(string name)
         {
