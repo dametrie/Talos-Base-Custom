@@ -196,7 +196,7 @@ namespace Talos.Base
         internal bool DeformNearStrangers { get; set; } = false;
         internal bool Stopped { get; set; } = false;
         internal bool NeedsToRepairHammer { get; set; } = false;
-        internal bool AssailNoise { get; set; }
+        internal bool AssailNoise { get; set; } = true;
         internal bool Ladder { get; set; }
         internal bool ChestToggle { get; set; } = false;
         internal bool RaffleToggle { get; set; } = false;

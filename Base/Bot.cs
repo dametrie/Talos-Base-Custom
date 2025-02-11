@@ -440,10 +440,12 @@ namespace Talos.Base
 
         private void DojoSpells()
         {
-            while (string.Equals(Client.ClientTab.toggleDojoBtn.Text, "Disable"))
-            {
-                if (_shouldThreadStop)
-                    break;
+            if (Client == null || Client.ClientTab == null)
+                return;
+
+            if (_shouldThreadStop)
+                return;
+
                 try
                 {
                     // Example: process lists of dojo spells and skills
@@ -550,10 +552,13 @@ namespace Talos.Base
                     // Optionally log or handle exceptions
                 }
             }
-        }
+        
 
         private void DojoSkills()
         {
+            if (Client == null || Client.ClientTab == null)
+                return;
+
             try
             {
                 // Bonus spells every 5+ seconds
@@ -561,11 +566,26 @@ namespace Talos.Base
                     (DateTime.UtcNow - _lastSkillBonusAppliedTime).TotalSeconds > 5 &&
                     Client.ClientTab.dojoBonusCbox.Checked)
                 {
-                    if (!Client.UseItem("Skill/Spell Quadruple Bonus") &&
-                        !Client.UseItem("Skill/Spell Triple Bonus"))
+                    bool usedBonus = false;
+
+                    // Attempt to use the quadruple bonus if it's in the inventory.
+                    if (Client.Inventory.Contains("Skill/Spell Quadruple Bonus"))
+                    {
+                        usedBonus = Client.UseItem("Skill/Spell Quadruple Bonus");
+                    }
+
+                    // If not used, try the triple bonus.
+                    if (!usedBonus && Client.Inventory.Contains("Skill/Spell Triple Bonus"))
+                    {
+                        usedBonus = Client.UseItem("Skill/Spell Triple Bonus");
+                    }
+
+                    // If neither bonus was used, fall back to the leveling bonus.
+                    if (!usedBonus && Client.Inventory.Contains("Skill/Spell Leveling Bonus"))
                     {
                         Client.UseItem("Skill/Spell Leveling Bonus");
                     }
+
                     _lastSkillBonusAppliedTime = DateTime.UtcNow;
                 }
 
@@ -1205,6 +1225,11 @@ namespace Talos.Base
         /// </summary>
         private bool ShouldUseHealingPotion()
         {
+            if (Client == null || Client.ClientTab == null)
+            {
+                return false;
+            }
+
             return Client.ClientTab.chkExkuranum.Checked &&
                    !Client.Player.NeedsHeal &&
                    Client.HealthPct <= Client.ClientTab.numExHeal.Value;
@@ -3458,8 +3483,9 @@ namespace Talos.Base
         }
         private bool CheckForStopConditions()
         {
-            return (Client.InventoryFull && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
-                   (Client.Bot._hasDeposited && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
+
+            return (Client.ClientTab != null && Client.InventoryFull && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
+                   (Client.ClientTab != null && Client.Bot._hasDeposited && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
                    Client.ExchangeOpen || Client.ClientTab == null || Client.Dialog != null || _dontCast;
         }
         private void ProcessPlayersAndCreatures()

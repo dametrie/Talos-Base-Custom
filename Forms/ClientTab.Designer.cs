@@ -26,7 +26,10 @@ namespace Talos.Forms
             {
                 components.Dispose();
             }
-            base.Dispose(disposing);
+            if (this.IsHandleCreated)
+            {
+                base.Dispose(disposing);
+            }
         }
 
         #region Component Designer generated code

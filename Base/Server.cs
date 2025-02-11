@@ -3237,7 +3237,10 @@ namespace Talos
 
         internal Client GetClient(string clientName)
         {
-            return Clients.FirstOrDefault(c => c.Name.Equals(clientName, StringComparison.CurrentCultureIgnoreCase));
+            lock (SyncObj)
+            {
+                return Clients.FirstOrDefault(c => c.Name.Equals(clientName, StringComparison.CurrentCultureIgnoreCase));
+            }
         }
 
         internal List<Client> GetFollowChain(Client leader)

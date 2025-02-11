@@ -616,7 +616,7 @@ namespace Talos.Helper
         {
             client.AssailNoise = !client.AssailNoise;
 
-            string status = client.AssailNoise ? "disabled" : "enabled";
+            string status = client.AssailNoise ? "enabled" : "disabled";
             client.ServerMessage((byte)ServerMessageType.ActiveMessage, $"Assail sounds have been {status}.");
         }
 

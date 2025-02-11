@@ -413,7 +413,7 @@ namespace Talos.Bashing
 
         private void SwapItemToSlot1(Item item)
         {
-            var pkt = new ClientPacket(48); // 48 = OpCode for slot manipulation
+            var pkt = new ClientPacket(48);
             pkt.WriteByte(0);
             pkt.WriteByte(item.Slot);
             pkt.WriteByte(1);
