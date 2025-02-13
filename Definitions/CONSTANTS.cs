@@ -50,14 +50,22 @@ namespace Talos.Definitions
             { 6656, new ushort[] { 207 } }, // Lynith Beach Way Boss 3
             { 6657, new ushort[] { 207 } }, // Lynith Beach Way Boss 3a
             { 6658, new ushort[] { 207 } }, // Lynith Beach Way Boss 3b
-            { 6659, new ushort[] { 207 } }  // Lynith Beach Way Boss 3c
+            { 6659, new ushort[] { 207 } },  // Lynith Beach Way Boss 3c
+            { 566, new ushort[] { 273, 266, 240, 272, 87 } },  // Shinewood Forest 36
+            { 567, new ushort[] { 273, 266, 240, 272, 87 } },  // Shinewood Forest 37
+            { 568, new ushort[] { 273, 266, 240, 272, 87 } },  // Shinewood Forest 38
+            { 569, new ushort[] { 273, 266, 240, 272, 87 } },  // Shinewood Forest 39
+            { 570, new ushort[] { 273, 266, 240, 272, 87 } },  // Shinewood Forest 40
+            { 571, new ushort[] { 273, 266, 240, 272, 87 } },  // Shinewood Forest 41
+            { 572, new ushort[] { 273, 266, 240, 272, 87 } },  // Shinewood Forest 42
+            { 573, new ushort[] { 273, 266, 240, 272, 87 } },  // Shinewood Forest 43
         };
 
         public static readonly IReadOnlyDictionary<string, IReadOnlyCollection<ushort>> WHITELIST_BY_MAP_NAME = new Dictionary<string, IReadOnlyCollection<ushort>>(StringComparer.OrdinalIgnoreCase)
         {
             //{ "Crypt", new ushort[] { 53 } }, // allow spider only in crypt maps cuz spider spawn spell),
-            { "Shinewood Forest 3", new ushort[] { 263, 266 } }, // allow beetle/mantis in sw2 30+),
-            { "Shinewood Forest 4", new ushort[] { 263, 266 } }, // allow beetle/mantis in sw2 40+),
+            { "Shinewood Forest 3", new ushort[] { 273, 266, 240, 272, 87 } }, // allow beetle/mantis in sw3),
+            { "Shinewood Forest 4", new ushort[] { 273, 266, 240, 272, 87 } }, // allow beetle/mantis in sw4),
             { "Aman Jungle", new ushort[] { 856, 873, 874, 875 } }, // allow frogs in aman jungle),
             { "Yowien Territory", new ushort[] { 634, 664 } }, // allow specific yt mobs),
             { "Beal na Carraige", new ushort[] { 707, 780, 781 } }, // allow giant things in bnc),

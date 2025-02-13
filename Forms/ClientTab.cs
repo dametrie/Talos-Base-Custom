@@ -3898,6 +3898,8 @@ namespace Talos.Forms
 
         private void btnBashing_Click(object sender, EventArgs e)
         {
+            if (InvokeRequired) { BeginInvoke(new Action(() => { btnBashing_Click(sender, e); })); return; }
+
             if (btnBashingNew.Text == "Start Bashing")
             {
                 btnBashingNew.Text = "Stop Bashing";

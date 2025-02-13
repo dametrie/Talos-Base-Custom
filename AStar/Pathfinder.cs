@@ -591,7 +591,7 @@ internal class Pathfinder
         DateTime now = DateTime.UtcNow;
         if ((now.Month == 2 && now.Day >= 11) || (now.Month == 3 && now.Day <= 4))
         {
-            Console.WriteLine("Seasonal Event Active: Adding 'Make a Wish' blocklist.");
+            //Console.WriteLine("Seasonal Event Active: Adding 'Make a Wish' blocklist.");
 
             Rectangle fountainBlock1 = new Rectangle(new Point(83, 31), new Size(13, 12));
             dictionary[500] = fountainBlock1.Points.Select(p => new Location(500, p.X, p.Y)).ToArray();

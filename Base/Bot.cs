@@ -219,11 +219,6 @@ namespace Talos.Base
 
                     Client.InventoryFull = Client.Inventory.IsFull;
 
-
-                    //CheckScrollTimers();
-                    BashLoop();
-                    DojoLoop();
-
                     // Block if conditions for ranger or exchange are not met
                     if ((_rangerNear && Client.ClientTab.rangerStopCbox.Checked) || Client.ExchangeOpen)
                     {
@@ -231,7 +226,9 @@ namespace Talos.Base
                         continue;
                     }
 
-
+                    //CheckScrollTimers();
+                    BashLoop();
+                    DojoLoop();
                     HolidayEvents();
                     // ItemFinding();
                     VeltainChests();
@@ -265,6 +262,7 @@ namespace Talos.Base
                 return;
 
             bool isRangerNear = IsRangerNearBy();
+            
             if (isRangerNear)
             {
                 Thread.Sleep(LONG_SLEEP_MS);
@@ -446,113 +444,113 @@ namespace Talos.Base
             if (_shouldThreadStop)
                 return;
 
-                try
+            try
+            {
+                // Example: process lists of dojo spells and skills
+                bool waitForBowEquip = false;
+                List<string> disarmSkills = Client.ClientTab.dojoSkillList
+                    .Where(skill => CONSTANTS.REQUIRE_DISARM.Any(dis => skill.Contains(dis)))
+                    .ToList();
+                List<string> stabSkills = Client.ClientTab.dojoSkillList
+                    .Where(skill => CONSTANTS.STABS.Contains(skill))
+                    .ToList();
+                bool hasArrowShot = Client.ClientTab.dojoSkillList.Any(skill => skill.Contains("Arrow Shot"));
+
+                if (Client.ClientTab.dojoSpellList.Count == 0)
+                    Client.ClientTab.dojoSpellList.Add("filler");
+
+                foreach (string dojoSpell in Client.ClientTab.dojoSpellList)
                 {
-                    // Example: process lists of dojo spells and skills
-                    bool waitForBowEquip = false;
-                    List<string> disarmSkills = Client.ClientTab.dojoSkillList
-                        .Where(skill => CONSTANTS.REQUIRE_DISARM.Any(dis => skill.Contains(dis)))
-                        .ToList();
-                    List<string> stabSkills = Client.ClientTab.dojoSkillList
-                        .Where(skill => CONSTANTS.STABS.Contains(skill))
-                        .ToList();
-                    bool hasArrowShot = Client.ClientTab.dojoSkillList.Any(skill => skill.Contains("Arrow Shot"));
-
-                    if (Client.ClientTab.dojoSpellList.Count == 0)
-                        Client.ClientTab.dojoSpellList.Add("filler");
-
-                    foreach (string dojoSpell in Client.ClientTab.dojoSpellList)
+                    foreach (string skill in disarmSkills.Where(s => Client.CanUseSkill(Client.Skillbook[s])))
                     {
-                        foreach (string skill in disarmSkills.Where(s => Client.CanUseSkill(Client.Skillbook[s])))
+                        if (skill.Contains("Claw Slash"))
                         {
-                            if (skill.Contains("Claw Slash"))
+                            if (!Client.UseItem("Blackstar Night Claw") &&
+                                !Client.UseItem("Yowien's Fist") &&
+                                !Client.UseItem("Yowien's Fist1") &&
+                                !Client.UseItem("Yowien's Claw") &&
+                                !Client.UseItem("Yowien's Claw1"))
                             {
-                                if (!Client.UseItem("Blackstar Night Claw") &&
-                                    !Client.UseItem("Yowien's Fist") &&
-                                    !Client.UseItem("Yowien's Fist1") &&
-                                    !Client.UseItem("Yowien's Claw") &&
-                                    !Client.UseItem("Yowien's Claw1"))
-                                {
-                                    Client.UseItem("Tilian Claw");
-                                }
+                                Client.UseItem("Tilian Claw");
                             }
-                            else
+                        }
+                        else
+                        {
+                            Client.RemoveWeapon();
+                            Client.RemoveShield();
+                        }
+                        if (Client.UseSkill(skill))
+                        {
+                            Client.RemoveWeapon();
+                            Client.RemoveShield();
+                            while (Client.EquippedItems[1] != null || Client.EquippedItems[3] != null)
                             {
-                                Client.RemoveWeapon();
-                                Client.RemoveShield();
-                            }
-                            if (Client.UseSkill(skill))
-                            {
-                                Client.RemoveWeapon();
-                                Client.RemoveShield();
-                                while (Client.EquippedItems[1] != null || Client.EquippedItems[3] != null)
-                                {
-                                    Thread.Sleep(5);
-                                }
                                 Thread.Sleep(5);
                             }
-                        }
-                        foreach (string skill in stabSkills.Where(s => Client.CanUseSkill(Client.Skillbook[s])))
-                        {
-                            string currentWeapon = Client.EquippedItems[1]?.Name;
-                            if ((currentWeapon == null || !CONSTANTS.BOWS.Concat(CONSTANTS.DAGGERS).Any(e => currentWeapon.Contains(e))) &&
-                                string.IsNullOrEmpty(Client.EquipBow()))
-                            {
-                                foreach (Item item in Client.Inventory)
-                                {
-                                    if (CONSTANTS.DAGGERS.Any(d => item.Name.Contains(d)))
-                                    {
-                                        Client.UseItem(item.Name);
-                                        break;
-                                    }
-                                }
-                            }
-                            Client.UseSkill(skill);
-                        }
-                        // Check and wait for bow equip if necessary
-                        string equippedWeapon = Client.EquippedItems[1]?.Name;
-                        if (hasArrowShot && (equippedWeapon == null || !CONSTANTS.BOWS.Any(b => equippedWeapon.Contains(b))) &&
-                            !string.IsNullOrEmpty(Client.EquipBow()))
-                        {
-                            waitForBowEquip = true;
-                        }
-                        DateTime startWait = DateTime.UtcNow;
-                        while (waitForBowEquip &&
-                              (equippedWeapon == null || !CONSTANTS.BOWS.Concat(CONSTANTS.DAGGERS).Any(e => equippedWeapon.Contains(e))) &&
-                              DateTime.UtcNow.Subtract(startWait).TotalMilliseconds <= 500)
-                        {
                             Thread.Sleep(5);
                         }
-                        waitForBowEquip = false;
-                        Thread.Sleep(5);
-                        if (!string.Equals(dojoSpell, "filler"))
+                    }
+                    foreach (string skill in stabSkills.Where(s => Client.CanUseSkill(Client.Skillbook[s])))
+                    {
+                        string currentWeapon = Client.EquippedItems[1]?.Name;
+                        if ((currentWeapon == null || !CONSTANTS.BOWS.Concat(CONSTANTS.DAGGERS).Any(e => currentWeapon.Contains(e))) &&
+                            string.IsNullOrEmpty(Client.EquipBow()))
                         {
-                            if (_needFasSpiorad)
+                            foreach (Item item in Client.Inventory)
                             {
-                                Client.UseSpell("fas spiorad", staffSwitch: Client.ClientTab.dojoAutoStaffCbox.Checked, wait: false);
+                                if (CONSTANTS.DAGGERS.Any(d => item.Name.Contains(d)))
+                                {
+                                    Client.UseItem(item.Name);
+                                    break;
+                                }
+                            }
+                        }
+                        Client.UseSkill(skill);
+                    }
+                    // Check and wait for bow equip if necessary
+                    string equippedWeapon = Client.EquippedItems[1]?.Name;
+                    if (hasArrowShot && (equippedWeapon == null || !CONSTANTS.BOWS.Any(b => equippedWeapon.Contains(b))) &&
+                        !string.IsNullOrEmpty(Client.EquipBow()))
+                    {
+                        waitForBowEquip = true;
+                    }
+                    DateTime startWait = DateTime.UtcNow;
+                    while (waitForBowEquip &&
+                          (equippedWeapon == null || !CONSTANTS.BOWS.Concat(CONSTANTS.DAGGERS).Any(e => equippedWeapon.Contains(e))) &&
+                          DateTime.UtcNow.Subtract(startWait).TotalMilliseconds <= 500)
+                    {
+                        Thread.Sleep(5);
+                    }
+                    waitForBowEquip = false;
+                    Thread.Sleep(5);
+                    if (!string.Equals(dojoSpell, "filler"))
+                    {
+                        if (_needFasSpiorad)
+                        {
+                            Client.UseSpell("fas spiorad", staffSwitch: Client.ClientTab.dojoAutoStaffCbox.Checked, wait: false);
+                        }
+                        else
+                        {
+                            ManageSpellHistory();
+                            if (!string.Equals(dojoSpell, "creag neart") && !string.Equals(dojoSpell, "Salvation"))
+                            {
+                                Client.UseSpell(dojoSpell, nonMainTarget, Client.ClientTab.dojoAutoStaffCbox.Checked, false);
                             }
                             else
                             {
-                                ManageSpellHistory();
-                                if (!string.Equals(dojoSpell, "creag neart") && !string.Equals(dojoSpell, "Salvation"))
-                                {
-                                    Client.UseSpell(dojoSpell, nonMainTarget, Client.ClientTab.dojoAutoStaffCbox.Checked, false);
-                                }
-                                else
-                                {
-                                    Client.UseSpell(dojoSpell, (Creature)Client.Player, Client.ClientTab.dojoAutoStaffCbox.Checked, false);
-                                }
+                                Client.UseSpell(dojoSpell, (Creature)Client.Player, Client.ClientTab.dojoAutoStaffCbox.Checked, false);
                             }
                         }
                     }
-                    Thread.Sleep(5);
                 }
-                catch
-                {
-                    // Optionally log or handle exceptions
-                }
+                Thread.Sleep(5);
             }
-        
+            catch
+            {
+                // Optionally log or handle exceptions
+            }
+        }
+
 
         private void DojoSkills()
         {
@@ -751,7 +749,7 @@ namespace Talos.Base
             }
         }
 
-
+        #region Raffles
         private void Raffles()
         {
             if (Client.Map == null || Client == null)
@@ -829,11 +827,12 @@ namespace Talos.Base
                 Thread.Sleep(500);
             }
         }
+        #endregion
 
 
         private void DuraLoop()
         {
-           
+
         }
 
         #region BashLoop
@@ -1190,7 +1189,7 @@ namespace Talos.Base
         }
 
 
-   
+
         #endregion
 
 
@@ -1382,7 +1381,7 @@ namespace Talos.Base
 
             // Route to Mileth storage
             Client.Routefind(new Location(135, 6, 6), 2);
-            return false; 
+            return false;
         }
         private bool DropSuccubusHair()
         {
@@ -1446,7 +1445,7 @@ namespace Talos.Base
                 Client.Routefind(new Location(135, 6, 6), 3);
                 return false;
             }
-            
+
             if (Client.Map.MapID == 500 && CONSTANTS.MILETH_ALTAR_SPOTS.Keys.Contains(Client.ServerLocation))
             {
                 // Drop the succubus hair
@@ -2652,7 +2651,7 @@ namespace Talos.Base
                     {
                         Client.ConfirmBubble = false;
                         Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
-                            && !Client.ClientTab.oneLineWalkCbox.Checked
+                            && Client.ClientTab != null && !Client.ClientTab.oneLineWalkCbox.Checked
                             && !Server._toggleWalk;
                     }
                     else
@@ -2721,7 +2720,7 @@ namespace Talos.Base
                 }
             }
             return false; // no walkable direction found
-        }       
+        }
 
         private bool UnStucker(Player leader)
         {
@@ -3328,7 +3327,7 @@ namespace Talos.Base
                 Thread.Sleep(2000);  // Delay before the next iteration to prevent high CPU usage
             }
 
-            
+
         }
         private void BotLoop()
         {
@@ -3431,9 +3430,9 @@ namespace Talos.Base
             if (Client == null || Client.ClientTab == null)
                 return false;
 
-            if (!Client.ClientTab.chkSpellStatus.Checked)  
+            if (!Client.ClientTab.chkSpellStatus.Checked)
                 return false;
-            
+
             foreach (Creature creature in _nearbyValidCreatures)
             {
                 // Retrieve the creature's states
@@ -3739,16 +3738,16 @@ namespace Talos.Base
             {
                 Thread.Sleep(330);
             }
-                
+
 
             return true;
         }
         private bool CastDefensiveSpells()
         {
             FasSpiorad();
+            Heal();
             Hide();
             BubbleBlock();
-            Heal();
             DispellAllySuain();
             DispellPlayerCurse();
             BeagCradh();
@@ -3842,7 +3841,7 @@ namespace Talos.Base
 
             if (!int.TryParse(Client.ClientTab.vineText.Text, out int vineDelay))
                 return;
-            
+
             if (!Client.ClientTab.vineyardCbox.Checked
                 || !Client.HasSpell("Lyliac Vineyard")
                 || !Client.Spellbook["Lyliac Vineyard"].CanUse)
@@ -4155,7 +4154,7 @@ namespace Talos.Base
 
             foreach (Ally ally in ReturnAllyList())
             {
-                if (ally.Page == null) { break; } 
+                if (ally.Page == null) { break; }
 
                 bool isDispelSuainChecked = ally.Page.dispelSuainCbox.Checked;
 
@@ -4792,8 +4791,8 @@ namespace Talos.Base
 
                             bool shouldHeal = player.NeedsHeal || currentHealthPct <= healAtPercent;
 
-                             //Console.WriteLine($"[Debug] {player.Name} NeedsHeal: {player.NeedsHeal}, ShouldHeal: {shouldHeal}, CurrentHP: {allyClient?.Stats.CurrentHP}, MaximumHP: {allyClient?.Stats.MaximumHP}");
-                            
+                            //Console.WriteLine($"[Debug] {player.Name} NeedsHeal: {player.NeedsHeal}, ShouldHeal: {shouldHeal}, CurrentHP: {allyClient?.Stats.CurrentHP}, MaximumHP: {allyClient?.Stats.MaximumHP}");
+
                             if (shouldHeal)
                             {
 
@@ -4881,8 +4880,8 @@ namespace Talos.Base
                 if (clientPct != playerPct)
                 {
                     Console.WriteLine(
-                        //$"[Debug] Discrepancy for {player.Name}: " +
-                        //$"Client side = {clientPct}%, Player object = {playerPct}%"
+                    //$"[Debug] Discrepancy for {player.Name}: " +
+                    //$"Client side = {clientPct}%, Player object = {playerPct}%"
                     );
                     // Take some action? — override the Player object's HP with the client’s more accurate HP?
                     // Because the client is more up-to-date, we’ll trust the client’s data?
@@ -5675,7 +5674,7 @@ namespace Talos.Base
                 //Creature targetCreature = enemyPage.NearestFirstCbx.Checked
                 //    ? eligibleCreatures.OrderBy(creature => creature.Location.DistanceFrom(Client.ServerLocation)).FirstOrDefault()
                 //    : eligibleCreatures.FirstOrDefault();
-                
+
                 Creature targetCreature;
 
                 if (enemyPage.NearestFirstCbx.Checked && !enemyPage.FarthestFirstCbx.Checked)
@@ -5920,14 +5919,14 @@ namespace Talos.Base
 
         internal bool CalculateHitCounter(Creature creature, EnemyPage enemyPage)
         {
-            if (creature.HealthPercent == 0 
-                && creature.AnimationHistory.Count != 0 
-                && creature.LastAnimation != (byte)SpellAnimation.Miss 
+            if (creature.HealthPercent == 0
+                && creature.AnimationHistory.Count != 0
+                && creature.LastAnimation != (byte)SpellAnimation.Miss
                 && DateTime.UtcNow.Subtract(creature.LastAnimationTime).TotalSeconds <= 1.5)
             {
                 return creature._hitCounter < enemyPage.expectedHitsNum.Value;
             }
-            if (creature.HealthPercent != 0 
+            if (creature.HealthPercent != 0
                 && creature._hitCounter > enemyPage.expectedHitsNum.Value)
             {
                 creature._hitCounter = (int)enemyPage.expectedHitsNum.Value - 1;
@@ -6087,19 +6086,19 @@ namespace Talos.Base
 
             while (Client.SpellHistory.Count >= 3 || Client.SpellCounter >= 3)
             {
-                if (timer.IsTimeExpired)        
+                if (timer.IsTimeExpired)
                     Client.SpellHistory.Clear();
                 Thread.Sleep(10);
             }
 
             if (DateTime.UtcNow.Subtract(_spellTimer).TotalSeconds <= 1.0)
                 return;
-        
+
             Client.SpellHistory.Clear();
-            
+
         }
 
-   
+
 
         internal bool ContainsAlly(string name)
         {

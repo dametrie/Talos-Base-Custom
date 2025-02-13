@@ -212,7 +212,7 @@ namespace Talos.Helper
                 // Remove cached updates after applying.
                 _pendingUpdates.TryRemove(creature.ID, out _);
 
-                Console.WriteLine($"[CreatureStateHelper] Applied cached updates for Creature ID: {creature.ID}, Creature Name: {creature.Name}");
+                //Console.WriteLine($"[CreatureStateHelper] Applied cached updates for Creature ID: {creature.ID}, Creature Name: {creature.Name}");
             }
         }
 
@@ -233,7 +233,7 @@ namespace Talos.Helper
                 if (isStale)
                 {
                     _pendingUpdates.TryRemove(creatureID, out _);
-                    Console.WriteLine($"[CreatureStateHelper] Removed stale cached updates for Creature ID: {creatureID}");
+                    //Console.WriteLine($"[CreatureStateHelper] Removed stale cached updates for Creature ID: {creatureID}");
                 }
             }
         }

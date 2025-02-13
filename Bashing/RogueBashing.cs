@@ -388,7 +388,8 @@ namespace Talos.Bashing
             if (arrowItem.Slot != 0)
                 SwapItemToSlot1(arrowItem);
 
-            Client.UseSkill(SpecialArrowAttack.Name);
+            if (SpecialArrowAttack != null)
+                Client.UseSkill(SpecialArrowAttack.Name);
 
             // Swap arrow item back to original slot if needed
             if (arrowItem.Slot != 0)
@@ -462,9 +463,11 @@ namespace Talos.Bashing
             Location behindTarget = target.Location.Offsetter(userToTargetDir);
             if (!Client.Map.IsWalkable(Client, behindTarget) ||
                 Warps.Contains(behindTarget) ||
-                !(Client.UseSkill(ShadowFigure.Name) ||
-                  Client.UseSkill(ShadowStrike.Name) ||
-                  Client.UseSkill(Ambush.Name)))
+                !(
+                     (ShadowFigure != null && Client.UseSkill(ShadowFigure.Name)) ||
+                     (ShadowStrike != null && Client.UseSkill(ShadowStrike.Name)) ||
+                     (Ambush != null && Client.UseSkill(Ambush.Name))
+                  ))
             {
                 return false;
             }
@@ -498,8 +501,10 @@ namespace Talos.Bashing
         /// </summary>
         internal virtual void UseRangedAssails()
         {
-            Client.UseSkill(ArrowShot.Name);
-            Client.UseSkill(ThrowSurigum.Name);
+            if (ArrowShot != null)
+                Client.UseSkill(ArrowShot.Name);
+            else if (ThrowSurigum != null)
+                Client.UseSkill(ThrowSurigum.Name);
         }
 
         /// <summary>
@@ -514,8 +519,11 @@ namespace Talos.Bashing
             if (!Client.CanUseSkill(skill))
                 return false;
 
-            Client.UseSkill(Amnesia.Name);
-            Client.UseSkill(skill.Name);
+            if (Amnesia != null)
+                Client.UseSkill(Amnesia.Name);
+            if (skill != null)
+                Client.UseSkill(skill.Name);
+
             return true;
         }
 
@@ -535,9 +543,12 @@ namespace Talos.Bashing
             // Then turn, use "Amnesia," walk forward, and skill
             Direction dir = target.Location.GetDirection(Client.ClientLocation);
             Client.Turn(dir);
-            Client.UseSkill(Amnesia.Name);
+            if (Amnesia != null)
+                Client.UseSkill(Amnesia.Name);
             Client.Walk(dir);
-            Client.UseSkill(skill.Name);
+            if (skill != null)
+                Client.UseSkill(skill.Name);
+
             return true;
         }
 
@@ -551,23 +562,24 @@ namespace Talos.Bashing
             byte hp = target.HealthPercent;
 
             // For high-health targets (>=80%), try a combo using Wolf Fang Fist or Frozen Strike with Charge.
-            if (hp >= 80 &&
-                (TryComboWithSleepSkill(Charge.Name)))
+            if (hp >= 80 && Charge != null && TryComboWithSleepSkill(Charge.Name))
             {
                 return true;
             }
 
             if (hp >= 60)
             {
-                if (target._hitCounter == 0 && (Client.UseSkill(AssassinStrike.Name) || Client.NumberedSkill(RearStrike.Name)) ||
-                    TryComboWithSleepSkill(StabTwice.Name, true) ||
-                    TryComboWithSleepSkill(KidneyShot.Name, true) ||
-                    TryAmnesiaTech(target, AssassinStrike.Name) ||
-                    TryAmnesiaTech(target, RearStrike.Name))
+                if (target._hitCounter == 0 && (AssassinStrike != null && Client.UseSkill(AssassinStrike.Name)) ||
+                    (RearStrike != null && Client.NumberedSkill(RearStrike.Name)) ||
+                    (StabTwice != null && TryComboWithSleepSkill(StabTwice.Name, true)) ||
+                    (KidneyShot != null && TryComboWithSleepSkill(KidneyShot.Name, true)) ||
+                    (AssassinStrike != null && TryAmnesiaTech(target, AssassinStrike.Name)) ||
+                    (RearStrike != null && TryAmnesiaTech(target, RearStrike.Name)))
                 {
                     return true;
                 }
             }
+        
 
             if (hp >= 40 &&
                 ((KidneyShot != null && Client.UseSkill(KidneyShot.Name)) ||
@@ -617,8 +629,8 @@ namespace Talos.Bashing
 
             // 1) If hp>=60 & hits=0 => "Rear Strike" or "Amnesia + Rear Strike"
             if (hp >= 60 &&
-               ((target._hitCounter == 0 && Client.NumberedSkill(RearStrike.Name)) ||
-                (Client.ClientLocation.DistanceFrom(target.Location) == 3 && TryComboWithAmnesia(RearStrike.Name))))
+               ((target._hitCounter == 0 && RearStrike != null && Client.UseSkill(RearStrike.Name)) ||
+                (Client.ClientLocation.DistanceFrom(target.Location) == 3 && RearStrike != null && TryComboWithAmnesia(RearStrike.Name))))
             {
                 return true;
             }
@@ -653,8 +665,12 @@ namespace Talos.Bashing
                         TurnForAction(mob, () =>
                         {
                             if (mob._hitCounter > 0)
-                                Client.UseSkill(Amnesia.Name);
-                            Client.UseSkill(rearStrike.Name);
+                            {
+                                if (Amnesia != null)
+                                    Client.UseSkill(Amnesia.Name);
+                            }
+                            if (rearStrike != null)
+                                Client.UseSkill(rearStrike.Name);
                         });
                         return true;
                     }
@@ -662,7 +678,7 @@ namespace Talos.Bashing
             }
 
             // 2) If "Assassin Strike" is available for a close target
-            if (Client.CanUseSkill(AssassinStrike))
+            if (AssassinStrike != null && Client.CanUseSkill(AssassinStrike))
             {
                 foreach (Creature mob in KillableTargets)
                 {

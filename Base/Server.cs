@@ -1802,7 +1802,7 @@ namespace Talos
         private bool ServerMessage_0x19_Sound(Client client, ServerPacket serverPacket)
         {
             byte soundCode = serverPacket.ReadByte();
-            Console.WriteLine($"[SERVER] Sound index: {soundCode}");
+            //Console.WriteLine($"[SERVER] Sound index: {soundCode}");
             
             if (soundCode == 19) // That god-awful sound that plays constantly in Tavaly
                 return false;
@@ -3237,9 +3237,14 @@ namespace Talos
 
         internal Client GetClient(string clientName)
         {
-            lock (SyncObj)
+            try
             {
                 return Clients.FirstOrDefault(c => c.Name.Equals(clientName, StringComparison.CurrentCultureIgnoreCase));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetClient: {ex.Message}");
+                return null;
             }
         }
 

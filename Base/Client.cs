@@ -1695,7 +1695,7 @@ namespace Talos.Base
                 .FirstOrDefault();
 
             if (candidateBow == null)
-                return string.Empty; // or return null depending on your error-handling preference
+                return string.Empty;
 
             UseItem(candidateBow.Name);
             return candidateBow.Name;
@@ -1876,7 +1876,7 @@ namespace Talos.Base
                 Utility.Timer timer = Utility.Timer.FromMilliseconds(1500);
                 while (!timer.IsTimeExpired)
                 {
-                    if (EquippedItems[6].Name == bestNecklace.Name)
+                    if (EquippedItems[6] != null && EquippedItems[6].Name == bestNecklace.Name)
                     {
                         OffenseElement = elementName;
                         return true;
@@ -1898,7 +1898,7 @@ namespace Talos.Base
                 return true;
             }
 
-            if (creature.Type == CreatureType.WalkThrough || CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID) || CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID))
+            if ((creature.Type == CreatureType.WalkThrough && !Map.Name.Contains("Shinewood")) || CONSTANTS.INVISIBLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.UNDESIRABLE_SPRITES.Contains(creature.SpriteID) || CONSTANTS.RED_BOROS.Contains(creature.SpriteID) || CONSTANTS.GREEN_BOROS.Contains(creature.SpriteID))
             {
                 return false;
             }
@@ -2201,7 +2201,7 @@ namespace Talos.Base
                 //Console.WriteLine($"[RouteFind] [{this.Name}] Current location: {currentLocation}");
                 Location adjustedDestination;
                 //adjust for followdistance?
-                if (ClientTab.followCbox.Checked)
+                if (ClientTab != null && ClientTab.followCbox.Checked)
                 {
                     adjustedDestination = GetValidLocationNearTarget(destination, (short)ClientTab.followDistanceNum.Value);
                 }
@@ -3346,7 +3346,7 @@ namespace Talos.Base
                 //}
                 if (spellName.Contains("fas"))
                 {
-                    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {CastedTarget.GetState<double>(CreatureState.FasDuration)}");
+                    //Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {CastedTarget.GetState<double>(CreatureState.FasDuration)}");
                 }
 
 
@@ -3358,13 +3358,13 @@ namespace Talos.Base
                     {
                         if (existingEntry.CooldownEndTime > DateTime.UtcNow)
                         {
-                            Console.WriteLine($"[Debug] Skipped adding {CastedTarget.ID} to _spellHistory due to cooldown.");
+                            //Console.WriteLine($"[Debug] Skipped adding {CastedTarget.ID} to _spellHistory due to cooldown.");
                         }
                         else
                         {
                             // Update cooldown end time for re-casting
                             existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(1);
-                            Console.WriteLine($"[Debug] Updated cooldown for {CastedTarget.ID} in _spellHistory.");
+                            //Console.WriteLine($"[Debug] Updated cooldown for {CastedTarget.ID} in _spellHistory.");
                         }
                     }
                     else
@@ -3374,8 +3374,8 @@ namespace Talos.Base
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
                         SpellHistory.Add(newEntry);
-                        Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
-                        Console.WriteLine($"[Debug] Added to _spellHistory: Spell = {spell.Name}, Creature ID = {CastedTarget.ID}, Time = {DateTime.UtcNow}");
+                        //Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
+                        //Console.WriteLine($"[Debug] Added to _spellHistory: Spell = {spell.Name}, Creature ID = {CastedTarget.ID}, Time = {DateTime.UtcNow}");
                     }
                 }
                 //else
