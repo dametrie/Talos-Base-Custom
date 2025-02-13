@@ -2624,7 +2624,8 @@ namespace Talos.Base
                     && Client.GetAllNearbyMonsters(0).Any())
                 {
                     Console.WriteLine($"[FollowWalking] Shake loose logic => random direction + short sleep + refresh");
-                    Client.Walk(RandomUtils.RandomEnumValue<Direction>());
+                    var direction = GetRandomDirection();
+                    Client.Walk(direction);
                     Thread.Sleep(300);
                     Client.RefreshRequest(false);
                 }
@@ -2696,6 +2697,16 @@ namespace Talos.Base
                 Client.IsWalking = false;
                 Console.WriteLine($"[FollowWalking] Exception occurred {ex.Message}");
             }
+        }
+
+        private Direction GetRandomDirection()
+        {
+            Direction direction;
+            do
+            {
+                direction = RandomUtils.RandomEnumValue<Direction>();
+            } while (direction == Direction.Invalid);
+            return direction;
         }
 
 

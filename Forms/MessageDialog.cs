@@ -18,6 +18,7 @@ namespace Talos
                 return messageDialog.ShowDialog(parent ?? mainForm);
             }
         }
+        }
 
         internal MessageDialog(string message)
         {
