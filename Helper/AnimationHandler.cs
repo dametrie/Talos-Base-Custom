@@ -213,8 +213,8 @@ namespace Talos.Helper
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, fasStateUpdate);
-                        Console.WriteLine($"[AnimationHandler] Someone else casted Fas on Creature ID: {_targetCreature?.ID}. LastFassed updated to {_targetCreature?.GetState<DateTime>(CreatureState.LastFassed)}");
-                        Console.WriteLine($"[AnimationHandler] (Other) Updating fas state for Creature ID: {_targetCreature.ID} using 'mor fas nadur' with Duration: {fasDuration} sec at {now}");
+                        //Console.WriteLine($"[AnimationHandler] Someone else casted Fas on Creature ID: {_targetCreature?.ID}. LastFassed updated to {_targetCreature?.GetState<DateTime>(CreatureState.LastFassed)}");
+                        //Console.WriteLine($"[AnimationHandler] (Other) Updating fas state for Creature ID: {_targetCreature.ID} using 'mor fas nadur' with Duration: {fasDuration} sec at {now}");
 
 
                     }
@@ -233,8 +233,8 @@ namespace Talos.Helper
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, fasStateUpdate);
-                        Console.WriteLine($"[AnimationHandler] We casted fas: {spellName} on Creature ID: {_targetCreature?.ID}. LastFassed updated to {_targetCreature?.GetState<DateTime>(CreatureState.LastFassed)}");
-                        Console.WriteLine($"[AnimationHandler] (We cast) Updating fas state for Creature ID: {_targetCreature.ID} using '{spellName}' with Duration: {fasDuration} sec at {now}");
+                        //Console.WriteLine($"[AnimationHandler] We casted fas: {spellName} on Creature ID: {_targetCreature?.ID}. LastFassed updated to {_targetCreature?.GetState<DateTime>(CreatureState.LastFassed)}");
+                        //Console.WriteLine($"[AnimationHandler] (We cast) Updating fas state for Creature ID: {_targetCreature.ID} using '{spellName}' with Duration: {fasDuration} sec at {now}");
 
 
                     }

@@ -66,7 +66,13 @@ namespace Talos.Bashing
         {
             // Show the rogue settings in UI
             // Adam check this
-            Client.ClientTab.rogueGbox.Visible = true;
+            // check if invoke required, if so, show rogueGbox on the main form
+            if (Client.ClientTab.InvokeRequired)
+            {
+                Client.ClientTab.Invoke(new Action(() => Client.ClientTab.rogueGbox.Visible = true));
+            }
+            else
+                Client.ClientTab.rogueGbox.Visible = true;
         }
 
         /// <summary>
@@ -76,18 +82,23 @@ namespace Talos.Bashing
         internal override void UseSkills(Creature target)
         {
             DateTime now = DateTime.UtcNow;
+            Console.WriteLine($"[DEBUG] UseSkills called for target {target.Name} (ID: {target.ID}) at {target.Location}");
+
             bool canUseSkill = (now - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
-            bool canAssail = (now - LastAssailed) > TimeSpan.FromMilliseconds(500);
+            bool canAssail = (now - LastAssailed) > TimeSpan.FromMilliseconds(1000.0);
+            Console.WriteLine($"[DEBUG] canUseSkill: {canUseSkill}, canAssail: {canAssail}");
 
             // Attempt multi-target logic first
             if (DoActionForSurroundingCreature())
             {
                 LastUsedSkill = now;
+                Console.WriteLine("[DEBUG] Early exit in UseSkills due to secondary action.");
                 return;
             }
 
             // Possibly back off if distance=2
             int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
+            Console.WriteLine($"[DEBUG] Distance to primary target: {distanceToTarget}");
             if (distanceToTarget == 2)
             {
                 if (TryBackOff(target, once: true) || TryApproach(target))
@@ -98,26 +109,37 @@ namespace Talos.Bashing
             if (DoActionForSurroundingCreature())
             {
                 LastUsedSkill = now;
+                Console.WriteLine("[DEBUG] Second Early exit in UseSkills due to secondary action.");
                 return;
             }
 
             // Re-check distance in case we moved
             distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget > 11)
+            {
+                Console.WriteLine("[DEBUG] Target is too far; exiting UseSkills.");
                 return;
+
+            }
 
             // Distances
             if (distanceToTarget == 1)
             {
+                Console.WriteLine("[DEBUG] Processing melee-range actions for primary target.");
                 // If asgalled but not bashing => skip
                 if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
+                {
+                    Console.WriteLine("[DEBUG] Primary target is asgalled and conditions not met; skipping melee action.");
                     return;
+                }
+
 
                 // Use skills if possible
                 if (canUseSkill && DoActionForRange1(target))
                 {
                     LastUsedSkill = now;
                     target._hitCounter++;
+                    Console.WriteLine("[DEBUG] DoActionForRange1 executed on primary target.");
                 }
 
                 // Possibly do assails if we can
@@ -126,29 +148,33 @@ namespace Talos.Bashing
                     UseAssails();
                     LastAssailed = now;
                     target._hitCounter++;
+                    Console.WriteLine("[DEBUG] UseAssails executed on primary target.");
                 }
             }
             else if (distanceToTarget == 2)
             {
                 // If we can do ranged assails
-                if (!canAssail)
-                    return;
+                if (!canAssail) { Console.WriteLine("[DEBUG] Cannot perform assails at distance 2; exiting UseSkills."); return; }
+
 
                 UseRangedAssails();
                 LastAssailed = now;
                 target._hitCounter++;
+                Console.WriteLine("[DEBUG] Ranged assails executed on primary target.");
             }
             else
             {
+                Console.WriteLine("[DEBUG] Processing actions for primary target at distance 3..11.");
                 // 3..11
-                if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
-                    return;
+                if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall) { Console.WriteLine("[DEBUG] Primary target is asgalled and conditions not met; exiting."); return; }
+
 
                 // If we can do skill
                 if (canUseSkill && DoActionForRangeLt11(target))
                 {
                     LastUsedSkill = now;
                     target._hitCounter++;
+                    Console.WriteLine("[DEBUG] DoActionForRangeLt11 executed on primary target.");
                 }
 
                 // Then do assails if time allows
@@ -158,6 +184,7 @@ namespace Talos.Bashing
                 UseRangedAssails();
                 LastAssailed = now;
                 target._hitCounter++;
+                Console.WriteLine("[DEBUG] Ranged assails executed on primary target.");
             }
         }
 
@@ -647,8 +674,10 @@ namespace Talos.Bashing
 
         private bool DoActionForSurroundingCreature()
         {
+            Console.WriteLine("[DEBUG] Entering DoActionForSurroundingCreature()");
             Skill rearStrike = Client.Skillbook.GetNumberedSkill(RearStrike.Name);
             bool canRearStrike = Client.CanUseSkill(rearStrike);
+            Console.WriteLine($"[DEBUG] canRearStrike: {canRearStrike}");
 
             // 1) Possibly do "Rear Strike" on a different target
             if (canRearStrike)
@@ -662,16 +691,24 @@ namespace Talos.Bashing
                         SharesAxis(Client.ClientLocation, mob.Location) &&
                         (mob._hitCounter <= 0 || Client.CanUseSkill(Amnesia)))
                     {
+                        Console.WriteLine($"[DEBUG] Found secondary mob {mob.Name} (ID: {mob.ID}) for Rear Strike. HitCounter: {mob._hitCounter}");
                         TurnForAction(mob, () =>
                         {
                             if (mob._hitCounter > 0)
                             {
                                 if (Amnesia != null)
+                                {
+                                    Console.WriteLine($"[DEBUG] Using Amnesia on {mob.ID}");
                                     Client.UseSkill(Amnesia.Name);
+                                }
                             }
                             if (rearStrike != null)
+                            {
+                                Console.WriteLine($"[DEBUG] Using Rear Strike on {mob.ID}");
                                 Client.UseSkill(rearStrike.Name);
+                            }
                         });
+                        Console.WriteLine("[DEBUG] Exiting DoActionForSurroundingCreature() after executing Rear Strike.");
                         return true;
                     }
                 }
@@ -688,12 +725,19 @@ namespace Talos.Bashing
                         MeetsKillCriteria(mob) &&
                         ShouldUseSkillsOnTarget(mob))
                     {
-                        TurnForAction(mob, () => Client.UseSkill(AssassinStrike.Name));
+                        Console.WriteLine($"[DEBUG] Found secondary mob {mob.Name} (ID: {mob.ID}) for Assassin Strike.");
+                        TurnForAction(mob, () =>
+                        {
+                            Console.WriteLine($"[DEBUG] Using Assassin Strike on {mob.Name}");
+                            Client.UseSkill(AssassinStrike.Name);
+                        });
+                        Console.WriteLine("[DEBUG] Exiting DoActionForSurroundingCreature() after executing Assassin Strike.");
                         return true;
                     }
                 }
             }
 
+            Console.WriteLine("[DEBUG] No secondary action executed in DoActionForSurroundingCreature().");
             return false;
         }
 

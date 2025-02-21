@@ -136,7 +136,7 @@ namespace Talos.Base
         internal bool madeLepNet;
         private DateTime _lastUsedHealingPotion;
         private Creature nonMainTarget;
-        private Thread dojoSpellThread;
+        private Task dojoSpellTask;
         private Location dojoPoint;
 
         public bool RecentlyUsedGlowingStone { get; set; } = false;
@@ -150,29 +150,30 @@ namespace Talos.Base
 
         internal Bot(Client client, Server server) : base(client, server)
         {
-            AddTask(new BotLoop(BotLoop));
-            AddTask(new BotLoop(SoundLoop));
-            AddTask(new BotLoop(WalkLoop));
-            AddTask(new BotLoop(MultiLoop));
-            AddTask(new BotLoop(AnimationLoop));
+            AddTask(BotLoop);
+            AddTask(SoundLoop);
+            AddTask(WalkLoop);
+            AddTask(MultiLoop);
+            AddTask(AnimationLoop);
+            AddTask(DojoLoop);
         }
 
-        private void AnimationLoop()
+        private async Task AnimationLoop(CancellationToken token)
         {
-            while (!_shouldThreadStop)
+            while (!token.IsCancellationRequested)
             {
                 try
                 {
                     if (Client.Map == null || !Client.Map.IsLoaded)
                     {
-                        Thread.Sleep(1000); // Wait for map to load
+                        await Task.Delay(1000, token); // Wait for map to load
                         continue;
                     }
 
                     // Ensure we are checking a valid MapID in the blacklist
                     if (!Pathfinder.BlackList.TryGetValue(Client.Map.MapID, out Location[] blacklistTiles))
                     {
-                        Thread.Sleep(1000); // If no blacklist for this map, just wait and retry
+                        await Task.Delay(1000, token); // If no blacklist for this map, just wait and retry
                         continue;
                     }
 
@@ -195,7 +196,11 @@ namespace Talos.Base
                     }
 
                     // Sleep to prevent excessive looping and CPU usage
-                    Thread.Sleep(2000);
+                    await Task.Delay(2000, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -205,14 +210,15 @@ namespace Talos.Base
         }
 
 
-
-
-        private void MultiLoop()
+        private async Task MultiLoop(CancellationToken token)
         {
-            while (!_shouldThreadStop)
+            while (!token.IsCancellationRequested)
             {
                 try
                 {
+                    //if (Client.Name == "Brightness")
+                    //    Console.WriteLine("MultiLoop Pulse");
+                        
                     // Block if Client or ClientTab is null
                     if (Client == null || Client.ClientTab == null)
                         continue;
@@ -222,13 +228,12 @@ namespace Talos.Base
                     // Block if conditions for ranger or exchange are not met
                     if ((_rangerNear && Client.ClientTab.rangerStopCbox.Checked) || Client.ExchangeOpen)
                     {
-                        Thread.Sleep(100);
+                        await Task.Delay(100, token);
                         continue;
                     }
 
                     //CheckScrollTimers();
                     BashLoop();
-                    DojoLoop();
                     HolidayEvents();
                     // ItemFinding();
                     VeltainChests();
@@ -239,7 +244,11 @@ namespace Talos.Base
                     DuraLoop();
 
                     // Sleep before the next iteration
-                    Thread.Sleep(100);
+                    await Task.Delay(100, token);
+                }
+                catch(OperationCanceledException)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -255,34 +264,51 @@ namespace Talos.Base
             Client.UseSkill("Rescue");
             Thread.Sleep(RESCUE_SLEEP_MS);
         }
-        internal void DojoLoop()
+        internal async Task DojoLoop(CancellationToken token)
         {
-            // Exit if Dojo is not enabled
-            if (!IsDojoEnabled())
-                return;
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    // Exit if Dojo is not enabled
+                    if (!IsDojoEnabled())
+                        return;
 
-            bool isRangerNear = IsRangerNearBy();
-            
-            if (isRangerNear)
+                    bool isRangerNear = IsRangerNearBy();
+
+                    if (isRangerNear)
+                    {
+                        await Task.Delay(LONG_SLEEP_MS, token);
+                    }
+
+                    if (Client.ClientTab.rescueCbox.Checked)
+                    {
+                        ExecuteRescue();
+                        return;
+                    }
+
+                    // If we are not on a dojo map and regeneration is not checked, perform map transition logic.
+                    if (!CONSTANTS.DOJO_MAPS.ContainsKey(Client.Map.MapID) && !Client.ClientTab.regenCaHere.Checked)
+                    {
+                        HandleMapTransition(isRangerNear);
+                    }
+                    else
+                    {
+                        // run the DoTrainingDojo task
+                        await Task.Run(() => DoTrainingDojo(token), token);
+                    }
+                }
+           
+            }
+            catch (OperationCanceledException)
             {
-                Thread.Sleep(LONG_SLEEP_MS);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DojoLoop] Exception occurred: {ex}");
             }
 
-            if (Client.ClientTab.rescueCbox.Checked)
-            {
-                ExecuteRescue();
-                return;
-            }
-
-            // If we are not on a dojo map and regeneration is not checked, perform map transition logic.
-            if (!CONSTANTS.DOJO_MAPS.ContainsKey(Client.Map.MapID) && !Client.ClientTab.regenCaHere.Checked)
-            {
-                HandleMapTransition(isRangerNear);
-            }
-            else
-            {
-                DoTrainingDojo();
-            }
         }
 
         private void HandleMapTransition(bool isRangerNear)
@@ -339,7 +365,7 @@ namespace Talos.Base
             }
         }
 
-        private void DoTrainingDojo()
+        private async Task DoTrainingDojo(CancellationToken token)
         {
             if (Client.ClientTab.chkDachaidh.Checked)
             {
@@ -379,17 +405,14 @@ namespace Talos.Base
             }
             else
             {
-                // Start the dojo spells thread if it’s not running
-                if (dojoSpellThread == null || !dojoSpellThread.IsAlive)
+                // Start the dojo spells task if it’s not running.
+                if (dojoSpellTask == null || dojoSpellTask.IsCompleted)
                 {
-                    BotThreads.Remove(dojoSpellThread);
-                    dojoSpellThread = new Thread(new ThreadStart(DojoSpells));
-                    BotThreads.Add(dojoSpellThread);
-                    dojoSpellThread.Start();
+                    dojoSpellTask = Task.Run(() => DojoSpells(token), token);
                 }
                 DojoSkills();
                 DojoCounterRegen();
-                Thread.Sleep(50);
+                await Task.Delay(50, token);
             }
         }
 
@@ -436,13 +459,12 @@ namespace Talos.Base
         }
 
 
-        private void DojoSpells()
+        private async Task DojoSpells(CancellationToken token)
         {
             if (Client == null || Client.ClientTab == null)
                 return;
 
-            if (_shouldThreadStop)
-                return;
+            token.ThrowIfCancellationRequested();
 
             try
             {
@@ -461,8 +483,12 @@ namespace Talos.Base
 
                 foreach (string dojoSpell in Client.ClientTab.dojoSpellList)
                 {
+                    token.ThrowIfCancellationRequested();
+
                     foreach (string skill in disarmSkills.Where(s => Client.CanUseSkill(Client.Skillbook[s])))
                     {
+                        token.ThrowIfCancellationRequested();
+
                         if (skill.Contains("Claw Slash"))
                         {
                             if (!Client.UseItem("Blackstar Night Claw") &&
@@ -485,19 +511,23 @@ namespace Talos.Base
                             Client.RemoveShield();
                             while (Client.EquippedItems[1] != null || Client.EquippedItems[3] != null)
                             {
-                                Thread.Sleep(5);
+                                await Task.Delay(5, token);
                             }
-                            Thread.Sleep(5);
+                            await Task.Delay(5, token);
                         }
                     }
                     foreach (string skill in stabSkills.Where(s => Client.CanUseSkill(Client.Skillbook[s])))
                     {
+                        token.ThrowIfCancellationRequested();
+
                         string currentWeapon = Client.EquippedItems[1]?.Name;
                         if ((currentWeapon == null || !CONSTANTS.BOWS.Concat(CONSTANTS.DAGGERS).Any(e => currentWeapon.Contains(e))) &&
                             string.IsNullOrEmpty(Client.EquipBow()))
                         {
                             foreach (Item item in Client.Inventory)
                             {
+                                token.ThrowIfCancellationRequested();
+
                                 if (CONSTANTS.DAGGERS.Any(d => item.Name.Contains(d)))
                                 {
                                     Client.UseItem(item.Name);
@@ -519,10 +549,10 @@ namespace Talos.Base
                           (equippedWeapon == null || !CONSTANTS.BOWS.Concat(CONSTANTS.DAGGERS).Any(e => equippedWeapon.Contains(e))) &&
                           DateTime.UtcNow.Subtract(startWait).TotalMilliseconds <= 500)
                     {
-                        Thread.Sleep(5);
+                        await Task.Delay(5, token);
                     }
                     waitForBowEquip = false;
-                    Thread.Sleep(5);
+                    await Task.Delay(5, token);
                     if (!string.Equals(dojoSpell, "filler"))
                     {
                         if (_needFasSpiorad)
@@ -543,12 +573,16 @@ namespace Talos.Base
                         }
                     }
                 }
-                Thread.Sleep(5);
+                await Task.Delay(5, token);
             }
-            catch
-            {
-                // Optionally log or handle exceptions
-            }
+ catch (OperationCanceledException)
+    {
+        // Handle cancellation if needed.
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DojoSpellsAsync] Exception occurred: {ex}");
+    }
         }
 
 
@@ -845,6 +879,9 @@ namespace Talos.Base
                     SetBashClass();
                 }
 
+                if (Client.Name == "Brightness")
+                    Console.WriteLine($"[DEBUG] IsBashing is currently set to {Client?.ClientTab?.IsBashing}");
+
                 if (!Client?.ClientTab?.IsBashing ?? true)
                 {
                     return;
@@ -855,7 +892,8 @@ namespace Talos.Base
                     return;
                 }
 
-                EnsureOneLineWalkEnabled();
+                if (!Client.ClientTab.oneLineWalkCbox.Checked)
+                    Client.ClientTab.oneLineWalkCbox.Checked = true;
 
                 BashingBase.EnableProtection = Client.ClientTab.Protect1Cbx.Checked || Client.ClientTab.Protect2Cbx.Checked;
                 BashingBase.ProtectName1 = Client.ClientTab.Protect1Cbx.Checked
@@ -1033,21 +1071,29 @@ namespace Talos.Base
             bashClassSet = (BashingBase != null);
         }
 
-        private void EnsureOneLineWalkEnabled()
-        {
-            if (!Client.ClientTab.oneLineWalkCbox.Checked)
-                Client.ClientTab.oneLineWalkCbox.Checked = true;
-        }
 
         private void LogException(string methodName, Exception ex)
         {
             Console.WriteLine($"[DEBUG] Logging exception from {methodName}: {ex.Message}");
-            string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "bashCrashLogs");
-            if (!Directory.Exists(logPath))
-                Directory.CreateDirectory(logPath);
 
-            string filePath = Path.Combine(logPath, $"{DateTime.Now:MM-dd-HH-yyyy_hh-mm-ss}.log");
-            File.WriteAllText(filePath, $"{methodName}: {ex}");
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+
+            string logsFolder = Path.Combine(basePath, "Logs");
+            if (!Directory.Exists(logsFolder))
+            {
+                Directory.CreateDirectory(logsFolder);
+            }
+
+            string crashLogsFolder = Path.Combine(logsFolder, "BashCrashLogs");
+            if (!Directory.Exists(crashLogsFolder))
+            {
+                Directory.CreateDirectory(crashLogsFolder);
+            }
+
+            string fileName = $"{DateTime.Now:MM-dd-HH-yyyy_hh-mm-ss_tt}.log";
+            string filePath = Path.Combine(crashLogsFolder, fileName);
+
+            File.WriteAllText(filePath, ex.ToString());
         }
 
 
@@ -1824,8 +1870,10 @@ namespace Talos.Base
                             break;
 
                         case 2: // February
-                            targetMapID = 3043;
-                            targetLocation = new Location(3043, 20, 24);
+                            targetMapID = 3271;
+                            targetLocation = new Location(3271, 43, 58);
+                            //targetMapID = 3043;
+                            //targetLocation = new Location(3043, 20, 24);
                             npcName = "Aidan";
                             break;
 
@@ -1963,10 +2011,10 @@ namespace Talos.Base
             }
         }
 
-        private void WalkLoop()
+        private async Task WalkLoop(CancellationToken token)
         {
 
-            while (!_shouldThreadStop)
+            while (!token.IsCancellationRequested)
             {
                 //Console.WriteLine("[WalkLoop] Pulse");
                 _rangerNear = IsRangerNearBy();
@@ -1977,7 +2025,7 @@ namespace Talos.Base
                     WalkActions();
                 }
 
-                Thread.Sleep(100); // Add a small sleep to avoid flooding the CPU default: 100
+                await Task.Delay(100, token); // Add a small sleep to avoid flooding the CPU default: 100
             }
 
         }
@@ -2555,6 +2603,12 @@ namespace Talos.Base
                     ?? Client.WorldObjects.Values.OfType<Player>()
                        .FirstOrDefault(p => p.Name.Equals(followName, StringComparison.CurrentCultureIgnoreCase));
 
+                List<Player> nearbyPlayers = Client.GetNearbyPlayers();
+
+                if(!nearbyPlayers.Any(p => p.Name.Equals(followName, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    leader = null;
+                }
 
                 var leaderClient = botClientToFollow;
 
@@ -2563,20 +2617,6 @@ namespace Talos.Base
                     RefreshLastStep();
                 }
 
-
-                if (Client.ClientTab.chkLastStepF5.Checked
-                    && botClientToFollow != null
-                    && (botClientToFollow.ClientTab.IsBashing || !botClientToFollow.Stopped))
-                {
-                    double idleSeconds = (DateTime.UtcNow - Client.LastStep).TotalSeconds;
-                    double requiredIdle = (double)Client.ClientTab.numLastStepTime.Value;
-                    if (idleSeconds >= requiredIdle)
-                    {
-                        // Perform a forced refresh if we've been idle too long
-                        Console.WriteLine($"[FollowWalking] Idle for {idleSeconds:F1}s, forcing refresh (LastStepF5).");
-                        Client.RefreshRequest();
-                    }
-                }
 
                 // If the leader is null, fallback to last known location
                 if (leader == null)
@@ -2601,6 +2641,8 @@ namespace Talos.Base
                 int distance = leaderLocation.DistanceFrom(Client.ClientLocation);
 
 
+
+
                 if (botClientToFollow != null
                     && botClientToFollow.Bot != null
                     && botClientToFollow.Bot.currentWay < botClientToFollow.Bot.ways.Count)
@@ -2608,12 +2650,16 @@ namespace Talos.Base
                     Location leadersCurrentWaypoint = botClientToFollow.Bot.ways[botClientToFollow.Bot.currentWay];
                     if (leadersCurrentWaypoint == Client.ServerLocation)
                     {
-                        Console.WriteLine($"[FollowWalking] [{Client.Name}] My location matches leader's current waypoint => random step + short sleep");
+                        Console.WriteLine($"[FollowWalking] [{Client.Name}] My location matches leader's current waypoint => random step + return");
 
-                        // Attempt random direction
-                        Client.Walk(RandomUtils.RandomEnumValue<Direction>());
-
-                        Thread.Sleep(2500);
+                        if (botClientToFollow?.ClientTab?.walkMapCombox.Text == "WayPoints" &&
+                            botClientToFollow.ClientTab.walkBtn.Text == "Stop" &&
+                            botClientToFollow.Stopped)
+                        {
+                            // Call your method to move to an adjacent walkable location
+                            MoveToNearbyLocation();
+                            return;
+                        }
                     }
                 }
 
@@ -2642,6 +2688,9 @@ namespace Talos.Base
                     {
                         if (distance > followDistance)
                         {
+                            if (Client.IsCasting)
+                                Client.IsCasting = false;
+
                             Client.ConfirmBubble = false;
                             Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
                                 && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -2650,6 +2699,9 @@ namespace Talos.Base
                     }
                     else if (distance > followDistance)
                     {
+                        if (Client.IsCasting)
+                            Client.IsCasting = false;
+
                         Client.ConfirmBubble = false;
                         Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
                             && Client.ClientTab != null && !Client.ClientTab.oneLineWalkCbox.Checked
@@ -2800,23 +2852,7 @@ namespace Talos.Base
             return false;
         }
 
-        private void BasherWalking(Client client)
-        {
-            bool? isBashing = client?.ClientTab?.IsBashing;
 
-            if (isBashing.GetValueOrDefault()
-                && !_rangerNear
-                && !Client.HasEffect(EffectsBar.BeagSuain)
-                && !Client.HasEffect(EffectsBar.Pramh)
-                && !Client.HasEffect(EffectsBar.Suain)
-                && Client.GetAllNearbyMonsters(0).Any<Creature>())
-            {
-                Direction direction = RandomUtils.RandomEnumValue<Direction>();
-                Client.Walk(direction);
-                Thread.Sleep(300);
-                Client.RefreshRequest(false);
-            }
-        }
 
         private void MoveToNearbyLocation()
         {
@@ -2853,33 +2889,6 @@ namespace Talos.Base
             if (lastStepF5 && exceededStepTime)
             {
                 Client.RefreshRequest(true);
-            }
-        }
-
-
-        //Added helper methods because was running into an issue where checkbox state wasn't
-        //being assessed correctly. Assumed it was a UI thread problem.
-        private bool GetCheckBoxChecked(CheckBox checkBox)
-        {
-            if (checkBox.InvokeRequired)
-            {
-                return (bool)checkBox.Invoke(new Func<bool>(() => checkBox.Checked));
-            }
-            else
-            {
-                return checkBox.Checked;
-            }
-        }
-
-        private decimal GetNumericUpDownValue(NumericUpDown numericUpDown)
-        {
-            if (numericUpDown.InvokeRequired)
-            {
-                return (decimal)numericUpDown.Invoke(new Func<decimal>(() => numericUpDown.Value));
-            }
-            else
-            {
-                return numericUpDown.Value;
             }
         }
 
@@ -3135,12 +3144,26 @@ namespace Talos.Base
             }
             catch (Exception ex)
             {
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PathfinderCrashLogs");
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
+                string basePath = AppDomain.CurrentDomain.BaseDirectory;
 
-                File.WriteAllText(Path.Combine(path, DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log"), ex.ToString());
+                string logsFolder = Path.Combine(basePath, "Logs");
+                if (!Directory.Exists(logsFolder))
+                {
+                    Directory.CreateDirectory(logsFolder);
+                }
+
+                string crashLogsFolder = Path.Combine(logsFolder, "PathfinderCrashLogs");
+                if (!Directory.Exists(crashLogsFolder))
+                {
+                    Directory.CreateDirectory(crashLogsFolder);
+                }
+
+                string fileName = $"{DateTime.Now:MM-dd-HH-yyyy_hh-mm-ss_tt}.log";
+                string filePath = Path.Combine(crashLogsFolder, fileName);
+
+                File.WriteAllText(filePath, ex.ToString());
             }
+
         }
 
 
@@ -3261,90 +3284,100 @@ namespace Talos.Base
                 Client.NpcDialog = "";
             }
         }
-        private void SoundLoop()
+        private async Task SoundLoop(CancellationToken token)
         {
             if (Client.ClientTab == null || Client == null)
             {
                 return;
             }
-            while (!_shouldThreadStop)
+            try
             {
-                //Console.WriteLine("[SoundLoop] Pulse");
-                if (Server._disableSound)
+                while (!token.IsCancellationRequested)
                 {
-                    Thread.Sleep(250);
-                    return;
-                }
-
-                if (Client.ClientTab == null || Client == null)
-                {
-                    return;
-                }
-
-                if (Client.RecentlyDied)
-                {
-                    //soundPlayer.Stream = Resources.warning;
-                    soundPlayer.PlaySync();
-                    Client.RecentlyDied = false;
-                }
-
-                if (Client.ClientTab.alertSkulledCbox.Checked && Client.IsSkulled)
-                {
-                    soundPlayer.Stream = Resources.skull;
-                    soundPlayer.PlaySync();
-                }
-
-                if (Client.ClientTab.alertRangerCbox.Checked && IsRangerNearBy())
-                {
-                    soundPlayer.Stream = Resources.ranger;
-                    soundPlayer.PlaySync();
-                }
-
-                if (Client.ClientTab.alertStrangerCbox.Checked && IsStrangerNearby())
-                {
-                    soundPlayer.Stream = Resources.detection;
-                    soundPlayer.PlaySync();
-                }
-
-                if (Client.ClientTab.alertItemCapCbox.Checked && _shouldAlertItemCap)
-                {
-                    soundPlayer.Stream = Resources.itemCap;
-                    soundPlayer.PlaySync();
-                    _shouldAlertItemCap = false;
-                }
-
-                if (Client.ClientTab.alertDuraCbox.Checked && itemDurabilityAlerts.Contains(true))
-                {
-                    for (int i = 0; i < itemDurabilityAlerts.Length; i++)
+                    //Console.WriteLine("[SoundLoop] Pulse");
+                    if (Server._disableSound)
                     {
-                        if (itemDurabilityAlerts[i])
-                        {
-                            soundPlayer.Stream = Resources.durability;
-                            soundPlayer.PlaySync();
-                            itemDurabilityAlerts[i] = false; // Set the current alert as handled
-                            break; // Exit the loop after handling the first alert
-                        }
+                        await Task.Delay(250);
+                        return;
                     }
-                    Thread.Sleep(2000);
+
+                    if (Client.ClientTab == null || Client == null)
+                    {
+                        return;
+                    }
+
+                    if (Client.RecentlyDied)
+                    {
+                        //soundPlayer.Stream = Resources.warning;
+                        soundPlayer.PlaySync();
+                        Client.RecentlyDied = false;
+                    }
+
+                    if (Client.ClientTab.alertSkulledCbox.Checked && Client.IsSkulled)
+                    {
+                        soundPlayer.Stream = Resources.skull;
+                        soundPlayer.PlaySync();
+                    }
+
+                    if (Client.ClientTab.alertRangerCbox.Checked && IsRangerNearBy())
+                    {
+                        soundPlayer.Stream = Resources.ranger;
+                        soundPlayer.PlaySync();
+                    }
+
+                    if (Client.ClientTab.alertStrangerCbox.Checked && IsStrangerNearby())
+                    {
+                        soundPlayer.Stream = Resources.detection;
+                        soundPlayer.PlaySync();
+                    }
+
+                    if (Client.ClientTab.alertItemCapCbox.Checked && _shouldAlertItemCap)
+                    {
+                        soundPlayer.Stream = Resources.itemCap;
+                        soundPlayer.PlaySync();
+                        _shouldAlertItemCap = false;
+                    }
+
+                    if (Client.ClientTab.alertDuraCbox.Checked && itemDurabilityAlerts.Contains(true))
+                    {
+                        for (int i = 0; i < itemDurabilityAlerts.Length; i++)
+                        {
+                            if (itemDurabilityAlerts[i])
+                            {
+                                soundPlayer.Stream = Resources.durability;
+                                soundPlayer.PlaySync();
+                                itemDurabilityAlerts[i] = false; // Set the current alert as handled
+                                break; // Exit the loop after handling the first alert
+                            }
+                        }
+                        await Task.Delay(2000);
+                    }
+
+                    if (Client.ClientTab.alertEXPCbox.Checked && Client.Experience >= 4290000000U)
+                    {
+                        soundPlayer.Stream = Resources.expmaxed;
+                        soundPlayer.PlaySync();
+                    }
+
+
+                    await Task.Delay(2000);  // Delay before the next iteration to prevent high CPU usage
                 }
-
-                if (Client.ClientTab.alertEXPCbox.Checked && Client.Experience >= 4290000000U)
-                {
-                    soundPlayer.Stream = Resources.expmaxed;
-                    soundPlayer.PlaySync();
-                }
-
-
-                Thread.Sleep(2000);  // Delay before the next iteration to prevent high CPU usage
             }
+            catch(OperationCanceledException)
+            {
 
-
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SoundLoop] Exception caught: {ex.Message}");
+            }
         }
-        private void BotLoop()
+
+        private async Task BotLoop(CancellationToken token)
         {
             try
             {
-                while (!_shouldThreadStop)
+                while (!token.IsCancellationRequested)
                 {
 
                     //Console.WriteLine("[BotLoop] Pulse - _shouldThreadStop: " + _shouldThreadStop);
@@ -3353,7 +3386,7 @@ namespace Talos.Base
                     {
                         if (Client.InArena)
                         {
-                            Thread.Sleep(1000);
+                            await Task.Delay(1000);
                             continue;
                         }
 
@@ -3366,7 +3399,7 @@ namespace Talos.Base
 
                         if (CheckForStopConditions())
                         {
-                            Thread.Sleep(100);
+                            await Task.Delay(100);
                             continue;
                         }
 
@@ -3395,6 +3428,10 @@ namespace Talos.Base
                                 Console.WriteLine("[BotLoop] Skulledplayers > 0, calling RedSkulledPlayers");
                                 RedSkulledPlayers();
                             }
+                            else
+                            {
+                                _dontWalk = false;
+                            }
                         }
 
                         if (IsStrangerNearby())
@@ -3421,6 +3458,10 @@ namespace Talos.Base
                 }
 
                 //Console.WriteLine("Exiting BotLoop, _shouldThreadStop: " + _shouldThreadStop);
+            }
+            catch (OperationCanceledException)
+            {
+                
             }
             catch (Exception ex)
             {
@@ -3600,11 +3641,11 @@ namespace Talos.Base
                 var inventory = Client.Inventory;
                 bool canUseBeetleAid = inventory.Contains("Beetle Aid") && Client.IsRegistered &&
                                        DateTime.UtcNow.Subtract(_lastUsedBeetleAid).TotalMinutes > 2.0;
-                bool canUseOtherItems = inventory.Contains("Komadium") || inventory.Contains("beothaich deum");
+                bool canUsePotions = inventory.Contains("Komadium") || inventory.Contains("beothaich deum");
 
-                Console.WriteLine($"[BotLoop] Can use Beetle Aid: {canUseBeetleAid}, Can use other items: {canUseOtherItems}");
+                Console.WriteLine($"[BotLoop] Can use Beetle Aid: {canUseBeetleAid}, Can use potions: {canUsePotions}");
 
-                if (canUseBeetleAid || canUseOtherItems)
+                if (canUseBeetleAid || canUsePotions)
                 {
                     _dontWalk = true;
                     Direction direction = player.Location.Point.GetDirection(Client.ServerLocation.Point);
@@ -3636,7 +3677,7 @@ namespace Talos.Base
                             Console.WriteLine("[BotLoop] Used Beetle Aid, updated lastUsedBeetleAid");
                             player.AnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
                         }
-                        else if (canUseOtherItems && (Client.UseItem("Komadium") || Client.UseItem("beothaich deum")))
+                        else if (canUsePotions && (Client.UseItem("Komadium") || Client.UseItem("beothaich deum")))
                         {
                             Console.WriteLine("[BotLoop] Used other item (Komadium or beothaich deum)");
                             player.AnimationHistory[(ushort)SpellAnimation.Skull] = DateTime.UtcNow.AddSeconds(-2);
@@ -3649,7 +3690,7 @@ namespace Talos.Base
                         return false;
                     }
                 }
-                else if (player == null || !Client.GetNearbyPlayers().Contains(player) || player.HealthPercent > 30 || DateTime.UtcNow.Subtract(player.AnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds > 5.0)
+                if (player == null || !Client.GetNearbyPlayers().Contains(player) || player.HealthPercent > 30 || DateTime.UtcNow.Subtract(player.AnimationHistory[(ushort)SpellAnimation.Skull]).TotalSeconds > 5.0)
                 {
                     Console.WriteLine("[BotLoop] Conditions for ending red-skull action met, resetting player and dontWalk flag");
                     player = null;
@@ -4808,7 +4849,7 @@ namespace Talos.Base
                             {
 
                                 uint healAmount = (uint)Client.CalculateHealAmount(healSpell);
-                                Console.WriteLine($"[Debug] Calculated Heal Amount: {healAmount} for player: {player.Name}");
+                                //Console.WriteLine($"[Debug] Calculated Heal Amount: {healAmount} for player: {player.Name}");
 
                                 List<Player> playersHealed = new List<Player>();
 
@@ -4816,7 +4857,7 @@ namespace Talos.Base
                                 {
                                     if (Client.UseSpell(healSpell, player, _autoStaffSwitch, false))
                                     {
-                                        Console.WriteLine($"[Debug] Cast single-target heal spell: {healSpell} on {player.Name}");
+                                        //Console.WriteLine($"[Debug] Cast single-target heal spell: {healSpell} on {player.Name}");
                                         playersHealed.Add(player);
                                         Thread.Sleep(200);
                                         RefreshPlayerHealStates(player, allyClient, healAtPercent);

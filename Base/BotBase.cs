@@ -1,26 +1,30 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Talos.Structs;
 
 namespace Talos.Base
 {
-    internal delegate void BotLoop();
+
     internal abstract class BotBase
     {
         internal Server Server { get; set; }
         internal Client Client { get; set; }
-        internal List<Thread> BotThreads { get; set; }
-        internal List<Location> Waypoints { get; set; }
-        internal List<BotLoop> BotLoops { get; set; }
 
-        internal volatile bool _shouldThreadStop = false;
+        protected CancellationTokenSource _cts;
+
+        public CancellationToken CancellationToken => _cts.Token;
+
+        protected List<Task> _tasks;
+
+        private readonly List<Func<CancellationToken, Task>> _botLoops = new List<Func<CancellationToken, Task>>();
 
 
         internal BotBase()
         {
-            BotThreads = new List<Thread>();
-            Waypoints = new List<Location>();
-            BotLoops = new List<BotLoop>();
+            _cts = new CancellationTokenSource();
+            _tasks = new List<Task>();
         }
 
         internal BotBase(Client client, Server server) : this()
@@ -28,39 +32,54 @@ namespace Talos.Base
             Client = client;
             Server = server;
         }
-        internal void Start()
+
+        protected void AddTask(Func<CancellationToken, Task> loopMethod)
         {
-            _shouldThreadStop = false;
-            BotThreads.Clear();
-            foreach (var botLoop in BotLoops)
+            _botLoops.Add(loopMethod);
+        }
+
+
+        public virtual void Start()
+        {
+            // If already running, optionally stop first (or simply return).
+            if (_cts != null && !_cts.IsCancellationRequested)
             {
-                BotLoop taskDelegate = botLoop;
-                Thread thread = new Thread(() => taskDelegate());
-                BotThreads.Add(thread);
-                thread.Start();
+                // Optionally call StopAsync() here to support restart.
+                // For now, assume we want to restart:
+                StopAsync().Wait();
+            }
+
+            // Reinitialize the cancellation token and tasks list.
+            _cts = new CancellationTokenSource();
+            _tasks = new List<Task>();
+
+            // Start each loop as a Task.
+            foreach (var loop in _botLoops)
+            {
+                _tasks.Add(Task.Run(() => loop(_cts.Token), _cts.Token));
             }
         }
 
-        internal void Stop()
+        public virtual async Task StopAsync()
         {
-            _shouldThreadStop = true;
-            foreach (var thread in BotThreads)
+            // Signal all loops to stop.
+            _cts.Cancel();
+
+            try
             {
-                thread.Join(); //previously using Thread.Abort() which is not recommended... but maybe it would stop the bot faster?
+                // Wait for all tasks to complete.
+                await Task.WhenAll(_tasks);
             }
-            BotThreads.Clear();
-
+            catch (OperationCanceledException)
+            {
+                // This is expected when cancellation occurs.
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[BotBase] Exception during stop: {ex}");
+            }
         }
 
-        internal void AddTask(BotLoop task)
-        {
-            BotLoops.Add(task);
-        }
-
-        internal void RemoveTask(BotLoop task) 
-        { 
-            BotLoops.Remove(task);
-        }
 
     }
 

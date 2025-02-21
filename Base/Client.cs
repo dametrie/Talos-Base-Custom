@@ -2570,7 +2570,7 @@ namespace Talos.Base
                         if (Dialog != null && Dialog.Message.Contains("Lumen Amulet"))
                         {
                             ServerMessage(0, "Deposit your lumen, then re-enable bot. damn nub");
-                            Bot.Stop();
+                            Bot.StopAsync();
                         }
                     }
                     else if (Map.MapID == 393 && ClientLocation.DistanceFrom(new Location(393, 7, 6)) <= 1)
@@ -3445,7 +3445,7 @@ namespace Talos.Base
                                 return false;
                             }
                         }
-                        if (ClientTab.hideLinesCbox.Checked)
+                        if (ClientTab != null && ClientTab.hideLinesCbox.Checked)
                         {
                             DisplayChant(" ");
                         }
@@ -3967,14 +3967,26 @@ namespace Talos.Base
 
         private void LogException(Exception ex)
         {
-            string logDirectory = AppDomain.CurrentDomain.BaseDirectory + "CrashLogs\\";
-            if (!Directory.Exists(logDirectory))
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+
+            string logsFolder = System.IO.Path.Combine(basePath, "Logs");
+            if (!Directory.Exists(logsFolder))
             {
-                Directory.CreateDirectory(logDirectory);
+                Directory.CreateDirectory(logsFolder);
             }
-            string logPath = logDirectory + DateTime.Now.ToString("MM-dd-HH-yyyy h mm tt") + ".log";
-            File.WriteAllText(logPath, ex.ToString());
+
+            string crashLogsFolder = System.IO.Path.Combine(logsFolder, "CrashLogs");
+            if (!Directory.Exists(crashLogsFolder))
+            {
+                Directory.CreateDirectory(crashLogsFolder);
+            }
+
+            string filename = $"{DateTime.Now:MM-dd-HH-yyyy_hh-mm-ss_tt}.log";
+            string filepath = System.IO.Path.Combine(crashLogsFolder, filename);
+
+            File.WriteAllText(filepath, ex.ToString());
         }
+
 
         private void ProcessReceiveQueue()
         {

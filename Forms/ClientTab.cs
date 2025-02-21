@@ -1615,11 +1615,8 @@ namespace Talos.Forms
                     _client.CurrentWaypoint = 0;
                 }
 
-                // asynchronously to avoid freezing the UI?
-                await Task.Run(() =>
-                {
-                    _client.BotBase.Start();
-                });
+                // Start the bot on a separate task if needed.
+                await Task.Run(() => _client.BotBase.Start());
 
                 if (!_client.ClientTab.safeScreenCbox.Checked)
                 {
@@ -1630,10 +1627,7 @@ namespace Talos.Forms
             {
                 startStrip.Text = "Start";
 
-                await Task.Run(() =>
-                {
-                    _client.BotBase.Stop();
-                });
+                await _client.BotBase.StopAsync();
 
                 if (!_client.ClientTab.safeScreenCbox.Checked)
                 {
@@ -3233,7 +3227,7 @@ namespace Talos.Forms
         {
             if (startStrip.Text == "Stop")
             {
-                _client.BotBase.Stop();
+                _client.BotBase.StopAsync();
             }
         }
 

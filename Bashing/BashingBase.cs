@@ -76,25 +76,34 @@ namespace Talos.Bashing
         {
             try
             {
+                Console.WriteLine($"[DEBUG] [{Client.Name}] DoBashing started at {DateTime.UtcNow}");
 
                 if (!CanPerformActions)
                 {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] Cannot perform actions. Exiting DoBashing.");
                     return true;
                 }
 
                 Update();
+                Console.WriteLine($"[DEBUG] [{Client.Name}] Update complete. NearbyPlayers: {NearbyPlayers.Count}, NearbyMonsters: {NearbyMonsters.Count}");
 
                 // Get filtered monsters and ordered potential targets
                 KillableTargets = FilterMonstersByCursedFased()?.ToList();
+                Console.WriteLine($"[DEBUG] [{Client.Name}] Filtered KillableTargets: {(KillableTargets == null ? 0 : KillableTargets.Count)}");
+
                 if (!ValidateKillableTargets())
                 {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] ValidateKillableTargets failed. Exiting DoBashing.");
                     return false;
                 }
                 //Console.WriteLine($"[Bashing] [{Client.Name}] Found {KillableTargets.Count} valid targets.");
 
                 var potentialTargets = GetOrderedPotentialTargets()?.ToList();
+                Console.WriteLine($"[DEBUG] [{Client.Name}] Potential targets count: {(potentialTargets == null ? 0 : potentialTargets.Count)}");
+
                 if (!ValidatePotentialTargets(potentialTargets))
                 {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] ValidatePotentialTargets failed. Exiting DoBashing.");
                     return false;
                 }
                 //Console.WriteLine($"[Bashing] [{Client.Name}] Found {potentialTargets.Count} ordered potential targets.");
@@ -103,38 +112,46 @@ namespace Talos.Bashing
                 Target = potentialTargets.FirstOrDefault(MeetsKillCriteria) ?? potentialTargets.FirstOrDefault();
                 if (Target == null)
                 {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] No valid target found. Exiting DoBashing.");
                     return false;
                 }
 
-                //Console.WriteLine($"[Bashing] [{Client.Name}] Target selected: {Target.Name} at {Target.Location}");
+                Console.WriteLine($"[DEBUG] [{Client.Name}] Target selected: {Target.Name} at {Target.Location}");
 
                 // Manage target selection timing
                 if (ShouldSendBashingTarget())
                 {
                     SendBashingTarget(Target);
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] Sent bashing target update.");
                 }
 
                 // Handle movement towards the target
                 if (!HandleMovement(Target))
                 {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] HandleMovement failed. Exiting DoBashing.");
                     return false;
                 }
 
+                Console.WriteLine($"[DEBUG] [{Client.Name}] Movement handled successfully.");
+
                 Client.Bot.EnsureWeaponEquipped();
+                Console.WriteLine($"[DEBUG] [{Client.Name}] Weapon check complete.");
 
                 // Perform refresh or equip actions if needed
                 if (RefreshIfNeeded() || EquipNecklaceIfNeeded(Target))
                 {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] Refresh or equip action executed. Exiting DoBashing for this cycle.");
                     return true;
                 }
 
                 // Perform bashing if enabled
                 if (Client.Bot?._dontBash == false)
                 {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] Using skills on target {Target.Name}");
                     UseSkills(Target);
                 }
 
-                //Console.WriteLine("[DEBUG] Exiting DoBashing method normally.");
+                Console.WriteLine("[DEBUG] Exiting DoBashing method normally.");
                 return true;
             }
             catch (Exception ex)
@@ -937,12 +954,19 @@ namespace Talos.Bashing
             // Refresh if Client and Server points are out of sync
             if (Client.ClientLocation != Client.ServerLocation)
             {
+
                 if ((currentTime - LastPointInSync).TotalMilliseconds > 1000)
                 {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] RefreshIfNeeded: Desync detected. Waiting for sync...");
+
                     WaitForSync(pingDelay, currentTime);
 
                     if (Client.ClientLocation != Client.ServerLocation)
+                    {
+                        Console.WriteLine($"[DEBUG] [{Client.Name}] Desync persists. Issuing RefreshRequest.");
                         Client.RefreshRequest();
+
+                    }
 
                     LastPointInSync = DateTime.UtcNow;
                     Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with true (desync refresh).");
@@ -954,7 +978,7 @@ namespace Talos.Bashing
                 LastPointInSync = currentTime;
             }
 
-            //Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with false (no refresh needed).");
+            Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with false (no refresh needed).");
             return false;
         }
 
@@ -978,14 +1002,20 @@ namespace Talos.Bashing
         /// <param name="startTime">The time we started the sync wait.</param>
         private void WaitForSync(TimeSpan pingDelay, DateTime startTime)
         {
-            //Console.WriteLine("[DEBUG] Entering WaitForSync method...");
+            Console.WriteLine($"[DEBUG] [{Client.Name}] Waiting for sync for up to {pingDelay.TotalMilliseconds} ms...");
+
             while ((DateTime.UtcNow - startTime) < pingDelay)
             {
                 Thread.Sleep(25);
                 if (Client.ClientLocation == Client.ServerLocation)
+                {
+                    Console.WriteLine($"[DEBUG] [{Client.Name}] Sync achieved.");
                     break;
+                }
+
             }
-            //Console.WriteLine("[DEBUG] Exiting WaitForSync method.");
+
+            Console.WriteLine($"[DEBUG] [{Client.Name}] Exiting WaitForSync.");
         }
 
         /// <summary>

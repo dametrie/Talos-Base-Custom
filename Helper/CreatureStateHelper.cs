@@ -83,7 +83,7 @@ namespace Talos.Helper
                 {
                     if (cacheEntry.LastFingerprint == newFingerprint && (now - cacheEntry.LastUpdateTime) < DebounceInterval)
                     {
-                        Console.WriteLine($"[CreatureStateHelper] Skipping redundant update for Creature ID: {creatureID}");
+                        //Console.WriteLine($"[CreatureStateHelper] Skipping redundant update for Creature ID: {creatureID}");
                         return;
                     }
                 }
@@ -101,7 +101,7 @@ namespace Talos.Helper
                                 creature.SetState(stateUpdate.Key, stateUpdate.Value);
                             }
                         }
-                        Console.WriteLine($"[CreatureStateHelper] Updated Creature ID: {creatureID}, Creature Name: {creature.Name}, for Client: {client.Name}");
+                        //Console.WriteLine($"[CreatureStateHelper] Updated Creature ID: {creatureID}, Creature Name: {creature.Name}, for Client: {client.Name}");
                     }
                     else
                     {
@@ -140,7 +140,7 @@ namespace Talos.Helper
                         }
                         if (state != CreatureState.LastStep)
                         {
-                            Console.WriteLine($"[CreatureStateHelper] Updated single state {state} for Creature ID: {creatureID}");
+                            //Console.WriteLine($"[CreatureStateHelper] Updated single state {state} for Creature ID: {creatureID}");
                         }
                     }
                     else
@@ -173,7 +173,7 @@ namespace Talos.Helper
                 return oldUpdates;
             });
 
-            Console.WriteLine($"[CreatureStateHelper] Cached updates for Creature ID: {creatureID}");
+            //Console.WriteLine($"[CreatureStateHelper] Cached updates for Creature ID: {creatureID}");
         }
 
         /// <summary>
@@ -192,8 +192,8 @@ namespace Talos.Helper
                 return oldUpdates;
             });
 
-            if (state != CreatureState.LastStep)
-                Console.WriteLine($"[CreatureStateHelper] Cached single update for Creature ID: {creatureID}, State: {state}");
+            //if (state != CreatureState.LastStep)
+            //    Console.WriteLine($"[CreatureStateHelper] Cached single update for Creature ID: {creatureID}, State: {state}");
         }
 
 

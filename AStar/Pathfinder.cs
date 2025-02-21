@@ -646,8 +646,8 @@ internal sealed class PathNode : IComparable<PathNode>
         Walkable = true;
         IsClosed = false;
         IsOpen = false;
-        Iterations = 0; // Start at zero, as in the original
-        Steps = 0; // Start at zero, as in the original
+        Iterations = 0; 
+        Steps = 0;
     }
 
     public int CompareTo(PathNode other)

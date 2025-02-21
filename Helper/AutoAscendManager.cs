@@ -300,7 +300,7 @@ namespace Talos.Helper
             else
             {
                 // Continue routing if the bot is running
-                if (!_client.Bot._shouldThreadStop)
+                if (!_client.Bot.CancellationToken.IsCancellationRequested)
                 {
                     _client.Routefind(targetLocation);
                 }
