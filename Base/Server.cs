@@ -1491,20 +1491,7 @@ namespace Talos
                     client.NearbyPlayers.TryRemove(player.Name, out _);
                     client.NearbyGhosts.TryRemove(player.Name, out _);
 
-                    // print each value of lastseenlocations
-                    Console.WriteLine("Before remove visible object: Last seen locations for player " + player.Name + " with ID of " + player.ID);
-                    foreach (var pair in client.LastSeenLocations)
-                    {
-                        Console.WriteLine($"Key: {pair.Key}, Value: {pair.Value}");
-                    }
                     client.LastSeenLocations[id] = player.Location;
-                    Console.WriteLine($"Last seen location for player {player.Name} updated to {player.Location}");
-                    foreach (var pair in client.LastSeenLocations)
-                    {
-                        Console.WriteLine($"Key: {pair.Key}, Value: {pair.Value}");
-                    }
-                    Console.WriteLine("After remove visible object: Last seen locations for player " + player.Name + " with ID of " + player.ID);
-
 
                     ClientTab clientTab = client.ClientTab;
                     if (clientTab != null)
@@ -2415,6 +2402,9 @@ namespace Talos
 
             if (!string.IsNullOrEmpty(player.Name))
             {
+                // Remove the player from the hidden list if they were hidden previously.
+                client.NearbyHiddenPlayers.TryRemove(id, out _);
+
                 client.NearbyPlayers.AddOrUpdate(player.Name, player, (key, oldValue) => player);
                 client.NearbyGhosts.TryRemove(player.Name, out _);
             }
@@ -2423,7 +2413,7 @@ namespace Talos
                 client.NearbyHiddenPlayers.AddOrUpdate(id, player, (key, oldValue) => player);
                 _shouldCloseProfile = true;
                 client.ClickObject(id);
-                client.RefreshRequest(false);
+                //client.RefreshRequest(false);
             }
 
 
