@@ -1462,6 +1462,7 @@ namespace Talos
         private bool ServerMessage_0x0E_RemoveVisibleObjects(Client client, ServerPacket serverPacket)
         {
             int id = serverPacket.ReadInt32();
+            Console.WriteLine($"Id of visible object inside RemoveVisibleObject: {id}");
 
             if (client.NearbyObjects.Contains(id))
             {
@@ -1489,6 +1490,20 @@ namespace Talos
 
                     client.NearbyPlayers.TryRemove(player.Name, out _);
                     client.NearbyGhosts.TryRemove(player.Name, out _);
+
+                    // print each value of lastseenlocations
+                    Console.WriteLine("Before remove visible object: Last seen locations for player " + player.Name + " with ID of " + player.ID);
+                    foreach (var pair in client.LastSeenLocations)
+                    {
+                        Console.WriteLine($"Key: {pair.Key}, Value: {pair.Value}");
+                    }
+                    client.LastSeenLocations[id] = player.Location;
+                    Console.WriteLine($"Last seen location for player {player.Name} updated to {player.Location}");
+                    foreach (var pair in client.LastSeenLocations)
+                    {
+                        Console.WriteLine($"Key: {pair.Key}, Value: {pair.Value}");
+                    }
+                    Console.WriteLine("After remove visible object: Last seen locations for player " + player.Name + " with ID of " + player.ID);
 
 
                     ClientTab clientTab = client.ClientTab;
@@ -3346,7 +3361,7 @@ namespace Talos
                 ? mappedClass
                 : defaultClass;
 
-            Console.WriteLine($"[SetTemuairClass] Setting temauirClass to: {temClass}");
+            Console.WriteLine($"[SetTemuairClass] Setting temauirClass to: {temuairClass}");
             client.SetTemuairClass(temuairClass);
         }
         internal void SetMedeniaClass(Client client, string className)

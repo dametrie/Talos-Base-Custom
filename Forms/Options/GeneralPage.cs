@@ -113,7 +113,22 @@ namespace Talos.Options
             _mainForm.Text = (sender as CheckBox).Checked ? "Talos(Paranoid)" : "Talos";
         }
 
-
-
+        private void useDawnd_CheckedChanged(object sender, EventArgs e)
+        {
+            // If the user is enabling Dawnd, we want to enable the radio buttons for display sise,
+            // otherwise we want to disable them
+            if (useDawnd.Checked)
+            {
+                smallWindowOpt.Enabled = true;
+                largeWindowOpt.Enabled = true;
+                fullWindowOpt.Enabled = true;
+            }
+            else
+            {
+                smallWindowOpt.Enabled = false;
+                largeWindowOpt.Enabled = false;
+                fullWindowOpt.Enabled = false;
+            }
+        }
     }
 }

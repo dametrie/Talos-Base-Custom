@@ -2624,7 +2624,7 @@ namespace Talos.Base
                     if (_leaderID.HasValue && Client.LastSeenLocations.TryGetValue(_leaderID.Value, out Location lastSeenLocation))
                     {
                         // Use last seen location
-                        Client.IsWalking = Client.Routefind(lastSeenLocation)
+                        Client.IsWalking = Client.Pathfind(lastSeenLocation)
                             && !Client.ClientTab.oneLineWalkCbox.Checked
                             && !Server._toggleWalk;
                     }
@@ -2640,8 +2640,33 @@ namespace Talos.Base
                 Location leaderLocation = leader.Location;
                 int distance = leaderLocation.DistanceFrom(Client.ClientLocation);
 
-
-
+                // If the leader is on a different map, attempt to follow via LastSeenLocations
+                if (leaderLocation.MapID != Client.Map.MapID)
+                {
+                    Console.WriteLine("[FollowWalking] Leader is on a different map. Attempting to use LastSeenLocations fallback.");
+                    if (_leaderID.HasValue &&
+                        Client.LastSeenLocations.TryGetValue(_leaderID.Value, out Location lastSeenLocation))
+                    {
+                        Console.WriteLine($"[FollowWalking] Last seen location for leader: Map {lastSeenLocation.MapID}, Point {lastSeenLocation.Point}.");
+                        if (lastSeenLocation.MapID == Client.Map.MapID)
+                        {
+                            Client.IsWalking = Client.Pathfind(lastSeenLocation)
+                                && !Client.ClientTab.oneLineWalkCbox.Checked
+                                && !Server._toggleWalk;
+                        }
+                        else
+                        {
+                            Console.WriteLine("[FollowWalking] Last seen location is still on a different map.");
+                            Client.IsWalking = false;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("[FollowWalking] No last seen location available for leader.");
+                        Client.IsWalking = false;
+                    }
+                    return;
+                }
 
                 if (botClientToFollow != null
                     && botClientToFollow.Bot != null

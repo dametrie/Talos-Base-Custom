@@ -94,7 +94,7 @@ namespace Talos.Options
             // enableOverlay
             // 
             this.enableOverlay.AutoSize = true;
-            this.enableOverlay.Location = new System.Drawing.Point(28, 174);
+            this.enableOverlay.Location = new System.Drawing.Point(28, 176);
             this.enableOverlay.Name = "enableOverlay";
             this.enableOverlay.Size = new System.Drawing.Size(104, 19);
             this.enableOverlay.TabIndex = 54;
@@ -107,12 +107,13 @@ namespace Talos.Options
             this.useDawnd.AutoSize = true;
             this.useDawnd.Checked = true;
             this.useDawnd.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.useDawnd.Location = new System.Drawing.Point(28, 149);
+            this.useDawnd.Location = new System.Drawing.Point(28, 102);
             this.useDawnd.Name = "useDawnd";
             this.useDawnd.Size = new System.Drawing.Size(95, 19);
             this.useDawnd.TabIndex = 53;
             this.useDawnd.Text = "Inject Dawnd";
             this.useDawnd.UseVisualStyleBackColor = true;
+            this.useDawnd.CheckedChanged += new System.EventHandler(this.useDawnd_CheckedChanged);
             // 
             // removeSpamCbox
             // 
@@ -194,7 +195,7 @@ namespace Talos.Options
             this.whisperSound.AutoSize = true;
             this.whisperSound.Checked = true;
             this.whisperSound.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.whisperSound.Location = new System.Drawing.Point(28, 99);
+            this.whisperSound.Location = new System.Drawing.Point(28, 127);
             this.whisperSound.Name = "whisperSound";
             this.whisperSound.Size = new System.Drawing.Size(172, 19);
             this.whisperSound.TabIndex = 45;
@@ -206,7 +207,7 @@ namespace Talos.Options
             this.whisperFlash.AutoSize = true;
             this.whisperFlash.Checked = true;
             this.whisperFlash.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.whisperFlash.Location = new System.Drawing.Point(28, 124);
+            this.whisperFlash.Location = new System.Drawing.Point(28, 152);
             this.whisperFlash.Name = "whisperFlash";
             this.whisperFlash.Size = new System.Drawing.Size(146, 19);
             this.whisperFlash.TabIndex = 44;
@@ -307,7 +308,7 @@ namespace Talos.Options
             // chkNoWalls
             // 
             this.chkNoWalls.AutoSize = true;
-            this.chkNoWalls.Location = new System.Drawing.Point(133, 149);
+            this.chkNoWalls.Location = new System.Drawing.Point(133, 102);
             this.chkNoWalls.Name = "chkNoWalls";
             this.chkNoWalls.Size = new System.Drawing.Size(71, 19);
             this.chkNoWalls.TabIndex = 58;

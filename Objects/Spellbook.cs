@@ -63,5 +63,6 @@ namespace Talos.Objects
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
+
 }
 

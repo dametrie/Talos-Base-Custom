@@ -669,7 +669,7 @@ namespace Talos.Definitions
 
         public static readonly IReadOnlyDictionary<uint, Location> DESTINATION_MAP = new Dictionary<uint, Location>
         {
-            { 104857644U,  new Location(11500, 76, 90) }, // Tavaly
+            { 104857644U,  new Location(11500, 69, 94) }, // Tavaly
             { 42952968U,   new Location(8995, 41, 36)  }, // Lost Ruins
             { 197647056U,  new Location(8295, 12, 7)   }, // Aman Skills/Spells
             { 140575268U,  new Location(10055, 0, 0)   }, // Noam
