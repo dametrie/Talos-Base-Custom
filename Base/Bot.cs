@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Talos.Bashing;
 using Talos.Definitions;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Extensions;
 using Talos.Forms;
 using Talos.Forms.UI;
@@ -3019,7 +3019,8 @@ namespace Talos.Base
 
                                 // Possibly handle "okToBubble" logic for certain dungeons
                                 if (Client.Map.Name.Contains("Lost Ruins")
-                                    || Client.Map.Name.Contains("Assassin Dungeon"))
+                                    || Client.Map.Name.Contains("Assassin Dungeon")
+                                    || (_nearbyValidCreatures.Count > 0 && _nearbyValidCreatures.Any(x => x.Location.DistanceFrom(Client.ServerLocation) <= 6)))
                                 {
                                     Client.OkToBubble = true;
                                     foreach (Client follower in Server.GetFollowChain(Client))
@@ -3806,10 +3807,11 @@ namespace Talos.Base
             byte? castLinesCount = castLinesCountNullable;
             int? castLines = (castLinesCount != null) ? new int?(castLinesCount.GetValueOrDefault()) : null;
 
-            // Throttling for 0 line spells to prevent spamming
             if (castLines.GetValueOrDefault() <= 0 & castLines != null)
             {
-                Thread.Sleep(330);
+                // Throttle 0 line spells if a stranger is nearby
+                if (IsStrangerNearby())
+                    Thread.Sleep(330);
             }
 
 
@@ -4208,17 +4210,6 @@ namespace Talos.Base
                 Client.UseHammer();
             }
 
-            //Adam this shit breaks casting
-            /*            Timer dialogWaitTime = Timer.FromSeconds(5);
-                        while (Client.Dialog == null)
-                        {
-                            if (dialogWaitTime.IsTimeExpired)
-                                return false;
-                            Thread.Sleep(10);
-                        }
-
-                        Client.Dialog.DialogNext();*/
-
             return false;
         }
 
@@ -4241,6 +4232,7 @@ namespace Talos.Base
 
                 }
             }
+
             return true;
         }
 
@@ -4251,6 +4243,7 @@ namespace Talos.Base
                 //Console.WriteLine($"[TryGetSuainedAlly] Player.ID: {player.ID}, Hash: {player.GetHashCode()}, Player {player.Name} IsSuained: {player.IsSuained}");
                 return player.IsSuained;
             }
+
             return false;
         }
 
@@ -4341,23 +4334,22 @@ namespace Talos.Base
                 return false;
             }
 
-            bool isWakeScrollChecked = clientTab.wakeScrollCbox.Checked;
-            bool isRegistered = Client.IsRegistered;
-
-            if (isWakeScrollChecked && isRegistered && NearbyAllies.Any(player => IsAllyAffectedByPramhOrAsleep(player)))
-            {
-                if (Client.UseItem("Wake Scroll"))
-                {
-                    foreach (Player player in NearbyAllies)
-                    {
-                        Client client = Server.GetClient(player.Name);
-                        if (client != null)
-                        {
-                            client.ClearEffect(EffectsBar.Pramh);
-                        }
-                    }
-                }
+            if (!clientTab.wakeScrollCbox.Checked || !Client.IsRegistered)
                 return false;
+
+            var alliesToClear = NearbyAllies
+                .Where(player => IsAllyAffectedByPramhOrAsleep(player))
+                .ToList();
+
+            if (alliesToClear.Count == 0)
+                return false;
+
+            if (!Client.UseItem("Wake Scroll"))
+                return false;
+
+            foreach (var player in alliesToClear)
+            {
+                Server.GetClient(player.Name)?.ClearEffect(EffectsBar.Pramh);
             }
 
             return true;
@@ -4384,23 +4376,28 @@ namespace Talos.Base
             // Process allies first
             AoPoisonForAllies();
 
-            // Then process the local player
-            bool isAoPoisonChecked = clientTab.aoPoisonCbox.Checked;
-            bool isPlayerPoisoned = Client.Player.IsPoisoned;
+            if (!clientTab.aoPoisonCbox.Checked)
+                return true;
 
-            if (isAoPoisonChecked && Client.HasEffect(EffectsBar.Poison) && isPlayerPoisoned)
+            // Check that the player is affected by poison
+            if (!Client.HasEffect(EffectsBar.Poison) || !Client.Player.IsPoisoned)
+                return true;
+
+            var currentTime = DateTime.UtcNow;
+            bool canUseFungusExtract = (currentTime - _lastUsedFungusBeetle).TotalSeconds > 1.0;
+
+            // Use Fungus Beetle Extract if conditions are met
+            if (clientTab.fungusExtractCbox.Checked &&
+                Client.IsRegistered &&
+                Client.HasItem("Fungus Beetle Extract") &&
+                canUseFungusExtract)
             {
-                // Check the cooldown for fungus extract
-                bool canUseFungusExtract = DateTime.UtcNow.Subtract(_lastUsedFungusBeetle).TotalSeconds > 1.0;
-                if (clientTab.fungusExtractCbox.Checked && Client.IsRegistered && Client.HasItem("Fungus Beetle Extract") && canUseFungusExtract)
-                {
-                    UseFungusBeetleExtract();
-                    _lastUsedFungusBeetle = DateTime.UtcNow;
-                }
-                else
-                {
-                    Client.UseSpell("ao puinsein", Client.Player, _autoStaffSwitch, false);
-                }
+                UseFungusBeetleExtract();
+                _lastUsedFungusBeetle = currentTime;
+            }
+            else
+            {
+                Client.UseSpell("ao puinsein", Client.Player, _autoStaffSwitch, false);
             }
 
             return true;
@@ -4416,7 +4413,6 @@ namespace Talos.Base
 
             foreach (Ally ally in ReturnAllyList())
             {
-                // Skip this ally if their dispel poison checkbox is not checked.
                 if (!ally.Page.dispelPoisonCbox.Checked)
                     continue;
 
@@ -4996,72 +4992,103 @@ namespace Talos.Base
                 return false;
             }
 
+            // UI Settings
             bool isBubbleBlockChecked = clientTab.bubbleBlockCbox.Checked;
             bool isSpamBubbleChecked = clientTab.spamBubbleCbox.Checked;
             bool isFollowChecked = clientTab.followCbox.Checked;
             string walkMap = clientTab.walkMapCombox.Text;
 
-            if (isBubbleBlockChecked && isSpamBubbleChecked)
-            {
-                if (Client.UseSpell("Bubble Block", null, true, true))
-                {
-                    return false;
-                }
-            }
-            else if (isBubbleBlockChecked && Client.OkToBubble)
-            {
-                if (walkMap == "WayPoints")
-                {
-                    if (CastBubbleBlock())
-                    {
-                        return false;
-                    }
-                }
-                else if (isFollowChecked && Client.ConfirmBubble && CastBubbleBlock())
-                {
-                    return false;
-                }
-            }
+            // Spell availability
+            bool hasBubbleBlock = Client.HasSpell("Bubble Block");
+            bool hasBubbleShield = Client.HasSpell("Bubble Shield");
 
-            return true;
-        }
-        private bool CastBubbleBlock()
-        {
-            // Check if the player has moved since the last bubble was cast.
+            // Cooldown checks
+            bool canCastBubbleBlock = hasBubbleBlock && Client.CanUseSpell(Client.Spellbook["Bubble Block"], null);
+            bool canCastBubbleShield = hasBubbleShield && Client.CanUseSpell(Client.Spellbook["Bubble Shield"], null);
+
+            // Movement check (assumes _lastBubbleLocation is maintained elsewhere)
             bool hasMoved = !Location.Equals(_lastBubbleLocation, Client.ServerLocation);
 
-            // Define the preferred order of bubble spells.
-            var bubbleSpells = new[] { "Bubble Block", "Bubble Shield" };
-
-            // Attempt to cast a bubble spell if the player has moved or the current bubble type is not set.
-            if (hasMoved || string.IsNullOrEmpty(_bubbleType))
+            // --- Mode 1: Spam Mode ---
+            if (isSpamBubbleChecked)
             {
-                foreach (var spellName in bubbleSpells)
+                bool castedSomething = false;
+                // Spam mode ignores movement; try to cast each available spell.
+                if (canCastBubbleBlock)
                 {
-                    if (Client.HasSpell(spellName) && Client.CanUseSpell(Client.Spellbook[spellName], null))
+                    castedSomething |= Client.UseSpell("Bubble Block", null, _autoStaffSwitch, true);
+                }
+                if (canCastBubbleShield)
+                {
+                    castedSomething |= Client.UseSpell("Bubble Shield", null, _autoStaffSwitch, true);
+                }
+                return !castedSomething;
+            }
+            // --- Mode 2: Normal Mode ---
+            else if (isBubbleBlockChecked && Client.OkToBubble)
+            {
+                // Only proceed if we're in Select Location, WayPoints, or Follow mode with confirmation.
+                if (walkMap == "WayPoints" || (isFollowChecked && Client.ConfirmBubble))
+                {
+                    // Fresh Cast: if we've moved or no bubble is active, choose based on availability,
+                    // preferring Bubble Shield for greater protection.
+                    if (hasMoved || string.IsNullOrEmpty(_bubbleType))
                     {
-                        Client.UseSpell(spellName, null, _autoStaffSwitch, true);
-                        _lastBubbleLocation = Client.ServerLocation;
-                        _bubbleType = spellName.ToUpperInvariant().Contains("BLOCK") ? "BLOCK" : "SHIELD";
-                        return true;
+                        if (canCastBubbleShield)
+                        {
+                            if (Client.UseSpell("Bubble Shield", null, _autoStaffSwitch, true))
+                            {
+                                _lastBubbleLocation = Client.ServerLocation;
+                                _bubbleType = "SHIELD";
+                                return false;
+                            }
+                        }
+                        else if (canCastBubbleBlock)
+                        {
+                            if (Client.UseSpell("Bubble Block", null, _autoStaffSwitch, true))
+                            {
+                                _lastBubbleLocation = Client.ServerLocation;
+                                _bubbleType = "BLOCK";
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Refresh/Rotate: When standing still and a bubble is active,
+                        // try to alternate the bubble spell.
+                        string currentSpell = _bubbleType == "BLOCK" ? "Bubble Block" : "Bubble Shield";
+                        string alternateSpell = _bubbleType == "BLOCK" ? "Bubble Shield" : "Bubble Block";
+                        bool canCastCurrent = (_bubbleType == "BLOCK") ? canCastBubbleBlock : canCastBubbleShield;
+                        bool hasAlternate = (_bubbleType == "BLOCK") ? hasBubbleShield : hasBubbleBlock;
+                        bool canCastAlternate = (_bubbleType == "BLOCK") ? canCastBubbleShield : canCastBubbleBlock;
+
+                        // If the alternate spell is available, cast it.
+                        if (hasAlternate && canCastAlternate)
+                        {
+                            if (Client.UseSpell(alternateSpell, null, _autoStaffSwitch, false))
+                            {
+                                _lastBubbleLocation = Client.ServerLocation;
+                                _bubbleType = _bubbleType == "BLOCK" ? "SHIELD" : "BLOCK";
+                                return false;
+                            }
+                        }
+                        // Otherwise, refresh the current bubble.
+                        else if (canCastCurrent && Client.UseSpell(currentSpell, null, _autoStaffSwitch, false))
+                        {
+                            _lastBubbleLocation = Client.ServerLocation;
+                            return false;
+                        }
                     }
                 }
             }
-            else
-            {
-                // If the player hasn't moved, attempt to refresh the current bubble type without the "true" force argument.
-                string spellToCast = _bubbleType == "BLOCK" ? "Bubble Block" : "Bubble Shield";
-                if (Client.HasSpell(spellToCast) && Client.CanUseSpell(Client.Spellbook[spellToCast], null))
-                {
-                    if (Client.UseSpell(spellToCast, null, _autoStaffSwitch, false))
-                        _lastBubbleLocation = Client.ServerLocation;
-                    return true;
-
-                }
-            }
-
-            return false;
+            return true;
         }
+
+
+
+
+
 
         private bool Hide()
         {
@@ -5120,6 +5147,8 @@ namespace Talos.Base
                 _nearbyValidCreatures = _nearbyValidCreatures.OrderBy(c => RandomUtils.Random()).ToList();
             }
 
+            // If a stranger is nearby, limit the nearby creatures to only those that have existed for 2 seconds
+            // This is to prevent the bot from attacking a creature that has just spawned and appear more huamn-like
             if (IsStrangerNearby())
             {
                 if (_nearbyValidCreatures.Count > 0)

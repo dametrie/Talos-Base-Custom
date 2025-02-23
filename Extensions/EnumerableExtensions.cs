@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Structs;
 
 namespace Talos.Extensions

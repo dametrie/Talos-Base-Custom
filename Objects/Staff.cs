@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Talos.Enumerations;
+using Talos.Definitions;
 
 namespace Talos.Objects
 {

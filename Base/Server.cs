@@ -18,7 +18,7 @@ using Talos.Base;
 using Talos.Cryptography;
 using Talos.Cryptography.Abstractions.Definitions;
 using Talos.Definitions;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Forms;
 using Talos.Forms.UI;
 using Talos.Helper;
@@ -1035,6 +1035,7 @@ namespace Talos
 
             return true;
         }
+
         private bool ServerMessage_0x07_DisplayVisibleObjects(Client client, ServerPacket serverPacket)
         {
             ushort length = serverPacket.ReadUInt16();

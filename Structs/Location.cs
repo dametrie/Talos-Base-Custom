@@ -1,5 +1,5 @@
 ﻿using System;
-using Talos.Enumerations;
+using Talos.Definitions;
 
 namespace Talos.Structs
 {

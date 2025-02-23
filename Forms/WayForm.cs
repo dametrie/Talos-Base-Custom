@@ -403,9 +403,9 @@ namespace Talos.Forms
                 try
                 {
                     string item = string.Empty;
-                    item = "(" + Client.ClientLocation.X + "," + Client.ClientLocation.Y + ") " + Client.Map.Name + ": " + Client.Map.MapID;
+                    item = "(" + Client.ServerLocation.X + "," + Client.ServerLocation.Y + ") " + Client.Map.Name + ": " + Client.Map.MapID;
                     waypointsLBox.Items.Add(item);
-                    Client.Bot.ways.Add(Client.ClientLocation);
+                    Client.Bot.ways.Add(Client.ServerLocation);
                 }
                 finally
                 {

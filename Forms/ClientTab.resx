@@ -117,6 +117,17 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <metadata name="toolTipSpamBlock.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>1198, 5</value>
+  </metadata>
+  <metadata name="toolTipBubbleBlock.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>1346, 18</value>
+  </metadata>
+  <data name="bubbleBlockCbox.ToolTip" xml:space="preserve">
+    <value>Automatically casts bubble spells when conditions are met. If WayPointing, condition 4 must be checked
+and is triggered when you're in key maps (LR or AD) or when an enemy is detected within 6 units.
+If Following, rotates between Bubble Shield and Bubble Block based on availability and movement.</value>
+  </data>
   <metadata name="packetStrip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>617, 17</value>
   </metadata>
@@ -136,6 +147,6 @@
     <value>1043, 17</value>
   </metadata>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>25</value>
+    <value>95</value>
   </metadata>
 </root>

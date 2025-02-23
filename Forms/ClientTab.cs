@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Talos.Networking;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Structs;
 using Talos.Objects;
 using System.Threading;
@@ -4077,6 +4077,11 @@ namespace Talos.Forms
             combo1List.AppendText("Yowien Hatchet");
             combo1List.AppendText(Environment.NewLine);
             combo1List.AppendText("Great Yowien Shield");
+        }
+
+        private void toolTipSpamBlock_Popup(object sender, PopupEventArgs e)
+        {
+
         }
     }
 }

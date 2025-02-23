@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Linq;
 using Talos.Base;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Objects;
 using Talos.Structs;
 

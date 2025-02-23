@@ -5,7 +5,7 @@ using System.Linq;
 using System.Media;
 using System.Text.RegularExpressions;
 using Talos.Base;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Objects;
 using Talos.Properties;
 using Talos.Structs;

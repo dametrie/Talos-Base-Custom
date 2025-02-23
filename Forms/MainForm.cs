@@ -23,7 +23,7 @@ using Talos.Options;
 using Talos.Structs;
 using System.Text;
 using Talos.Objects;
-using Talos.Enumerations;
+using Talos.Definitions;
 using System.Xml.Linq;
 
 

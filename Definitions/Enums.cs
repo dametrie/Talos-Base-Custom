@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Talos.Enumerations
+namespace Talos.Definitions
 {
     public enum CreatureState
     {

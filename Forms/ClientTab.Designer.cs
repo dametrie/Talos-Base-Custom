@@ -41,6 +41,7 @@ namespace Talos.Forms
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ClientTab));
             this.clientTabControl = new System.Windows.Forms.TabControl();
             this.mainCoverTab = new System.Windows.Forms.TabPage();
             this.coverMapInfoGrp = new System.Windows.Forms.GroupBox();
@@ -443,6 +444,8 @@ namespace Talos.Forms
             this.statsPerLbl = new System.Windows.Forms.Label();
             this.toggleAscensionBtn = new System.Windows.Forms.Button();
             this.dojoTab = new System.Windows.Forms.TabPage();
+            this.regenCaHere = new System.Windows.Forms.CheckBox();
+            this.chkDachaidh = new System.Windows.Forms.CheckBox();
             this.flowerCbox = new System.Windows.Forms.CheckBox();
             this.dojo2SpaceCbox = new System.Windows.Forms.CheckBox();
             this.rescueCbox = new System.Windows.Forms.CheckBox();
@@ -598,10 +601,10 @@ namespace Talos.Forms
             this.currentAction = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolTipSpamBlock = new System.Windows.Forms.ToolTip(this.components);
+            this.toolTipBubbleBlock = new System.Windows.Forms.ToolTip(this.components);
             this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
             this.chatBox = new Talos.Forms.UI.ChatBox();
-            this.chkDachaidh = new System.Windows.Forms.CheckBox();
-            this.regenCaHere = new System.Windows.Forms.CheckBox();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -2230,6 +2233,9 @@ namespace Talos.Forms
             this.spamBubbleCbox.Size = new System.Drawing.Size(88, 19);
             this.spamBubbleCbox.TabIndex = 22;
             this.spamBubbleCbox.Text = "Spam Block";
+            this.toolTipSpamBlock.SetToolTip(this.spamBubbleCbox, "When active, your character will continuously cast bubble spells, automatically r" +
+        "otating\r\nbetween Bubble Shield and Bubble Block (if available) to maintain const" +
+        "ant protection.\r\n\r\n");
             this.spamBubbleCbox.UseVisualStyleBackColor = true;
             // 
             // bubbleBlockCbox
@@ -2241,6 +2247,7 @@ namespace Talos.Forms
             this.bubbleBlockCbox.Size = new System.Drawing.Size(95, 19);
             this.bubbleBlockCbox.TabIndex = 21;
             this.bubbleBlockCbox.Text = "Bubble Block";
+            this.toolTipBubbleBlock.SetToolTip(this.bubbleBlockCbox, resources.GetString("bubbleBlockCbox.ToolTip"));
             this.bubbleBlockCbox.UseVisualStyleBackColor = true;
             // 
             // rangerStopCbox
@@ -5850,6 +5857,28 @@ namespace Talos.Forms
             this.dojoTab.Text = "Dojo";
             this.dojoTab.UseVisualStyleBackColor = true;
             // 
+            // regenCaHere
+            // 
+            this.regenCaHere.AutoSize = true;
+            this.regenCaHere.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.regenCaHere.Location = new System.Drawing.Point(658, 283);
+            this.regenCaHere.Name = "regenCaHere";
+            this.regenCaHere.Size = new System.Drawing.Size(140, 46);
+            this.regenCaHere.TabIndex = 14;
+            this.regenCaHere.Text = "Regen/CA/Dach\r\nHere";
+            this.regenCaHere.UseVisualStyleBackColor = true;
+            // 
+            // chkDachaidh
+            // 
+            this.chkDachaidh.AutoSize = true;
+            this.chkDachaidh.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkDachaidh.Location = new System.Drawing.Point(658, 128);
+            this.chkDachaidh.Name = "chkDachaidh";
+            this.chkDachaidh.Size = new System.Drawing.Size(94, 25);
+            this.chkDachaidh.TabIndex = 13;
+            this.chkDachaidh.Text = "Dachaidh";
+            this.chkDachaidh.UseVisualStyleBackColor = true;
+            // 
             // flowerCbox
             // 
             this.flowerCbox.AutoSize = true;
@@ -7504,6 +7533,10 @@ namespace Talos.Forms
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
             // 
+            // toolTipSpamBlock
+            // 
+            this.toolTipSpamBlock.Popup += new System.Windows.Forms.PopupEventHandler(this.toolTipSpamBlock_Popup);
+            // 
             // chatPanel2
             // 
             this.chatPanel2.AutoDetectUrls = true;
@@ -7532,28 +7565,6 @@ namespace Talos.Forms
             this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
             this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
             this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
-            // 
-            // chkDachaidh
-            // 
-            this.chkDachaidh.AutoSize = true;
-            this.chkDachaidh.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chkDachaidh.Location = new System.Drawing.Point(658, 128);
-            this.chkDachaidh.Name = "chkDachaidh";
-            this.chkDachaidh.Size = new System.Drawing.Size(94, 25);
-            this.chkDachaidh.TabIndex = 13;
-            this.chkDachaidh.Text = "Dachaidh";
-            this.chkDachaidh.UseVisualStyleBackColor = true;
-            // 
-            // regenCaHere
-            // 
-            this.regenCaHere.AutoSize = true;
-            this.regenCaHere.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.regenCaHere.Location = new System.Drawing.Point(658, 283);
-            this.regenCaHere.Name = "regenCaHere";
-            this.regenCaHere.Size = new System.Drawing.Size(140, 46);
-            this.regenCaHere.TabIndex = 14;
-            this.regenCaHere.Text = "Regen/CA/Dach\r\nHere";
-            this.regenCaHere.UseVisualStyleBackColor = true;
             // 
             // ClientTab
             // 
@@ -8352,5 +8363,7 @@ namespace Talos.Forms
         private Button button14;
         internal CheckBox chkDachaidh;
         internal CheckBox regenCaHere;
+        private ToolTip toolTipSpamBlock;
+        private ToolTip toolTipBubbleBlock;
     }
 }

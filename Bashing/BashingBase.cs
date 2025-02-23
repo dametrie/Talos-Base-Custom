@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using Talos.Base;
 using Talos.Definitions;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Objects;
 using Talos.Structs;
 using Talos.Utility;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using Talos.Base;
 using Talos.Cryptography;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Utility;
 
 namespace Talos.Networking

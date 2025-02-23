@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Talos.Base;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Newtonsoft.Json.Linq;
 using Talos.Extensions;
 using System.IO;

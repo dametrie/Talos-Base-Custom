@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using Talos.Cryptography;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Structs;
 
 namespace Talos.Networking

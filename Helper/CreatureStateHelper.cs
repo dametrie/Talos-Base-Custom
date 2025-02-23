@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Talos.Base;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Objects;
 
 namespace Talos.Helper

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Talos.Base;
-using Talos.Enumerations;
+using Talos.Definitions;
 using Talos.Networking;
 using Talos.Objects;
 using Talos.Structs;
