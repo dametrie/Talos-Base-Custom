@@ -2630,7 +2630,7 @@ namespace Talos.Base
                         // Use last seen location
                         Client.IsWalking = Client.Pathfind(lastSeenLocation)
                             && !Client.ClientTab.oneLineWalkCbox.Checked
-                            && !Server._toggleWalk;
+                            && !Server.StopWalking;
                     }
                     else
                     {
@@ -2654,7 +2654,7 @@ namespace Talos.Base
                         {
                             Client.IsWalking = Client.Pathfind(lastSeenLocation)
                                 && !Client.ClientTab.oneLineWalkCbox.Checked
-                                && !Server._toggleWalk;
+                                && !Server.StopWalking;
                         }
                         else
                         {
@@ -2719,7 +2719,7 @@ namespace Talos.Base
                             Client.ConfirmBubble = false;
                             Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
                                 && !Client.ClientTab.oneLineWalkCbox.Checked
-                                && !Server._toggleWalk;
+                                && !Server.StopWalking;
                         }
                     }
                     else if (distance > followDistance)
@@ -2730,7 +2730,7 @@ namespace Talos.Base
                         Client.ConfirmBubble = false;
                         Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
                             && Client.ClientTab != null && !Client.ClientTab.oneLineWalkCbox.Checked
-                            && !Server._toggleWalk;
+                            && !Server.StopWalking;
                     }
                     else
                     {
@@ -2812,7 +2812,7 @@ namespace Talos.Base
 
         private bool UnStucker(Player leader)
         {
-            if (Server._toggleWalk)
+            if (Server.StopWalking)
             {
                 return false;
             }
@@ -3097,7 +3097,7 @@ namespace Talos.Base
                                         // pathfind up to distance=2
                                         Client.IsWalking = Client.Pathfind(closest.Location, 2)
                                                            && !Client.ClientTab.oneLineWalkCbox.Checked
-                                                           && !Server._toggleWalk;
+                                                           && !Server.StopWalking;
                                         return;
                                     }
 
@@ -3152,9 +3152,9 @@ namespace Talos.Base
                     {
                         // Attempt the routefind
                         bool routeOk = Client.Routefind(currentLocation, (short)wform.distanceUpDwn.Value);
-                        // Possibly respect "oneLineWalkCbox" or "Server.toggleWalk"
+                        // Possibly respect "oneLineWalkCbox" or "Server.StopWalking"
                         Client.IsWalking = routeOk && !Client.ClientTab.oneLineWalkCbox.Checked
-                                                   && !Server._toggleWalk;
+                                                   && !Server.StopWalking;
                     }
 
                 }

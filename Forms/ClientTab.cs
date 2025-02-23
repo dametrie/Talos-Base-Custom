@@ -3369,7 +3369,7 @@ namespace Talos.Forms
             }
             else
             {
-                _client.EnableCheats(Cheats.NoBlind);
+                _client.DisableCheats(Cheats.NoBlind);
             }
             _client.SetStatUpdateFlags(StatUpdateFlags.Secondary);
         }
@@ -4082,6 +4082,11 @@ namespace Talos.Forms
         }
 
         private void toolTipSpamBlock_Popup(object sender, PopupEventArgs e)
+        {
+
+        }
+
+        private void mapFlagsEnableCbox_CheckedChanged(object sender, EventArgs e)
         {
 
         }

@@ -679,16 +679,16 @@ namespace Talos
                     }
                     break;
                 case 3: // Toggle Casting
-                    Server._stopCasting = !Server._stopCasting;
+                    Server.StopCasting = !Server.StopCasting;
                     foreach (Client client in Server.ClientList)
                     {
                         if (client.ClientTab != null)
                         {
                             if (!client.ClientTab.safeScreenCbox.Checked)
                             {
-                                client.ServerMessage(1, "Casting: " + (Server._stopCasting ? "OFF" : "ON"));
+                                client.ServerMessage(1, "Casting: " + (Server.StopCasting ? "OFF" : "ON"));
                             }
-                            if (Server._stopCasting)
+                            if (Server.StopCasting)
                             {
                                 client.IsCasting = false;
                             }
@@ -696,16 +696,16 @@ namespace Talos
                     }
                     break;
                 case 4: // Toggle Walking
-                    Server._stopWalking = !Server._stopWalking;
+                    Server.StopWalking = !Server.StopWalking;
                     foreach (Client client in Server.ClientList)
                     {
                         if (client.ClientTab != null)
                         {
                             if (!client.ClientTab.safeScreenCbox.Checked)
                             {
-                                client.ServerMessage(1, "Walking: " + (Server._stopWalking ? "OFF" : "ON"));
+                                client.ServerMessage(1, "Walking: " + (Server.StopWalking ? "OFF" : "ON"));
                             }
-                            if (Server._stopWalking)
+                            if (Server.StopWalking)
                             {
                                 client.IsWalking = false;
                             }

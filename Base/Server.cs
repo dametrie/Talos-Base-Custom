@@ -63,8 +63,9 @@ namespace Talos
 
         private bool _isMapping;
         private bool _mapChangePending;
-        internal bool _stopWalking;
-        internal bool _stopCasting;
+        internal bool StopWalking { get; set; }
+        internal bool StopCasting { get; set; }
+
         internal bool _disableSound = false;
         private bool _shouldCloseProfile = false;
         private bool _canCloseProfile = false;
@@ -108,7 +109,6 @@ namespace Talos
         internal ConcurrentDictionary<string, bool> ManualServerSwitch { get; set; } = new ConcurrentDictionary<string, bool>();
 
         internal List<Client> _clients = new List<Client>();
-        internal bool _toggleWalk;
         private string _exchangeName;
         private string _exchangeItem;
         private string _exchangeCancel;

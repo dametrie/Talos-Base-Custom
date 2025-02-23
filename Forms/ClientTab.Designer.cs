@@ -4780,6 +4780,7 @@ namespace Talos.Forms
             this.mapFlagsEnableCbox.TabIndex = 0;
             this.mapFlagsEnableCbox.Text = "Enable";
             this.mapFlagsEnableCbox.UseVisualStyleBackColor = true;
+            this.mapFlagsEnableCbox.CheckedChanged += new System.EventHandler(this.mapFlagsEnableCbox_CheckedChanged);
             // 
             // clientHacksGroup
             // 

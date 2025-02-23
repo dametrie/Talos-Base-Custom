@@ -2194,7 +2194,7 @@ namespace Talos.Base
             try
             {
                 //Console.WriteLine($"[RouteFind] [{Name}] Starting RouteFind to {destination}");
-                if (Server._stopWalking)
+                if (Server.StopWalking)
                 {
                     //Console.WriteLine($"[RouteFind] [{Name}] Not supposed to walk.");
                     return false;
@@ -2893,7 +2893,7 @@ namespace Talos.Base
                 return false;
             }
 
-            if (!EffectsBar.Contains((ushort)Definitions.EffectsBar.Pramh) && !EffectsBar.Contains((ushort)Definitions.EffectsBar.Suain) && !Server._stopCasting)
+            if (!EffectsBar.Contains((ushort)Definitions.EffectsBar.Pramh) && !EffectsBar.Contains((ushort)Definitions.EffectsBar.Suain) && !Server.StopCasting)
             {
                 ClientPacket clientPacket = new ClientPacket(28);
                 clientPacket.WriteByte(item.Slot);
@@ -3304,6 +3304,11 @@ namespace Talos.Base
 
         internal bool UseSpell(string spellName, Creature target = null, bool staffSwitch = true, bool wait = true)
         {
+            if (Server.StopCasting)
+            {
+                IsCasting = false;
+                return false;
+            }
 
             if (Spellbook[spellName] == null)
             {
@@ -3333,7 +3338,7 @@ namespace Talos.Base
             lock (BashLock)
             {
 
-                if (spell == null || !CanUseSpell(spell, target) || ((spellName == "Hide" || spellName == "White Bat Form") && Server._stopCasting))
+                if (spell == null || !CanUseSpell(spell, target) || ((spellName == "Hide" || spellName == "White Bat Form") && Server.StopCasting))
                 {
                     //Console.WriteLine($"[UseSpell] Aborted casting {spellName} on Creature ID: {target?.ID}. Reason: Validation failed.");
                     IsCasting = false;
@@ -3351,16 +3356,6 @@ namespace Talos.Base
 
                 CastedTarget = (target ?? Player);
 
-                //if (spellName.Contains("cradh"))
-                //{
-                //    Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsCursed: {CastedTarget.IsCursed}, LastCursed: {CastedTarget.GetState<DateTime>(CreatureState.LastCursed)}, CurseDuration: {CastedTarget.GetState<double>(CreatureState.CurseDuration)}");
-                //}
-                if (spellName.Contains("fas"))
-                {
-                    //Console.WriteLine($"[Casting] {spellName} on Creature ID: {CastedTarget.ID}, Name: {CastedTarget.Name}, HashCode: {CastedTarget.GetHashCode()}, IsFassed: {CastedTarget.IsFassed}, LastFassed: {CastedTarget.GetState<DateTime>(CreatureState.LastFassed)}, FasDuration: {CastedTarget.GetState<double>(CreatureState.FasDuration)}");
-                }
-
-
                 if (ReadyToSpell(spell.Name))
                 {
                     var existingEntry = SpellHistory.FirstOrDefault(cts => cts.Creature.ID == CastedTarget.ID && cts.Spell.Name == spell.Name);
@@ -3375,7 +3370,6 @@ namespace Talos.Base
                         {
                             // Update cooldown end time for re-casting
                             existingEntry.CooldownEndTime = DateTime.UtcNow.AddSeconds(1);
-                            //Console.WriteLine($"[Debug] Updated cooldown for {CastedTarget.ID} in _spellHistory.");
                         }
                     }
                     else
@@ -3385,15 +3379,9 @@ namespace Talos.Base
                             CooldownEndTime = DateTime.UtcNow.AddSeconds(1)
                         };
                         SpellHistory.Add(newEntry);
-                        //Console.WriteLine($"[UseSpell] Casting '{spellName}' on Creature ID: {target?.ID}, CooldownEndTime: {newEntry.CooldownEndTime}");
-                        //Console.WriteLine($"[Debug] Added to _spellHistory: Spell = {spell.Name}, Creature ID = {CastedTarget.ID}, Time = {DateTime.UtcNow}");
+
                     }
                 }
-                //else
-                //{
-                //return false;
-                //}
-
 
                 if (LastSpell != spell)
                 {
@@ -3409,8 +3397,6 @@ namespace Talos.Base
                     clientPacket.WriteStruct(target.Location);
                 }
 
-
-
                 if (castLines > 0)
                 {
                     if (IsWalking)
@@ -3422,7 +3408,7 @@ namespace Talos.Base
                     lock (CastLock)
                     {
                         IsCasting = true;
-                        ClientPacket chantPacket = new ClientPacket(77);//begin chant
+                        ClientPacket chantPacket = new ClientPacket(77); // Begin to chant
                         chantPacket.WriteByte(castLines);
                         Enqueue(chantPacket);
                         for (int i = 0; i < castLines; i++)
@@ -3502,6 +3488,7 @@ namespace Talos.Base
                 return !wait || WaitForSpellChant();
             }
         }
+
         internal void DisplayChant(string chant)
         {
             ClientPacket clientPacket = new ClientPacket(78);
@@ -3760,7 +3747,7 @@ namespace Talos.Base
 
             //Console.WriteLine($"Attempting to walk in direction: {dir}"); // Log the direction
 
-            if (Dialog == null || !Server._stopWalking || dir != Direction.Invalid || IsRefreshingData == 1)
+            if (Dialog == null || !Server.StopWalking || dir != Direction.Invalid || IsRefreshingData == 1)
             {
                 _walkCallCount++;
                 //Console.WriteLine($"Walk method called {walkCallCount} times");
