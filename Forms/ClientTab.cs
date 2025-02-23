@@ -1618,7 +1618,7 @@ namespace Talos.Forms
                 // Start the bot on a separate task if needed.
                 await Task.Run(() => _client.BotBase.Start());
 
-                if (!_client.ClientTab.safeScreenCbox.Checked)
+                if (!(_client?.ClientTab?.safeScreenCbox.Checked ?? false))
                 {
                     _client.ServerMessage((byte)ServerMessageType.OrangeBar1, "Bot Started");
                 }
@@ -1629,7 +1629,7 @@ namespace Talos.Forms
 
                 await _client.BotBase.StopAsync();
 
-                if (!_client.ClientTab.safeScreenCbox.Checked)
+                if (!(_client?.ClientTab?.safeScreenCbox.Checked ?? false))
                 {
                     _client.ServerMessage((byte)ServerMessageType.OrangeBar1, "Bot Stopped");
                 }
@@ -2007,6 +2007,7 @@ namespace Talos.Forms
                     AiteComboxText = aiteCombox.Text,
                     HealComboxText = healCombox.Text,
                     FasComboxText = fasCombox.Text,
+                    SafeFSTboxText = safeFSTbox.Text,
                     VineComboxText = vineCombox.Text,
                     OptionsSkullCboxChecked = optionsSkullCbox.Checked,
                     OptionsSkullSurrboxChecked = optionsSkullSurrbox.Checked,
@@ -2429,6 +2430,7 @@ namespace Talos.Forms
                         aiteCombox.Text = formState.AislingPage.AiteComboxText;
                         healCombox.Text = formState.AislingPage.HealComboxText;
                         fasCombox.Text = formState.AislingPage.FasComboxText;
+                        safeFSTbox.Text = formState.AislingPage.SafeFSTboxText;
                         vineCombox.Text = formState.AislingPage.VineComboxText;
 
                         optionsSkullCbox.Checked = formState.AislingPage.OptionsSkullCboxChecked;

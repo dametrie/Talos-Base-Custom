@@ -895,17 +895,21 @@ namespace Talos.Base
                 if (!Client.ClientTab.oneLineWalkCbox.Checked)
                     Client.ClientTab.oneLineWalkCbox.Checked = true;
 
-                BashingBase.EnableProtection = Client.ClientTab.Protect1Cbx.Checked || Client.ClientTab.Protect2Cbx.Checked;
-                BashingBase.ProtectName1 = Client.ClientTab.Protect1Cbx.Checked
-                    ? Client.ClientTab.Protected1Tbx.Text
-                    : null;
-                BashingBase.ProtectName2 = Client.ClientTab.Protect2Cbx.Checked
-                    ? Client.ClientTab.Protected2Tbx.Text
+                BashingBase.EnableProtection =
+                    (Client.ClientTab?.Protect1Cbx?.Checked ?? false) ||
+                    (Client.ClientTab?.Protect2Cbx?.Checked ?? false);
+
+                BashingBase.ProtectName1 = (Client.ClientTab?.Protect1Cbx?.Checked ?? false)
+                    ? Client.ClientTab?.Protected1Tbx?.Text
                     : null;
 
-                BashingBase.AssistBasherEnabled = Client.ClientTab.assistBasherChk.Checked;
-                BashingBase.AssistBasherName = Client.ClientTab.leadBasherTxt.Text;
-                BashingBase.AssistBasherStray = (int)Client.ClientTab.numAssitantStray.Value;
+                BashingBase.ProtectName2 = (Client.ClientTab?.Protect2Cbx?.Checked ?? false)
+                    ? Client.ClientTab?.Protected2Tbx?.Text
+                    : null;
+
+                BashingBase.AssistBasherEnabled = Client.ClientTab?.assistBasherChk?.Checked ?? false;
+                BashingBase.AssistBasherName = Client.ClientTab?.leadBasherTxt?.Text;
+                BashingBase.AssistBasherStray = (int)(Client.ClientTab?.numAssitantStray?.Value ?? 0);
 
                 bool result = BashingBase.DoBashing();
 

@@ -877,17 +877,18 @@ namespace Talos.Helper
 
             if (client.SpellHistory.Count > 0)
             {
+                Spell spell = client.SpellHistory[0].Spell;
                 //Console.WriteLine($"[HandleAlreadyCastMessage] Already cast message received on {client._creatureToSpellList[0].Creature.ID}");
                 //Console.WriteLine($"[HandleAlreadyCastMessage] _creatureToSpellList.Count before removal: {client._creatureToSpellList.Count}");
 
-                if (client.CastedSpell != null && client.CastedSpell.Name.Contains("fas"))
+                if (spell != null && spell.Name.Contains("fas"))
                 {
                     //client._spellHistory[0].Creature.LastFassed = DateTime.UtcNow;
                     //client._spellHistory[0].Creature.FasDuration = Spell.GetSpellDuration(client.CastedSpell.Name);
                     //if (client._spellHistory[0].Creature.ID != client.Player.ID)
                     //    client.UpdateFasTargets(client, client._spellHistory[0].Creature.ID, client._spellHistory[0].Creature.FasDuration);
                     Creature creature = client.SpellHistory[0].Creature;
-                    string fasName = client.CastedSpell.Name;
+                    string fasName = spell.Name;
 
                     Console.WriteLine($"[HandleAlreadyCastMessage] Fas: Received 'You already cast' message for {fasName} on Creature ID: {client.SpellHistory[0].Creature?.ID}, Creature name: {creature.Name}, Hash: {client.SpellHistory[0].Creature?.GetHashCode()} Updating LastFassed.");
 
@@ -911,10 +912,41 @@ namespace Talos.Helper
                     client.CastedSpell = null;
                 }
 
-                if (client.CastedSpell != null && client.CastedSpell.Name.Contains("aite"))
+                if (spell != null &&
+                   (spell.Name.Contains("cradh") ||
+                    spell.Name.Contains("seal") ||
+                    spell.Name.Contains("Demise")))
+                    
+                {
+
+                    Creature creature = client.SpellHistory[0].Creature;
+                    string cradhName = spell.Name;
+
+                    Console.WriteLine($"[HandleAlreadyCastMessage] Curse: Received 'You already cast' message for {cradhName} on Creature ID: {client.SpellHistory[0].Creature?.ID}, Creature name: {creature.Name}, Hash: {client.SpellHistory[0].Creature?.GetHashCode()} Updating LastCurse.");
+
+                    double cradh = Spell.GetSpellDuration(cradhName);
+                    DateTime now = DateTime.UtcNow;
+
+                    var cradhStateUpdates = new Dictionary<CreatureState, object>
+                    {
+                        { CreatureState.IsCursed, true },
+                        { CreatureState.LastCursed, DateTime.UtcNow },
+                        { CreatureState.CurseDuration, cradh },
+                        { CreatureState.CurseName, cradhName },
+                    };
+
+                    // Update the creature's state across all clients
+                    CreatureStateHelper.UpdateCreatureStates(client, creature.ID, cradhStateUpdates);
+
+                    Console.WriteLine($"[ActiveMessageHandler] Updating curse state for Creature ID: {creature.ID}, Creature name: {creature.Name} using '{cradhName}' with Duration: {cradh} sec at {now}");
+
+                    client.CastedSpell = null;
+                }
+
+                if (spell != null && spell.Name.Contains("aite"))
                 {
                     Creature creature = client.SpellHistory[0].Creature;
-                    string aiteName = client.CastedSpell.Name;
+                    string aiteName = spell.Name;
 
                     double aiteDuration = Spell.GetSpellDuration(aiteName);
 
@@ -931,13 +963,13 @@ namespace Talos.Helper
 
                     client.CastedSpell = null;
                 }
-                if (client.CastedSpell != null && client.CastedSpell.Name.Contains("pramh"))
+                if (spell != null && spell.Name.Contains("pramh"))
                 {
                     client.SpellHistory[0].Creature.AnimationHistory[(ushort)SpellAnimation.Pramh] = DateTime.UtcNow;
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");
                     client.CastedSpell = null;
                 }
-                if (client.CastedSpell != null && client.CastedSpell.Name.Contains("suain"))
+                if (spell != null && spell.Name.Contains("suain"))
                 {
                     client.SpellHistory[0].Creature.AnimationHistory[(ushort)SpellAnimation.Suain] = DateTime.UtcNow;
                     //-Console.WriteLine($"[UpdateSpellAnimationHistory] 'pramh' cast on Creature ID: {client._creatureToSpellList[0].Creature.ID}, Time: {DateTime.UtcNow}");

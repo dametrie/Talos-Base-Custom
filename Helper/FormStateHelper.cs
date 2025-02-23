@@ -113,6 +113,7 @@ namespace Talos.Helper
         public string WalkSpeedTlbl { get;  set; }
         public bool ChkIgnoreDionWaypointsChecked { get; set; }
         public bool ChkNoCastOffsenseChecked { get; set; }
+        public string SafeFSTboxText { get; set; }
     }
 
     [Serializable]

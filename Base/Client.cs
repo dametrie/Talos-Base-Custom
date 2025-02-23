@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ using Talos.PInvoke;
 using Talos.Properties;
 using Talos.Structs;
 using Talos.Utility;
+using static System.Net.Mime.MediaTypeNames;
 using GroundItem = Talos.Objects.GroundItem;
 using Timer = Talos.Utility.Timer;
 
@@ -522,9 +524,10 @@ namespace Talos.Base
             {
                 try
                 {
-                    foreach (var objectId in NearbyGroundItems)
+                    foreach (var nearbyGroundItem in NearbyGroundItems)
                     {
-                        if (WorldObjects[objectId] is GroundItem groundItem
+
+                        if (WorldObjects[nearbyGroundItem] is GroundItem groundItem
                             && WithinRange(groundItem, distance)
                             && spriteSet.Contains(groundItem.SpriteID))
                         {
@@ -2672,6 +2675,8 @@ namespace Talos.Base
         }
         internal bool IsLocationSurrounded(Location location)
         {
+            Console.WriteLine($"[IsLocationSurrounded] Checking if location {location} is surrounded.");
+
             if (Player == null) return false;
 
             // Early return if the player is too close to the location.
@@ -3304,6 +3309,12 @@ namespace Talos.Base
             {
                 //ServerMessage(0, $"Spell {spellName} not found in spellbook");
                 //Console.WriteLine($"Spell {spellName} not found in spellbook");
+                return false;
+            }
+
+            if (this.Bot.IsAllyAffectedByPramhOrAsleep(this.Player))
+            {
+                ServerMessage((byte)ServerMessageType.TopRight, $"Nothing, you're asleep");
                 return false;
             }
 

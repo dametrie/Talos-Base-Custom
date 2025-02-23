@@ -1048,21 +1048,28 @@ namespace Talos
                     Point point = serverPacket.ReadStruct();
                     Location location = new Location(client.Map.MapID, point);
                     int id = serverPacket.ReadInt32();
-                    ushort sprite = serverPacket.ReadUInt16();
 
-                    if (sprite >= CONSTANTS.ITEM_SPRITE_OFFSET) // Is not a creature
+                    // Read the raw sprite value
+                    ushort rawSprite = serverPacket.ReadUInt16();
+
+                    if (rawSprite >= CONSTANTS.ITEM_SPRITE_OFFSET) // Is not a creature
                     {
                         serverPacket.Read(3);
-                        var obj = new GroundItem(id, (ushort)(sprite - CONSTANTS.ITEM_SPRITE_OFFSET), location, true);
+                        ushort groundSprite = (ushort)(rawSprite - CONSTANTS.ITEM_SPRITE_OFFSET);
+                        var obj = new GroundItem(id, groundSprite, location, true);
+
                         if (!client.WorldObjects.ContainsKey(id))
                             client.WorldObjects.TryAdd(id, obj);
 
                         if (!client.NearbyGroundItems.Contains(id))
                             client.NearbyGroundItems.Add(id);
+
+                        if (!client.NearbyObjects.Contains(id))
+                            client.NearbyObjects.Add(id);
                     }
                     else // Is a creature
                     {
-                        sprite = (ushort)(sprite - CONSTANTS.CREATURE_SPRITE_OFFSET);
+                        ushort creatureSprite = (ushort)(rawSprite - CONSTANTS.CREATURE_SPRITE_OFFSET); 
                         serverPacket.Read(4);
                         byte direction = serverPacket.ReadByte();
                         serverPacket.ReadByte();
@@ -1074,10 +1081,7 @@ namespace Talos
                             name = serverPacket.ReadString8();
                         }
 
-                        Creature creature = GetOrCreateCreature(client, id, name, sprite, type, location, (Direction)direction);
-
-                        //if (!client.WorldObjects.ContainsKey(id))
-                        //    client.WorldObjects.AddOrUpdate(id, creature, (key, oldValue) => creature);
+                        Creature creature = GetOrCreateCreature(client, id, name, creatureSprite, type, location, (Direction)direction);
 
                         if (!client.NearbyObjects.Contains(id))
                             client.NearbyObjects.Add(id);
@@ -1094,18 +1098,8 @@ namespace Talos
                         }
                         else if (client.ClientTab != null)
                         {
-                            TabPage selectedTab;
-                            ClientTab tab1 = client.ClientTab;
-                            if (tab1 != null)
-                            {
-                                selectedTab = tab1.monsterTabControl.SelectedTab;
-                            }
-                            else
-                            {
-                                ClientTab local1 = tab1;
-                                selectedTab = null;
-                            }
-                            if (ReferenceEquals(selectedTab, client.ClientTab.nearbyEnemyTab) && ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainMonstersTab))
+                            if (ReferenceEquals(client.ClientTab.monsterTabControl.SelectedTab, client.ClientTab.nearbyEnemyTab) &&
+                                ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainMonstersTab))
                             {
                                 client.ClientTab.AddNearbyEnemy(creature);
                             }
@@ -1463,7 +1457,7 @@ namespace Talos
         private bool ServerMessage_0x0E_RemoveVisibleObjects(Client client, ServerPacket serverPacket)
         {
             int id = serverPacket.ReadInt32();
-            Console.WriteLine($"Id of visible object inside RemoveVisibleObject: {id}");
+           // Console.WriteLine($"Id of visible object inside RemoveVisibleObject: {id}");
 
             if (client.NearbyObjects.Contains(id))
             {
