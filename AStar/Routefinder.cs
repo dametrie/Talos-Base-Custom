@@ -123,10 +123,11 @@ namespace Talos.AStar
             }
             if (!adjacentNode.IsClosed)
             {
-                float newDistance = currentNode.AccumulatedCost + 1f;
+                float distanceCost = currentNode.Location.Point.Distance(warp.SourceLocation.Point);
+                float newDistance = currentNode.AccumulatedCost + distanceCost + 5f;
                 if (adjacentNode.IsOpen)
                 {
-                    if ((double)adjacentNode.AccumulatedCost > (double)newDistance)
+                    if (adjacentNode.AccumulatedCost > newDistance)
                     {
                         adjacentNode.AccumulatedCost = newDistance;
                         adjacentNode.Parent = currentNode;
@@ -141,9 +142,9 @@ namespace Talos.AStar
                     OpenNodes.Enqueue(adjacentNode);
                 }
             }
-
             return worldMapEntry;
         }
+
 
         private void ProcessAdjacentExits(Location end, RouteNode currentNode, Warp exit)
         {
@@ -167,12 +168,16 @@ namespace Talos.AStar
                 };
                 RouteNodes.Add(newLocation, adjacentNode);
             }
+
             if (!adjacentNode.IsClosed)
             {
-                float newDistance = currentNode.AccumulatedCost + 1f;
+                // Calculate cost: current cost plus distance from current node to warp's source location plus a fixed penalty (5)
+                float distanceCost = currentNode.Location.Point.Distance(exit.SourceLocation.Point);
+                float newDistance = currentNode.AccumulatedCost + distanceCost + 5f;
+
                 if (adjacentNode.IsOpen)
                 {
-                    if ((double)adjacentNode.AccumulatedCost > (double)newDistance)
+                    if (adjacentNode.AccumulatedCost > newDistance)
                     {
                         adjacentNode.AccumulatedCost = newDistance;
                         adjacentNode.Parent = currentNode;
@@ -188,6 +193,7 @@ namespace Talos.AStar
                 }
             }
         }
+
 
         internal sealed class RouteNode : IComparable<RouteNode>
         {

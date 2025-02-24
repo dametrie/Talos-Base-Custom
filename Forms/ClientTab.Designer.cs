@@ -605,6 +605,7 @@ namespace Talos.Forms
             this.toolTipBubbleBlock = new System.Windows.Forms.ToolTip(this.components);
             this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
             this.chatBox = new Talos.Forms.UI.ChatBox();
+            this.button15 = new System.Windows.Forms.Button();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -7134,6 +7135,7 @@ namespace Talos.Forms
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.button15);
             this.tabPage1.Controls.Add(this.button6);
             this.tabPage1.Controls.Add(this.button5);
             this.tabPage1.Controls.Add(this.button4);
@@ -7566,6 +7568,16 @@ namespace Talos.Forms
             this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
             this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
             this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
+            // 
+            // button15
+            // 
+            this.button15.Location = new System.Drawing.Point(610, 179);
+            this.button15.Name = "button15";
+            this.button15.Size = new System.Drawing.Size(139, 23);
+            this.button15.TabIndex = 160;
+            this.button15.Text = "Are we bashing?";
+            this.button15.UseVisualStyleBackColor = true;
+            this.button15.Click += new System.EventHandler(this.button15_Click);
             // 
             // ClientTab
             // 
@@ -8366,5 +8378,6 @@ namespace Talos.Forms
         internal CheckBox regenCaHere;
         private ToolTip toolTipSpamBlock;
         private ToolTip toolTipBubbleBlock;
+        private Button button15;
     }
 }

@@ -461,7 +461,7 @@ namespace Talos.Helper
             _client.IsWalking = true;
 
             // Ensure the walk button is in the correct state
-            if (!_client.ClientTab.IsBashing && _client.ClientTab.walkBtn.Text != "Stop" && _client.ClientTab.WayForm.waypointsLBox.Items.Count > 0)
+            if (!_client.ClientTab.IsBashingActive && _client.ClientTab.walkBtn.Text != "Stop" && _client.ClientTab.WayForm.waypointsLBox.Items.Count > 0)
             {
                 _client.ClientTab.walkBtn.Text = "Stop";
             }

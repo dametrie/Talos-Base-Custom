@@ -132,6 +132,19 @@ internal class Pathfinder
             }
         }
 
+       if (avoidWarps)
+        {
+            foreach (Location warp in _client.GetWarpPoints(destination))
+            {
+                if (!obstacles.Contains(warp))
+                {
+                    obstacles.Add(warp);
+                }
+            }
+        }
+
+
+
         //Console.WriteLine("Obstacles from creature coverage:");
         foreach (Creature creature in _client.GetAllNearbyMonsters(12, CONSTANTS.GREEN_BOROS.ToArray()))
         {

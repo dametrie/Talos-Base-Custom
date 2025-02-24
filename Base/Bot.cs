@@ -138,7 +138,10 @@ namespace Talos.Base
         private Creature nonMainTarget;
         private Task dojoSpellTask;
         private Location dojoPoint;
-
+        private DateTime _lastLootTime = DateTime.MinValue;
+        private const int LootIntervalMs = 500; // adjust as needed
+        private DateTime _lastDropTime = DateTime.MinValue;
+        private const int DropIntervalMs = 5000; // adjust as needed
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
         public bool RecentlyUsedFungusExtract { get; set; } = false;
@@ -212,11 +215,11 @@ namespace Talos.Base
 
         private async Task MultiLoop(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            try
             {
-                try
+                while (!token.IsCancellationRequested)
                 {
-                    //if (Client.Name == "Brightness")
+                    if (Client.Name == "Brightness")
                     //    Console.WriteLine("MultiLoop Pulse");
                         
                     // Block if Client or ClientTab is null
@@ -246,14 +249,16 @@ namespace Talos.Base
                     // Sleep before the next iteration
                     await Task.Delay(100, token);
                 }
-                catch(OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[MultiLoop] Exception occurred: {ex}");
-                }
+               
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine($"[MultiLoop] OperationCanceledException");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MultiLoop] Exception occurred: {ex}");
             }
         }
 
@@ -874,15 +879,24 @@ namespace Talos.Base
         {
             try
             {
+                if (Client.Name == "Brightness")
+                    Console.WriteLine($"[BASHLOOP] ClientTab instance: {Client.ClientTab.GetHashCode()}, IsBashingActive: {Client.ClientTab.IsBashingActive}");
+
+                // Grab a local reference to ensure we’re working with the same ClientTab instance
+                var tab = Client?.ClientTab;
+                if (tab == null || !tab.IsBashingActive)
+                    return;
+
+
                 if (!bashClassSet)
                 {
                     SetBashClass();
                 }
 
                 if (Client.Name == "Brightness")
-                    Console.WriteLine($"[DEBUG] IsBashing is currently set to {Client?.ClientTab?.IsBashing}");
+                    Console.WriteLine($"[BASHLOOP] ClientTab instance: {Client.ClientTab.GetHashCode()}, IsBashingActive: {Client.ClientTab.IsBashingActive}");
 
-                if (!Client?.ClientTab?.IsBashing ?? true)
+                if (!Client?.ClientTab?.IsBashingActive ?? true)
                 {
                     return;
                 }
@@ -2011,7 +2025,7 @@ namespace Talos.Base
             }
             else
             {
-                return true;//Adam
+                return true;
             }
         }
 
@@ -2609,14 +2623,16 @@ namespace Talos.Base
 
                 List<Player> nearbyPlayers = Client.GetNearbyPlayers();
 
-                if(!nearbyPlayers.Any(p => p.Name.Equals(followName, StringComparison.CurrentCultureIgnoreCase)))
+                // Only nullify leader if we don't have a bot client AND the player is not nearby.
+                if (botClientToFollow == null &&
+                    !nearbyPlayers.Any(p => p.Name.Equals(followName, StringComparison.CurrentCultureIgnoreCase)))
                 {
                     leader = null;
                 }
 
                 var leaderClient = botClientToFollow;
 
-                if (Client != null && (Client.ClientTab.IsBashing || !Client.Stopped))
+                if (Client != null && (Client.ClientTab.IsBashingActive || !Client.Stopped))
                 {
                     RefreshLastStep();
                 }
@@ -2644,29 +2660,6 @@ namespace Talos.Base
                 Location leaderLocation = leader.Location;
                 int distance = leaderLocation.DistanceFrom(Client.ClientLocation);
 
-                // If the leader is on a different map, attempt to follow via LastSeenLocations
-                if (leaderLocation.MapID != Client.Map.MapID)
-                {
-                    if (_leaderID.HasValue &&
-                        Client.LastSeenLocations.TryGetValue(_leaderID.Value, out Location lastSeenLocation))
-                    {
-                        if (lastSeenLocation.MapID == Client.Map.MapID)
-                        {
-                            Client.IsWalking = Client.Pathfind(lastSeenLocation)
-                                && !Client.ClientTab.oneLineWalkCbox.Checked
-                                && !Server.StopWalking;
-                        }
-                        else
-                        {
-                            Client.IsWalking = false;
-                        }
-                    }
-                    else
-                    {
-                        Client.IsWalking = false;
-                    }
-                    return;
-                }
 
                 if (botClientToFollow != null
                     && botClientToFollow.Bot != null
@@ -2688,7 +2681,7 @@ namespace Talos.Base
                     }
                 }
 
-                if (leaderClient?.ClientTab?.IsBashing == true
+                if (leaderClient?.ClientTab?.IsBashingActive == true
                     && !Client.HasEffect(EffectsBar.BeagSuain)
                     && !Client.HasEffect(EffectsBar.Pramh)
                     && !Client.HasEffect(EffectsBar.Suain)
@@ -2767,6 +2760,30 @@ namespace Talos.Base
                             }
                         }
                     }
+                }
+
+                // If the leader is on a different map, attempt to follow via LastSeenLocations
+                if (leaderLocation.MapID != Client.Map.MapID)
+                {
+                    if (_leaderID.HasValue &&
+                        Client.LastSeenLocations.TryGetValue(_leaderID.Value, out Location lastSeenLocation))
+                    {
+                        if (lastSeenLocation.MapID == Client.Map.MapID)
+                        {
+                            Client.IsWalking = Client.Pathfind(lastSeenLocation)
+                                && !Client.ClientTab.oneLineWalkCbox.Checked
+                                && !Server.StopWalking;
+                        }
+                        else
+                        {
+                            Client.IsWalking = false;
+                        }
+                    }
+                    else
+                    {
+                        Client.IsWalking = false;
+                    }
+                    return;
                 }
             }
             catch (Exception ex)
@@ -2982,7 +2999,7 @@ namespace Talos.Base
                         //    E.g. if (# of mobs in proximityUpDwn1 >= mobSizeUpDwn1) => slow
                         //    The old code does each "conditionX" in order; if matched => set walkspeed
                         WayForm waysForm = Client.ClientTab.WayForm;
-                        if (waysForm.condition1.Checked && !Client.ClientTab.IsBashing)
+                        if (waysForm.condition1.Checked && !Client.ClientTab.IsBashingActive)
                         {
                             int count = nearbyMobs.Count(c =>
                                 Client.WithinRange(c, (int)waysForm.proximityUpDwn1.Value));
@@ -2991,7 +3008,7 @@ namespace Talos.Base
                                 Client.WalkSpeed = (double)waysForm.walkSlowUpDwn1.Value;
                             }
                         }
-                        if (waysForm.condition2.Checked && !Client.ClientTab.IsBashing)
+                        if (waysForm.condition2.Checked && !Client.ClientTab.IsBashingActive)
                         {
                             int count = nearbyMobs.Count(c =>
                                 Client.WithinRange(c, (int)waysForm.proximityUpDwn2.Value));
@@ -3000,7 +3017,7 @@ namespace Talos.Base
                                 Client.WalkSpeed = (double)waysForm.walkSlowUpDwn2.Value;
                             }
                         }
-                        if (waysForm.condition3.Checked && !Client.ClientTab.IsBashing)
+                        if (waysForm.condition3.Checked && !Client.ClientTab.IsBashingActive)
                         {
                             int count = nearbyMobs.Count(c =>
                                 Client.WithinRange(c, (int)waysForm.proximityUpDwn3.Value));
@@ -3406,10 +3423,10 @@ namespace Talos.Base
                 while (!token.IsCancellationRequested)
                 {
 
-                    //Console.WriteLine("[BotLoop] Pulse - _shouldThreadStop: " + _shouldThreadStop);
+                        //Console.WriteLine("[BotLoop] Pulse - _shouldThreadStop: " + _shouldThreadStop);
 
-                    try
-                    {
+                        try
+                        {
                         if (Client.InArena)
                         {
                             await Task.Delay(1000);
@@ -6334,9 +6351,7 @@ namespace Talos.Base
             bool isDropTrashChecked = clientTab.dropTrashCbox.Checked;
 
             if (!isPickupGoldChecked && !isPickupItemsChecked && !isDropTrashChecked)
-            {
                 return;
-            }
 
             try
             {
@@ -6361,6 +6376,9 @@ namespace Talos.Base
 
         private void ProcessLoot(List<Objects.GroundItem> nearbyObjects, Rectangle lootArea)
         {
+            if (DateTime.UtcNow.Subtract(_lastLootTime).TotalMilliseconds < LootIntervalMs)
+                return;
+
             bool isPickupGoldChecked = Client.ClientTab.pickupGoldCbox.Checked;
             bool isPickupItemsChecked = Client.ClientTab.pickupItemsCbox.Checked;
 
@@ -6380,6 +6398,8 @@ namespace Talos.Base
                     Client.Pickup(0, obj.Location);
                 }
             }
+
+            _lastLootTime = DateTime.UtcNow;
         }
 
         private bool IsGold(Objects.GroundItem obj, Rectangle lootArea)
@@ -6394,24 +6414,23 @@ namespace Talos.Base
 
         private void HandleTrashItems()
         {
+            if (DateTime.UtcNow.Subtract(_lastDropTime).TotalMilliseconds < DropIntervalMs)
+                return;
+
             if (Client.ClientTab.dropTrashCbox.Checked)
             {
-                if (_dropCounter >= 15)
+
+                foreach (Item item in Client.Inventory.ToList())
                 {
-                    foreach (Item item in Client.Inventory.ToList())
+                    if (Client.ClientTab._trashToDrop.Contains(item.Name, StringComparer.CurrentCultureIgnoreCase))
                     {
-                        if (Client.ClientTab._trashToDrop.Contains(item.Name, StringComparer.CurrentCultureIgnoreCase))
-                        {
-                            Client.Drop(item.Slot, Client.ServerLocation, item.Quantity);
-                        }
+                        Client.Drop(item.Slot, Client.ServerLocation, item.Quantity);
                     }
-                    _dropCounter = 0;
                 }
-                else
-                {
-                    _dropCounter++;
-                }
+
             }
+
+            _lastDropTime = DateTime.UtcNow;
         }
 
 

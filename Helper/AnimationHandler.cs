@@ -204,7 +204,7 @@ namespace Talos.Helper
                     {
                         double fasDuration = Spell.GetSpellDuration("mor fas nadur");
 
-                        var fasStateUpdate = new Dictionary<CreatureState, object> //Adam new
+                        var fasStateUpdate = new Dictionary<CreatureState, object> 
                         {
                             { CreatureState.IsFassed, true },
                             { CreatureState.LastFassed, DateTime.UtcNow },
@@ -216,7 +216,6 @@ namespace Talos.Helper
                         //Console.WriteLine($"[AnimationHandler] Someone else casted Fas on Creature ID: {_targetCreature?.ID}. LastFassed updated to {_targetCreature?.GetState<DateTime>(CreatureState.LastFassed)}");
                         //Console.WriteLine($"[AnimationHandler] (Other) Updating fas state for Creature ID: {_targetCreature.ID} using 'mor fas nadur' with Duration: {fasDuration} sec at {now}");
 
-
                     }
                     else
                     {
@@ -224,7 +223,7 @@ namespace Talos.Helper
                         string spellName = _client.SpellHistory[0].Spell.Name;
                         double fasDuration = Spell.GetSpellDuration(spellName);
 
-                        var fasStateUpdate = new Dictionary<CreatureState, object> //Adam new
+                        var fasStateUpdate = new Dictionary<CreatureState, object>
                         {
                             { CreatureState.IsFassed, true },
                             { CreatureState.LastFassed, DateTime.UtcNow },
@@ -266,7 +265,7 @@ namespace Talos.Helper
 
                     double bcDuration = Spell.GetSpellDuration("beag cradh");
 
-                    var bcStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    var bcStateUpdates = new Dictionary<CreatureState, object>
                     {
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
@@ -283,7 +282,7 @@ namespace Talos.Helper
 
                     double cDuration = Spell.GetSpellDuration("cradh");
 
-                    var cStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    var cStateUpdates = new Dictionary<CreatureState, object>
                     {
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
@@ -300,7 +299,7 @@ namespace Talos.Helper
 
                     double mcDuration = Spell.GetSpellDuration("mor cradh");
 
-                    var mcStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    var mcStateUpdates = new Dictionary<CreatureState, object>
                     {
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
@@ -317,7 +316,7 @@ namespace Talos.Helper
 
                     double acDuration = Spell.GetSpellDuration("ard cradh");
 
-                    var acStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    var acStateUpdates = new Dictionary<CreatureState, object>
                     {
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
@@ -326,10 +325,6 @@ namespace Talos.Helper
                     };
 
                     CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, acStateUpdates);
-
-                    //_targetCreature.Curse = "ard cradh";
-                    //_targetCreature.CurseDuration = Spell.GetSpellDuration(_targetCreature.Curse);
-                    //_targetCreature.LastCursed = DateTime.UtcNow;
                     
                     //Console.WriteLine($"[AnimationHandler] curse duration set on Animation. Duration: {_targetCreature.GetState<double>(CreatureState.CurseDuration)}, LastCursed: {_targetCreature.GetState<DateTime>(CreatureState.LastCursed)}");
                     
@@ -339,7 +334,7 @@ namespace Talos.Helper
 
                     double demiseDuration = Spell.GetSpellDuration("Demise");
 
-                    var demiseStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    var demiseStateUpdates = new Dictionary<CreatureState, object>
                     {
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
@@ -355,7 +350,7 @@ namespace Talos.Helper
 
                     double darkerSealDuration = Spell.GetSpellDuration("Darker Seal");
 
-                    var darkerSealStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    var darkerSealStateUpdates = new Dictionary<CreatureState, object>
                     {
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
@@ -371,7 +366,7 @@ namespace Talos.Helper
 
                     double darkSealDuration = Spell.GetSpellDuration("Dark Seal");
 
-                    var darkSealStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                    var darkSealStateUpdates = new Dictionary<CreatureState, object> 
                     {
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
@@ -474,7 +469,7 @@ namespace Talos.Helper
                     break;
 
                 case (ushort)SpellAnimation.CreatureAsgall:
-                    if (_targetCreature == _client.Player && _sourceCreature == _client.Player && _client.ClientTab.IsBashing)
+                    if (_targetCreature == _client.Player && _sourceCreature == _client.Player && _client.ClientTab.IsBashingActive)
                     {
                         Creature target = _client.Bot.BashingBase.Target;
                         if (target != null && !target.IsAsgalled) 

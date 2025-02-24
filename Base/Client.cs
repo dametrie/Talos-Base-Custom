@@ -543,7 +543,7 @@ namespace Talos.Base
 
             return nearbyGroundItems;
         }
-        internal List<GroundItem> GetNearbyGroundItems(int distance = 12) //Adam
+        internal List<GroundItem> GetNearbyGroundItems(int distance = 12)
         {
             if (!Monitor.TryEnter(Server.SyncObj, 1000))
             {
@@ -649,7 +649,7 @@ namespace Talos.Base
             // Return an empty list if unable to acquire lock
             return new List<Creature>();
         }
-        internal List<WorldObject> GetNearbyObjects() //Adam
+        internal List<WorldObject> GetNearbyObjects()
         {
             return WorldObjects.Values.Where(wo => NearbyObjects.Contains(wo.ID)).ToList();
         }
@@ -691,6 +691,7 @@ namespace Talos.Base
 
             return allWarpPoints;
         }
+
 
 
 
@@ -965,7 +966,7 @@ namespace Talos.Base
         private bool IsValidSpell(Client client, string spellName, Creature creature)
         {
             // Guard clause: Reject spell if Suain effect is active and spell is not allowed
-            //Adam maybe we should check if pramh'd too?
+            // Maybe we should check if pramh'd too?
             if (ShouldRejectSpellDueToSuain(client, spellName))
             {
                 return false;
@@ -975,7 +976,7 @@ namespace Talos.Base
             if (!Map.Name.Contains("Training Dojo"))
             {
                 // Reject spell based on spell name
-                //Adam check whether this is needed. We already check for spell == null in the parent method
+                // Check whether this is needed. We already check for spell == null in the parent method
                 //if (ShouldRejectSpellDueToSpellName(spellName))
                 //{
                 //    return false;
@@ -1051,7 +1052,6 @@ namespace Talos.Base
                         }
 
                     case 2030226177: // armachd
-                        //Adam check this
                         if (!CastedTarget.HasArmachd) return true;
                         return false;
 
@@ -1648,7 +1648,7 @@ namespace Talos.Base
             Staffs.Add(new Staff("Yowien's Claw1", StaffSpells, 65, 99, true, TemuairClass.Monk));
             Staffs.Add(new Staff("Blackstar Night Claw", StaffSpells, 95, 99, true, TemuairClass.Monk));
             Staffs.Add(new Staff("Ancient Hy-brasyl Tonfa", StaffSpells, 99, 99, true, TemuairClass.Monk));
-            //Adam Add Arsaid Aon weapons?
+            // Add Arsaid Aon weapons?
         }
         internal void CheckWeaponType(Item item)
         {
@@ -2236,7 +2236,7 @@ namespace Talos.Base
 
                 if (_routeStack.Count == 0 || Location.NotEquals(_routeDestination, adjustedDestination))
                 {
-                    //Console.WriteLine($"[RouteFind] [{this.Name}] Finding new route.");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Finding new route.");
                     _routeDestination = adjustedDestination;
                     _routeStack = RouteFinder.FindRoute(currentLocation, adjustedDestination);
                 }
@@ -2248,7 +2248,7 @@ namespace Talos.Base
 
                 if (_routeStack.Count == 0)
                 {
-                    //Console.WriteLine($"[RouteFind] [{this.Name}] Route not found, initializing new RouteFinder.");
+                    Console.WriteLine($"[RouteFind] [{this.Name}] Route not found, initializing new RouteFinder.");
                     RouteFinder = new RouteFinder(Server, this);
                     _routeDestination = adjustedDestination;
                     _lastClickedWorldMap = DateTime.MinValue;
@@ -2675,7 +2675,7 @@ namespace Talos.Base
         }
         internal bool IsLocationSurrounded(Location location)
         {
-            Console.WriteLine($"[IsLocationSurrounded] Checking if location {location} is surrounded.");
+            //Console.WriteLine($"[IsLocationSurrounded] Checking if location {location} is surrounded.");
 
             if (Player == null) return false;
 

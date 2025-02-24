@@ -76,30 +76,30 @@ namespace Talos.Bashing
         {
             try
             {
-                Console.WriteLine($"[DEBUG] [{Client.Name}] DoBashing started at {DateTime.UtcNow}");
+                //Console.WriteLine($"[DEBUG] [{Client.Name}] DoBashing started at {DateTime.UtcNow}");
 
                 if (!CanPerformActions)
                 {
-                    Console.WriteLine($"[DEBUG] [{Client.Name}] Cannot perform actions. Exiting DoBashing.");
+                    //Console.WriteLine($"[DEBUG] [{Client.Name}] Cannot perform actions. Exiting DoBashing.");
                     return true;
                 }
 
                 Update();
-                Console.WriteLine($"[DEBUG] [{Client.Name}] Update complete. NearbyPlayers: {NearbyPlayers.Count}, NearbyMonsters: {NearbyMonsters.Count}");
+                //Console.WriteLine($"[DEBUG] [{Client.Name}] Update complete. NearbyPlayers: {NearbyPlayers.Count}, NearbyMonsters: {NearbyMonsters.Count}");
 
                 // Get filtered monsters and ordered potential targets
                 KillableTargets = FilterMonstersByCursedFased()?.ToList();
-                Console.WriteLine($"[DEBUG] [{Client.Name}] Filtered KillableTargets: {(KillableTargets == null ? 0 : KillableTargets.Count)}");
+                //Console.WriteLine($"[DEBUG] [{Client.Name}] Filtered KillableTargets: {(KillableTargets == null ? 0 : KillableTargets.Count)}");
 
                 if (!ValidateKillableTargets())
                 {
-                    Console.WriteLine($"[DEBUG] [{Client.Name}] ValidateKillableTargets failed. Exiting DoBashing.");
+                    //Console.WriteLine($"[DEBUG] [{Client.Name}] ValidateKillableTargets failed. Exiting DoBashing.");
                     return false;
                 }
                 //Console.WriteLine($"[Bashing] [{Client.Name}] Found {KillableTargets.Count} valid targets.");
 
                 var potentialTargets = GetOrderedPotentialTargets()?.ToList();
-                Console.WriteLine($"[DEBUG] [{Client.Name}] Potential targets count: {(potentialTargets == null ? 0 : potentialTargets.Count)}");
+                //Console.WriteLine($"[DEBUG] [{Client.Name}] Potential targets count: {(potentialTargets == null ? 0 : potentialTargets.Count)}");
 
                 if (!ValidatePotentialTargets(potentialTargets))
                 {
@@ -112,52 +112,52 @@ namespace Talos.Bashing
                 Target = potentialTargets.FirstOrDefault(MeetsKillCriteria) ?? potentialTargets.FirstOrDefault();
                 if (Target == null)
                 {
-                    Console.WriteLine($"[DEBUG] [{Client.Name}] No valid target found. Exiting DoBashing.");
+                    //Console.WriteLine($"[DEBUG] [{Client.Name}] No valid target found. Exiting DoBashing.");
                     return false;
                 }
 
-                Console.WriteLine($"[DEBUG] [{Client.Name}] Target selected: {Target.Name} at {Target.Location}");
+                //Console.WriteLine($"[DEBUG] [{Client.Name}] Target selected: {Target.Name} at {Target.Location}");
 
                 // Manage target selection timing
                 if (ShouldSendBashingTarget())
                 {
                     SendBashingTarget(Target);
-                    Console.WriteLine($"[DEBUG] [{Client.Name}] Sent bashing target update.");
+                    //Console.WriteLine($"[DEBUG] [{Client.Name}] Sent bashing target update.");
                 }
 
                 // Handle movement towards the target
                 if (!HandleMovement(Target))
                 {
-                    Console.WriteLine($"[DEBUG] [{Client.Name}] HandleMovement failed. Exiting DoBashing.");
+                    //Console.WriteLine($"[DEBUG] [{Client.Name}] HandleMovement failed. Exiting DoBashing.");
                     return false;
                 }
 
-                Console.WriteLine($"[DEBUG] [{Client.Name}] Movement handled successfully.");
+                //Console.WriteLine($"[DEBUG] [{Client.Name}] Movement handled successfully.");
 
                 Client.Bot.EnsureWeaponEquipped();
-                Console.WriteLine($"[DEBUG] [{Client.Name}] Weapon check complete.");
+                //Console.WriteLine($"[DEBUG] [{Client.Name}] Weapon check complete.");
 
                 // Perform refresh or equip actions if needed
                 if (RefreshIfNeeded() || EquipNecklaceIfNeeded(Target))
                 {
-                    Console.WriteLine($"[DEBUG] [{Client.Name}] Refresh or equip action executed. Exiting DoBashing for this cycle.");
+                    //Console.WriteLine($"[DEBUG] [{Client.Name}] Refresh or equip action executed. Exiting DoBashing for this cycle.");
                     return true;
                 }
 
                 // Perform bashing if enabled
                 if (Client.Bot?._dontBash == false)
                 {
-                    Console.WriteLine($"[DEBUG] [{Client.Name}] Using skills on target {Target.Name}");
+                    //Console.WriteLine($"[DEBUG] [{Client.Name}] Using skills on target {Target.Name}");
                     UseSkills(Target);
                 }
 
-                Console.WriteLine("[DEBUG] Exiting DoBashing method normally.");
+                //Console.WriteLine("[DEBUG] Exiting DoBashing method normally.");
                 return true;
             }
             catch (Exception ex)
             {
                 Log($"[Bashing] [{Client.Name}] Exception in DoBashing: {ex.Message}\n{ex.StackTrace}");
-                Console.WriteLine($"[Bashing] [{Client.Name}] Exception in DoBashing: {ex.Message}\n{ex.StackTrace}");
+                //Console.WriteLine($"[Bashing] [{Client.Name}] Exception in DoBashing: {ex.Message}\n{ex.StackTrace}");
                 return false;
             }
         }
@@ -957,19 +957,19 @@ namespace Talos.Bashing
 
                 if ((currentTime - LastPointInSync).TotalMilliseconds > 1000)
                 {
-                    Console.WriteLine($"[DEBUG] [{Client.Name}] RefreshIfNeeded: Desync detected. Waiting for sync...");
+                    //Console.WriteLine($"[DEBUG] [{Client.Name}] RefreshIfNeeded: Desync detected. Waiting for sync...");
 
                     WaitForSync(pingDelay, currentTime);
 
                     if (Client.ClientLocation != Client.ServerLocation)
                     {
-                        Console.WriteLine($"[DEBUG] [{Client.Name}] Desync persists. Issuing RefreshRequest.");
+                        //Console.WriteLine($"[DEBUG] [{Client.Name}] Desync persists. Issuing RefreshRequest.");
                         Client.RefreshRequest();
 
                     }
 
                     LastPointInSync = DateTime.UtcNow;
-                    Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with true (desync refresh).");
+                    //Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with true (desync refresh).");
                     return true;
                 }
             }
@@ -978,7 +978,7 @@ namespace Talos.Bashing
                 LastPointInSync = currentTime;
             }
 
-            Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with false (no refresh needed).");
+            //Console.WriteLine("[DEBUG] Exiting RefreshIfNeeded with false (no refresh needed).");
             return false;
         }
 

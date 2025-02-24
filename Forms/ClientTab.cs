@@ -102,7 +102,13 @@ namespace Talos.Forms
             "Magus Diana",
             "Holy Diana",
             "Magus Gaea",
-            "Holy Gaea"
+            "Holy Gaea",
+            "Goblin's Skull",
+            "Hobgoblin's Skull",
+            "Mythril Greaves",
+            "Saffian Boots",
+            "Hatchet",
+            "Wooden Club",
         };
 
         internal BindingList<string> _wayFormProfiles = new BindingList<string>();
@@ -118,13 +124,11 @@ namespace Talos.Forms
         internal bool _isLoading;
         private string waypointsPath;
         private System.Windows.Forms.Timer mushroomBonusCooldownTimer;
-
-        internal bool IsBashing
+        private int _isBashingActive;
+        internal bool IsBashingActive
         {
-            get
-            {
-                return btnBashingNew.Text == "Stop Bashing";
-            }
+            get => Interlocked.CompareExchange(ref _isBashingActive, 0, 0) == 1;
+            set => Interlocked.Exchange(ref _isBashingActive, value ? 1 : 0);
         }
 
         internal ClientTab(Client client)
@@ -3898,6 +3902,7 @@ namespace Talos.Forms
 
             if (btnBashingNew.Text == "Start Bashing")
             {
+                IsBashingActive = true;
                 btnBashingNew.Text = "Stop Bashing";
                 btnBashingNew.Image = Resources.grumblade;
                 btnBashingNew.ImageAlign = ContentAlignment.MiddleLeft;
@@ -3905,6 +3910,7 @@ namespace Talos.Forms
             }
             else
             {
+                IsBashingActive = false;
                 btnBashingNew.Text = "Start Bashing";
                 btnBashingNew.Image = Resources.bruneblade;
                 btnBashingNew.ImageAlign = ContentAlignment.MiddleLeft;
@@ -4088,6 +4094,14 @@ namespace Talos.Forms
 
         private void mapFlagsEnableCbox_CheckedChanged(object sender, EventArgs e)
         {
+
+        }
+
+        private void button15_Click(object sender, EventArgs e)
+        {
+            // Send a servermessage with the stats of IsBashing
+            _client.ServerMessage((byte)ServerMessageType.OrangeBar1, $"ClientTab IsBashing: {this.IsBashingActive}");
+            Console.WriteLine($"[DEBUG] ClientTab instance: {this.GetHashCode()}, IsBashingActive: {this.IsBashingActive}");
 
         }
     }

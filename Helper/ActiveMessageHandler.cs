@@ -296,7 +296,7 @@ namespace Talos.Helper
 
                             double curseDuration = Spell.GetSpellDuration(spellName);
 
-                            var curseStateUpdates = new Dictionary<CreatureState, object> //Adam New
+                            var curseStateUpdates = new Dictionary<CreatureState, object> 
                             {
                                 { CreatureState.IsCursed, true },
                                 { CreatureState.LastCursed, DateTime.UtcNow },
@@ -323,7 +323,7 @@ namespace Talos.Helper
 
                             double fasDuration = Spell.GetSpellDuration(spellName);
 
-                            var fasStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                            var fasStateUpdates = new Dictionary<CreatureState, object> 
                             {
                                 { CreatureState.IsFassed, true },
                                 { CreatureState.LastFassed, DateTime.UtcNow },
@@ -349,7 +349,7 @@ namespace Talos.Helper
                         {
                             double dionDuration = Spell.GetSpellDuration(spellName);
 
-                            var dionStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                            var dionStateUpdates = new Dictionary<CreatureState, object> 
                             {
                                 { CreatureState.IsDioned, true },
                                 { CreatureState.LastDioned, DateTime.UtcNow },
@@ -1138,7 +1138,7 @@ namespace Talos.Helper
 
                 double fasDuration = Spell.GetSpellDuration("mor fas nadur");
 
-                var fasStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                var fasStateUpdates = new Dictionary<CreatureState, object> 
                 {
                     { CreatureState.IsFassed, true },
                     { CreatureState.LastFassed, DateTime.UtcNow },
@@ -1157,7 +1157,7 @@ namespace Talos.Helper
             {
                 double curseDuration = Spell.GetSpellDuration(message);
 
-                var curseStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                var curseStateUpdates = new Dictionary<CreatureState, object> 
                 {
                     { CreatureState.IsCursed, true },
                     { CreatureState.LastCursed, DateTime.UtcNow },
@@ -1174,7 +1174,7 @@ namespace Talos.Helper
             lock (_lock)
             {
 
-                var curseStateUpdates = new Dictionary<CreatureState, object> //Adam new
+                var curseStateUpdates = new Dictionary<CreatureState, object> 
                 {
                     { CreatureState.IsCursed, false },
                     { CreatureState.LastCursed, DateTime.MinValue },

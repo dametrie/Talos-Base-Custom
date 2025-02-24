@@ -65,8 +65,6 @@ namespace Talos.Bashing
         public RogueBashing(Bot bot) : base(bot)
         {
             // Show the rogue settings in UI
-            // Adam check this
-            // check if invoke required, if so, show rogueGbox on the main form
             if (Client.ClientTab.InvokeRequired)
             {
                 Client.ClientTab.Invoke(new Action(() => Client.ClientTab.rogueGbox.Visible = true));
@@ -82,23 +80,23 @@ namespace Talos.Bashing
         internal override void UseSkills(Creature target)
         {
             DateTime now = DateTime.UtcNow;
-            Console.WriteLine($"[DEBUG] UseSkills called for target {target.Name} (ID: {target.ID}) at {target.Location}");
+            //Console.WriteLine($"[DEBUG] UseSkills called for target {target.Name} (ID: {target.ID}) at {target.Location}");
 
             bool canUseSkill = (now - LastUsedSkill) > TimeSpan.FromMilliseconds(SkillIntervalMs);
             bool canAssail = (now - LastAssailed) > TimeSpan.FromMilliseconds(1000.0);
-            Console.WriteLine($"[DEBUG] canUseSkill: {canUseSkill}, canAssail: {canAssail}");
+            //Console.WriteLine($"[DEBUG] canUseSkill: {canUseSkill}, canAssail: {canAssail}");
 
             // Attempt multi-target logic first
             if (DoActionForSurroundingCreature())
             {
                 LastUsedSkill = now;
-                Console.WriteLine("[DEBUG] Early exit in UseSkills due to secondary action.");
+                //Console.WriteLine("[DEBUG] Early exit in UseSkills due to secondary action.");
                 return;
             }
 
             // Possibly back off if distance=2
             int distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
-            Console.WriteLine($"[DEBUG] Distance to primary target: {distanceToTarget}");
+            //Console.WriteLine($"[DEBUG] Distance to primary target: {distanceToTarget}");
             if (distanceToTarget == 2)
             {
                 if (TryBackOff(target, once: true) || TryApproach(target))
@@ -109,7 +107,7 @@ namespace Talos.Bashing
             if (DoActionForSurroundingCreature())
             {
                 LastUsedSkill = now;
-                Console.WriteLine("[DEBUG] Second Early exit in UseSkills due to secondary action.");
+                //Console.WriteLine("[DEBUG] Second Early exit in UseSkills due to secondary action.");
                 return;
             }
 
@@ -117,7 +115,7 @@ namespace Talos.Bashing
             distanceToTarget = Client.ClientLocation.DistanceFrom(target.Location);
             if (distanceToTarget > 11)
             {
-                Console.WriteLine("[DEBUG] Target is too far; exiting UseSkills.");
+                //Console.WriteLine("[DEBUG] Target is too far; exiting UseSkills.");
                 return;
 
             }
@@ -125,11 +123,11 @@ namespace Talos.Bashing
             // Distances
             if (distanceToTarget == 1)
             {
-                Console.WriteLine("[DEBUG] Processing melee-range actions for primary target.");
+                //Console.WriteLine("[DEBUG] Processing melee-range actions for primary target.");
                 // If asgalled but not bashing => skip
                 if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall)
                 {
-                    Console.WriteLine("[DEBUG] Primary target is asgalled and conditions not met; skipping melee action.");
+                    //Console.WriteLine("[DEBUG] Primary target is asgalled and conditions not met; skipping melee action.");
                     return;
                 }
 
@@ -139,7 +137,7 @@ namespace Talos.Bashing
                 {
                     LastUsedSkill = now;
                     target._hitCounter++;
-                    Console.WriteLine("[DEBUG] DoActionForRange1 executed on primary target.");
+                    //Console.WriteLine("[DEBUG] DoActionForRange1 executed on primary target.");
                 }
 
                 // Possibly do assails if we can
@@ -148,7 +146,7 @@ namespace Talos.Bashing
                     UseAssails();
                     LastAssailed = now;
                     target._hitCounter++;
-                    Console.WriteLine("[DEBUG] UseAssails executed on primary target.");
+                    //Console.WriteLine("[DEBUG] UseAssails executed on primary target.");
                 }
             }
             else if (distanceToTarget == 2)
@@ -160,11 +158,11 @@ namespace Talos.Bashing
                 UseRangedAssails();
                 LastAssailed = now;
                 target._hitCounter++;
-                Console.WriteLine("[DEBUG] Ranged assails executed on primary target.");
+                //Console.WriteLine("[DEBUG] Ranged assails executed on primary target.");
             }
             else
             {
-                Console.WriteLine("[DEBUG] Processing actions for primary target at distance 3..11.");
+                //Console.WriteLine("[DEBUG] Processing actions for primary target at distance 3..11.");
                 // 3..11
                 if (target.IsAsgalled && !Client.Player.IsDioned && !BashAsgall) { Console.WriteLine("[DEBUG] Primary target is asgalled and conditions not met; exiting."); return; }
 
@@ -174,7 +172,7 @@ namespace Talos.Bashing
                 {
                     LastUsedSkill = now;
                     target._hitCounter++;
-                    Console.WriteLine("[DEBUG] DoActionForRangeLt11 executed on primary target.");
+                    //Console.WriteLine("[DEBUG] DoActionForRangeLt11 executed on primary target.");
                 }
 
                 // Then do assails if time allows
@@ -184,7 +182,7 @@ namespace Talos.Bashing
                 UseRangedAssails();
                 LastAssailed = now;
                 target._hitCounter++;
-                Console.WriteLine("[DEBUG] Ranged assails executed on primary target.");
+                //Console.WriteLine("[DEBUG] Ranged assails executed on primary target.");
             }
         }
 
@@ -333,32 +331,61 @@ namespace Talos.Bashing
         internal IEnumerable<(Creature Target, Location AttackPosition)> GetAllRangedAttackPositions(
             Creature target, int maxDistance = 8)
         {
+            // Define the extreme points based on maxDistance.
             var top = new Location(Client.Map.MapID, target.Location.X, (short)(target.Location.Y - maxDistance));
             var east = new Location(Client.Map.MapID, (short)(target.Location.X + maxDistance), target.Location.Y);
             var south = new Location(Client.Map.MapID, target.Location.X, (short)(target.Location.Y + maxDistance));
             var west = new Location(Client.Map.MapID, (short)(target.Location.X - maxDistance), target.Location.Y);
 
-            // Each direction, iterating closer to the target
+            //Console.WriteLine($"[GetAllRangedAttackPositions] Target {target.Name} at {target.Location}");
+            //Console.WriteLine($"[GetAllRangedAttackPositions] Top: {top}, East: {east}, South: {south}, West: {west}");
+
+            // Iterate for each direction and log the positions along the line.
             foreach (var p in WalkLine(top, target.Location, Direction.South))
+            {
+                //Console.WriteLine($"[WalkLine - Top->Target] {p}");
                 yield return (target, p);
+            }
 
             foreach (var p in WalkLine(east, target.Location, Direction.West))
+            {
+                //Console.WriteLine($"[WalkLine - East->Target] {p}");
                 yield return (target, p);
+            }
 
             foreach (var p in WalkLine(south, target.Location, Direction.North))
+            {
+                //Console.WriteLine($"[WalkLine - South->Target] {p}");
                 yield return (target, p);
+            }
 
             foreach (var p in WalkLine(west, target.Location, Direction.East))
+            {
+                //Console.WriteLine($"[WalkLine - West->Target] {p}");
                 yield return (target, p);
+            }
 
+            // Local helper function to iterate a line from start to end.
             IEnumerable<Location> WalkLine(Location start, Location end, Direction dir)
             {
                 var current = start;
-                while (current != end)
+                int count = 0;
+                while (!current.Equals(end))  // Ensure that Location implements equality correctly.
                 {
+                    //Console.WriteLine($"[WalkLine] Current: {current}, Direction: {dir}");
                     if (!Warps.Contains(current) && Client.Map.IsWalkable(Client, current))
+                    {
                         yield return current;
+                    }
                     current = current.Offsetter(dir);
+                    count++;
+
+                    // Safety break: if we've iterated more than expected, break out.
+                    if (count > maxDistance + 10)
+                    {
+                        Console.WriteLine("[WalkLine] Safety break triggered.");
+                        break;
+                    }
                 }
             }
         }
@@ -674,10 +701,10 @@ namespace Talos.Bashing
 
         private bool DoActionForSurroundingCreature()
         {
-            Console.WriteLine("[DEBUG] Entering DoActionForSurroundingCreature()");
+            //Console.WriteLine("[DEBUG] Entering DoActionForSurroundingCreature()");
             Skill rearStrike = Client.Skillbook.GetNumberedSkill(RearStrike.Name);
             bool canRearStrike = Client.CanUseSkill(rearStrike);
-            Console.WriteLine($"[DEBUG] canRearStrike: {canRearStrike}");
+            //Console.WriteLine($"[DEBUG] canRearStrike: {canRearStrike}");
 
             // 1) Possibly do "Rear Strike" on a different target
             if (canRearStrike)
@@ -691,24 +718,24 @@ namespace Talos.Bashing
                         SharesAxis(Client.ClientLocation, mob.Location) &&
                         (mob._hitCounter <= 0 || Client.CanUseSkill(Amnesia)))
                     {
-                        Console.WriteLine($"[DEBUG] Found secondary mob {mob.Name} (ID: {mob.ID}) for Rear Strike. HitCounter: {mob._hitCounter}");
+                        //Console.WriteLine($"[DEBUG] Found secondary mob {mob.Name} (ID: {mob.ID}) for Rear Strike. HitCounter: {mob._hitCounter}");
                         TurnForAction(mob, () =>
                         {
                             if (mob._hitCounter > 0)
                             {
                                 if (Amnesia != null)
                                 {
-                                    Console.WriteLine($"[DEBUG] Using Amnesia on {mob.ID}");
+                                    //Console.WriteLine($"[DEBUG] Using Amnesia on {mob.ID}");
                                     Client.UseSkill(Amnesia.Name);
                                 }
                             }
                             if (rearStrike != null)
                             {
-                                Console.WriteLine($"[DEBUG] Using Rear Strike on {mob.ID}");
+                                //Console.WriteLine($"[DEBUG] Using Rear Strike on {mob.ID}");
                                 Client.UseSkill(rearStrike.Name);
                             }
                         });
-                        Console.WriteLine("[DEBUG] Exiting DoActionForSurroundingCreature() after executing Rear Strike.");
+                        //Console.WriteLine("[DEBUG] Exiting DoActionForSurroundingCreature() after executing Rear Strike.");
                         return true;
                     }
                 }
@@ -725,19 +752,19 @@ namespace Talos.Bashing
                         MeetsKillCriteria(mob) &&
                         ShouldUseSkillsOnTarget(mob))
                     {
-                        Console.WriteLine($"[DEBUG] Found secondary mob {mob.Name} (ID: {mob.ID}) for Assassin Strike.");
+                        //Console.WriteLine($"[DEBUG] Found secondary mob {mob.Name} (ID: {mob.ID}) for Assassin Strike.");
                         TurnForAction(mob, () =>
                         {
-                            Console.WriteLine($"[DEBUG] Using Assassin Strike on {mob.Name}");
+                            //Console.WriteLine($"[DEBUG] Using Assassin Strike on {mob.Name}");
                             Client.UseSkill(AssassinStrike.Name);
                         });
-                        Console.WriteLine("[DEBUG] Exiting DoActionForSurroundingCreature() after executing Assassin Strike.");
+                        //Console.WriteLine("[DEBUG] Exiting DoActionForSurroundingCreature() after executing Assassin Strike.");
                         return true;
                     }
                 }
             }
 
-            Console.WriteLine("[DEBUG] No secondary action executed in DoActionForSurroundingCreature().");
+            //Console.WriteLine("[DEBUG] No secondary action executed in DoActionForSurroundingCreature().");
             return false;
         }
 
