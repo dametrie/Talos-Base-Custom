@@ -880,9 +880,6 @@ namespace Talos.Base
         {
             try
             {
-                if (Client.Name == "Brightness")
-                    Console.WriteLine($"[BASHLOOP] ClientTab instance: {Client.ClientTab.GetHashCode()}, IsBashingActive: {Client.ClientTab.IsBashingActive}");
-
                 // Grab a local reference to ensure we’re working with the same ClientTab instance
                 var tab = Client?.ClientTab;
                 if (tab == null || !tab.IsBashingActive)
@@ -893,9 +890,6 @@ namespace Talos.Base
                 {
                     SetBashClass();
                 }
-
-                if (Client.Name == "Brightness")
-                    Console.WriteLine($"[BASHLOOP] ClientTab instance: {Client.ClientTab.GetHashCode()}, IsBashingActive: {Client.ClientTab.IsBashingActive}");
 
                 if (!Client?.ClientTab?.IsBashingActive ?? true)
                 {
@@ -1201,10 +1195,8 @@ namespace Talos.Base
 
         private void EnterDruidForm()
         {
-            Console.WriteLine("[DEBUG] Entering EnterDruidForm method...");
             if (!Client.ClientTab.druidFormCbox.Checked)
             {
-                Console.WriteLine("[DEBUG] druidFormCbox not checked, exiting...");
                 return;
             }
 
@@ -1223,15 +1215,12 @@ namespace Talos.Base
             }
 
             Thread.Sleep(80);
-            Console.WriteLine("[DEBUG] Exiting EnterDruidForm method...");
         }
 
         private void RemoveDruidForm()
         {
-            Console.WriteLine("[DEBUG] Entering RemoveDruidForm method...");
             if (!Client.ClientTab.druidFormCbox.Checked)
             {
-                Console.WriteLine("[DEBUG] druidFormCbox not checked, exiting...");
                 return;
             }
 
@@ -1250,7 +1239,6 @@ namespace Talos.Base
             }
 
             Thread.Sleep(80);
-            Console.WriteLine("[DEBUG] Exiting RemoveDruidForm method...");
         }
 
 
@@ -2711,7 +2699,7 @@ namespace Talos.Base
                                 Client.IsCasting = false;
 
                             Client.ConfirmBubble = false;
-                            Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
+                            Client.IsWalking = Client.Pathfind(leaderLocation, followDistance, true, true)
                                 && !Client.ClientTab.oneLineWalkCbox.Checked
                                 && !Server.StopWalking;
                         }
@@ -2722,7 +2710,7 @@ namespace Talos.Base
                             Client.IsCasting = false;
 
                         Client.ConfirmBubble = false;
-                        Client.IsWalking = Client.Routefind(leaderLocation, followDistance, true, true)
+                        Client.IsWalking = Client.Pathfind(leaderLocation, followDistance, true, true)
                             && Client.ClientTab != null && !Client.ClientTab.oneLineWalkCbox.Checked
                             && !Server.StopWalking;
                     }
