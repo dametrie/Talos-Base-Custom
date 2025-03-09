@@ -2323,6 +2323,7 @@ namespace Talos.Forms
                                         allyPage.dbIocCombox.Text = allyState.DbIocComboxText;
                                         allyPage.dbIocNumPct.Value = allyState.DbIocNumPctValue;
                                         allyPage.miscLyliacTbox.Text = allyState.MiscLyliacTboxText;
+                                        allyPage.miscLyliacCbox.Checked = allyState.MiscLyliacCboxChecked;
 
                                         // Apply RadioButton states
                                         allyPage.allyMICSpamRbtn.Checked = allyState.AllyMICSpamRbtnChecked;
@@ -2365,6 +2366,8 @@ namespace Talos.Forms
                                         // Apply CheckBox values
                                         enemyPage.NearestFirstCbx.Checked = enemyState.NearestFirstCbxChecked;
                                         enemyPage.FarthestFirstCbx.Checked = enemyState.FarthestFirstCbxChecked;
+                                        enemyPage.fasFirstRbtn.Checked = enemyState.FasFirstRbtnChecked;
+                                        enemyPage.curseFirstRbtn.Checked = enemyState.CurseFirstRbtnChecked;
                                         enemyPage.spellsCurseCbox.Checked = enemyState.SpellsCurseCboxChecked;
                                         enemyPage.spellsFasCbox.Checked = enemyState.SpellsFasCboxChecked;
                                         enemyPage.spellsControlCbox.Checked = enemyState.SpellsControlCboxChecked;

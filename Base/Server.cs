@@ -3497,16 +3497,16 @@ namespace Talos
         {
             BinaryReader binaryReader = new BinaryReader(new MemoryStream(Resources.maps));
             int header = binaryReader.ReadInt32();
-            //Console.WriteLine($"Header/version: {header}");
+            //Logger.Log($"Header/version: {header}");
 
             short worldMapCount = binaryReader.ReadInt16();
-            //Console.WriteLine($"World maps count: {worldMapCount}");
+            //Logger.Log($"World maps count: {worldMapCount}");
             for (int i = 0; i < worldMapCount; i++)
             {
                 string worldMapName = binaryReader.ReadString();
                 WorldMap worldMap = new WorldMap(worldMapName, new WorldMapNode[0]);
                 byte nodeCount = binaryReader.ReadByte();
-                //Console.WriteLine($"World Map '{worldMapName}' with {nodeCount} nodes:");
+                //Logger.Log($"World Map '{worldMapName}' with {nodeCount} nodes:");
 
                 for (int index2 = 0; index2 < nodeCount; ++index2)
                 {
@@ -3517,13 +3517,13 @@ namespace Talos
                     byte targetX = binaryReader.ReadByte();
                     byte targetY = binaryReader.ReadByte();
                     worldMap.Nodes.Add(new WorldMapNode(new Point(sourceX, sourceY), nodeName, mapId, new Point(targetX, targetY)));
-                    //Console.WriteLine($" - Node {nodeName} at [{sourceX},{sourceY}] to Map {mapId} at [{targetX},{targetY}]");
+                    //Logger.Log($" - Node {nodeName} at [{sourceX},{sourceY}] to Map {mapId} at [{targetX},{targetY}]");
                 }
                 _worldMaps[worldMap.GetCRC32()] = worldMap;
             }
 
             short mapCount = binaryReader.ReadInt16();
-            //Console.WriteLine($"Map count: {mapCount}");
+            //Logger.Log($"Map count: {mapCount}");
 
             for (int index3 = 0; index3 < mapCount; ++index3)
             {
@@ -3537,10 +3537,10 @@ namespace Talos
                     sbyte music = binaryReader.ReadSByte();
 
                     Map map = new Map(sourceMapId, sizeX, sizeY, flags, name, music);
-                    //Console.WriteLine($"Processing map '{name}' ID {sourceMapId} Size {sizeX}x{sizeY}");
+                    //Logger.Log($"Processing map '{name}' ID {sourceMapId} Size {sizeX}x{sizeY}");
 
                     short warpCount = binaryReader.ReadInt16();
-                    //Console.WriteLine($" - {warpCount} warps:");
+                    //Logger.Log($" - {warpCount} warps:");
                     for (int index4 = 0; index4 < warpCount; ++index4)
                     {
                         byte sourceX = binaryReader.ReadByte();
@@ -3550,11 +3550,11 @@ namespace Talos
                         byte targetY = binaryReader.ReadByte();
                         Warp warp = new Warp(sourceX, sourceY, targetX, targetY, sourceMapId, targetMapId);
                         map.Exits[new Point(sourceX, sourceY)] = warp;
-                        //Console.WriteLine($" - Warp from Map {sourceMapId} [{sourceX},{sourceY}] to Map {targetMapId} at [{targetX},{targetY}]");
+                        //Logger.Log($" - Warp from Map {sourceMapId} [{sourceX},{sourceY}] to Map {targetMapId} at [{targetX},{targetY}]");
                     }
 
                     byte numWorldMaps = binaryReader.ReadByte();
-                    //Console.WriteLine($" - {numWorldMaps} world map links:");
+                    //Logger.Log($" - {numWorldMaps} world map links:");
                     for (int index5 = 0; index5 < numWorldMaps; ++index5)
                     {
                         byte x = binaryReader.ReadByte();
@@ -3563,24 +3563,37 @@ namespace Talos
                         if (_worldMaps.ContainsKey(key))
                         {
                             map.WorldMaps[new Point(x, y)] = _worldMaps[key];
-                            //Console.WriteLine($" - World map link at [{x},{y}] to world map with key {key}");
+                            //Logger.Log($" - World map link at [{x},{y}] to world map with key {key}");
                         }
                         else
                         {
-                            //Console.WriteLine($" - Failed to find world map with key {key} for position [{x},{y}]");
+                            //Logger.Log($" - Failed to find world map with key {key} for position [{x},{y}]");
                         }
                     }
                     _maps.Add(sourceMapId, map);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error processing map ID {index3}: {ex.Message}");
+                    //Logger.Log($"Error processing map ID {index3}: {ex.Message}");
                 }
             }
             binaryReader.Close();
             return true;
         }
-     
+
+        public static class Logger
+        {
+            private static readonly string LogFilePath = "mapcache.log";
+
+            public static void Log(string message)
+            {
+                using (StreamWriter sw = new StreamWriter(LogFilePath, true))
+                {
+                    sw.WriteLine($"{DateTime.Now}: {message}");
+                }
+            }
+        }
+
         internal void ResetBuffsOnAoSith(Client client, int creatureId, bool strangerNearby = false)
         {
             if (strangerNearby)

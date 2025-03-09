@@ -78,6 +78,7 @@ namespace Talos.Base
         private DateTime _lastWakeScroll = DateTime.MinValue;
         private DateTime _lastUsedFungusBeetle = DateTime.MinValue;
         private DateTime _lastUsedBeetleAid = DateTime.MinValue;
+        private DateTime _lastUsedVanishElixir = DateTime.MinValue;
         internal TimeSpan _expBonusElapsedTime = TimeSpan.Zero;
         internal DateTime _lastUnstick = DateTime.MinValue;
 
@@ -4096,9 +4097,11 @@ namespace Talos.Base
             {
                 foreach (Player ally in NearbyAllies)
                 {
-                    if (!ally.IsHidden)
+                    if (ally != Client.Player && !ally.IsHidden && DateTime.UtcNow.Subtract(_lastUsedVanishElixir).TotalSeconds > 2.0)
                     {
+                        _lastUsedVanishElixir = DateTime.UtcNow;
                         Client.UseItem("Vanishing Elixir");
+                        Console.WriteLine("[Other] Used Vanishing Elixir");
                     }
                 }
             }
