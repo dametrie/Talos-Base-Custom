@@ -578,7 +578,7 @@ namespace Talos.Helper
 
             string[] spamKeywords = new[]
             {
-                "Feathers", "Groo", "Keeter", "Torch", "Mermaid", "cradh", "Seal", "fas",
+                "Cheile", "Feathers", "Groo", "Keeter", "Torch", "Mermaid", "cradh", "Seal", "fas",
                 "ioc", "nuadhaich", "searg", "concentrate", "gar", "snare", "trap", "comlha",
                 "pramh", "suain", "Arrow", "dion", "lamh", "find", "ABILITY_"
             };
