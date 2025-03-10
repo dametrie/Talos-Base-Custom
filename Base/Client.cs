@@ -138,7 +138,7 @@ namespace Talos.Base
         internal ConcurrentDictionary<string, Player> NearbyGhosts { get; private set; } = new ConcurrentDictionary<string, Player>(StringComparer.OrdinalIgnoreCase);
         internal ConcurrentDictionary<string, Creature> NearbyNPC { get; private set; } = new ConcurrentDictionary<string, Creature>();
         internal ConcurrentDictionary<string, int> ObjectID { get; private set; } = new ConcurrentDictionary<string, int>();
-        internal ConcurrentDictionary<string, Player> DeadPlayers { get; private set; } = new ConcurrentDictionary<string, Player>();
+        internal ConcurrentDictionary<string, Player> Players { get; private set; } = new ConcurrentDictionary<string, Player>();
         internal ConcurrentDictionary<Location, Door> Doors { get; private set; } = new ConcurrentDictionary<Location, Door> { };
         internal HashSet<int> NearbyObjects { get; private set; } = new HashSet<int>();
         internal HashSet<int> NearbyGroundItems { get; private set; } = new HashSet<int>();
@@ -3727,6 +3727,7 @@ namespace Talos.Base
                 serverPacket.WriteUInt32(0u);
             }
             serverPacket.WriteByte(player.NameTagStyle);
+
             if (player.BodySprite == 0 && !GetCheats(Cheats.SeeHidden))
             {
                 Map map = Map;
@@ -3744,36 +3745,22 @@ namespace Talos.Base
         }
         internal void Walk(Direction dir)
         {
-
-            //Console.WriteLine($"Attempting to walk in direction: {dir}"); // Log the direction
-
             if (Dialog == null || !Server.StopWalking || dir != Direction.Invalid || IsRefreshingData == 1)
             {
                 _walkCallCount++;
-                //Console.WriteLine($"Walk method called {walkCallCount} times");
-
-                //Console.WriteLine("Walk conditions met. Proceeding..."); // Debugging: Log that conditions are met
-
                 LastStep = DateTime.UtcNow;
-                //Console.WriteLine($"LastStep set to: {LastStep}"); // Debugging: Log LastStep update
 
                 if (ServerDirection != dir)
                 {
-                    //Console.WriteLine($"Turning from {_serverDirection} to {dir}"); // Debugging: Log direction change
                     Turn(dir);
                 }
 
                 HasWalked = true;
-                //Console.WriteLine("shouldRefresh set to true"); // Debugging: Log shouldRefresh update
 
-
-                //Console.WriteLine($"Preparing packets for PlayerID: {PlayerID} at {_clientLocation} moving {dir}"); // Debugging: Log enqueueing of server packet
                 ClientPacket clientPacket = new ClientPacket(6); // walk
                 clientPacket.WriteByte((byte)dir);
                 clientPacket.WriteByte(StepCount++);
-                //Console.WriteLine($"Client packet prepared. StepCount: {StepCount - 1}"); // Debugging: Log ClientPacket preparation
                 Enqueue(clientPacket);
-
 
                 ServerPacket serverPacket = new ServerPacket(12); // creaturewalk
                 serverPacket.WriteUInt32(PlayerID);
@@ -3782,20 +3769,15 @@ namespace Talos.Base
 
                 Enqueue(serverPacket);
 
-
                 ClientLocation = ClientLocation.Offsetter(dir);
-                //Console.WriteLine($"Client location updated to: {_clientLocation}"); // Debugging: Log client location update
-
                 LastStep = DateTime.UtcNow;
-                //Console.WriteLine($"[WalkLastStep set to: {LastStep}"); // Debugging: Log LastStep update
 
                 UpdateClientActionText($"{Action} Walking {dir}");
             }
             else
             {
                 IsWalking = false;
-                //Console.WriteLine("Walk aborted due to conditions not met. _isWalking set to false."); // Debugging: Log abort and _isWalking update
-                Thread.Sleep(100); // Consider logging this delay for clarity if necessary
+                Thread.Sleep(100);
             }
         }
         internal void Cooldown(bool isSkill, byte slot, uint ticks)

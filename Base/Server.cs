@@ -2371,8 +2371,6 @@ namespace Talos
             player.IsHidden = isHidden;
             player.NameTagStyle = nameTagStyle;
             player.GroupName = groupName;
-            //if ((bodySprite == 0) || ((id == client.PlayerID) || client.InArena))
-            //{
             player.HeadSprite = headSprite;
             player.BootsSprite = bootsSprite;
             player.ShieldSprite = shieldSprite;
@@ -2387,30 +2385,35 @@ namespace Talos
             player.OvercoatSprite = overcoatSprite;
             player.BodyColor = bodyColor;
             player.FaceSprite = faceSprite;
-            //}
+
 
             if (!client.NearbyObjects.Contains(id))
             {
                 client.NearbyObjects.Add(id);
             }
-          
 
             if (!string.IsNullOrEmpty(player.Name))
             {
-                // Remove the player from the hidden list if they were hidden previously.
                 client.NearbyHiddenPlayers.TryRemove(id, out _);
-
+                client.Players.AddOrUpdate(player.Name, player, (key, oldValue) => player);
                 client.NearbyPlayers.AddOrUpdate(player.Name, player, (key, oldValue) => player);
                 client.NearbyGhosts.TryRemove(player.Name, out _);
             }
             else
             {
-                client.NearbyHiddenPlayers.AddOrUpdate(id, player, (key, oldValue) => player);
-                _shouldCloseProfile = true;
-                client.ClickObject(id);
-                //client.RefreshRequest(false);
+                bool isConnected = ClientList.Any(c => c.Player.ID == id);
+                if (isConnected)
+                {
+                    client.NearbyHiddenPlayers.TryRemove(id, out _);
+                }
+                else
+                {
+                    var updatedPlayer = client.NearbyHiddenPlayers.AddOrUpdate(id, player, (key, oldValue) => player);
+                    _shouldCloseProfile = true;
+                    client.ClickObject(id);
+                    client.RefreshRequest(false);
+                }
             }
-
 
             if (id == client.PlayerID)
             {
@@ -2439,27 +2442,11 @@ namespace Talos
                 client.ClientTab.UpdateStrangerList();
             }
 
-            if ((id != client.PlayerID) && !string.IsNullOrEmpty(name))
+            if (id != client.PlayerID && !string.IsNullOrEmpty(name))
             {
-                object selectedTab;
-                if (client == null)
-                {
-                    selectedTab = null;
-                }
-                else
-                {
-                    ClientTab tab1 = client.ClientTab;
-                    if (tab1 != null)
-                    {
-                        selectedTab = tab1.aislingTabControl.SelectedTab;
-                    }
-                    else
-                    {
-                        ClientTab local3 = tab1;
-                        selectedTab = null;
-                    }
-                }
-                if ((selectedTab == client.ClientTab.nearbyAllyTab) && ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainAislingsTab))
+                var selectedTab = client.ClientTab.aislingTabControl.SelectedTab;
+                if (selectedTab == client.ClientTab.nearbyAllyTab &&
+                    ReferenceEquals(client.ClientTab.clientTabControl.SelectedTab, client.ClientTab.mainAislingsTab))
                 {
                     client.ClientTab.AddNearbyAlly(player);
                 }
@@ -2471,18 +2458,15 @@ namespace Talos
         }
 
         /// <summary>
-        /// Message received when a player profile is requested, including legend details
+        /// Message received when a player profile is requested, including legend details.
         /// </summary>
         /// <param name="client"></param>
         /// <param name="serverPacket"></param>
         /// <returns></returns>
         private bool ServerMessage_0x34_Profile(Client client, ServerPacket serverPacket)
         {
-
-
             int id = serverPacket.ReadInt32();
             var equipmentData = ReadEquipmentData(client, serverPacket);
-
 
             byte optionsByte = serverPacket.ReadByte();
             string name = serverPacket.ReadString8();
@@ -2492,7 +2476,7 @@ namespace Talos
             try
             {
                 profileData = ReadProfileData(serverPacket);
-                if (ShouldResendPacket(profileData))
+                if (profileData.Flag)
                 {
                     ResendPacket(client, id, equipmentData, optionsByte, name, profileData);
                 }
@@ -2502,9 +2486,6 @@ namespace Talos
                 return true;
             }
 
-            bool isValidProfile = IsProfileValid(client, id, name);
-
-
             UpdatePlayerInformation(client, id, name);
 
             if (_shouldCloseProfile)
@@ -2512,45 +2493,39 @@ namespace Talos
                 _shouldCloseProfile = false;
                 return false;
             }
-            //return isValidProfile && !profileData.Flag;
+
             return !profileData.Flag;
         }
 
         private bool UpdatePlayerInformation(Client client, int id, string name)
         {
-            if (client.WorldObjects.ContainsKey(id) && client.WorldObjects[id] is Player p)
+            bool inRange = false;
+            if (client.WorldObjects.ContainsKey(id) && client.WorldObjects[id] is Player player)
             {
-  
-                if (string.IsNullOrEmpty(p.Name))
+                if (string.IsNullOrEmpty(player.Name))
                 {
-                    p.Name = name;
-                    client.WorldObjects[id] = p;
+                    player.Name = name;
+                    client.WorldObjects[id] = player;
 
-                    if (!client.DeadPlayers.ContainsKey(name))
-                    {
-                        client.DeadPlayers.TryAdd(name, p);
-                    }
+                    if (!client.Players.ContainsKey(name))
+                        client.Players.TryAdd(name, player);
 
                     if (!client.NearbyPlayers.ContainsKey(name))
-                    {
-                        client.NearbyPlayers.TryAdd(name, p);
-                    }
+                        client.NearbyPlayers.TryAdd(name, player);
 
-                    if (client.NearbyHiddenPlayers.ContainsKey(p.ID))
-                    {
-                        client.NearbyHiddenPlayers.TryRemove(p.ID, out _);
-                    }
+                    if (client.NearbyHiddenPlayers.ContainsKey(player.ID))
+                        client.NearbyHiddenPlayers.TryRemove(player.ID, out _);
 
                 }
 
-                if (client.WithinRange(p, 12))
+                inRange = client.WithinRange(player, 12);
+                if (inRange)
                 {
                     client.ClientTab.UpdateStrangerList();
-                    client.DisplayAisling(p);
+                    client.DisplayAisling(player);
                 }
             }
-
-            return true;
+            return inRange;
         }
 
         private (ushort[] EquipmentSprite, byte[] EquipmentColor) ReadEquipmentData(Client client, ServerPacket packet)
@@ -2561,15 +2536,8 @@ namespace Talos
             for (int i = 0; i < 18; i++)
             {
                 equipmentSprite[i] = packet.ReadUInt16();
-                //client.EquippedItems[i].Sprite = equipmentSprite[i];
-
                 equipmentColor[i] = packet.ReadByte();
-                //client.EquippedItems[i].Color = equipmentColor[i];
             }
-
-
-
-
             return (equipmentSprite, equipmentColor);
         }
 
@@ -2596,12 +2564,12 @@ namespace Talos
                 markKey[i] = serverPacket.ReadString8();
                 markText[i] = serverPacket.ReadString8();
 
+                // If any string exceeds 70 characters, flag for resending with trimmed values.
                 if (markText[i].Length > 70 || markKey[i].Length > 70)
                 {
                     flag = true;
                 }
             }
-
             return (flag, markIcon, markColor, markKey, markText);
         }
 
@@ -2616,7 +2584,8 @@ namespace Talos
                 serverPacket.WriteByte(equipmentData.EquipmentColor[i]);
             }
 
-            // Write optionsByte, name, and other non-equipment profile data...
+            serverPacket.WriteByte(optionsByte);
+            serverPacket.WriteString8(name);
 
             for (int i = 0; i < profileData.MarkIcon.Length; i++)
             {
@@ -2628,17 +2597,6 @@ namespace Talos
 
             client.Enqueue(new Packet[] { serverPacket });
         }
-
-        private bool IsProfileValid(Client client, int id, string name)
-        {
-            return !client.WorldObjects.ContainsKey(id) || (client.DeadPlayers.ContainsKey(name) && client.DeadPlayers[name].ID == id);
-        }
-
-        private bool ShouldResendPacket((bool Flag, byte[] MarkIcon, byte[] MarkColor, string[] MarkKey, string[] MarkText) profileData)
-        {
-            return profileData.Flag;
-        }
-
 
         private bool ServerMessage_0x36_WorldList(Client client, ServerPacket serverPacket)
         {
@@ -2855,6 +2813,7 @@ namespace Talos
 
             client.ClientTab.SetClassSpecificSpells();
 
+            client.DisplayAisling(client.Player);
             return true;
         }
 
