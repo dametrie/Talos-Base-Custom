@@ -2401,18 +2401,22 @@ namespace Talos
             }
             else
             {
-                bool isConnected = ClientList.Any(c => c.Player.ID == id);
-                if (isConnected)
+                if (!client.Map.Name.Contains("Arena"))
                 {
-                    client.NearbyHiddenPlayers.TryRemove(id, out _);
+                    bool isConnected = ClientList.Any(c => c.Player?.ID == id);
+                    if (isConnected)
+                    {
+                        client.NearbyHiddenPlayers.TryRemove(id, out _);
+                    }
+                    else
+                    {
+                        var updatedPlayer = client.NearbyHiddenPlayers.AddOrUpdate(id, player, (key, oldValue) => player);
+                        _shouldCloseProfile = true;
+                        client.ClickObject(id);
+                        client.RefreshRequest(false);
+                    }
                 }
-                else
-                {
-                    var updatedPlayer = client.NearbyHiddenPlayers.AddOrUpdate(id, player, (key, oldValue) => player);
-                    _shouldCloseProfile = true;
-                    client.ClickObject(id);
-                    client.RefreshRequest(false);
-                }
+
             }
 
             if (id == client.PlayerID)

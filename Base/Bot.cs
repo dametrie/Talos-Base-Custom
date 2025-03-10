@@ -1970,8 +1970,8 @@ namespace Talos.Base
             if (Client != null && Client.ClientTab != null)
             {
                 bool strangerNear = IsStrangerNearby();
-                bool deformChecked = Client.ClientTab.deformCbox.Checked;
-                ushort desiredFormNum = (ushort)Client.ClientTab.formNum.Value;
+                bool deformChecked = (bool)(Client?.ClientTab?.deformCbox.Checked);
+                ushort desiredFormNum = (ushort)Client?.ClientTab?.formNum.Value;
 
                 if (Client.ClientTab.formCbox.Checked)
                 {
