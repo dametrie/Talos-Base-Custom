@@ -189,7 +189,7 @@ namespace Talos.Bashing
             }
 
             // For very low-health targets (<=20%), try Mantis Kick, High Kick, or Kick
-            // Adam: consider checking if insight is below 99 for a separate branch of kicks
+            // Consider checking if insight is below 99 for a separate branch of kicks
             if (hp <= 20 && 
                 ((MantisKick != null && Client.UseSkill(MantisKick.Name)) ||
                     (HighKick != null && Client.UseSkill(HighKick.Name)) ||

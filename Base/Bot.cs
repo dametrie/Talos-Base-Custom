@@ -936,7 +936,6 @@ namespace Talos.Base
 
         }
 
-        //ADAM
         private void HandleRandomWaypoints()
         {
             Console.WriteLine("[DEBUG] Entering HandleRandomWaypoints method...");
@@ -1045,8 +1044,7 @@ namespace Talos.Base
 
         private void SetBashClass()
         {
-            //Adam figure this out later
-            //Needs to work for lowbies too
+            // Needs to work for lowbies too
             BashingBase = null; // Clear any previously set base
 
             if (Client.PreviousClassFlag == PreviousClass.Pure &&

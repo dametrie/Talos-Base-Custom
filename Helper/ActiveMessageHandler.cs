@@ -131,11 +131,11 @@ namespace Talos.Helper
                 { new Regex(@"(\d+) experience!"), HandleExperienceMessage },
                 { new Regex("AP went up"), HandleExperienceMessage },
 
-                { new Regex("[a-zA-Z] works for you for 1 day"), HandleLaborMessage },//Adam check
-                { new Regex("(\\w+) works for you, although you didn't need much done"), HandleLaborMessage },//Adam check
-                { new Regex(@"^\(\( 4 Temuairan days = 12 (Terran|real-life) hours \)\)$"), HandleLaborMessage },//Adam check
-                { new Regex(@"You do not have time for these 4 Temuairan days"), HandleLaborMessage },//Adam check
-                { new Regex(@"You work for \w+, although the Aisling didn't need much done"), HandleLaborMessage },//Adam check
+                { new Regex("[a-zA-Z] works for you for 1 day"), HandleLaborMessage },// Check
+                { new Regex("(\\w+) works for you, although you didn't need much done"), HandleLaborMessage },// Check
+                { new Regex(@"^\(\( 4 Temuairan days = 12 (Terran|real-life) hours \)\)$"), HandleLaborMessage },// Check
+                { new Regex(@"You do not have time for these 4 Temuairan days"), HandleLaborMessage },// Check
+                { new Regex(@"You work for \w+, although the Aisling didn't need much done"), HandleLaborMessage },// Check
 
                 { new Regex(@"n:Necklace:([a-zA-Z \'0-9]+)\t Armor class"), HandleNecklaceMessage },
                 { new Regex("([a-zA-Z0-9 ]+), You can't have more than [0-9]+"), HandleInventoryFullMessage },
@@ -258,8 +258,6 @@ namespace Talos.Helper
 
                 string spellName = match.Groups[1].Value;
 
-                //adam add spells - pramh, ards?
-                //You cast Master Karura Form
                 switch (spellName)
                 {
                     case "beag naomh aite":
@@ -288,12 +286,6 @@ namespace Talos.Helper
                     case "Demon Seal":
                         if (creature != null)
                         {
-                            //creature.Curse = spellName;
-                            //creature.CurseDuration = Spell.GetSpellDuration(spellName);
-                            //creature.LastCursed = DateTime.UtcNow;
-                            //if (creature.ID != client.Player.ID)
-                            //    client.UpdateCurseTargets(client, creature.ID, spellName);
-
                             double curseDuration = Spell.GetSpellDuration(spellName);
 
                             var curseStateUpdates = new Dictionary<CreatureState, object> 
@@ -301,7 +293,7 @@ namespace Talos.Helper
                                 { CreatureState.IsCursed, true },
                                 { CreatureState.LastCursed, DateTime.UtcNow },
                                 { CreatureState.CurseName, spellName },
-                                { CreatureState.CurseDuration, curseDuration } // Duration in seconds
+                                { CreatureState.CurseDuration, curseDuration }
                             };
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, curseStateUpdates);
 
@@ -316,11 +308,6 @@ namespace Talos.Helper
                     case "ard fas nadur":
                         if (creature != null)
                         {
-                            //creature.FasDuration = Spell.GetSpellDuration(spellName);
-                            //creature.LastFassed = DateTime.UtcNow;
-                            //if (creature.ID != client.Player.ID)
-                            //    client.UpdateFasTargets(client, creature.ID, creature.FasDuration);
-
                             double fasDuration = Spell.GetSpellDuration(spellName);
 
                             var fasStateUpdates = new Dictionary<CreatureState, object> 
@@ -328,7 +315,7 @@ namespace Talos.Helper
                                 { CreatureState.IsFassed, true },
                                 { CreatureState.LastFassed, DateTime.UtcNow },
                                 { CreatureState.FasName, spellName },
-                                { CreatureState.FasDuration, fasDuration } // Duration in seconds
+                                { CreatureState.FasDuration, fasDuration }
                             };
 
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, fasStateUpdates);
@@ -354,7 +341,7 @@ namespace Talos.Helper
                                 { CreatureState.IsDioned, true },
                                 { CreatureState.LastDioned, DateTime.UtcNow },
                                 { CreatureState.DionName, spellName },
-                                { CreatureState.DionDuration, dionDuration } // Duration in seconds
+                                { CreatureState.DionDuration, dionDuration }
                             };
 
                             CreatureStateHelper.UpdateCreatureStates(client, creature.ID, dionStateUpdates);
@@ -439,7 +426,7 @@ namespace Talos.Helper
                         }
                         break;
 
-                    case "Master Karurua Form"://Adam add others //need to figure out how to clear it because there is no orange message when it drops
+                    case "Master Karurua Form": //need to figure out how to clear it because there is no orange message when it drops
                         break;
 
                     case "beag pramh":
@@ -842,7 +829,7 @@ namespace Talos.Helper
                     { CreatureState.IsDioned, false },
                     { CreatureState.LastDioned, DateTime.MinValue },
                     { CreatureState.DionName, string.Empty },
-                    { CreatureState.DionDuration, 0.0 } // Duration in seconds
+                    { CreatureState.DionDuration, 0.0 } 
                 };
 
                 CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, dionStateUpdates);
@@ -1100,7 +1087,7 @@ namespace Talos.Helper
                     { CreatureState.IsAited, true },
                     { CreatureState.LastAited, DateTime.UtcNow },
                     { CreatureState.AiteName, "ard naomh aite" },// if we login and have aite there is no way to know the duration so we assume it is max
-                    { CreatureState.AiteDuration, Spell.GetSpellDuration("ard naomh aite") } // Duration in seconds
+                    { CreatureState.AiteDuration, Spell.GetSpellDuration("ard naomh aite") } 
                 };
 
                 CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, aiteStateUpdates);
@@ -1122,7 +1109,7 @@ namespace Talos.Helper
             {
                 client.EffectsBar.Remove((ushort)EffectsBar.FasNadur);
 
-                var fasStateUpdates = new Dictionary<CreatureState, object> // Adam new
+                var fasStateUpdates = new Dictionary<CreatureState, object>
                 {
                     { CreatureState.IsFassed, false },
                     { CreatureState.LastFassed, DateTime.MinValue },
@@ -1162,7 +1149,7 @@ namespace Talos.Helper
                     { CreatureState.IsCursed, true },
                     { CreatureState.LastCursed, DateTime.UtcNow },
                     { CreatureState.CurseName, message },
-                    { CreatureState.CurseDuration, curseDuration } // Duration in seconds
+                    { CreatureState.CurseDuration, curseDuration } 
                 };
 
                 CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, curseStateUpdates);
@@ -1179,7 +1166,7 @@ namespace Talos.Helper
                     { CreatureState.IsCursed, false },
                     { CreatureState.LastCursed, DateTime.MinValue },
                     { CreatureState.CurseName, String.Empty },
-                    { CreatureState.CurseDuration, 0.0 } // Duration in seconds
+                    { CreatureState.CurseDuration, 0.0 } 
                 };
 
                 CreatureStateHelper.UpdateCreatureStates(client, client.Player.ID, curseStateUpdates);
@@ -1201,7 +1188,6 @@ namespace Talos.Helper
 
         private void HandleBonusMessage(Client client, string message)
         {
-            //Adam check other bonuses - stars/vdays double shrooms
             client.EffectsBar.Add((ushort)EffectsBar.SpellSkillBonus1);
         }
 

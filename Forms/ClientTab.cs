@@ -3473,7 +3473,7 @@ namespace Talos.Forms
 
         internal void AutoLoginHandlers()
         {
-            //Adam
+            // Do this
         }
 
         private void button2_Click_1(object sender, EventArgs e)

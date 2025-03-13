@@ -2837,14 +2837,13 @@ namespace Talos
                 {
                     //Console.WriteLine("Adding effect: " + effect);
                     client.EffectsBar.Add(effect);
-                    //Console.WriteLine("total items in hashset: " + client.EffectsBarHashSet.Count);
                 }
             }
             else if (client.EffectsBar.Contains(effect))
             {
                 //Console.WriteLine("Removing effect: " + effect);
                 client.EffectsBar.Remove(effect);
-                if ((effect == 19) && !client.InArena)//bday or incapacitate //ADAM check this
+                if ((effect == 19) && !client.InArena)
                 {
                     ThreadPool.QueueUserWorkItem(_ => client.ReEquipItem(_itemToReEquip));
                 }

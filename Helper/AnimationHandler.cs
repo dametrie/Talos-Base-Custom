@@ -209,7 +209,7 @@ namespace Talos.Helper
                             { CreatureState.IsFassed, true },
                             { CreatureState.LastFassed, DateTime.UtcNow },
                             { CreatureState.FasName, "mor fas nadur" },//we didnt cast it so we assume it's max?
-                            { CreatureState.FasDuration, fasDuration } // Duration in seconds
+                            { CreatureState.FasDuration, fasDuration } 
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, fasStateUpdate);
@@ -228,7 +228,7 @@ namespace Talos.Helper
                             { CreatureState.IsFassed, true },
                             { CreatureState.LastFassed, DateTime.UtcNow },
                             { CreatureState.FasName, spellName },
-                            { CreatureState.FasDuration, fasDuration } // Duration in seconds
+                            { CreatureState.FasDuration, fasDuration } 
                         };
 
                         CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, fasStateUpdate);
@@ -270,7 +270,7 @@ namespace Talos.Helper
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
                         { CreatureState.CurseName, "beag cradh" },
-                        { CreatureState.CurseDuration, bcDuration } // Duration in seconds
+                        { CreatureState.CurseDuration, bcDuration } 
                     };
 
                     CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, bcStateUpdates);
@@ -287,7 +287,7 @@ namespace Talos.Helper
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
                         { CreatureState.CurseName, "cradh" },
-                        { CreatureState.CurseDuration, cDuration } // Duration in seconds
+                        { CreatureState.CurseDuration, cDuration } 
                     };
 
                     CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, cStateUpdates);
@@ -304,7 +304,7 @@ namespace Talos.Helper
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
                         { CreatureState.CurseName, "mor cradh" },
-                        { CreatureState.CurseDuration, mcDuration } // Duration in seconds
+                        { CreatureState.CurseDuration, mcDuration } 
                     };
 
                     CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, mcStateUpdates);
@@ -321,7 +321,7 @@ namespace Talos.Helper
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
                         { CreatureState.CurseName, "ard cradh" },
-                        { CreatureState.CurseDuration, acDuration } // Duration in seconds
+                        { CreatureState.CurseDuration, acDuration } 
                     };
 
                     CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, acStateUpdates);
@@ -339,14 +339,14 @@ namespace Talos.Helper
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
                         { CreatureState.CurseName, "Demise" },
-                        { CreatureState.CurseDuration, demiseDuration } // Duration in seconds
+                        { CreatureState.CurseDuration, demiseDuration }
                     };
 
                     CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, demiseStateUpdates);
 
                     break;
 
-                case (ushort)SpellAnimation.DarkerSeal: //Adam how do we handle demon seal
+                case (ushort)SpellAnimation.DarkerSeal: // Do we handle demon seal? It's same duration...
 
                     double darkerSealDuration = Spell.GetSpellDuration("Darker Seal");
 
@@ -355,7 +355,7 @@ namespace Talos.Helper
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
                         { CreatureState.CurseName, "Darker Seal" },
-                        { CreatureState.CurseDuration, darkerSealDuration } // Duration in seconds
+                        { CreatureState.CurseDuration, darkerSealDuration }
                     };
 
                     CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, darkerSealStateUpdates);
@@ -371,7 +371,7 @@ namespace Talos.Helper
                         { CreatureState.IsCursed, true },
                         { CreatureState.LastCursed, DateTime.UtcNow },
                         { CreatureState.CurseName, "Dark Seal" },
-                        { CreatureState.CurseDuration, darkSealDuration } // Duration in seconds
+                        { CreatureState.CurseDuration, darkSealDuration } 
                     };
 
                     CreatureStateHelper.UpdateCreatureStates(_client, _targetCreature.ID, darkSealStateUpdates);
