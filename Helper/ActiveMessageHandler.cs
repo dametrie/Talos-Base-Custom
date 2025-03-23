@@ -78,6 +78,7 @@ namespace Talos.Helper
                 { "That doesn't work here.", HandleCantCastMessage },
                 { "The magic has been deflected.", HandleResistMessage },
                 { "You already cast that spell.", HandleAlreadyCastMessage },
+                { "You already have an Insect Net", HandleAlreadyHaveInsectNet },
                 { "You are in hibernation.", HandleSuainMessage },
                 { "You are no longer invisible.", HandleHideMessage },
                 { "You are not a member of the Training Grounds", HandleTrainingGroundsMessage },
@@ -152,8 +153,6 @@ namespace Talos.Helper
 
         }
 
-
-
         internal bool Handle(Client client, string message)
         {
 
@@ -178,6 +177,11 @@ namespace Talos.Helper
             }
 
             return true; // allow any message we aren't handling to come through
+        }
+
+        private void HandleAlreadyHaveInsectNet(Client client, string arg2)
+        {
+            client.Bot.HasInsectNet = true;
         }
         private void HandleCALMessage(Client client, string arg2)
         {
@@ -706,7 +710,7 @@ namespace Talos.Helper
 
             if (itemName == "Insect Net" && durabilityPercent == 10)
             {
-                client.Bot._netRepair = true;
+                client.Bot.InsectNetRepair = true;
             }
 
             if (client.ClientTab.equipmentrepairCbox.Checked && durabilityPercent == 10)

@@ -41,6 +41,7 @@ namespace Talos.Base
         internal Creature target;
         internal BashingBase BashingBase;
         CommandManager commandManager = CommandManager.Instance;
+        private readonly BugManager _bugManager;
 
         private bool _autoStaffSwitch;
         private bool _fasSpiorad;
@@ -118,7 +119,7 @@ namespace Talos.Base
 
         internal TimeSpan _mushroomBonusElapsedTime;
 
-        internal bool _netRepair = false;
+        internal bool InsectNetRepair = false;
         internal DateTime _hammerTimer = DateTime.MinValue;
         internal bool _spikeGameToggle;
         private DateTime _animationTimer = DateTime.MinValue;
@@ -143,6 +144,8 @@ namespace Talos.Base
         private const int LootIntervalMs = 500; // adjust as needed
         private DateTime _lastDropTime = DateTime.MinValue;
         private const int DropIntervalMs = 5000; // adjust as needed
+
+        internal bool HasInsectNet { get; set; }
         public bool RecentlyUsedGlowingStone { get; set; } = false;
         public bool RecentlyUsedDragonScale { get; set; } = false;
         public bool RecentlyUsedFungusExtract { get; set; } = false;
@@ -154,6 +157,8 @@ namespace Talos.Base
 
         internal Bot(Client client, Server server) : base(client, server)
         {
+            _bugManager = new BugManager(Client);
+
             AddTask(BotLoop);
             AddTask(SoundLoop);
             AddTask(WalkLoop);
@@ -1812,6 +1817,7 @@ namespace Talos.Base
         {
             ConsecutiveLogin();
             RetrieveDoubles();
+            _bugManager.BugLoop();
         }
 
         private void ConsecutiveLogin()
@@ -1823,7 +1829,7 @@ namespace Talos.Base
                 {
                     // Interact with the NPC
                     var creature = Client.GetNearbyNPC("Celesta");
-                    if (creature == null || !Client.ClickNPCDialog(creature, "Avid Daydreamer", true))
+                    if (creature == null || !Client.RequestNamedPursuit(creature, "Avid Daydreamer", true))
                     {
                         return; // Exit if NPC interaction fails
                     }
@@ -2910,7 +2916,7 @@ namespace Talos.Base
             Thread.Sleep(2500);
         }
 
-        private void RefreshLastStep()
+        internal void RefreshLastStep()
         {
             bool lastStepF5 = Client.ClientTab.chkLastStepF5.Checked;
             bool exceededStepTime = DateTime.UtcNow.Subtract(Client.LastStep).TotalSeconds > (double)Client.ClientTab.numLastStepTime.Value;

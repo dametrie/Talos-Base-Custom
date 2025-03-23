@@ -96,6 +96,8 @@ namespace Talos.Forms
             this.doublesCombox = new System.Windows.Forms.ComboBox();
             this.expHourLbl = new System.Windows.Forms.Label();
             this.expSessionLbl = new System.Windows.Forms.Label();
+            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
+            this.chatBox = new Talos.Forms.UI.ChatBox();
             this.mainAislingsTab = new System.Windows.Forms.TabPage();
             this.aislingTabControl = new System.Windows.Forms.TabControl();
             this.selfTab = new System.Windows.Forms.TabPage();
@@ -558,6 +560,7 @@ namespace Talos.Forms
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toggleDialogBtn = new System.Windows.Forms.ToolStripButton();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.button15 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
@@ -603,9 +606,6 @@ namespace Talos.Forms
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolTipSpamBlock = new System.Windows.Forms.ToolTip(this.components);
             this.toolTipBubbleBlock = new System.Windows.Forms.ToolTip(this.components);
-            this.chatPanel2 = new Talos.Forms.UI.ChatPanel2();
-            this.chatBox = new Talos.Forms.UI.ChatBox();
-            this.button15 = new System.Windows.Forms.Button();
             this.clientTabControl.SuspendLayout();
             this.mainCoverTab.SuspendLayout();
             this.coverMapInfoGrp.SuspendLayout();
@@ -1446,6 +1446,35 @@ namespace Talos.Forms
             this.expSessionLbl.TabIndex = 0;
             this.expSessionLbl.Text = "Session";
             this.expSessionLbl.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // chatPanel2
+            // 
+            this.chatPanel2.AutoDetectUrls = true;
+            this.chatPanel2.BackColor = System.Drawing.Color.White;
+            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
+            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
+            this.chatPanel2.Name = "chatPanel2";
+            this.chatPanel2.ReadOnly = true;
+            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
+            this.chatPanel2.TabIndex = 0;
+            this.chatPanel2.Text = "";
+            // 
+            // chatBox
+            // 
+            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatBox.ForeColor = System.Drawing.Color.Black;
+            this.chatBox.Location = new System.Drawing.Point(121, 484);
+            this.chatBox.MaxLength = 53;
+            this.chatBox.Name = "chatBox";
+            this.chatBox.Size = new System.Drawing.Size(508, 23);
+            this.chatBox.TabIndex = 13;
+            this.chatBox.TabStop = false;
+            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
+            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
+            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
+            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
             // 
             // mainAislingsTab
             // 
@@ -6361,7 +6390,6 @@ namespace Talos.Forms
             // 
             this.bugGroup.Controls.Add(this.bugLbl);
             this.bugGroup.Controls.Add(this.toggleBugBtn);
-            this.bugGroup.Enabled = false;
             this.bugGroup.Location = new System.Drawing.Point(9, 10);
             this.bugGroup.Name = "bugGroup";
             this.bugGroup.Size = new System.Drawing.Size(408, 88);
@@ -7168,6 +7196,16 @@ namespace Talos.Forms
             this.tabPage1.TabIndex = 14;
             this.tabPage1.Text = "DEBUG";
             // 
+            // button15
+            // 
+            this.button15.Location = new System.Drawing.Point(610, 179);
+            this.button15.Name = "button15";
+            this.button15.Size = new System.Drawing.Size(139, 23);
+            this.button15.TabIndex = 160;
+            this.button15.Text = "Are we bashing?";
+            this.button15.UseVisualStyleBackColor = true;
+            this.button15.Click += new System.EventHandler(this.button15_Click);
+            // 
             // button6
             // 
             this.button6.AutoSize = true;
@@ -7539,45 +7577,6 @@ namespace Talos.Forms
             // toolTipSpamBlock
             // 
             this.toolTipSpamBlock.Popup += new System.Windows.Forms.PopupEventHandler(this.toolTipSpamBlock_Popup);
-            // 
-            // chatPanel2
-            // 
-            this.chatPanel2.AutoDetectUrls = true;
-            this.chatPanel2.BackColor = System.Drawing.Color.White;
-            this.chatPanel2.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatPanel2.ForeColor = System.Drawing.Color.Black;
-            this.chatPanel2.Location = new System.Drawing.Point(121, 253);
-            this.chatPanel2.Name = "chatPanel2";
-            this.chatPanel2.ReadOnly = true;
-            this.chatPanel2.Size = new System.Drawing.Size(508, 225);
-            this.chatPanel2.TabIndex = 0;
-            this.chatPanel2.Text = "";
-            // 
-            // chatBox
-            // 
-            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chatBox.ForeColor = System.Drawing.Color.Black;
-            this.chatBox.Location = new System.Drawing.Point(121, 484);
-            this.chatBox.MaxLength = 53;
-            this.chatBox.Name = "chatBox";
-            this.chatBox.Size = new System.Drawing.Size(508, 23);
-            this.chatBox.TabIndex = 13;
-            this.chatBox.TabStop = false;
-            this.chatBox.Enter += new System.EventHandler(this.ChatBox_Enter);
-            this.chatBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.WhispShout);
-            this.chatBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.EscapeSay);
-            this.chatBox.Leave += new System.EventHandler(this.ChatBox_Leave);
-            // 
-            // button15
-            // 
-            this.button15.Location = new System.Drawing.Point(610, 179);
-            this.button15.Name = "button15";
-            this.button15.Size = new System.Drawing.Size(139, 23);
-            this.button15.TabIndex = 160;
-            this.button15.Text = "Are we bashing?";
-            this.button15.UseVisualStyleBackColor = true;
-            this.button15.Click += new System.EventHandler(this.button15_Click);
             // 
             // ClientTab
             // 

@@ -230,6 +230,30 @@ namespace Talos.Definitions
             53
         };
 
+        public static readonly List<ushort> BugNums = new List<ushort>
+        {
+            8127,
+            8129,
+            8128,
+            8125,
+            8126,
+            8130,
+            8132,
+            8134,
+            8131,
+            8133,
+            8135,
+            8136,
+            8137,
+            8138,
+            8139,
+            8140,
+            8141,
+            8142,
+            8143,
+            8144
+        };
+
         public static readonly IReadOnlyCollection<string> KNOWN_RANGERS = new string[]
         {
             "justyce",

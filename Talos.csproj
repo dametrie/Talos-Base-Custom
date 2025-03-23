@@ -251,6 +251,7 @@
     </Compile>
     <Compile Include="Helper\AnimationHandler.cs" />
     <Compile Include="Helper\AutoAscendManager.cs" />
+    <Compile Include="Helper\BugManager.cs" />
     <Compile Include="Helper\CommandManager.cs" />
     <Compile Include="Helper\CreatureStateHelper.cs" />
     <Compile Include="Helper\FormStateHelper.cs" />

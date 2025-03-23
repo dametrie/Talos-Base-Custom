@@ -2200,7 +2200,7 @@ namespace Talos.Base
                     return false;
                 }
 
-                Location currentLocation = new Location(Map.MapID, ClientLocation.X, ClientLocation.Y);
+                Location currentLocation = new Location((short)(Map?.MapID), ClientLocation.X, ClientLocation.Y);
                 //Console.WriteLine($"[RouteFind] [{this.Name}] Current location: {currentLocation}");
                 Location adjustedDestination;
                 //adjust for followdistance?
@@ -2407,7 +2407,7 @@ namespace Talos.Base
                     if (Location.Equals(ClientLocation, new Location(6926, 8, 9)) && nextLocation.MapID == 10028)
                     {
                         Creature creature = GetNearbyNPC("Quard");
-                        ClickNPCDialog(creature, "Express Ship", true);
+                        RequestNamedPursuit(creature, "Express Ship", true);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
 
@@ -2441,7 +2441,7 @@ namespace Talos.Base
                     else if (Location.Equals(ClientLocation, new Location(10000, 29, 31)) && nextLocation.MapID == 10999)
                     {
                         Creature creature = GetNearbyNPC("Lenoa");
-                        ClickNPCDialog(creature, "Caravan to Noam", true);
+                        RequestNamedPursuit(creature, "Caravan to Noam", true);
                         ReplyDialog(1, creature.ID, 0, 2);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
@@ -2449,7 +2449,7 @@ namespace Talos.Base
                     else if (Location.Equals(ClientLocation, new Location(10055, 46, 23)) && nextLocation.MapID == 10999)
                     {
                         Creature creature = GetNearbyNPC("Habab");
-                        ClickNPCDialog(creature, "Caravan to Asilon or Hwarone", true);
+                        RequestNamedPursuit(creature, "Caravan to Asilon or Hwarone", true);
                         ReplyDialog(1, creature.ID, 0, 2);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
@@ -2457,7 +2457,7 @@ namespace Talos.Base
                     else if (Location.Equals(ClientLocation, new Location(10265, 87, 47)) && nextLocation.MapID == 10998)
                     {
                         Creature creature = GetNearbyNPC("Mank");
-                        ClickNPCDialog(creature, "Caravan to Noam", true);
+                        RequestNamedPursuit(creature, "Caravan to Noam", true);
                         ReplyDialog(1, creature.ID, 0, 2);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
@@ -2465,7 +2465,7 @@ namespace Talos.Base
                     else if (Location.Equals(ClientLocation, new Location(10055, 46, 24)) && nextLocation.MapID == 1960)
                     {
                         Creature creature = GetNearbyNPC("Habab");
-                        ClickNPCDialog(creature, "Carpet Merchant", true);
+                        RequestNamedPursuit(creature, "Carpet Merchant", true);
                         ReplyDialog(1, creature.ID, 0, 2);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
@@ -2497,18 +2497,18 @@ namespace Talos.Base
                     else if (Location.Equals(ClientLocation, new Location(3634, 16, 6)) && nextLocation.MapID == 8420)
                     {
                         Creature creature = GetNearbyNPC("Fallen Soldier");
-                        ClickNPCDialog(creature, "ChadulEntry", true);
+                        RequestNamedPursuit(creature, "ChadulEntry", true);
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                     }
                     else if (Location.Equals(ClientLocation, new Location(8318, 50, 95)) && nextLocation.MapID == 8345)
                     {
-                        Creature class7 = GetNearbyNPC("Ashlee");
-                        ClickObject(class7.ID);
-                        ReplyDialog(1, class7.ID, 0, 2);
+                        Creature creature = GetNearbyNPC("Ashlee");
+                        ClickObject(creature.ID);
+                        ReplyDialog(1, creature.ID, 0, 2);
                     }
                     else if (Location.Equals(ClientLocation, new Location(8355, 32, 5)) && nextLocation.MapID == 8356)
                     {
-                        Creature class8 = GetNearbyNPC("Norrie");
+                        Creature creature = GetNearbyNPC("Norrie");
                         PublicMessage(0, "let me through");
                         while (Dialog == null)
                         {
@@ -2516,20 +2516,20 @@ namespace Talos.Base
                         }
                         if (!Dialog.Message.Contains("Sorry, I forgot..."))
                         {
-                            ReplyDialog(1, class8.ID, 0, 2, 1);
-                            ReplyDialog(1, class8.ID, 0, 2, 1);
+                            ReplyDialog(1, creature.ID, 0, 2, 1);
+                            ReplyDialog(1, creature.ID, 0, 2, 1);
                             Thread.Sleep(1000);
                             PublicMessage(0, "let me through");
                         }
-                        ReplyDialog(1, class8.ID, 0, 2);
-                        ReplyDialog(1, class8.ID, 0, 2);
-                        ReplyDialog(1, class8.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2);
+                        ReplyDialog(1, creature.ID, 0, 2);
                         Thread.Sleep(1000);
                     }
                     else if (Location.Equals(ClientLocation, new Location(8361, 32, 7)) && nextLocation.MapID == 8362)
                     {
-                        Creature class9 = GetNearbyNPC("Yowien Guard");
-                        if (class9 != null && Inventory.Contains("Yowien Costume"))
+                        Creature creature = GetNearbyNPC("Yowien Guard");
+                        if (creature != null && Inventory.Contains("Yowien Costume"))
                         {
                             UseSkill("Assail");
                             UseItem("Yowien Costume");
@@ -2552,19 +2552,19 @@ namespace Talos.Base
                         }
                         else
                         {
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            ReplyDialog(1, class9.ID, 0, 2);
-                            ReplyDialog(1, class9.ID, 0, 2);
+                            ReplyDialog(1, creature.ID, 0, 2);
+                            ReplyDialog(1, creature.ID, 0, 2);
+                            ReplyDialog(1, creature.ID, 0, 2);
+                            ReplyDialog(1, creature.ID, 0, 2);
+                            ReplyDialog(1, creature.ID, 0, 2);
                             Thread.Sleep(1000);
                         }
                     }
                     else if (Map.MapID == 3052 && ClientLocation.X == 44 && ClientLocation.Y >= 18 && ClientLocation.Y <= 25)
                     {
-                        Creature class10 = GetNearbyNPC("Celesta");
-                        ClickNPCDialog(class10, "Enter Balanced Arena", true);
-                        ReplyDialog(1, class10.ID, 0, 2);
+                        Creature creature = GetNearbyNPC("Celesta");
+                        RequestNamedPursuit(creature, "Enter Balanced Arena", true);
+                        ReplyDialog(1, creature.ID, 0, 2);
                         while (Dialog == null)
                         {
                             Thread.Sleep(10);
@@ -2592,7 +2592,7 @@ namespace Talos.Base
                     else if (Location.Equals(ClientLocation, new Location(503, 41, 59)) && nextLocation.MapID == 3014)
                     {
                         Creature npc = GetNearbyNPC("Keane");
-                        ClickNPCDialog(npc, "Suomi Help", true);
+                        RequestNamedPursuit(npc, "Suomi Help", true);
                         ReplyDialog(1, npc.ID, 0, 2, 1);
                         ReplyDialog(1, npc.ID, 0, 2);
                     }
@@ -2604,49 +2604,7 @@ namespace Talos.Base
                 }
             }
         }
-        internal bool ClickNPCDialog(Creature creature, string dialogText, bool click)
-        {
-            DateTime utcNow = DateTime.UtcNow;
-            if (creature != null)
-            {
-                if (!Server.PursuitIDs.Values.Contains(dialogText))
-                {
-                    bool flag = false;
-                    ClickObject(creature.ID);
-                    while (Dialog == null)
-                    {
-                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds > 2.0)
-                        {
-                            if (flag)
-                            {
-                                return false;
-                            }
-                            ClickObject(creature.ID);
-                            flag = true;
-                        }
-                        Thread.Sleep(10);
-                    }
-                    Dialog.Reply();
-                }
-                utcNow = DateTime.UtcNow;
-                Dialog = null;
-                PursuitRequest(1, creature.ID, Server.PursuitIDs.FirstOrDefault((KeyValuePair<ushort, string> keyValuePair_0) => keyValuePair_0.Value == dialogText).Key);
-                if (click)
-                {
-                    while (Dialog == null)
-                    {
-                        if (DateTime.UtcNow.Subtract(utcNow).TotalSeconds <= 2.0)
-                        {
-                            Thread.Sleep(10);
-                            continue;
-                        }
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
+       
         internal bool WaitForDialog()
         {
             DateTime utcNow = DateTime.UtcNow;
@@ -3008,6 +2966,7 @@ namespace Talos.Base
             ushort pursuitKey = Server.PursuitIDs
                 .FirstOrDefault(p => string.Equals(p.Value, pursuitName))
                 .Key;
+
             PursuitRequest(1, merchant.ID, pursuitKey);
 
             if (wait)
@@ -3112,33 +3071,33 @@ namespace Talos.Base
                 clientPacket.WriteString8(quantity.ToString());
             Enqueue(clientPacket);
         }
-        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId)
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort pursuitIndex)
         {
             ClientPacket clientPacket = new ClientPacket(58);
             clientPacket.WriteByte(objType);
             clientPacket.WriteInt32(objId);
             clientPacket.WriteUInt16(pursuitId);
-            clientPacket.WriteUInt16(dialogId);
+            clientPacket.WriteUInt16(pursuitIndex);
             Enqueue(clientPacket);
         }
-        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, byte optionToClick)
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort pursuitIndex, byte optionToClick)
         {
             ClientPacket clientPacket = new ClientPacket(58);
             clientPacket.WriteByte(objType);
             clientPacket.WriteInt32(objId);
             clientPacket.WriteUInt16(pursuitId);
-            clientPacket.WriteUInt16(dialogId);
+            clientPacket.WriteUInt16(pursuitIndex);
             clientPacket.WriteByte(1);
             clientPacket.WriteByte(optionToClick);
             Enqueue(clientPacket);
         }
-        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort dialogId, string response)
+        internal void ReplyDialog(byte objType, int objId, ushort pursuitId, ushort pursuitIndex, string response)
         {
             ClientPacket clientPacket = new ClientPacket(58);
             clientPacket.WriteByte(objType);
             clientPacket.WriteInt32(objId);
             clientPacket.WriteUInt16(pursuitId);
-            clientPacket.WriteUInt16(dialogId);
+            clientPacket.WriteUInt16(pursuitIndex);
             clientPacket.WriteByte(2);
             clientPacket.WriteString8(response);
             Enqueue(clientPacket);
