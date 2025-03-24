@@ -67,7 +67,7 @@ namespace Talos.Base
 
         internal DateTime _lastEXP = DateTime.MinValue;
         internal DateTime _lastDisenchanterCast = DateTime.MinValue;
-        internal DateTime _lastGrimeScentCast = DateTime.MinValue;
+        internal DateTime LastGrimeScentCast = DateTime.MinValue;
         internal DateTime _skullTime = DateTime.MinValue;
         internal DateTime _lastRefresh = DateTime.MinValue;
         internal DateTime _lastVineCast = DateTime.MinValue;
@@ -6143,9 +6143,10 @@ namespace Talos.Base
         {
 
             // Check if Ao Suain is enabled and the Suain effect is present before attempting to cast spells.
-            if (!Client.ClientTab.aoSuainCbox.Checked || !Client.HasEffect(EffectsBar.Suain))
+            if (!(Client?.ClientTab?.aoSuainCbox.Checked ?? false) || !Client.HasEffect(EffectsBar.Suain))
             {
                 return;
+                
             }
             Console.WriteLine("[AoSuain] Attempting to cast 'ao suain' to clear the Suain effect.");
             // Attempt to cast "Leafhopper Chirp" first. If it fails, attempt to cast "ao suain".

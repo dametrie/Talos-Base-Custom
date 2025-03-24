@@ -387,7 +387,7 @@ namespace Talos.Helper
                         break;
 
                     case "Light SealLR":
-                        client.Bot._lastGrimeScentCast = DateTime.UtcNow;
+                        client.Bot.LastGrimeScentCast = DateTime.UtcNow;
                         break;
 
                     case "Gem Polishing":

@@ -142,10 +142,18 @@ namespace Talos.Helper
 
         private void BugsCompleted()
         {
-            _client.ServerMessage(0, "Bugs Completed!");
-            _client.ServerMessage(0, "Go get your reward!");
-            SystemSounds.Beep.Play();
-            Thread.Sleep(500);
+            var targetLocation = new Location(165, new Point(6, 10));
+            if (!Location.Equals(_client.ClientLocation, targetLocation))
+            {
+                _client.Routefind(targetLocation, 0, false, true, true);
+                return;
+            }
+            else
+            {
+                _client.ServerMessage(0, "Bugs Completed!");
+                SystemSounds.Beep.Play();
+                Thread.Sleep(500);
+            }
         }
 
         private void GetInsectNet()
