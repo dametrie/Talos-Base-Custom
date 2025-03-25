@@ -4314,7 +4314,7 @@ namespace Talos.Base
             }
 
             bool isBeagCradhChecked = clientTab.beagCradhCbox.Checked;
-            bool isPlayerCursed = Client.Player.IsCursed;
+            bool isPlayerCursed = (bool)(Client.Player?.IsCursed);
 
             if (isBeagCradhChecked && !isPlayerCursed)
             {

@@ -118,16 +118,16 @@ namespace Talos.Helper
 
         private void ProcessBugMap(BugMap bugMap)
         {
-            if (_client.Map.MapID != bugMap.ShopMapID && _client.Map.MapID != bugMap.BugsMapID)
+            if (_client?.Map?.MapID != bugMap.ShopMapID && _client?.Map?.MapID != bugMap.BugsMapID)
             {
                 // Not at the expected maps; route to the starting map.
                 _client.Routefind(new Location(bugMap.ShopMapID, new Point(7, 7)), 0, false, true, true);
             }
-            else if (_client.Map.MapID == bugMap.ShopMapID)
+            else if (_client?.Map?.MapID == bugMap.ShopMapID)
             {
                 EnterBugMap();
             }
-            else if (_client.Map.MapID == bugMap.BugsMapID)
+            else if (_client?.Map?.MapID == bugMap.BugsMapID)
             {
                 if (_client.Bot.InsectNetRepair)
                 {
@@ -142,7 +142,7 @@ namespace Talos.Helper
 
         private void BugsCompleted()
         {
-            var targetLocation = new Location(165, new Point(6, 10));
+            var targetLocation = new Location(165, new Point(7, 10));
             if (!Location.Equals(_client.ClientLocation, targetLocation))
             {
                 _client.Routefind(targetLocation, 0, false, true, true);
@@ -159,7 +159,7 @@ namespace Talos.Helper
         private void GetInsectNet()
         {
             _client.RemoveShield();
-            var targetLocation = new Location(165, new Point(6, 10));
+            var targetLocation = new Location(165, new Point(7, 10));
             if (!Location.Equals(_client.ClientLocation, targetLocation))
             {
                 _client.Routefind(targetLocation, 0, false, true, true);
@@ -196,7 +196,7 @@ namespace Talos.Helper
         private void EnterBugMap()
         {
             // Map-specific navigation.
-            switch (_client.Map.MapID)
+            switch (_client?.Map?.MapID)
             {
                 case 10265:
                     if (_client.ServerLocation.AbsoluteXY(90, 47) > 1)

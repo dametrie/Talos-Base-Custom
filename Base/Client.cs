@@ -2471,7 +2471,7 @@ namespace Talos.Base
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
 
-                        if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
+                        if (!string.IsNullOrEmpty(ClientTab?.walkMapCombox.Text) && ClientTab?.walkBtn.Text == "Stop" && ClientTab?.startStrip.Text == "Stop")
                         {
                             Server.MedWalk[Name] = ClientTab.walkMapCombox.Text;
                         }
