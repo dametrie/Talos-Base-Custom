@@ -2411,27 +2411,27 @@ namespace Talos.Base
                         ReplyDialog(1, creature.ID, 0, 2, 1);
                         ReplyDialog(1, creature.ID, 0, 2);
 
-                        if (!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop" && ClientTab.startStrip.Text == "Stop")
+                        if (!string.IsNullOrEmpty(ClientTab?.walkMapCombox.Text) && ClientTab?.walkBtn.Text == "Stop" && ClientTab?.startStrip.Text == "Stop")
                         {
-                            Server.MedWalk[Name] = ClientTab.walkMapCombox.Text;
+                            Server.MedWalk[Name] = ClientTab?.walkMapCombox.Text;
                         }
-                        if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
+                        if (!string.IsNullOrEmpty(ClientTab?.followText.Text) && ClientTab?.followCbox.Checked == true && ClientTab?.startStrip.Text == "Stop")
                         {
-                            Server.MedTask[Name] = ClientTab.followText.Text;
+                            Server.MedTask[Name] = ClientTab?.followText.Text;
                         }
-                        if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
+                        if (((!string.IsNullOrEmpty(ClientTab?.walkMapCombox.Text) && ClientTab?.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab?.followText.Text) && ClientTab?.followCbox.Checked == true)) && ClientTab?.startStrip.Text == "Stop")
                         {
-                            Server.MedWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server.MedWalkSpeed[Name] = (int)(ClientTab?.walkSpeedSldr.Value);
                         }
-                        if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        if (ClientTab?.toggleBugBtn.Text == "Disable" && ClientTab?.startStrip.Text == "Stop")
                         {
                             Server.MedTask[Name] = "bugEvent";
-                            Server.MedWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server.MedWalkSpeed[Name] = (int)(ClientTab?.walkSpeedSldr.Value);
                         }
-                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab?.startStrip.Text == "Stop")
                         {
                             Server.MedTask[Name] = "vDayEvent";
-                            Server.MedWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server.MedWalkSpeed[Name] = (int)(ClientTab?.walkSpeedSldr.Value);
                         }
                     }
                     else if (Location.Equals(ClientLocation, new Location(706, 11, 13)) && nextLocation.MapID == 6591)
@@ -2473,25 +2473,25 @@ namespace Talos.Base
 
                         if (!string.IsNullOrEmpty(ClientTab?.walkMapCombox.Text) && ClientTab?.walkBtn.Text == "Stop" && ClientTab?.startStrip.Text == "Stop")
                         {
-                            Server.MedWalk[Name] = ClientTab.walkMapCombox.Text;
+                            Server.MedWalk[Name] = ClientTab?.walkMapCombox.Text;
                         }
-                        if (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked && ClientTab.startStrip.Text == "Stop")
+                        if (!string.IsNullOrEmpty(ClientTab?.followText.Text) && ClientTab?.followCbox.Checked == true && ClientTab?.startStrip.Text == "Stop")
                         {
-                            Server.MedTask[Name] = ClientTab.followText.Text;
+                            Server.MedTask[Name] = ClientTab?.followText.Text;
                         }
-                        if (((!string.IsNullOrEmpty(ClientTab.walkMapCombox.Text) && ClientTab.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab.followText.Text) && ClientTab.followCbox.Checked)) && ClientTab.startStrip.Text == "Stop")
+                        if (((!string.IsNullOrEmpty(ClientTab?.walkMapCombox.Text) && ClientTab?.walkBtn.Text == "Stop") || (!string.IsNullOrEmpty(ClientTab?.followText.Text) && ClientTab?.followCbox.Checked == true)) && ClientTab?.startStrip.Text == "Stop")
                         {
-                            Server.MedWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server.MedWalkSpeed[Name] = (int)(ClientTab?.walkSpeedSldr.Value);
                         }
-                        if (ClientTab.toggleBugBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        if (ClientTab?.toggleBugBtn.Text == "Disable" && ClientTab?.startStrip.Text == "Stop")
                         {
                             Server.MedTask[Name] = "bugEvent";
-                            Server.MedWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server.MedWalkSpeed[Name] = (int)(ClientTab?.walkSpeedSldr.Value);
                         }
-                        if (ClientTab.toggleSeaonalDblBtn.Text == "Disable" && ClientTab.startStrip.Text == "Stop")
+                        if (ClientTab?.toggleSeaonalDblBtn.Text == "Disable" && ClientTab?.startStrip.Text == "Stop")
                         {
                             Server.MedTask[Name] = "vDayEvent";
-                            Server.MedWalkSpeed[Name] = ClientTab.walkSpeedSldr.Value;
+                            Server.MedWalkSpeed[Name] = (int)(ClientTab?.walkSpeedSldr.Value);
                         }
                     }
                     else if (Location.Equals(ClientLocation, new Location(3634, 16, 6)) && nextLocation.MapID == 8420)

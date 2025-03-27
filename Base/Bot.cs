@@ -3928,15 +3928,15 @@ namespace Talos.Base
         public void HandleVineyard()
         {
 
-            if (!int.TryParse(Client.ClientTab.vineText.Text, out int vineDelay))
+            if (!int.TryParse(Client.ClientTab?.vineText.Text, out int vineDelay))
                 return;
 
-            if (!Client.ClientTab.vineyardCbox.Checked
+            if (!Client.ClientTab?.vineyardCbox.Checked == true
                 || !Client.HasSpell("Lyliac Vineyard")
                 || !Client.Spellbook["Lyliac Vineyard"].CanUse)
                 return;
 
-            bool shouldCast = ShouldCastVineyard(vineDelay, Client.ClientTab.vineCombox.Text);
+            bool shouldCast = ShouldCastVineyard(vineDelay, Client.ClientTab?.vineCombox.Text);
 
             if (shouldCast)
             {
