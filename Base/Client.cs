@@ -1344,12 +1344,53 @@ namespace Talos.Base
             }
             else
             {
-                var bestStaff = Inventory
+                /*var bestStaff = Inventory
                     .Where(item => item.IsStaff && item.ThisStaff.CanUse(Ability, Level, ToNextLevel, TemuairClassFlag))
                     .FirstOrDefault(item => item.ThisStaff.CastLines[spell.Name] < spell.CastLines &&
                         (item.ThisStaff.AbilityRequired > staff.AbilityRequired ||
                         item.ThisStaff.InsightRequired >= staff.InsightRequired ||
-                        (item.ThisStaff.MasterRequired && !staff.MasterRequired)));
+                        (item.ThisStaff.MasterRequired && !staff.MasterRequired)));*/
+                Item bestStaff = null;
+
+                foreach (var item in Inventory)
+                {
+                    if (!item.IsStaff)
+                    {
+                        //Console.WriteLine($"Skipping {item.Name} - Not a staff.");
+                        continue;
+                    }
+
+                    if (!item.ThisStaff.CanUse(Ability, Level, ToNextLevel, TemuairClassFlag))
+                    {
+                        Console.WriteLine($"Skipping {item.Name} - Cannot use staff with current stats.");
+                        continue;
+                    }
+
+                    // Passed the initial filter
+                    Console.WriteLine($"Considering {item.Name} - Passed usability checks.");
+
+                    // Evaluate staff improvement conditions
+                    bool isBetter = item.ThisStaff.CastLines.TryGetValue(spell.Name, out byte itemCastLines) && itemCastLines < spell.CastLines &&
+                        (
+                            item.ThisStaff.AbilityRequired > staff.AbilityRequired ||
+                            item.ThisStaff.InsightRequired >= staff.InsightRequired ||
+                            (item.ThisStaff.MasterRequired && !staff.MasterRequired)
+                        );
+
+                    Console.WriteLine($"Evaluating {item.Name}: CastLines = {itemCastLines}, IsBetter = {isBetter}");
+
+                    if (isBetter)
+                    {
+                        bestStaff = item;
+                        Console.WriteLine($"Selected {item.Name} as the best staff so far.");
+                        break; // or continue to find the best if not using FirstOrDefault logic
+                    }
+                }
+
+                if (bestStaff == null)
+                {
+                    Console.WriteLine("No suitable staff found.");
+                }
 
                 if (bestStaff != null)
                 {

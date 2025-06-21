@@ -3571,8 +3571,8 @@ namespace Talos.Base
         private bool CheckForStopConditions()
         {
 
-            return (Client.ClientTab != null && Client.InventoryFull && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
-                   (Client.ClientTab != null && Client.Bot._hasDeposited && Client.ClientTab.toggleFarmBtn.Text == "Farming") ||
+            return (Client.ClientTab != null && Client.InventoryFull && Client.ClientTab?.toggleFarmBtn.Text == "Farming") ||
+                   (Client.ClientTab != null && Client.Bot._hasDeposited && Client.ClientTab?.toggleFarmBtn.Text == "Farming") ||
                    Client.ExchangeOpen || Client.ClientTab == null || Client.Dialog != null || _dontCast;
         }
         private void ProcessPlayersAndCreatures()
@@ -3598,7 +3598,7 @@ namespace Talos.Base
         }
         private void LogIfSkulled()
         {
-            bool isOptionsSkullCboxChecked = Client.ClientTab.optionsSkullCbox.Checked;
+            bool isOptionsSkullCboxChecked = Client.ClientTab?.optionsSkullCbox.Checked == true;
 
             if (isOptionsSkullCboxChecked && DateTime.UtcNow.Subtract(_skullTime).TotalSeconds > 6.0)
             {
@@ -3618,7 +3618,7 @@ namespace Talos.Base
         }
         private void LogIfSkulledAndSurrounded()
         {
-            bool isOptionsSkullSurrboxChecked = Client.ClientTab.optionsSkullSurrbox.Checked;
+            bool isOptionsSkullSurrboxChecked = Client.ClientTab?.optionsSkullSurrbox.Checked == true;
             if (isOptionsSkullSurrboxChecked && DateTime.UtcNow.Subtract(_skullTime).TotalSeconds > 4.0 && Client.IsLocationSurrounded(Client.ServerLocation))
             {
                 string text2 = AppDomain.CurrentDomain.BaseDirectory + "\\skull.txt";
@@ -3644,7 +3644,7 @@ namespace Talos.Base
 
         private bool AutoRedConditionsMet()
         {
-            return Client.ClientTab != null && _playersExistingOver250ms != null && Client.ClientTab.autoRedCbox.Checked;
+            return Client.ClientTab != null && _playersExistingOver250ms != null && Client.ClientTab?.autoRedCbox.Checked == true;
         }
         private List<Player> GetSkulledPlayers()
         {
@@ -3667,7 +3667,7 @@ namespace Talos.Base
 
             Console.WriteLine("[BotLoop] RedSkulledPlayers called");
 
-            if (_skulledPlayers.Count > 0 && Client.ClientTab.autoRedCbox.Checked)
+            if (_skulledPlayers.Count > 0 && Client.ClientTab?.autoRedCbox.Checked == true)
             {
                 Console.WriteLine("[BotLoop] Players needing red > 0 and autoRed checked");
 
